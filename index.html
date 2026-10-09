@@ -497,7 +497,7 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none!importa
 .fs-ctl button{padding:6px 10px;min-width:40px;font-weight:700}
 </style>
 <style>
-/* ===== หน้าต่าง LINE แบบกะทัดรัด: 2 คอลัมน์ + เลื่อนได้ + ปุ่มล่างติดขอบ ===== */
+/* ===== หน้าต่าง LINE แบบกะทัดรัด ===== */
 .mod-ln{max-width:820px;max-height:calc(100vh - 32px);display:flex;flex-direction:column;padding:0;overflow:hidden}
 .mod-ln .ln-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 8px}
 .mod-ln .ln-head h3{margin:0;font-size:18px}
@@ -882,6 +882,9 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none!importa
           <input id="lnUrl" placeholder="https://script.google.com/macros/s/.../exec">
           <label class="ln-lb">Secret (ตรงกับ SECRET ใน Apps Script)</label>
           <input id="lnSecret" type="password" placeholder="รหัสผ่านที่ตั้งเอง">
+          <div class="ln-btns" style="margin-top:8px">
+            <button type="button" class="btn-g" id="lnShare" title="คัดลอกลิงก์ที่ตั้งค่า LINE ให้อัตโนมัติ เมื่อเพื่อนเปิดลิงก์นี้ครั้งเดียว">🔗 คัดลอกลิงก์ตั้งค่า LINE ให้เพื่อน</button>
+          </div>
           <div class="ln-t" style="margin-top:12px">📷 ส่งรูปหน้าจอ</div>
           <label class="ln-ck"><input type="checkbox" id="imgAuto"> ส่งรูปอัตโนมัติเมื่อมีการแก้ไข</label>
           <div class="ln-row">
@@ -1909,6 +1912,23 @@ tr.od-soon{background:rgba(245,158,11,.15)}
 })();
 </script>
 <script>
+/* ===== นำเข้าการตั้งค่า LINE จากลิงก์ตั้งค่า (#ln=...) — ทำงานก่อนสคริปต์ LINE ===== */
+(function(){
+  try{
+    var m=(location.hash||'').match(/[#&]ln=([^&]+)/); if(!m) return;
+    var o=JSON.parse(decodeURIComponent(escape(atob(decodeURIComponent(m[1])))));
+    if(o&&o.u&&o.s){
+      var KEY='issue_tracker_line', cur={};
+      try{ cur=JSON.parse(localStorage.getItem(KEY)||'{}')||{}; }catch(e){}
+      cur.url=String(o.u); cur.secret=String(o.s);
+      localStorage.setItem(KEY,JSON.stringify(cur));
+      window.__lnImported=true;
+    }
+    history.replaceState(null,'',location.pathname+location.search);   // ลบรหัสออกจากแถบที่อยู่ทันที
+  }catch(e){}
+})();
+</script>
+<script>
 /* ================= แจ้งเตือน LINE (ตอนเปิดไฟล์) ================= */
 (function(){
   const LN_KEY='issue_tracker_line';
@@ -2616,5 +2636,23 @@ tr.od-soon{background:rgba(245,158,11,.15)}
 if(window.SPDB) window.SPDB.bind();
 </script>
 <!-- External/Supabase edition generated from Rev.36; UI and original features retained. -->
+<script>
+(function(){
+  var g=function(id){return document.getElementById(id);};
+  function say(m,c){ try{ toast(m,c); }catch(e){ alert(m); } }
+  if(window.__lnImported) setTimeout(function(){ say('✅ ตั้งค่า LINE จากลิงก์แล้ว — กด 🔔 LINE → ส่งทดสอบ เพื่อตรวจ'); },700);
+  var b=g('lnShare'); if(!b) return;
+  b.onclick=async function(){
+    var c={}; try{ c=JSON.parse(localStorage.getItem('issue_tracker_line')||'{}')||{}; }catch(e){}
+    var u=(g('lnUrl').value||c.url||'').trim(), sec=(g('lnSecret').value||c.secret||'');
+    if(!u||!sec){ say('⚠️ กรอก Web App URL และ Secret แล้วกด "บันทึก" ก่อน','var(--t-dang)'); return; }
+    if(location.protocol==='file:'){ say('⚠️ ต้องเปิดจากลิงก์เว็บ (github.io) ไม่ใช่ไฟล์ในเครื่อง','var(--t-dang)'); return; }
+    var enc=encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify({u:u,s:sec})))));
+    var link=location.origin+location.pathname+'#ln='+enc;
+    try{ await navigator.clipboard.writeText(link); say('🔗 คัดลอกลิงก์แล้ว — ส่งให้เฉพาะคนในทีม (ลิงก์มีรหัสผ่าน)'); }
+    catch(e){ prompt('คัดลอกลิงก์นี้ (Ctrl+C) แล้วส่งให้เฉพาะคนในทีม',link); }
+  };
+})();
+</script>
 </body>
 </html>
