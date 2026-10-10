@@ -522,6 +522,324 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none!importa
 .mod-ln .ln-foot button{padding:8px 16px;font-size:13px}
 @media(max-width:700px){.mod-ln .ln-grid{grid-template-columns:1fr}}
 </style>
+<style id="msStyle">
+/* ================= 🎯 7 Mission QE Electronics ================= */
+#viewMission{display:none}
+#viewMission .ms-sub{color:var(--mut);font-size:13px}
+.ms-head{margin-bottom:16px}
+.ms-head h1{font-size:24px;margin:0 0 2px}
+.ms-bar{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;margin:12px 0 8px}
+.ms-years,.ms-views{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.ms-yr{padding:7px 16px;border-radius:999px;font-size:14px;font-weight:700;background:transparent;color:var(--mut);border:1px solid var(--line);letter-spacing:.3px}
+.ms-yr:hover{color:var(--txt);border-color:var(--pri)}
+.ms-yr.on{background:var(--pri);color:var(--on-pri);border-color:var(--pri);box-shadow:0 4px 14px var(--ring)}
+.ms-yr.add{border-style:dashed;color:var(--pri)}
+.ms-vw{padding:8px 14px;border-radius:10px;font-size:13px;background:transparent;color:var(--mut);border:1px solid var(--line)}
+.ms-vw.on{background:var(--soft2);color:var(--txt);border-color:var(--pri);box-shadow:inset 0 -2px 0 var(--pri)}
+.ms-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ms-tools select{width:auto;min-width:200px;padding:7px 10px;font-size:13px}
+.ms-tools .btn-g{padding:7px 12px;font-size:12px}
+.ms-fy{font-size:13px;color:var(--mut);margin-left:4px}
+.ms-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:0 1px 4px var(--sh)}
+.ms-card h3{margin:0 0 4px;font-size:15px}
+.ms-card .ms-sub{margin-bottom:10px}
+.ms-sec2{margin:0 0 16px}
+
+/* ----- summary ----- */
+.ms-hero{display:grid;grid-template-columns:minmax(300px,420px) 1fr;gap:16px;margin-bottom:16px}
+@media(max-width:860px){.ms-hero{grid-template-columns:1fr}}
+.ms-ovc{display:flex;align-items:center;gap:18px;background:linear-gradient(135deg,color-mix(in srgb,var(--pri) 14%,var(--card)),var(--card))}
+.ms-ovg{flex:0 0 auto}
+.ms-ovt{min-width:0}
+.ms-eyebrow{font-size:12px;color:var(--mut);letter-spacing:.6px;text-transform:uppercase}
+.ms-bigp{font-size:40px;font-weight:800;line-height:1.05;margin:2px 0}
+.ms-mut{font-size:12px;color:var(--mut)}
+.ms-prog{height:8px;border-radius:99px;background:var(--line);margin-top:10px;overflow:hidden}
+.ms-prog i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--pri),var(--vio))}
+.ms-kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.ms-kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;box-shadow:0 1px 4px var(--sh)}
+.ms-kpi .n{font-size:30px;font-weight:800;line-height:1.1}
+.ms-kpi .l{font-size:12px;color:var(--mut);margin-top:3px}
+.ms-kpi .i{font-size:18px;float:right;opacity:.85}
+.ms-mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+.ms-mc{display:flex;flex-direction:column;justify-content:flex-start;width:100%;text-align:left;cursor:pointer;background:var(--card);color:var(--txt);border:1px solid var(--line);border-top:4px solid var(--mc);border-radius:14px;padding:12px 14px 12px;font-weight:400;box-shadow:0 1px 4px var(--sh);transition:transform .15s,box-shadow .15s}
+@media(min-width:1180px){.ms-mgrid{grid-template-columns:repeat(7,minmax(0,1fr))}.ms-mc{padding:12px 10px}}
+.ms-mc:hover{transform:translateY(-3px);box-shadow:0 10px 24px var(--shp)}
+.ms-mh{display:flex;align-items:center;gap:8px}
+.ms-mn{display:flex;flex-direction:column;min-width:0;line-height:1.2}
+.ms-mn b{font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ms-mn small{color:var(--mut);font-size:11px}
+.ms-mi{width:30px;height:30px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;font-size:17px;background:color-mix(in srgb,var(--mc) 22%,transparent)}
+.ms-mg{display:flex;justify-content:center;margin:6px 0 4px}
+.ms-ch{display:flex;justify-content:center;gap:12px;font-size:12px;font-weight:700}
+.c-ok{color:var(--t-ok)}.c-ng{color:var(--t-dang)}.c-na{color:var(--mut)}
+.ms-bads{margin-top:auto}
+.ms-bad{margin-top:8px;font-size:11px;color:var(--t-dang);line-height:1.35;border-top:1px dashed var(--line);padding-top:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ms-bad.ok{color:var(--t-ok)}
+.ms-two{display:grid;grid-template-columns:1fr;gap:16px;margin-top:16px}
+.ms-legend{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 6px}
+.ms-lg{padding:4px 10px;font-size:12px;border-radius:999px;background:color-mix(in srgb,var(--mc) 18%,transparent);color:var(--txt);border:1px solid var(--mc);font-weight:600}
+.ms-lg.off{opacity:.35;text-decoration:line-through}
+.ms-trend{width:100%;height:auto;display:block}
+.ms-trend text{fill:var(--mut);font-size:11px}
+.ms-hm{overflow:auto}
+.ms-hm table{min-width:760px;border-radius:10px}
+.ms-hm th,.ms-hm td{padding:7px 8px;font-size:12px;text-align:center;border-bottom:1px solid var(--line)}
+.ms-hm th:first-child,.ms-hm td:first-child{text-align:left;white-space:nowrap;font-weight:700}
+.ms-hm td.na{color:var(--mut);opacity:.5}
+.ms-hm tr.tot td{font-weight:800;border-top:2px solid var(--line)}
+.ms-ng{overflow:auto}
+.ms-ng table{min-width:720px}
+.ms-ng td,.ms-ng th{padding:8px 10px;font-size:12.5px}
+.ms-ng tr[data-act]{cursor:pointer}
+.ms-chip{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:700;background:color-mix(in srgb,var(--mc) 20%,transparent);border:1px solid var(--mc);white-space:nowrap}
+.ms-pill{display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:800;color:#fff}
+.ms-empty{text-align:center;padding:46px 20px}
+.ms-empty h2{margin:0 0 6px}
+
+/* ----- editable grids ----- */
+.ms-sec{margin:0 0 18px;border:1px solid var(--line);border-left:6px solid var(--mc);border-radius:14px;background:var(--card);box-shadow:0 1px 4px var(--sh);overflow:hidden}
+.ms-sh{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 12px;background:color-mix(in srgb,var(--mc) 10%,transparent)}
+.ms-sh .ms-fold{padding:2px 9px;font-size:14px;background:transparent;color:var(--mut);border:1px solid var(--line)}
+.ms-sh input.mf{width:auto;padding:5px 8px;font-size:14px}
+.ms-sh .mic{width:46px;text-align:center;font-size:17px}
+.ms-sh .mnm{font-weight:800;font-size:16px;width:min(280px,46vw)}
+.ms-sh input[type=color]{width:30px;height:28px;padding:1px;border-radius:6px;cursor:pointer}
+.ms-sh .grow{flex:1}
+.ms-sh .btn-g{padding:5px 10px;font-size:12px}
+.ms-scroll{overflow:auto;max-height:78vh}
+.ms-tbl{border-collapse:separate;border-spacing:0;min-width:0;table-layout:fixed;font-size:12px;border-radius:0;box-shadow:none;background:transparent}
+.ms-tbl th,.ms-tbl td{padding:0;border-bottom:1px solid var(--line);border-right:1px solid color-mix(in srgb,var(--line) 55%,transparent);text-align:center;vertical-align:middle;font-size:12px;text-transform:none;letter-spacing:0}
+.ms-tbl thead th{position:sticky;top:0;z-index:4;background:var(--pop);padding:7px 4px;font-weight:700;color:var(--mut);font-size:11px}
+.ms-tbl thead th.agc{color:var(--txt);background:color-mix(in srgb,var(--pop) 88%,var(--pri))}
+.ms-tbl .s1{position:sticky;left:0;z-index:3;background:var(--pop)}
+.ms-tbl .s2{position:sticky;left:38px;z-index:3;background:var(--pop);box-shadow:2px 0 4px var(--sh)}
+.ms-tbl thead th.s1,.ms-tbl thead th.s2{z-index:6}
+.ms-tbl td.agc{background:color-mix(in srgb,var(--pri) 6%,transparent)}
+.ms-tbl tr.kP td{border-bottom-style:dashed}
+.ms-tbl tr.kR td.agc{background:color-mix(in srgb,var(--pri) 9%,transparent)}
+.ms-tbl tr.kJ td{border-bottom:2px solid var(--line)}
+.ms-tbl .ms-act td{background:color-mix(in srgb,var(--mc) 12%,var(--pop));text-align:left;padding:5px 10px;font-weight:700;color:var(--txt);position:sticky;left:0}
+.ms-tbl input,.ms-tbl textarea{width:100%;border:1px solid transparent;background:transparent;color:var(--txt);border-radius:4px;padding:5px 5px;font-size:12px;box-shadow:none}
+.ms-tbl input.mc{text-align:right;min-width:0;width:100%;height:26px}
+.ms-tbl input.mc:hover{background:var(--soft)}
+.ms-tbl input.mc:focus,.ms-tbl textarea:focus,.ms-tbl input.mf:focus{outline:none;background:var(--soft2);border-color:var(--pri);box-shadow:0 0 0 2px var(--ring)}
+.ms-tbl input.mc.auto{font-style:italic;color:var(--mut)}
+.ms-tbl input.mc.part{opacity:.65}
+.ms-tbl input.mc.fx{color:var(--t-vio);font-style:italic;background:color-mix(in srgb,var(--vio) 7%,transparent)}
+.ms-tbl input.mc.man{font-weight:700;box-shadow:inset 3px 0 0 var(--warn)}
+.ms-tbl input.mf{padding:5px 6px;font-size:12px;height:26px}
+.ms-tbl .mi-name{height:84px;resize:none;line-height:1.35;text-align:left;font-size:12.5px;font-weight:600;padding:6px 8px}
+.ms-tbl td.mt input{text-align:center;min-width:0}
+.ms-tbl td.k{min-width:26px;width:26px;font-weight:800;color:var(--mut);font-size:11px;background:var(--th)}
+.ms-tbl .gear{padding:2px 6px;font-size:13px;background:transparent;color:var(--mut);border:1px solid transparent;border-radius:6px;line-height:1}
+.ms-tbl .gear:hover{background:var(--soft2);border-color:var(--line);color:var(--txt)}
+.ms-tbl .no{font-size:11px;color:var(--mut);font-weight:700}
+.ms-j{cursor:pointer;height:26px}
+.ms-j:hover{background:var(--soft2)}
+.jb{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;font-size:11px;font-weight:800}
+.jb.jo{background:rgba(34,197,94,.22);color:var(--t-ok)}
+.jb.jx{background:rgba(239,68,68,.24);color:var(--t-dang)}
+.jb.jn{background:rgba(148,163,184,.25);color:var(--mut)}
+.ms-j .dot{position:relative}
+.ms-j.jov .jb{box-shadow:0 0 0 2px var(--warn)}
+.ms-addrow{display:flex;gap:8px;padding:8px 12px;border-top:1px solid var(--line);background:var(--soft)}
+.ms-addrow .btn-g{padding:5px 12px;font-size:12px}
+.ms-note{font-size:12px;color:var(--mut);margin:0 0 10px;line-height:1.7}
+.ms-note kbd{background:var(--soft2);border:1px solid var(--line);border-radius:4px;padding:0 5px;font-size:11px}
+.ms-flash td,.ms-flash input{animation:shFlash 1.8s ease-out}
+.ms-sec.closed .ms-scroll,.ms-sec.closed .ms-addrow{display:none}
+.ms-fld{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0}
+.ms-fld label{margin-bottom:3px}
+.ms-fld .full{grid-column:1/-1}
+.ms-help{font-size:12px;color:var(--mut);line-height:1.6;background:var(--soft);border:1px dashed var(--line);border-radius:9px;padding:8px 10px;margin:8px 0}
+@media(max-width:700px){.ms-bigp{font-size:32px}.tabbar{flex-wrap:wrap}.tabbtn{padding:8px 12px;font-size:13px}}
+</style>
+<style id="otStyle">
+/* ================= ⏱ OT Control ================= */
+.ot-nav{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;margin:6px 0 16px;padding:10px 12px;border:1px solid var(--line);border-radius:14px;background:var(--card);box-shadow:0 1px 4px var(--sh)}
+.ot-nav>.btn-g{padding:7px 12px;font-size:12px}
+.ot-chips{display:flex;flex-wrap:wrap;gap:6px;flex:1;min-width:0}
+.ot-navr{margin-left:auto}
+.ot-chip{position:relative;padding:7px 12px;border-radius:999px;font-size:13px;font-weight:700;background:transparent;color:var(--mut);border:1px solid var(--line);display:inline-flex;align-items:center;gap:6px}
+.ot-chip:hover{color:var(--txt);border-color:var(--pri)}
+.ot-chip.on{background:var(--pri);color:var(--on-pri);border-color:var(--pri);box-shadow:0 4px 14px var(--ring)}
+.ot-dot{width:8px;height:8px;border-radius:50%;background:transparent;border:1px solid var(--line)}
+.ot-dot.o{background:var(--ok);border-color:var(--ok)}.ot-dot.x{background:var(--dang);border-color:var(--dang)}
+.ot-card{margin:0 0 16px}
+.ot-card .ms-trend{max-width:980px;margin:0 auto}
+.ms-trend text.otl{fill:var(--t-vio);font-size:12.5px;font-weight:800;paint-order:stroke;stroke:var(--pop);stroke-width:3.5px;stroke-linejoin:round}
+.ot-hero{margin-bottom:16px}
+.ot-leg{display:flex;flex-wrap:wrap;gap:10px 16px;margin-top:10px;font-size:12px;color:var(--mut)}
+.ot-leg i,.ot-bleg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.ot-bleg{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:10px;font-size:12px;color:var(--mut)}
+.ot-bleg i.lim{width:3px;height:12px;border-radius:2px;background:var(--warn);margin-right:6px}
+.ot-pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;margin-top:6px}
+.ot-pc{border:1px solid var(--line);border-top:4px solid var(--pc);border-radius:14px;padding:12px 14px;background:linear-gradient(180deg,color-mix(in srgb,var(--pc) 9%,transparent),transparent 60%)}
+.ot-ph{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.ot-ph b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}
+.ot-av{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#06101c}
+.ot-pv{display:flex;align-items:baseline;gap:8px}
+.ot-pv .n{font-size:30px;font-weight:800;line-height:1.1}
+.ot-pv small{font-size:11px;color:var(--mut)}
+.ot-split{display:flex;height:8px;border-radius:99px;overflow:hidden;background:var(--line);margin:8px 0 6px}
+.ot-split i{display:block;height:100%}
+.ot-pm{display:flex;justify-content:space-between;gap:6px;font-size:11px;color:var(--mut);margin-bottom:6px;flex-wrap:wrap}
+.ot-sw{display:inline-block;width:10px;height:10px;border-radius:3px;vertical-align:-1px;margin-right:4px}
+.ot-sum td,.ot-sum th{white-space:nowrap}
+.ot-sum tr[data-act]{cursor:pointer}
+.ot-sum tr.tot td{font-weight:800;border-top:2px solid var(--line)}
+.ot-sum td{text-align:center}.ot-sum td:first-child{text-align:left}
+.ot-sum th{text-align:center}
+.ot-sum th.hrh{color:var(--t-vio)}
+.ot-sum td.hrc{padding:4px 6px;background:color-mix(in srgb,var(--vio) 7%,transparent)}
+.ot-sum input.oh{width:74px;height:28px;text-align:center;font-size:13px;font-weight:700;padding:3px 6px;border-radius:7px;border:1px dashed color-mix(in srgb,var(--vio) 55%,var(--line));background:transparent;color:var(--t-vio);box-shadow:none}
+.ot-sum input.oh:hover{background:var(--soft)}
+.ot-sum input.oh:focus{outline:none;border-style:solid;border-color:var(--vio);background:var(--soft2);box-shadow:0 0 0 2px var(--ring)}
+.ot-mbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;margin:0 0 14px}
+.ot-mbar h2{margin:0;font-size:22px}
+.ot-mbar .grow{flex:1}
+.ot-f{display:flex;align-items:center;gap:8px;margin:0;font-size:13px;color:var(--txt)}
+.ot-f input{width:76px;padding:6px 8px;font-size:13px;text-align:center}
+.ot-pb{display:flex;flex-direction:column;gap:10px;margin-top:4px}
+.ot-pr{display:grid;grid-template-columns:150px minmax(0,1fr) 92px;gap:10px;align-items:center}
+.ot-pn{font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ot-bar{position:relative;height:18px;border-radius:9px;background:var(--line);overflow:visible}
+.ot-bar i{position:absolute;top:0;bottom:0;min-width:0}
+.ot-bar i:first-child{border-radius:9px 0 0 9px}
+.ot-bar em{position:absolute;top:-2px;bottom:-2px;width:3px;margin-left:-1px;background:var(--warn);border-radius:2px;z-index:2}
+.ot-pt{display:flex;align-items:center;gap:6px;justify-content:flex-end;font-size:14px}
+.ot-tbl{border-collapse:separate;border-spacing:0;table-layout:fixed;font-size:12px;background:transparent;box-shadow:none;border-radius:0}
+.ot-tbl th,.ot-tbl td{padding:0;border-bottom:1px solid var(--line);border-right:1px solid color-mix(in srgb,var(--line) 55%,transparent);text-align:center;vertical-align:middle;font-size:12.5px;text-transform:none;letter-spacing:0}
+.ot-tbl thead th{position:sticky;top:0;z-index:4;background:var(--pop);padding:7px 4px;font-weight:700;color:var(--txt);font-size:12px}
+.ot-tbl thead tr:nth-child(2) th{top:31px;font-size:11px;color:var(--mut)}
+.ot-tbl .ot-ph2{border-bottom:3px solid var(--pc)}
+.ot-tbl th.t15{color:#22d3ee}.ot-tbl th.t30{color:#f59e0b}
+.ot-tbl .s1{position:sticky;left:0;z-index:3;background:var(--pop);text-align:left;padding:0 8px;box-shadow:2px 0 4px var(--sh)}
+.ot-tbl thead .s1{z-index:6}
+.ot-tbl small{color:var(--mut);font-weight:600}
+.ot-tbl tr.wk td:not(.s1){background:color-mix(in srgb,var(--vio) 6%,transparent)}
+.ot-tbl tr.wk .s1 small{color:var(--warn)}
+.ot-tbl tr.bad td.tt,.ot-tbl tr.bad td.av{color:var(--t-dang);font-weight:800;background:rgba(239,68,68,.10)}
+.ot-tbl input.oc{width:100%;height:28px;border:1px solid transparent;background:transparent;color:var(--txt);border-radius:4px;padding:4px 6px;font-size:12.5px;text-align:right;box-shadow:none}
+.ot-tbl input.oc:hover{background:var(--soft)}
+.ot-tbl input.oc:focus{outline:none;background:var(--soft2);border-color:var(--pri);box-shadow:0 0 0 2px var(--ring)}
+.ot-tbl input.oc.t30{color:#f59e0b;font-weight:700}
+.ot-tbl .tt,.ot-tbl .av{font-weight:700;padding:0 6px}
+.ot-tbl tr.ot-tot td{position:sticky;bottom:0;background:var(--pop);font-weight:800;border-top:2px solid var(--line);z-index:3}
+.ot-tbl tr.ot-tot td.s1{z-index:5}
+.ot-mr{display:flex;gap:8px;align-items:center;margin:6px 0}
+.ot-mr .osname{flex:1}
+.ot-mr .oscol{width:44px;height:34px;padding:2px;border-radius:8px;cursor:pointer}
+.ot-go{display:block;width:100%;margin-top:4px;padding:4px 8px;font-size:12px;border-radius:8px;border:1px solid var(--pri);background:color-mix(in srgb,var(--pri) 16%,transparent);color:var(--txt);font-weight:700;cursor:pointer}
+.ot-go:hover{background:var(--pri);color:var(--on-pri)}
+.ms-tbl .mi-name.otn{height:54px}
+@media(max-width:760px){.ot-pr{grid-template-columns:100px minmax(0,1fr) 78px}.ot-mbar h2{font-size:18px}}
+</style>
+<style id="lvStyle">
+/* ================= 🌴 แผนลา แลกวันหยุด อบรม ================= */
+.lv-hero{display:grid;grid-template-columns:minmax(320px,440px) 1fr;gap:16px;margin-bottom:16px}
+@media(max-width:900px){.lv-hero{grid-template-columns:1fr}}
+.lv-big{display:flex;align-items:center;gap:18px;background:linear-gradient(135deg,color-mix(in srgb,#14b8a6 16%,var(--card)),color-mix(in srgb,var(--pri) 8%,var(--card)))}
+.lv-big .num{font-size:44px;font-weight:800;line-height:1.05}
+.lv-big .num small{font-size:15px;color:var(--mut);font-weight:600;margin-left:4px}
+.lv-pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.lv-pc{border:1px solid var(--line);border-top:4px solid var(--pc);border-radius:16px;padding:14px 16px;background:linear-gradient(180deg,color-mix(in srgb,var(--pc) 8%,transparent),transparent 55%);box-shadow:0 1px 4px var(--sh)}
+.lv-ph{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.lv-ph .ot-av{width:34px;height:34px;font-size:15px}
+.lv-ph b{font-size:15px;line-height:1.15}
+.lv-ph small{display:block;color:var(--mut);font-size:11px}
+.lv-ph .tr{margin-left:auto;font-size:11px;padding:3px 9px;border-radius:999px;background:color-mix(in srgb,var(--warn) 22%,transparent);border:1px solid var(--warn);color:var(--t-warn);font-weight:700;white-space:nowrap}
+.lv-rings{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}
+.lv-ring{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0}
+.lv-ring svg{display:block}
+.lv-ring .tt{font-size:12px;font-weight:700}
+.lv-ring .rr{font-size:11px;color:var(--txt);line-height:1.25}
+.lv-ring .uu{font-size:10.5px;color:var(--mut);line-height:1.25}
+.lv-plan{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;padding-top:10px;border-top:1px dashed var(--line)}
+.lv-chip{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:11.5px;font-weight:700;border:1px solid var(--line);background:var(--soft)}
+.lv-chip i{width:9px;height:9px;border-radius:3px;display:inline-block}
+.lv-bt{width:100%;border-collapse:collapse;min-width:900px;font-size:13px}
+.lv-bt th,.lv-bt td{padding:6px 8px;text-align:center;border-bottom:1px solid var(--line);white-space:nowrap}
+.lv-bt th{font-size:11.5px}
+.lv-bt td.nm{text-align:left;font-weight:700}
+.lv-bt tr.g1 th{background:var(--th)}
+.lv-bt .cvac{background:color-mix(in srgb,#14b8a6 7%,transparent)}
+.lv-bt .csick{background:color-mix(in srgb,#f59e0b 7%,transparent)}
+.lv-bt .cpers{background:color-mix(in srgb,#8b5cf6 7%,transparent)}
+.lv-bt input.lb{width:92px;height:28px;text-align:center;font-size:12.5px;padding:3px 5px;border-radius:7px;border:1px dashed var(--line);background:transparent;color:var(--txt);box-shadow:none}
+.lv-bt input.lb.r{font-weight:800;border-style:solid}
+.lv-bt input.lb:hover{background:var(--soft)}
+.lv-bt input.lb:focus{outline:none;border-style:solid;border-color:var(--pri);background:var(--soft2);box-shadow:0 0 0 2px var(--ring)}
+.lv-bt .warn{display:inline-block;font-size:10.5px;color:var(--t-warn);margin-top:2px;max-width:150px;white-space:normal;line-height:1.25}
+.lv-upd{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--mut);margin-top:8px}
+.lv-upd input{width:190px;padding:4px 8px;font-size:12px}
+.lv-two{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:16px;margin-bottom:16px}
+@media(max-width:980px){.lv-two{grid-template-columns:1fr}}
+.lv-up{display:flex;flex-direction:column;gap:6px;max-height:330px;overflow:auto;margin-top:4px}
+.lv-ev{display:grid;grid-template-columns:56px minmax(0,1fr);gap:10px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:12px;cursor:pointer;background:var(--soft)}
+.lv-ev:hover{border-color:var(--pri);background:var(--soft2)}
+.lv-evd{text-align:center;line-height:1.1}
+.lv-evd b{font-size:19px;display:block}
+.lv-evd small{font-size:10.5px;color:var(--mut)}
+.lv-evt{min-width:0;font-size:12.5px}
+.lv-evt .l1{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-weight:700}
+.lv-evt .l2{color:var(--mut);font-size:11.5px;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lv-tag{display:inline-block;padding:1px 8px;border-radius:999px;font-size:11px;font-weight:800;color:#fff}
+.lv-mbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;margin:0 0 14px}
+.lv-mbar h2{margin:0;font-size:22px}
+.lv-mbar .grow{flex:1}
+.lv-brush{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 10px}
+.lv-brush .lbl{font-size:12px;color:var(--mut);margin-right:4px}
+.lv-bb{padding:6px 12px;border-radius:999px;font-size:12px;font-weight:800;border:2px solid transparent;color:#fff;cursor:pointer;opacity:.92}
+.lv-bb.off{background:transparent!important;color:var(--txt)!important;border-color:var(--line)!important;font-weight:600}
+.lv-bb.on{outline:3px solid var(--ring);outline-offset:1px;opacity:1;transform:translateY(-1px)}
+.lv-scroll{overflow:auto;border:1px solid var(--line);border-radius:14px;background:var(--card);max-height:78vh}
+.lv-tbl{border-collapse:separate;border-spacing:0;table-layout:fixed;font-size:12px;background:transparent;box-shadow:none;border-radius:0}
+.lv-tbl th,.lv-tbl td{padding:0;border-bottom:1px solid color-mix(in srgb,var(--line) 70%,transparent);border-right:1px solid color-mix(in srgb,var(--line) 50%,transparent);text-align:center;vertical-align:middle;text-transform:none;letter-spacing:0;font-size:12px}
+.lv-tbl thead th{position:sticky;top:0;z-index:5;background:var(--pop);padding:5px 0;line-height:1.1;font-weight:800}
+.lv-tbl thead th small{display:block;font-size:9.5px;font-weight:600;opacity:.8}
+.lv-tbl thead th.d{cursor:pointer;color:var(--txt)}
+.lv-tbl thead th.wk{background:#f97316;color:#fff}
+.lv-tbl thead th.hol{background:#16a34a;color:#fff}
+.lv-tbl thead th.d:hover{filter:brightness(1.1)}
+.lv-tbl thead th.nm,.lv-tbl td.nm{position:sticky;left:0;z-index:6;background:var(--pop);text-align:left;padding:0 10px;box-shadow:2px 0 4px var(--sh)}
+.lv-tbl td.nm{z-index:4;font-weight:700;font-size:12.5px}
+.lv-tbl td.nm .ot-av{width:22px;height:22px;font-size:11px;margin-right:6px;vertical-align:-6px}
+.lv-tbl td.lc{height:38px;cursor:pointer;position:relative;font-weight:800;font-size:11px;white-space:nowrap;overflow:hidden;user-select:none}
+.lv-tbl td.lc.off{background:color-mix(in srgb,#f97316 14%,transparent)}
+.lv-tbl td.lc.hl{background:color-mix(in srgb,#16a34a 18%,transparent)}
+.lv-tbl td.lc:hover{outline:2px solid var(--pri);outline-offset:-2px;z-index:2}
+.lv-tbl td.lc.hn::after{content:"";position:absolute;right:0;top:0;border-style:solid;border-width:0 9px 9px 0;border-color:transparent #facc15 transparent transparent}
+.lv-tbl td.lc.k{font-size:10px}
+.lv-tbl tr.sum td{position:sticky;bottom:0;z-index:3;background:var(--pop);font-weight:800;border-top:2px solid var(--line);height:32px}
+.lv-tbl tr.sum td.nm{z-index:6;font-size:11.5px}
+.lv-tbl td.cf{background:rgba(239,68,68,.22);color:var(--t-dang)}
+.lv-tbl td.tt{font-weight:800;font-size:12px;background:var(--soft)}
+.lv-tbl thead th.tt{background:var(--th)}
+.lv-leg{display:flex;flex-wrap:wrap;gap:8px 14px;margin-top:10px;font-size:12px;color:var(--mut);align-items:center}
+.lv-leg span{display:inline-flex;align-items:center;gap:5px}
+.lv-leg i{display:inline-block;min-width:22px;height:16px;border-radius:4px;padding:0 3px;font-style:normal;font-size:9.5px;font-weight:800;color:#fff;text-align:center;line-height:16px}
+.lv-pm{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-bottom:16px}
+.lv-mc{border:1px solid var(--line);border-left:5px solid var(--pc);border-radius:14px;padding:10px 12px;background:var(--card)}
+.lv-mc .h{display:flex;align-items:center;gap:8px;font-weight:800;font-size:13.5px;margin-bottom:6px}
+.lv-mc .h .ot-av{width:24px;height:24px;font-size:12px}
+.lv-mc .r{display:flex;justify-content:space-between;gap:6px;font-size:12px;color:var(--mut);margin-top:4px}
+.lv-mc .r b{color:var(--txt)}
+.lv-mc .bar{display:flex;height:8px;border-radius:99px;overflow:hidden;background:var(--line);margin:6px 0 2px}
+.lv-mc .bar i{display:block;height:100%}
+.lv-evl{max-height:360px;overflow:auto;display:flex;flex-direction:column;gap:6px}
+.lv-cm{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:11.5px;color:var(--mut);margin:6px 0 0}
+.lv-fld{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0}
+.lv-types{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px}
+.lv-tb{padding:7px 12px;border-radius:10px;font-size:12.5px;font-weight:800;border:2px solid var(--line);background:transparent;color:var(--txt);cursor:pointer}
+.lv-tb.on{color:#fff;border-color:transparent;box-shadow:0 0 0 3px var(--ring)}
+.lv-pr{display:grid;grid-template-columns:110px 90px 120px;gap:8px;align-items:center;margin:6px 0}
+.lv-mr{display:grid;grid-template-columns:44px 90px minmax(0,1fr) 40px;gap:8px;align-items:center;margin:6px 0}
+.lv-mr input[type=color]{width:44px;height:34px;padding:2px;border-radius:8px}
+@media(max-width:700px){.lv-big .num{font-size:34px}.lv-ev{grid-template-columns:48px minmax(0,1fr)}}
+#msMod{background:var(--pop)!important;-webkit-backdrop-filter:none;backdrop-filter:none;max-height:92vh;overflow:auto}
+</style>
 </head>
 <body>
 <script>try{var t=localStorage.getItem("ui_theme")||"neo";if(t!=="classic"){document.body.classList.add("neo");if(t==="holo"||t==="ember")document.body.classList.add(t)}}catch(e){document.body.classList.add("neo")}</script>
@@ -529,6 +847,7 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none!importa
   <div class="tabbar">
     <button type="button" class="tabbtn on" id="tabT">📊 Tracker</button>
     <button type="button" class="tabbtn" id="tabS">📝 Checklist รายวัน</button>
+    <button type="button" class="tabbtn" id="tabM">🎯 7 Mission QE Electronics</button>
     <button type="button" class="btn-g" id="themeBtn" title="สลับธีม Neo / Classic">🌗 ธีม</button>
     <button type="button" class="btn-g" id="spBtn" title="ตั้งค่าฐานข้อมูลกลางบน Supabase">☁ Cloud DB</button>
     <button type="button" class="btn-g" id="imgBtn" style="color:var(--t-vio)" title="ถ่ายหน้าจอที่เปิดอยู่เป็นรูป แล้วส่งเข้า LINE กลุ่มทันที (ไม่ Download)">📷 ส่งรูปเข้า LINE</button>
@@ -638,6 +957,7 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none!importa
 
   </div><!-- /viewTracker -->
 
+  <div id="viewMission"></div>
   <div id="viewSheet">
     <h1 style="font-size:20px;margin:0 0 4px">📝 Checklist รายวัน</h1>
     <div class="sub" style="margin-bottom:12px">จดรายการที่ต้องทำในแต่ละวัน แบบตาราง Excel — บันทึกอัตโนมัติ แยกตามวันที่ (Cloud DB เมื่อเชื่อมต่อ และมีสำเนาในเครื่อง)</div>
@@ -938,6 +1258,8 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none!importa
   </div>
 </div>
 
+<div class="ov" id="msOv"><div class="mod" id="msMod"></div></div>
+<input type="file" id="msFile" accept=".json,application/json" style="display:none">
 <div id="toast"></div>
 
 <script>
@@ -946,8 +1268,9 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none!importa
   'use strict';
   const CFG='countermeasure_cloud_config_v1';
   const PREFIX='countermeasure-cloud:';
-  const MANAGED=new Set(['TrackerItem','TrashItem','ChecklistDay','AppConfig']);
+  const MANAGED=new Set(['TrackerItem','TrashItem','ChecklistDay','AppConfig','MissionData','OTData','LVData']);
   const PAGE=500;
+  const cj=o=>JSON.stringify(o,(k,v)=>(v&&typeof v==='object'&&!Array.isArray(v))?Object.keys(v).sort().reduce((a,x)=>{a[x]=v[x];return a;},{}):v);
   let cfg=readCfg(), cache=new Map(), ready=false, syncing=false, again=false, timer=0, lastSync='';
   const g=id=>document.getElementById(id);
 
@@ -998,7 +1321,7 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none!importa
   function appModel(){
     let ck={days:{},conf:{},notes:{}}; try{if(window.__checklist)ck=window.__checklist.get();}catch(e){}
     let title={}; try{title=getTitle();}catch(e){}
-    return {tracker:(typeof data!=='undefined'&&Array.isArray(data))?data:[],trash:(typeof trash!=='undefined'&&Array.isArray(trash))?trash:[],checklist:ck||{days:{},conf:{},notes:{}},title:title};
+    return {tracker:(typeof data!=='undefined'&&Array.isArray(data))?data:[],trash:(typeof trash!=='undefined'&&Array.isArray(trash))?trash:[],checklist:ck||{days:{},conf:{},notes:{}},title:title,missions:(window.MS?window.MS.get():null)};
   }
   function toRecords(m){
     const a=[];
@@ -1010,14 +1333,15 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none!importa
       if(rows.length||note||confirmedAt)a.push({key:PREFIX+'checklist:'+d,type:'ChecklistDay',payload:{date:d,rows:rows,confirmedAt:confirmedAt,note:note},date:d});
     });
     a.push({key:PREFIX+'config:app',type:'AppConfig',payload:{title:m.title||{}},date:null});
+    if(window.MS&&m.missions)window.MS.records(m.missions,PREFIX).forEach(r=>a.push(r));
     return a;
   }
   function recMap(m){
-    return new Map(toRecords(m).map(r=>[r.key,Object.assign({},r,{json:JSON.stringify(r.payload)})]));
+    return new Map(toRecords(m).map(r=>[r.key,Object.assign({},r,{json:cj(r.payload)})]));
   }
   function fromRow(x){
     const p=(typeof x.payload==='string')?JSON.parse(x.payload||'null'):x.payload;
-    return {key:x.record_key,type:x.entity_type,payload:p,date:x.record_date||null,json:JSON.stringify(p),updatedAt:x.updated_at||''};
+    return {key:x.record_key,type:x.entity_type,payload:p,date:x.record_date||null,json:cj(p),updatedAt:x.updated_at||''};
   }
   async function fetchRows(){
     const out=new Map(); let from=0;
@@ -1047,6 +1371,7 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none!importa
       else if(x.type==='TrashItem')m.trash.push(p);
       else if(x.type==='ChecklistDay'){m.checklist.days[p.date]=p.rows||[];if(p.confirmedAt)m.checklist.conf[p.date]=p.confirmedAt;if(p.note)m.checklist.notes[p.date]=p.note;}
       else if(x.type==='AppConfig')m.title=p.title||null;
+      else if(x.type==='MissionData'||x.type==='OTData'||x.type==='LVData')(m.missionRows=m.missionRows||[]).push(p);
     });
     m.tracker.sort((a,b)=>(b.id||0)-(a.id||0));
     m.trash.sort((a,b)=>String(b.deletedAt||'').localeCompare(String(a.deletedAt||'')));
@@ -1057,7 +1382,11 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none!importa
     if(typeof trash!=='undefined'){trash=m.trash;localStorage.setItem('issue_tracker_trash',JSON.stringify(trash));}
     if(m.title&&m.title.title)localStorage.setItem('issue_tracker_title',JSON.stringify(m.title));
     if(window.__checklist&&window.__checklist.loadCentral)window.__checklist.loadCentral(m.checklist);
+    if(window.MS&&window.MS.loadRemote)window.MS.loadRemote(m.missionRows||[]);
     try{loadTitle();render();checkBackup();}catch(e){}
+  }
+  function localMoved(base){
+    try{ const l=recMap(appModel()); if(l.size!==base.size) return true; let mv=false; l.forEach((r,k)=>{ const o=base.get(k); if(!o||o.json!==r.json) mv=true; }); return mv; }catch(e){ return false; }
   }
   async function syncNow(force){
     if(!cfg.enabled){setStatus('off','ปิดการใช้ฐานข้อมูลกลาง — ข้อมูลยังอยู่เฉพาะเครื่องนี้');return;}
@@ -1078,7 +1407,8 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none!importa
       if(removed.length)await deleteMany(removed);
       const finalMap=await fetchRows();
       lastSync=new Date().toLocaleString('th-TH');
-      if(safeToApply()){cache=finalMap;applyRemote(remoteModel(finalMap));}else cache=local;
+      if(localMoved(local)){ cache=local; again=true; }
+      else if(safeToApply()){cache=finalMap;applyRemote(remoteModel(finalMap));}else cache=local;
       ready=true;setStatus('ok','เชื่อมต่อ <b>'+esc(table())+'</b> · บันทึกแล้ว '+esc(lastSync));
     }catch(e){setStatus('error','Sync ไม่สำเร็จ — '+errText(e));throw e;}
     finally{syncing=false;if(again){again=false;setTimeout(()=>syncNow(false).catch(()=>{}),100);}}
@@ -1100,7 +1430,9 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none!importa
   }
   async function refreshRemote(showToast){
     if(!valid()||syncing||!safeToApply())return;
-    const remote=await fetchRows();cache=remote;ready=true;applyRemote(remoteModel(remote));
+    const remote=await fetchRows();
+    if(localMoved(cache)){ queue(); return; }
+    cache=remote;ready=true;applyRemote(remoteModel(remote));
     lastSync=new Date().toLocaleString('th-TH');setStatus('ok','เชื่อมต่อ <b>'+esc(table())+'</b> · อัปเดตล่าสุด '+esc(lastSync));
     if(showToast&&typeof toast==='function')toast('↻ ดึงข้อมูลล่าสุดแล้ว');
   }
@@ -1400,7 +1732,7 @@ function stampDay(){const d=new Date();
 function payloadText(){
   return JSON.stringify({app:'issue_tracker',version:4,exportedAt:new Date().toISOString(),
     title:getTitle(),count:data.length,items:data,trash:trash,
-    checklist:(window.__checklist?window.__checklist.get():null)},null,2);
+    checklist:(window.__checklist?window.__checklist.get():null),missions:(window.MS?window.MS.get():null)},null,2);
 }
 function dl(txt,name){
   const a=document.createElement('a');
@@ -1453,6 +1785,7 @@ $('rsFile').onchange=e=>{
         saveTrash();
       }
       if(p.checklist&&window.__checklist){ const n=window.__checklist.restore(p.checklist,merge); if(n) toast('✅ กู้คืน Checklist '+n+' วันด้วย'); }
+      if(p.missions&&window.MS){ try{ const n=window.MS.restore(p.missions,merge); if(n) toast('✅ กู้คืน Mission '+n+' ปีด้วย'); }catch(e){} }
       data.forEach(x=>{ x.revs=x.revs||[]; if(x.status==='Open') x.status='In Progress'; });
       data.sort((a,b)=>b.id-a.id);
       save(); render();
@@ -1924,7 +2257,7 @@ tr.od-soon{background:rgba(245,158,11,.15)}
       localStorage.setItem(KEY,JSON.stringify(cur));
       window.__lnImported=true;
     }
-    history.replaceState(null,'',location.pathname+location.search);   // ลบรหัสออกจากแถบที่อยู่ทันที
+    history.replaceState(null,'',location.pathname+location.search);
   }catch(e){}
 })();
 </script>
@@ -2102,6 +2435,1308 @@ tr.od-soon{background:rgba(245,158,11,.15)}
 </script>
 
 <script>
+/* ================= 🎯 7 Mission QE Electronics (แยกตามปี · แก้ไขได้ · สรุป % ต่อ Mission) ================= */
+(function(){
+'use strict';
+const KEY='qe_missions_v1', UIK='qe_missions_ui_v1';
+const g=id=>document.getElementById(id);
+const E=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const PER=['Apr','May','Jun','Q1','Jul','Aug','Sep','Q2','H1','Oct','Nov','Dec','Q3','Jan','Feb','Mar','Q4','H2','TOT'];
+const MON=[0,1,2,4,5,6,9,10,11,13,14,15];
+const WIN={3:[0,1,2],7:[4,5,6],8:[0,1,2,4,5,6],12:[9,10,11],16:[13,14,15],17:[9,10,11,13,14,15],18:MON};
+const isAgg=i=>WIN[i]!==undefined;
+const TH={0:'เม.ย.',1:'พ.ค.',2:'มิ.ย.',4:'ก.ค.',5:'ส.ค.',6:'ก.ย.',9:'ต.ค.',10:'พ.ย.',11:'ธ.ค.',13:'ม.ค.',14:'ก.พ.',15:'มี.ค.',3:'Q1',7:'Q2',12:'Q3',16:'Q4',8:'H1',17:'H2',18:'TOT'};
+const PAL=['#ef4444','#3b82f6','#f97316','#eab308','#8b5cf6','#14b8a6','#ec4899','#22c55e','#06b6d4','#a855f7'];
+const TEMPLATE=[['Safety','🦺'],['Quality','🏅'],['Production','🏭'],['Cost','💰'],['Self M/T','🛠️'],['Envi','🌱'],['HR','👥']];
+const isN=v=>typeof v==='number'&&isFinite(v);
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+const clone=o=>JSON.parse(JSON.stringify(o));
+const nul19=()=>new Array(19).fill(null);
+const clip=(s,n)=>{ s=String(s||'').replace(/\s+/g,' ').trim(); return s.length>n?s.slice(0,n)+'…':s; };
+const close=(a,b)=>Math.abs(a-b)<=1e-6*Math.max(1,Math.abs(a),Math.abs(b));
+
+/* ---------- model + ui state ---------- */
+let store={years:{}};
+let ui={year:'',view:'sum',period:'ALL',hide:{},open:{},otm:'Y',lvm:'S',lvb:''};
+try{ const s=JSON.parse(localStorage.getItem(KEY)||'null'); if(s&&s.years&&typeof s.years==='object'){ store=s; Object.keys(store.years).forEach(y=>{ if(store.years[y]) delete store.years[y].detail; }); } }catch(e){}
+try{ Object.assign(ui,JSON.parse(localStorage.getItem(UIK)||'{}')||{}); }catch(e){}
+if(ui.view!=='plan'&&ui.view!=='ot'&&ui.view!=='lv') ui.view='sum'; if(ui.lvm==null) ui.lvm='S'; if(ui.lvb==null) ui.lvb=''; delete ui.dsel; if(ui.otm==null) ui.otm='Y';
+const saveUI=()=>{ try{ localStorage.setItem(UIK,JSON.stringify(ui)); }catch(e){} };
+const years=()=>Object.keys(store.years).sort((a,b)=>+a-+b);
+const Y=()=>store.years[ui.year];
+function ensureYear(){ const ys=years(); if(!ys.length){ ui.year=''; return; } if(!store.years[ui.year]) ui.year=ys[0]; }
+const cj=o=>JSON.stringify(o,(k,v)=>(v&&typeof v==='object'&&!Array.isArray(v))?Object.keys(v).sort().reduce((a,x)=>{a[x]=v[x];return a;},{}):v);
+
+let CC=new Map();
+const C=it=>{ let c=CC.get(it); if(!c){ c=calcItem(it); CC.set(it,c); } return c; };
+let saveT=0;
+function touch(){ CC=new Map(); clearTimeout(saveT); saveT=setTimeout(save,350); }
+function save(){
+  try{ localStorage.setItem(KEY,JSON.stringify(store)); }catch(e){}
+  try{ dirty++; checkBackup(); autoBackup(false,true); }catch(e){}
+  if(window.SPDB) window.SPDB.queue();
+}
+
+/* ---------- cell parsing / formatting ---------- */
+function parseCell(t){ t=String(t==null?'':t).trim(); if(t==='') return null; const s=t.replace(/,/g,''); if(/^[-+]?(\d+\.?\d*|\.\d+)(e[-+]?\d+)?$/i.test(s)) return parseFloat(s); return t; }
+function fv(v){ if(v==null) return ''; if(isN(v)) return String(+v.toFixed(4)); return String(v); }
+
+/* ---------- aggregation / judgement engine ---------- */
+function aggVal(vals,idx,agg){
+  if(!agg||agg==='none') return null;
+  const ms=WIN[idx].map(i=>vals[i]).filter(isN); if(!ms.length) return null;
+  if(agg==='sum') return ms.reduce((a,b)=>a+b,0);
+  if(agg==='avg') return ms.reduce((a,b)=>a+b,0)/ms.length;
+  if(agg==='last') return ms[ms.length-1];
+  return null;
+}
+function effRow(vals,agg){ const o=new Array(19); for(let i=0;i<19;i++){ let v=vals[i]; if(isAgg(i)&&(v==null||v==='')) v=aggVal(vals,i,agg); o[i]=(v===undefined||v==='')?null:v; } return o; }
+const complete=(vals,i)=>WIN[i].every(j=>isN(vals[j]));
+function judgeAuto(it,P,R,i,part){
+  if(!it.dir||it.dir==='none'||part) return null;
+  const p=P[i], r=R[i]; if(!isN(p)||!isN(r)) return null;
+  const rv=r*(it.rs||1), e=1e-9;
+  if(it.dir==='le') return rv<=p+e?'O':'X';
+  if(it.dir==='ge') return rv>=p-e?'O':'X';
+  if(it.dir==='eq') return Math.abs(rv-p)<e?'O':'X';
+  return null;
+}
+function calcItem(it){
+  const P=effRow(it.P,it.agg), R=effRow(it.R,it.agg);
+  const J=new Array(19).fill(null), A=new Array(19).fill(null), part=new Array(19).fill(false), ov=new Array(19).fill(false);
+  for(let i=0;i<19;i++){
+    part[i]=isAgg(i)&&(it.R[i]==null||it.R[i]==='')&&R[i]!=null&&!complete(it.R,i);
+    A[i]=judgeAuto(it,P,R,i,part[i]);
+    const m=it.jm&&it.jm[i];
+    if(m){ J[i]=m; ov[i]=true; } else J[i]=A[i];
+  }
+  return {P,R,J,A,part,ov};
+}
+function latestIdx(y){ let L=-1; (y.missions||[]).forEach(m=>m.items.forEach(it=>MON.forEach(i=>{ if(isN(it.R[i])&&i>L) L=i; }))); return L<0?0:L; }
+function firstIdx(y){ let F=99; (y.missions||[]).forEach(m=>m.items.forEach(it=>MON.forEach(i=>{ if(isN(it.R[i])&&i<F) F=i; }))); return F===99?0:F; }
+function statsFor(m,key){
+  let ok=0,ng=0,na=0; const bad=[];
+  m.items.forEach(it=>{
+    const c=C(it);
+    if(key==='ALL'){
+      let o=0,n=0,last=null; MON.forEach(i=>{ const j=c.J[i]; if(j==='O') o++; else if(j==='X'){ n++; last=i; } });
+      ok+=o; ng+=n; if(!o&&!n) na++; if(n) bad.push({it,n,o,last,c});
+    }else{
+      const i=+key, j=c.J[i];
+      if(j==='O') ok++; else if(j==='X'){ ng++; bad.push({it,n:1,o:0,last:i,c}); } else na++;
+    }
+  });
+  const ev=ok+ng; return {ok,ng,na,ev,pct:ev?ok/ev*100:null,bad,items:m.items.length};
+}
+const pctColor=p=>p==null?'var(--mut)':p>=80?'var(--ok)':p>=50?'var(--warn)':'var(--dang)';
+const heat=p=>p==null?'transparent':`hsl(${Math.round(Math.max(0,Math.min(100,p))*1.2)} 70% 42% / .40)`;
+function periodOpts(y){
+  const li=latestIdx(y), o=[['ALL','สะสมทุกเดือนที่มีผล'],['LAST','เดือนล่าสุด ('+TH[li]+')']];
+  MON.forEach(i=>o.push([String(i),TH[i]+' ('+PER[i]+')']));
+  [3,7,12,16,8,17].forEach(i=>o.push([String(i),PER[i]+(i===8?' (ครึ่งปีแรก)':i===17?' (ครึ่งปีหลัง)':'')]));
+  return o;
+}
+function periodKey(y){ let k=ui.period||'ALL'; if(k==='LAST') k=String(latestIdx(y)); return k; }
+function periodLabel(y){
+  const k=ui.period||'ALL';
+  if(k==='ALL') return 'สะสม '+TH[firstIdx(y)]+' – '+TH[latestIdx(y)];
+  if(k==='LAST') return 'เดือนล่าสุด: '+TH[latestIdx(y)];
+  return 'ช่วง '+TH[+k]+' ('+PER[+k]+')';
+}
+
+/* ---------- small svg / html builders ---------- */
+function gauge(p,size,color){
+  const r=48, c=2*Math.PI*r, v=p==null?0:Math.max(0,Math.min(100,p)), d=v/100*c;
+  return `<svg viewBox="0 0 120 120" width="${size}" height="${size}" role="img" aria-label="${p==null?'ไม่มีข้อมูล':Math.round(p)+'%'}">`+
+    `<circle cx="60" cy="60" r="${r}" fill="none" stroke="var(--line)" stroke-opacity=".6" stroke-width="12"/>`+
+    (v>0?`<circle cx="60" cy="60" r="${r}" fill="none" stroke="${color}" stroke-width="12" stroke-linecap="round" stroke-dasharray="${d} ${c-d}" transform="rotate(-90 60 60)"/>`:'')+
+    `<text x="60" y="${size>150?68:66}" text-anchor="middle" font-size="${size>150?27:25}" font-weight="800" fill="var(--txt)">${p==null?'–':Math.round(p)+'%'}</text></svg>`;
+}
+function trend(y){
+  const W=760,H=280,Lm=40,Rm=16,Tm=14,Bm=30, iw=W-Lm-Rm, ih=H-Tm-Bm;
+  const X=k=>Lm+(k/(MON.length-1))*iw, Yp=p=>Tm+(1-p/100)*ih;
+  let s=`<svg class="ms-trend" viewBox="0 0 ${W} ${H}" role="img" aria-label="แนวโน้มเปอร์เซ็นต์ผ่านเป้ารายเดือน">`;
+  [0,25,50,75,100].forEach(v=>{ s+=`<line x1="${Lm}" x2="${W-Rm}" y1="${Yp(v)}" y2="${Yp(v)}" stroke="var(--line)" stroke-opacity=".7" ${v?'stroke-dasharray="3 4"':''}/><text x="${Lm-6}" y="${Yp(v)+4}" text-anchor="end">${v}%</text>`; });
+  MON.forEach((mi,k)=>{ s+=`<text x="${X(k)}" y="${H-10}" text-anchor="middle">${TH[mi]}</text>`; });
+  const series=[]; let ovAll=MON.map(i=>{ let ok=0,ng=0; y.missions.forEach(m=>{ const t=statsFor(m,String(i)); ok+=t.ok; ng+=t.ng; }); return ok+ng?ok/(ok+ng)*100:null; });
+  if(!ui.hide.ALL) series.push({id:'ALL',name:'ภาพรวม',color:'var(--txt)',w:3.2,dash:'',vals:ovAll});
+  y.missions.forEach(m=>{ if(ui.hide[m.id]) return; series.push({id:m.id,name:m.name,color:m.color,w:2,dash:'',vals:MON.map(i=>statsFor(m,String(i)).pct)}); });
+  series.forEach(se=>{
+    let d='',pen=false; se.vals.forEach((p,k)=>{ if(p==null){ pen=false; return; } d+=(pen?'L':'M')+X(k).toFixed(1)+' '+Yp(p).toFixed(1)+' '; pen=true; });
+    if(d) s+=`<path d="${d}" fill="none" stroke="${se.color}" stroke-width="${se.w}" stroke-linejoin="round" stroke-linecap="round" ${se.dash?'stroke-dasharray="'+se.dash+'"':''} opacity="${se.id==='ALL'?1:.9}"/>`;
+    se.vals.forEach((p,k)=>{ if(p!=null) s+=`<circle cx="${X(k).toFixed(1)}" cy="${Yp(p).toFixed(1)}" r="${se.id==='ALL'?4:3}" fill="${se.color}"><title>${E(se.name)} · ${TH[MON[k]]}: ${p.toFixed(1)}%</title></circle>`; });
+  });
+  return s+'</svg>';
+}
+
+/* ---------- views ---------- */
+function head(ys){
+  const y=Y();
+  let h=`<div class="ms-head"><h1>🎯 7 Mission QE Electronics</h1><div class="ms-sub">เป้าหมาย &amp; ผลการดำเนินงานรายเดือน แยกตามปีงบประมาณ (เม.ย. – มี.ค.) · แก้ไขได้ทุกช่อง บันทึกอัตโนมัติ</div>`;
+  h+=`<div class="ms-bar"><div class="ms-years">`+ys.map(k=>`<button type="button" class="ms-yr${k===ui.year?' on':''}" data-act="yr" data-y="${k}">${k}</button>`).join('')+`<button type="button" class="ms-yr add" data-act="addyear" title="เพิ่มปีใหม่ เช่น ${ys.length?+ys[ys.length-1]+1:new Date().getFullYear()}">+ เพิ่มปี</button></div>`;
+  if(y) h+=`<span class="ms-fy">${E(y.label||'FY'+ui.year)} · ${E(y.note||'')}</span>`;
+  h+=`</div>`;
+  if(y){
+    h+=`<div class="ms-bar"><div class="ms-views">`+[['sum','📊 สรุปผล %'],['plan','📋 Action Plan (P / R / J)'],['ot','⏱ OT Control'],['lv','🌴 แผนลา แลกวันหยุด อบรม']].map(v=>`<button type="button" class="ms-vw${ui.view===v[0]?' on':''}" data-act="vw" data-v="${v[0]}">${v[1]}</button>`).join('')+`</div><div class="ms-tools">`;
+    if(ui.view==='sum') h+=`<select id="msPeriod" title="ช่วงเวลาที่ใช้คำนวณ % ผ่านเป้า">`+periodOpts(y).map(o=>`<option value="${o[0]}"${o[0]===(ui.period||'ALL')?' selected':''}>${o[1]}</option>`).join('')+`</select>`;
+    if(ui.view!=='sum') h+=`<button type="button" class="btn-g" data-act="csv">⬇ CSV</button>`;
+    if(ui.view==='ot'&&y.ot) h+=`<button type="button" class="btn-g" data-act="otjson" title="สำรองเฉพาะข้อมูล OT ของปีนี้">💾 JSON OT</button>`;
+    if(ui.view==='lv'&&y.lv) h+=`<button type="button" class="btn-g" data-act="lvjson" title="สำรองเฉพาะข้อมูลแผนลาของปีนี้">\uD83D\uDCBE JSON แผนลา</button>`;
+    h+=`<button type="button" class="btn-g" data-act="json" title="สำรองข้อมูล Mission ทุกปีเป็นไฟล์ JSON">💾 JSON</button><button type="button" class="btn-g" data-act="imp" title="นำเข้าข้อมูลจากไฟล์ JSON">📂 นำเข้า</button><button type="button" class="btn-g" data-act="delyear" style="color:var(--t-dang)" title="ลบปี ${E(ui.year)}">🗑 ลบปีนี้</button></div></div>`;
+  }
+  return h+`</div>`;
+}
+function empty(){
+  return `<div class="ms-card ms-empty"><h2>ยังไม่มีข้อมูล Mission</h2><p class="ms-sub">นำเข้าข้อมูลจากไฟล์ JSON (เช่น ไฟล์ปี 2026 ที่ได้รับ) หรือสร้างปีแรกเป็น 7 Mission เปล่าแล้วกรอกเอง</p>`+
+    `<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:12px"><button type="button" class="btn-p" data-act="imp">📂 นำเข้าจากไฟล์ JSON</button><button type="button" class="btn-g" data-act="addyear">➕ สร้างปีแรก</button></div></div>`;
+}
+const kpi=(i,n,l,c)=>`<div class="ms-kpi"><span class="i">${i}</span><div class="n" style="color:${c||'var(--txt)'}">${n}</div><div class="l">${l}</div></div>`;
+
+function viewSummary(y){
+  const key=periodKey(y), all=key==='ALL';
+  const per=y.missions.map(m=>({m,s:statsFor(m,key)}));
+  const T={ok:0,ng:0,na:0,items:0}; per.forEach(x=>{ T.ok+=x.s.ok; T.ng+=x.s.ng; T.na+=x.s.na; T.items+=x.s.items; });
+  const ev=T.ok+T.ng, pct=ev?T.ok/ev*100:null, col=pctColor(pct);
+  let h=`<div class="ms-hero"><div class="ms-card ms-ovc"><div class="ms-ovg">${gauge(pct,170,col)}</div><div class="ms-ovt"><div class="ms-eyebrow">ภาพรวม ${y.missions.length} Mission · ${E(ui.year)}</div>`+
+    `<div class="ms-bigp" style="color:${col}">${pct==null?'–':pct.toFixed(1)+'%'}</div><div class="ms-mut">ผ่านเป้าหมาย · ${E(periodLabel(y))}</div><div class="ms-prog"><i style="width:${pct==null?0:pct}%"></i></div></div></div>`;
+  h+=`<div class="ms-kpis">`+kpi('📌',T.items,'หัวข้อควบคุมทั้งหมด')+kpi('✅',T.ok,all?'จุดตรวจที่ผ่านเป้า':'หัวข้อที่ผ่านเป้า','var(--t-ok)')+kpi('❌',T.ng,all?'จุดตรวจที่ไม่ผ่าน':'หัวข้อที่ไม่ผ่าน','var(--t-dang)')+kpi('⏳',T.na,'หัวข้อที่ยังไม่มีผล')+`</div></div>`;
+  if(all) h+=`<div class="ms-note">📐 โหมด “สะสม” นับเป็น <b>จุดตรวจรายเดือน</b> (หัวข้อ × เดือนที่มีผล) · ผ่านเป้า = ผลลัพธ์ (R) เทียบเป้า (P) ตามเกณฑ์ของแต่ละหัวข้อ หรือตามที่กดตัดสินเอง (O/X) ในแท็บ Action Plan</div>`;
+  h+=`<div class="ms-card ms-sec2"><h3>🎯 ผลลัพธ์แต่ละ Mission (% ผ่านเป้า)</h3><div class="ms-sub">คลิกการ์ดเพื่อไปดูรายละเอียดใน Action Plan</div><div class="ms-mgrid">`;
+  per.forEach(({m,s})=>{
+    const top=s.bad.slice().sort((a,b)=>b.n-a.n).slice(0,2);
+    h+=`<button type="button" class="ms-mc" data-act="gom" data-m="${m.id}" style="--mc:${m.color}"><div class="ms-mh"><span class="ms-mi">${E(m.icon)}</span><div class="ms-mn"><b>${E(m.name)}</b><small>${s.items} หัวข้อ</small></div></div>`+
+      `<div class="ms-mg">${gauge(s.pct,112,pctColor(s.pct))}</div><div class="ms-ch"><span class="c-ok">✓ ${s.ok}</span><span class="c-ng">✗ ${s.ng}</span><span class="c-na">… ${s.na}</span></div>`+
+      `<div class="ms-bads">`+(top.length?top.map(b=>`<div class="ms-bad">⚠ ${E(clip(b.it.name,36))}</div>`).join(''):`<div class="ms-bad ok">${s.ev?'ผ่านเป้าทุกหัวข้อ 🎉':'ยังไม่มีข้อมูลผลลัพธ์'}</div>`)+`</div></button>`;
+  });
+  h+=`</div></div>`;
+  // trend
+  h+=`<div class="ms-two"><div class="ms-card"><h3>📈 แนวโน้ม % ผ่านเป้ารายเดือน</h3><div class="ms-sub">คลิกชื่อ Mission เพื่อซ่อน/แสดงเส้น</div><div class="ms-legend">`+
+    `<button type="button" class="ms-lg${ui.hide.ALL?' off':''}" data-act="lg" data-id="ALL" style="--mc:var(--txt)">ภาพรวม</button>`+
+    y.missions.map(m=>`<button type="button" class="ms-lg${ui.hide[m.id]?' off':''}" data-act="lg" data-id="${m.id}" style="--mc:${m.color}">${E(m.icon)} ${E(m.name)}</button>`).join('')+`</div>${trend(y)}</div>`;
+  // heatmap
+  const cols=MON.map(i=>String(i)).concat(['8','17','ALL']);
+  h+=`<div class="ms-card"><h3>🗓️ Heatmap: % ผ่านเป้า Mission × เดือน</h3><div class="ms-sub">สีเขียว = ผ่านเป้ามาก · แดง = ต่ำ · จาง = ยังไม่มีข้อมูล</div><div class="ms-hm"><table><thead><tr><th>Mission</th>`+cols.map(c=>`<th>${c==='ALL'?'รวม':TH[+c]}</th>`).join('')+`</tr></thead><tbody>`;
+  y.missions.forEach(m=>{ h+=`<tr><td><span class="ms-mi" style="--mc:${m.color};width:22px;height:22px;font-size:13px">${E(m.icon)}</span> ${E(m.name)}</td>`+cols.map(c=>{ const p=statsFor(m,c).pct; return p==null?`<td class="na">–</td>`:`<td style="background:${heat(p)}">${Math.round(p)}%</td>`; }).join('')+`</tr>`; });
+  h+=`<tr class="tot"><td>ภาพรวม</td>`+cols.map(c=>{ let ok=0,ng=0; y.missions.forEach(m=>{ const t=statsFor(m,c); ok+=t.ok; ng+=t.ng; }); const p=ok+ng?ok/(ok+ng)*100:null; return p==null?`<td class="na">–</td>`:`<td style="background:${heat(p)}">${Math.round(p)}%</td>`; }).join('')+`</tr></tbody></table></div></div>`;
+  // NG list
+  const bad=[]; per.forEach(({m,s})=>s.bad.forEach(b=>bad.push(Object.assign({m},b)))); bad.sort((a,b)=>b.n-a.n);
+  h+=`<div class="ms-card"><h3>⚠️ หัวข้อที่ต้องติดตาม (ไม่ผ่านเป้า)</h3><div class="ms-sub">${bad.length?`${bad.length} หัวข้อ · ${E(periodLabel(y))} · คลิกแถวเพื่อไปแก้ไข`:'ไม่มีหัวข้อที่ไม่ผ่านเป้าในช่วงนี้ 🎉'}</div>`;
+  if(bad.length){
+    h+=`<div class="ms-ng"><table><thead><tr><th>Mission</th><th style="text-align:left">หัวข้อควบคุม</th><th>เป้า</th><th>ผู้รับผิดชอบ</th><th>${all?'ไม่ผ่าน (เดือน)':'ผลลัพธ์ R'}</th><th>P / R ล่าสุด</th></tr></thead><tbody>`;
+    bad.slice(0,40).forEach(b=>{
+      const li=b.last, c=b.c;
+      h+=`<tr data-act="goit" data-m="${b.m.id}" data-it="${b.it.id}"><td><span class="ms-chip" style="--mc:${b.m.color}">${E(b.m.icon)} ${E(b.m.name)}</span></td><td style="text-align:left">${E(clip(b.it.name,70))}</td><td>${E(b.it.target==null?'':b.it.target)} ${E(b.it.unit&&b.it.unit!=='-'?b.it.unit:'')}</td><td>${E(b.it.resp||'')}</td>`+
+        `<td><b style="color:var(--t-dang)">${all?b.n+' / '+(b.n+b.o):'✗'}</b></td><td>${li==null?'':E(TH[li])+': P '+E(fv(c.P[li]))+' · R <b>'+E(fv(c.R[li]))+'</b>'}</td></tr>`;
+    });
+    h+=`</tbody></table></div>`;
+  }
+  return h+`</div></div>`;
+}
+
+function headCols(){ return PER.map((p,i)=>`<th class="${isAgg(i)?'agc':''}">${p}</th>`).join(''); }
+const COLW=66, PLAN_W=[38,230,76,64,84,26];
+function tblOpen(w){ const tot=w.reduce((a,b)=>a+b,0)+19*COLW; return `<table class="ms-tbl" style="width:${tot}px"><colgroup>`+w.map(x=>`<col style="width:${x}px">`).join('')+PER.map(()=>`<col style="width:${COLW}px">`).join('')+`</colgroup>`; }
+function pcell(attrs,i,raw,eff,agg,part,ro,fx){
+  const man=agg&&raw!=null&&raw!=='';
+  const shown=agg&&!man?fv(eff):fv(raw);
+  const cls='mc'+(agg?(man?' man':' auto'):'')+(part?' part':'')+(fx?' fx':'');
+  return `<td class="${agg?'agc':''}"><input class="${cls}" ${attrs} data-i="${i}" value="${E(shown)}" data-orig="${E(shown)}" inputmode="decimal" autocomplete="off"${ro?' readonly':''}></td>`;
+}
+function jcell(m,it,c,i){
+  const j=c.J[i], cls=j==='O'?'jo':j==='X'?'jx':'jn';
+  const tip=c.ov[i]?`ตัดสินเอง (${j}) · ระบบคำนวณได้: ${c.A[i]||'ไม่ได้'} · คลิกเพื่อสลับ (O → X → – → อัตโนมัติ)`:'อัตโนมัติ · คลิกเพื่อตัดสินเอง (O → X → – → อัตโนมัติ)';
+  return `<td class="ms-j${c.ov[i]?' jov':''}${isAgg(i)?' agc':''}" data-act="jc" data-m="${m.id}" data-it="${it.id}" data-i="${i}" title="${E(tip)}">${j?`<span class="jb ${cls}">${j==='-'?'–':j}</span>`:''}</td>`;
+}
+function planRows(m,it,ii){
+  const c=C(it), at=`data-m="${m.id}" data-it="${it.id}"`;
+  const mf=(f,ph)=>`<input class="mf" ${at} data-f="${f}" value="${E(it[f]==null?'':it[f])}" placeholder="${ph}">`;
+  let h=`<tr class="kP" data-it="${it.id}"><td class="s1" rowspan="3"><div class="no">${ii+1}</div><button type="button" class="gear" data-act="itemset" ${at} title="ตั้งค่าหัวข้อ (เกณฑ์ผ่านเป้า · วิธีรวม Q/H · ย้าย · ลบ)">⚙</button></td>`+
+    `<td class="s2" rowspan="3"><textarea class="mf mi-name${isOtItem(it)?' otn':''}" ${at} data-f="name" placeholder="ชื่อหัวข้อควบคุม" title="${E(it.name)}">${E(it.name)}</textarea>${isOtItem(it)?'<button type="button" class="ot-go" data-act="otgo" title="เปิดหน้า OT Control — Dashboard และข้อมูล OT รายเดือน/รายคน">⏱ OT Control →</button>':''}</td>`+
+    `<td class="mt" rowspan="3">${mf('target','เป้า')}</td><td class="mt" rowspan="3">${mf('unit','หน่วย')}</td><td class="mt" rowspan="3">${mf('resp','ผู้รับผิดชอบ')}</td><td class="k">P</td>`;
+  for(let i=0;i<19;i++) h+=pcell(`${at} data-k="P"`,i,it.P[i],c.P[i],isAgg(i),false,false,false);
+  h+=`</tr><tr class="kR" data-it="${it.id}"><td class="k">R</td>`;
+  for(let i=0;i<19;i++) h+=pcell(`${at} data-k="R"`,i,it.R[i],c.R[i],isAgg(i),c.part[i],false,false);
+  h+=`</tr><tr class="kJ" data-it="${it.id}"><td class="k">J</td>`;
+  for(let i=0;i<19;i++) h+=jcell(m,it,c,i);
+  return h+`</tr>`;
+}
+function missionPill(m){ const s=statsFor(m,'ALL'); return s.pct==null?`<span class="ms-pill" data-m="${m.id}" style="background:var(--mut)">–</span>`:`<span class="ms-pill" data-m="${m.id}" style="background:${pctColor(s.pct)}">${Math.round(s.pct)}%</span>`; }
+function viewPlan(y){
+  let h=`<div class="ms-note">✏️ แก้ไขได้ทุกช่อง · <b>P</b> = แผน/เป้าหมาย · <b>R</b> = ผลลัพธ์ · <b>J</b> = ผลตัดสิน (O ผ่าน / X ไม่ผ่าน) คำนวณอัตโนมัติจาก R เทียบ P — คลิกวงกลม J เพื่อตัดสินเอง (วงกลมที่มีขอบส้ม = ตัดสินเอง) · คอลัมน์ Q / H / TOT คำนวณอัตโนมัติ (ตัวเอียงสีจาง) พิมพ์ทับเพื่อกำหนดเอง (แถบส้ม) ลบค่าเพื่อกลับเป็นอัตโนมัติ · <kbd>Enter</kbd>/<kbd>↑</kbd><kbd>↓</kbd> เลื่อนช่อง · วางข้อมูลทั้งแถวจาก Excel ได้ (คัดลอกหลายช่องในแถวเดียว)</div>`;
+  y.missions.forEach(m=>{
+    const closed=ui.open[m.id]===false;
+    h+=`<section class="ms-sec${closed?' closed':''}" data-sec="${m.id}" style="--mc:${m.color}"><div class="ms-sh"><button type="button" class="ms-fold" data-act="fold" data-m="${m.id}" title="ย่อ/ขยาย">${closed?'▸':'▾'}</button>`+
+      `<input class="mf mic" data-m="${m.id}" data-f="icon" value="${E(m.icon)}" title="ไอคอน"><input class="mf mnm" data-m="${m.id}" data-f="name" value="${E(m.name)}" title="ชื่อ Mission"><input class="mf" type="color" data-m="${m.id}" data-f="color" value="${E(m.color)}" title="สี">`+
+      `<span class="ms-sub ms-cnt" data-m="${m.id}">${m.items.length} หัวข้อ</span>${missionPill(m)}<span class="grow"></span><button type="button" class="btn-g" data-act="delmission" data-m="${m.id}" style="color:var(--t-dang)" title="ลบ Mission นี้">🗑 ลบ Mission</button></div>`;
+    h+=`<div class="ms-scroll">${tblOpen(PLAN_W)}<thead><tr><th class="s1">#</th><th class="s2">Control item (หัวข้อควบคุม)</th><th>Target</th><th>Unit</th><th>Resp.</th><th></th>${headCols()}</tr></thead><tbody>`;
+    let prev=null;
+    m.items.forEach((it,ii)=>{ if(it.act&&it.act!==prev) h+=`<tr class="ms-act" style="--mc:${m.color}"><td colspan="25">▸ ${E(it.act)}</td></tr>`; prev=it.act; h+=planRows(m,it,ii); });
+    if(!m.items.length) h+=`<tr><td colspan="25" style="padding:18px;color:var(--mut);text-align:left">ยังไม่มีหัวข้อควบคุม — กด “+ เพิ่มหัวข้อควบคุม”</td></tr>`;
+    h+=`</tbody></table></div><div class="ms-addrow"><button type="button" class="btn-g" data-act="additem" data-m="${m.id}">+ เพิ่มหัวข้อควบคุม</button></div></section>`;
+  });
+  return h+`<div style="margin:6px 0 24px"><button type="button" class="btn-g" data-act="addmission">+ เพิ่ม Mission</button></div>`;
+}
+function render(){
+  const el=g('viewMission'); if(!el) return;
+  CC=new Map(); ensureYear();
+  const ys=years(); let h=head(ys);
+  if(!ys.length) h+=empty(); else { const y=Y(); h+=ui.view==='plan'?viewPlan(y):ui.view==='ot'?viewOT(y):ui.view==='lv'?viewLV(y):viewSummary(y); }
+  const sc=window.scrollY; el.innerHTML=h; saveUI();
+  if(window.scrollY!==sc) window.scrollTo(0,sc);
+}
+
+/* ---------- live refresh (ไม่ render ใหม่ทั้งหน้า เพื่อไม่ให้เคอร์เซอร์หลุด) ---------- */
+function setInp(el,shown,agg,man,part,force){
+  if(el!==force&&document.activeElement===el) return;
+  el.value=shown; el.dataset.orig=shown;
+  el.classList.toggle('auto',agg&&!man); el.classList.toggle('man',agg&&man); el.classList.toggle('part',!!part);
+}
+function refreshItem(m,it,force){
+  const root=g('viewMission'), c=C(it);
+  ['P','R'].forEach(k=>{ for(let i=0;i<19;i++){
+    const el=root.querySelector(`input.mc[data-it="${it.id}"][data-k="${k}"][data-i="${i}"]`); if(!el) continue;
+    const raw=it[k][i], agg=isAgg(i), man=agg&&raw!=null&&raw!=='';
+    setInp(el,agg&&!man?fv(c[k][i]):fv(raw),agg,man,k==='R'&&agg&&!man&&c.part[i],force);
+  } });
+  for(let i=0;i<19;i++){
+    const td=root.querySelector(`td.ms-j[data-it="${it.id}"][data-i="${i}"]`); if(!td) continue;
+    const t=document.createElement('tbody'); t.innerHTML='<tr>'+jcell(m,it,c,i)+'</tr>';
+    td.className=t.firstChild.firstChild.className; td.title=t.firstChild.firstChild.title; td.innerHTML=t.firstChild.firstChild.innerHTML;
+  }
+  refreshHead(m);
+}
+function refreshHead(m){
+  const root=g('viewMission');
+  const p=root.querySelector(`.ms-pill[data-m="${m.id}"]`); if(p){ const s=statsFor(m,'ALL'); p.textContent=s.pct==null?'–':Math.round(s.pct)+'%'; p.style.background=pctColor(s.pct); }
+  const n=root.querySelector(`.ms-cnt[data-m="${m.id}"]`); if(n) n.textContent=m.items.length+' หัวข้อ';
+}
+/* ---------- finders ---------- */
+const fM=id=>{ const y=Y(); return y&&y.missions.find(m=>m.id===id); };
+const fI=(mid,iid)=>{ const m=fM(mid); return m&&m.items.find(i=>i.id===iid); };
+
+/* ---------- editing events ---------- */
+function setCell(arr,i,txt,agg){
+  const v=parseCell(txt);
+  if(agg&&isAgg(i)&&v!=null){ // ถ้าค่าที่พิมพ์ = ค่าคำนวณอัตโนมัติ ไม่ต้องเก็บเป็นค่ากำหนดเอง
+    const a=aggVal(arr,i,agg); if(isN(v)&&isN(a)&&close(v,a)){ arr[i]=null; return; }
+  }
+  arr[i]=v;
+}
+function onChange(e){
+  const el=e.target;
+  if(el.id==='msPeriod'){ ui.period=el.value; saveUI(); render(); return; }
+  if(el.classList.contains('lb')){ lvBal(el); return; }
+  if(el.id==='lvUpd'){ const y=Y(); if(y&&y.lv){ y.lv.upd=el.value.trim(); touch(); } return; }
+  if(el.classList.contains('oh')){ otHr(el); return; }
+  if(el.classList.contains('oc')){ otCell(el); return; }
+  if(el.id==='otWd'||el.id==='otMp'){ otMeta(el); return; }
+  if(el.classList.contains('mc')){
+    const i=+el.dataset.i; if(el.value===el.dataset.orig) return;
+    if(el.dataset.it){ const m=fM(el.dataset.m), it=fI(el.dataset.m,el.dataset.it); if(!it) return; setCell(it[el.dataset.k],i,el.value,it.agg); touch(); refreshItem(m,it,el); }
+    return;
+  }
+  if(el.classList.contains('mf')){
+    const f=el.dataset.f, v=el.value;
+    if(el.dataset.it){ const it=fI(el.dataset.m,el.dataset.it); if(!it) return; it[f]=(f==='target')?parseCell(v):v; if(f==='name') el.title=v; touch(); }
+    else if(el.dataset.m){ const m=fM(el.dataset.m); if(!m) return; m[f]=v; if(f==='color'){ const s=el.closest('.ms-sec'); if(s) s.style.setProperty('--mc',v); } touch(); }
+  }
+}
+function onKey(e){
+  if(e.target.classList&&e.target.classList.contains('lb')) return lvKey(e);
+  if(e.target.classList&&(e.target.classList.contains('oc')||e.target.classList.contains('oh'))) return otKey(e);
+  const el=e.target; if(!el.classList||!el.classList.contains('mc')) return;
+  if(e.key==='Enter'||e.key==='ArrowDown'||e.key==='ArrowUp'){
+    const t=el.closest('table'); const list=Array.from(t.querySelectorAll(`input.mc[data-i="${el.dataset.i}"]`)); const k=list.indexOf(el);
+    const nx=list[k+((e.key==='ArrowUp')?-1:1)]; e.preventDefault();
+    if(el.value!==el.dataset.orig) el.dispatchEvent(new Event('change',{bubbles:true}));
+    if(nx){ nx.focus(); nx.select(); }
+  }
+}
+function onPaste(e){
+  if(e.target.classList&&(e.target.classList.contains('oc')||e.target.classList.contains('oh'))) return otPaste(e);
+  const el=e.target; if(!el.classList||!el.classList.contains('mc')) return;
+  const txt=(e.clipboardData||window.clipboardData).getData('text'); if(!/[\t\n]/.test(txt.replace(/[\r\n]+$/,''))) return;
+  e.preventDefault();
+  const lines=txt.replace(/\r/g,'').replace(/\n+$/,'').split('\n').map(l=>l.split('\t'));
+  const i0=+el.dataset.i;
+  if(el.dataset.it){
+    const m=fM(el.dataset.m), it=fI(el.dataset.m,el.dataset.it); if(!it) return; const arr=it[el.dataset.k];
+    const cells=lines[0]; let n=0;
+    cells.forEach((t,k)=>{ const i=i0+k; if(i>18) return; if(!isAgg(i)){ arr[i]=parseCell(t); n++; } });
+    cells.forEach((t,k)=>{ const i=i0+k; if(i>18||!isAgg(i)) return; setCell(arr,i,t,it.agg); n++; });
+    touch(); refreshItem(m,it,el); refreshItem(m,it,null); toastMsg('วางข้อมูล '+n+' ช่อง'+(lines.length>1?' (วางเฉพาะแถวแรก — วางทีละแถว P / R)':''));
+  }
+}
+const toastMsg=(m,c)=>{ try{ toast(m,c); }catch(e){ } };
+
+/* ---------- actions ---------- */
+function openMsMod(html,w){ const mod=g('msMod'); mod.style.maxWidth=(w||560)+'px'; mod.innerHTML=html; g('msOv').classList.add('on'); }
+function closeMsMod(){ g('msOv').classList.remove('on'); ctx=null; }
+let ctx=null;
+function blankYear(y){ return {label:'FY'+y,note:`เม.ย. ${y} – มี.ค. ${+y+1}`,missions:TEMPLATE.map((t,i)=>({id:'m'+(i+1),name:t[0],icon:t[1],color:PAL[i%PAL.length],items:[]}))}; }
+function makeYear(y,src,mode){
+  let Yn;
+  if(src&&store.years[src]){
+    Yn=clone(store.years[src]);
+    Yn.missions.forEach(m=>m.items.forEach(it=>{ it.R=nul19(); it.jm={}; if(mode==='struct') it.P=nul19(); }));
+    if(Yn.ot){ Yn.ot.months={}; }
+    if(Yn.lv){ Yn.lv.months={}; Object.keys(Yn.lv.bal||{}).forEach(k=>{ const b=Yn.lv.bal[k]; ['vac','sick','pers'].forEach(c=>{ if(b[c]){ b[c].u={d:0,h:0,m:0}; b[c].r=b[c].e; } }); b.out=null; }); Yn.lv.upd=''; }
+  }else Yn=blankYear(y);
+  Yn.label='FY'+y; Yn.note=`เม.ย. ${y} – มี.ค. ${+y+1}`; return Yn;
+}
+function openYearMod(){
+  const ys=years(), next=ys.length?String(+ys[ys.length-1]+1):String(new Date().getFullYear());
+  ctx={t:'year'};
+  openMsMod(`<h3>➕ เพิ่มปีใหม่</h3><div class="sub" style="margin-bottom:8px">ปีงบประมาณนับจาก เม.ย. ของปีที่เลือก ถึง มี.ค. ปีถัดไป</div><div class="ms-fld">`+
+    `<div><label>ปี (ค.ศ.)</label><input id="myY" type="number" min="2000" max="2100" value="${next}"></div>`+
+    `<div><label>คัดลอกโครงสร้างจากปี</label><select id="myS">${ys.map(k=>`<option value="${k}"${k===ui.year?' selected':''}>${k}</option>`).join('')}<option value="">— เริ่มว่าง (7 Mission ตามแม่แบบ) —</option></select></div>`+
+    `<div class="full"><label>รูปแบบการคัดลอก</label><select id="myM"><option value="plan">คัดลอกโครงสร้าง + เป้าหมาย/แผน (P) — ล้างผลลัพธ์ (R) และผลตัดสิน (J)</option><option value="struct">คัดลอกเฉพาะโครงสร้างหัวข้อ — ล้างตัวเลขทั้งหมด</option></select></div></div>`+
+    `<div class="ms-help">หลังสร้างปีใหม่ แก้ไขเป้าหมายและกรอกผลลัพธ์ได้ทุกช่อง</div>`+
+    `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button type="button" class="btn-p" data-ma="addyear">สร้างปี</button><button type="button" class="btn-g" data-ma="cancel">ยกเลิก</button></div>`,540);
+}
+function openItemMod(mid,iid){
+  const it=fI(mid,iid); if(!it) return; ctx={t:'item',mid,iid};
+  openMsMod(`<h3>⚙ ตั้งค่าหัวข้อควบคุม</h3><div class="sub" style="margin-bottom:6px">${E(clip(it.name,90))}</div><div class="ms-fld">`+
+    `<div><label>เกณฑ์ผ่านเป้า (R เทียบ P)</label><select id="miD"><option value="le">R ≤ P (ยิ่งน้อยยิ่งดี)</option><option value="ge">R ≥ P (ยิ่งมากยิ่งดี)</option><option value="eq">R = P</option><option value="none">ไม่ประเมินอัตโนมัติ</option></select></div>`+
+    `<div><label>มาตราส่วนของ R</label><select id="miS"><option value="1">ใช้ค่า R ตามที่กรอก</option><option value="100">R เป็นเศษส่วน (0.14 = 14%) → ×100 ก่อนเทียบ P</option></select></div>`+
+    `<div><label>วิธีรวม Q / H / TOT</label><select id="miA"><option value="sum">ผลรวม (Sum)</option><option value="avg">ค่าเฉลี่ย (Average)</option><option value="last">ค่าล่าสุด</option><option value="none">ไม่คำนวณ (กรอกเอง)</option></select></div>`+
+    `<div><label>กลุ่มกิจกรรม (Main activity)</label><input id="miAct" value="${E(it.act||'')}"></div></div>`+
+    `<div class="ms-help">J = ผ่าน (O) เมื่อเงื่อนไขเป็นจริง เช่น เลือก “R ≤ P” แล้ว R=0.18 เทียบ P=0.2 → O · ช่องที่ R หรือ P ว่าง/เป็นข้อความ จะไม่ถูกประเมิน</div>`+
+    `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button type="button" class="btn-p" data-ma="saveitem">บันทึก</button><button type="button" class="btn-g" data-ma="up">↑ เลื่อนขึ้น</button><button type="button" class="btn-g" data-ma="down">↓ เลื่อนลง</button><button type="button" class="btn-d" data-ma="delitem">🗑 ลบหัวข้อ</button><button type="button" class="btn-g" data-ma="cancel">ปิด</button></div>`);
+  g('miD').value=it.dir||'le'; g('miS').value=String(it.rs||1); g('miA').value=it.agg||'avg';
+}
+function move(arr,i,d){ const j=i+d; if(j<0||j>=arr.length) return false; const t=arr[i]; arr[i]=arr[j]; arr[j]=t; return true; }
+function onModal(e){
+  const t=e.target.closest('[data-ma]'); if(e.target===g('msOv')){ closeMsMod(); return; } if(!t||!ctx) return;
+  const a=t.dataset.ma;
+  if(a==='cancel') return closeMsMod();
+  if(ctx.t==='otset'||ctx.t==='otstart') return otModal(a,t);
+  if(ctx.t&&ctx.t.indexOf('lv')===0) return lvModal(a,t);
+  if(a==='addyear'){
+    const y=String(parseInt(g('myY').value,10)); if(!/^\d{4}$/.test(y)){ alert('กรุณาใส่ปี ค.ศ. 4 หลัก'); return; }
+    if(store.years[y]){ alert('มีข้อมูลปี '+y+' อยู่แล้ว'); return; }
+    store.years[y]=makeYear(y,g('myS').value,g('myM').value); ui.year=y; ui.view='plan'; closeMsMod(); save(); render(); toastMsg('✅ สร้างปี '+y+' แล้ว'); return;
+  }
+  if(ctx.t==='item'){
+    const m=fM(ctx.mid), it=fI(ctx.mid,ctx.iid); if(!it) return closeMsMod(); const ii=m.items.indexOf(it);
+    if(a==='saveitem'){
+      it.dir=g('miD').value; it.rs=+g('miS').value; it.agg=g('miA').value;
+      const old=it.act, nw=g('miAct').value.trim(); if(nw!==old){ for(let k=ii;k<m.items.length&&m.items[k].act===old;k++) m.items[k].act=nw; }
+      closeMsMod(); touch(); render(); return;
+    }
+    if(a==='up'||a==='down'){ if(move(m.items,ii,a==='up'?-1:1)){ touch(); closeMsMod(); render(); } return; }
+    if(a==='delitem'){ closeMsMod(); ask('ลบหัวข้อควบคุม?',it.name||'(ไม่มีชื่อ)',()=>{ m.items.splice(m.items.indexOf(it),1); touch(); render(); }); return; }
+  }
+}
+function csvOut(rows,name){
+  const q=v=>{ v=v==null?'':String(v); if(/^[=+\-@]/.test(v)&&isNaN(+v)) v=' '+v; return '"'+v.replace(/"/g,'""')+'"'; };
+  const txt='\ufeff'+rows.map(r=>r.map(q).join(',')).join('\n');
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([txt],{type:'text/csv;charset=utf-8'})); a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+}
+function exportCsv(){
+  if(ui.view==='ot') return otCsv();
+  if(ui.view==='lv') return lvCsv();
+  const y=Y(); if(!y) return; const rows=[];
+  {
+    rows.push(['Mission','Activity','Control item','Target','Unit','Response by','Type'].concat(PER));
+    y.missions.forEach(m=>m.items.forEach(it=>{ const c=C(it); ['P','R','J'].forEach(k=>rows.push([m.name,it.act,it.name,it.target,it.unit,it.resp,k].concat((k==='J'?c.J:c[k]).map(v=>v==null?'':(isN(v)?+v.toFixed(6):v))))); }));
+    csvOut(rows,`QE_Mission_${ui.year}_ActionPlan.csv`);
+  }
+}
+function exportJson(){
+  const txt=JSON.stringify({app:'qe_mission',version:1,exportedAt:new Date().toISOString(),years:store.years},null,1);
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([txt],{type:'application/json'})); a.download='qe_mission_'+new Date().toISOString().slice(0,10).replace(/-/g,'')+'.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+  toastMsg('💾 บันทึกไฟล์ Mission แล้ว');
+}
+const fix19=a=>{ const o=Array.isArray(a)?a.slice(0,19):[]; while(o.length<19) o.push(null); return o.map(v=>(v===undefined||v==='')?null:v); };
+function sanitizeYear(Yr,y){
+  Yr=clone(Yr||{});
+  Yr.missions=(Yr.missions||[]).map((m,i)=>{ m.id=m.id||('m'+uid()); m.name=m.name||'Mission'; m.icon=m.icon||'🎯'; m.color=m.color||PAL[i%PAL.length];
+    m.items=(m.items||[]).map(it=>{ it.id=it.id||('i'+uid()); it.P=fix19(it.P); it.R=fix19(it.R); it.dir=it.dir||'le'; it.rs=it.rs||1; it.agg=it.agg||'avg'; it.jm=it.jm||{}; it.name=it.name||''; it.act=it.act||''; return it; }); return m; });
+  delete Yr.detail;
+  if(Yr.ot) Yr.ot=otSan(Yr.ot); else delete Yr.ot;
+  if(Yr.lv) Yr.lv=lvSan(Yr.lv); else delete Yr.lv;
+  Yr.label=Yr.label||('FY'+y); Yr.note=Yr.note||''; return Yr;
+}
+function importFile(f){
+  const fr=new FileReader();
+  fr.onload=()=>{ try{
+    const p=JSON.parse(fr.result), yrs=p&&p.years; if(!yrs||typeof yrs!=='object'||!Object.keys(yrs).length) throw 0;
+    const names=Object.keys(yrs);
+    ask('นำเข้าข้อมูล','พบข้อมูลปี: '+names.join(', ')+'\nไฟล์ที่มี Mission จะเขียนทับปีนั้นทั้งปี · ไฟล์ที่มีเฉพาะ OT หรือแผนลา จะอัปเดตเฉพาะส่วนนั้น (Mission ไม่เปลี่ยน)',()=>{
+      let otOnly=0, lvOnly=0; names.forEach(y=>{ const src=yrs[y]; if(src&&!src.missions&&(src.ot||src.lv)&&store.years[y]){ const yy=store.years[y]; if(src.ot){ yy.ot=otSan(src.ot); const it=otItem(yy); if(it) for(let m=0;m<12;m++){ const M=yy.ot.months[m]; if(M&&isN(M.hr)) it.R[MON[m]]=M.hr; } } if(src.lv){ yy.lv=lvSan(src.lv); lvOnly++; } otOnly++; } else store.years[y]=sanitizeYear(src,y); });
+      ui.year=names[0]; ui.view=(otOnly&&otOnly===names.length)?(lvOnly?'lv':'ot'):'sum'; ui.otm='Y'; ui.lvm='S'; save(); render(); toastMsg(otOnly&&otOnly===names.length?(lvOnly?'✅ นำเข้าข้อมูลแผนลาแล้ว':'✅ นำเข้าข้อมูล OT แล้ว'):'✅ นำเข้าข้อมูล '+names.length+' ปีแล้ว'); });
+  }catch(err){ alert('❌ ไฟล์ไม่ถูกต้อง — ต้องเป็นไฟล์ JSON ของ 7 Mission (จากปุ่ม 💾 JSON หรือไฟล์ที่ได้รับ)'); } };
+  fr.readAsText(f);
+}
+function flash(el){ if(!el) return; el.classList.remove('ms-flash'); void el.offsetWidth; el.classList.add('ms-flash'); setTimeout(()=>el.classList.remove('ms-flash'),2000); }
+function onClick(e){
+  if(e.target.tagName==='INPUT') return;
+  const t=e.target.closest('[data-act]'); if(!t) return; const a=t.dataset.act, y=Y();
+  switch(a){
+    case 'yr': ui.year=t.dataset.y; render(); break;
+    case 'addyear': openYearMod(); break;
+    case 'delyear': ask('ลบข้อมูลปี '+ui.year+'?','ข้อมูล Mission ปี '+ui.year+' ทั้งหมด (Action Plan) จะถูกลบ — กู้คืนได้จากไฟล์สำรอง JSON เท่านั้น',()=>{ delete store.years[ui.year]; ui.year=''; touch(); render(); }); break;
+    case 'vw': ui.view=t.dataset.v; render(); break;
+    case 'otgo': ui.view='ot'; ui.otm='Y'; render(); window.scrollTo({top:0,behavior:'smooth'}); break;
+    case 'otm': ui.otm=t.dataset.m; render(); break;
+    case 'otset': otSetMod(); break;
+    case 'otstart': otStartMod(); break;
+    case 'otclr': otClear(+t.dataset.m); break;
+    case 'otjson': otJson(); break;
+    case 'lvm': ui.lvm=t.dataset.m; render(); break;
+    case 'lvset': lvSetMod(); break;
+    case 'lvstart': lvStartMod(); break;
+    case 'lvjson': lvJson(); break;
+    case 'lvbr': ui.lvb=(ui.lvb===t.dataset.b&&t.dataset.b!=='')?'':t.dataset.b; lvRefresh(); { const bb=document.querySelector('.lv-brush'); if(bb){ /* refresh brush bar */ } } break;
+    case 'lvc': lvCellClick(t.dataset.p,+t.dataset.d); break;
+    case 'lvhol': lvHol(+t.dataset.d); break;
+    case 'lvclr': lvClearMonth(+t.dataset.m); break;
+    case 'lvev': ui.lvm=String(t.dataset.m); { const pid=t.dataset.p, d=+t.dataset.d, m=+t.dataset.m; render(); lvCellMod(pid,m,d,null); } break;
+    case 'fold': { const key=t.dataset.m; const sec=t.closest('.ms-sec'); const closed=sec.classList.toggle('closed'); ui.open[key]=!closed; t.textContent=closed?'▸':'▾'; saveUI(); break; }
+    case 'lg': ui.hide[t.dataset.id]=!ui.hide[t.dataset.id]; render(); break;
+    case 'gom': ui.view='plan'; ui.open[t.dataset.m]=true; render(); { const s=document.querySelector(`[data-sec="${t.dataset.m}"]`); if(s){ s.scrollIntoView({behavior:'smooth',block:'start'}); flash(s.querySelector('.ms-sh')); } } break;
+    case 'goit': ui.view='plan'; ui.open[t.dataset.m]=true; render(); { const r=document.querySelector(`tr.kP[data-it="${t.dataset.it}"]`); if(r){ r.scrollIntoView({behavior:'smooth',block:'center'}); document.querySelectorAll(`tr[data-it="${t.dataset.it}"]`).forEach(flash); } } break;
+    case 'additem': { const m=fM(t.dataset.m); if(!m) break; const last=m.items[m.items.length-1]; const it={id:'i'+uid(),act:last?last.act:'',name:'',target:'',unit:'',resp:'',dir:'le',rs:1,agg:'avg',P:nul19(),R:nul19(),jm:{}}; m.items.push(it); touch(); render();
+      const ta=document.querySelector(`textarea.mi-name[data-it="${it.id}"]`); if(ta){ ta.scrollIntoView({block:'center'}); ta.focus(); } break; }
+    case 'addmission': { const i=y.missions.length; y.missions.push({id:'m'+uid(),name:'Mission ใหม่',icon:'🎯',color:PAL[i%PAL.length],items:[]}); touch(); render(); window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'}); break; }
+    case 'delmission': { const m=fM(t.dataset.m); if(!m) break; ask('ลบ Mission “'+m.name+'”?','หัวข้อควบคุมทั้งหมด '+m.items.length+' รายการใน Mission นี้จะถูกลบ',()=>{ y.missions.splice(y.missions.indexOf(m),1); touch(); render(); }); break; }
+    case 'itemset': openItemMod(t.dataset.m,t.dataset.it); break;
+    case 'jc': { const it=fI(t.dataset.m,t.dataset.it); if(!it) break; const i=+t.dataset.i; it.jm=it.jm||{}; const cur=it.jm[i]; const nx=cur===undefined?'O':cur==='O'?'X':cur==='X'?'-':null; if(nx===null) delete it.jm[i]; else it.jm[i]=nx; touch(); refreshItem(fM(t.dataset.m),it,null); break; }
+    case 'csv': exportCsv(); break;
+    case 'json': exportJson(); break;
+    case 'imp': g('msFile').click(); break;
+  }
+}
+
+/* ---------- sync with Cloud DB (Supabase) ---------- */
+function records(model,P){
+  const a=[]; if(!model||!model.years) return a;
+  Object.keys(model.years).forEach(y=>{ const Yr=model.years[y]; if(!Yr) return;
+    a.push({key:P+'mission:'+y+':meta',type:'MissionData',payload:{k:'year',year:y,label:Yr.label||('FY'+y),note:Yr.note||''},date:null});
+    (Yr.missions||[]).forEach((m,i)=>a.push({key:P+'mission:'+y+':m:'+m.id,type:'MissionData',payload:{k:'mission',year:y,o:i,mission:m},date:null}));
+    if(Yr.lv){ const o=Yr.lv;
+      a.push({key:P+'lv:'+y+':meta',type:'LVData',payload:{k:'lvmeta',year:y,meta:{people:o.people,set:o.set,bal:o.bal,upd:o.upd||''}},date:null});
+      Object.keys(o.months||{}).forEach(mk=>{ const M=o.months[mk]; if(M&&((M.hol&&M.hol.length)||Object.keys(M.c||{}).length)) a.push({key:P+'lv:'+y+':m:'+mk,type:'LVData',payload:{k:'lvm',year:y,m:+mk,month:M},date:null}); });
+    }
+    if(Yr.ot){ const o=Yr.ot;
+      a.push({key:P+'ot:'+y+':meta',type:'OTData',payload:{k:'otmeta',year:y,meta:{members:o.members,set:o.set,link:o.link||''}},date:null});
+      Object.keys(o.months||{}).forEach(mk=>{ const M=o.months[mk]; if(M&&(M.wd||M.mp||isN(M.hr)||Object.keys(M.d||{}).length)) a.push({key:P+'ot:'+y+':m:'+mk,type:'OTData',payload:{k:'otm',year:y,m:+mk,month:M},date:null}); });
+    }
+  });
+  return a;
+}
+function loadRemote(rows){
+  if(!rows||!rows.length){ if(years().length&&window.SPDB) window.SPDB.queue(); return; }
+  const yrs={}; let hasOld=false;
+  rows.forEach(p=>{ if(!p||!p.year) return; const Yr=yrs[p.year]||(yrs[p.year]={label:'FY'+p.year,note:'',_m:[]});
+    if(p.k==='year'){ Yr.label=p.label||Yr.label; Yr.note=p.note||''; }
+    else if(p.k==='mission'&&p.mission) Yr._m.push([p.o||0,p.mission]);
+    else if(p.k==='lvmeta'&&p.meta) Yr._lv=p.meta;
+    else if(p.k==='lvm'&&p.month) (Yr._lvm=Yr._lvm||{})[p.m]=p.month;
+    else if(p.k==='otmeta'&&p.meta) Yr._ot=p.meta;
+    else if(p.k==='otm'&&p.month) (Yr._otm=Yr._otm||{})[p.m]=p.month;
+    else if(p.k==='detail') hasOld=true; });
+  Object.keys(yrs).forEach(y=>{ const Yr=yrs[y]; Yr.missions=Yr._m.sort((a,b)=>a[0]-b[0]).map(x=>x[1]); delete Yr._m; if(Yr._lv) Yr.lv=Object.assign({},Yr._lv,{months:Yr._lvm||{}}); delete Yr._lv; delete Yr._lvm; if(Yr._ot) Yr.ot=Object.assign({},Yr._ot,{months:Yr._otm||{}}); delete Yr._ot; delete Yr._otm; yrs[y]=sanitizeYear(Yr,y); });
+  if(hasOld&&window.SPDB) setTimeout(()=>window.SPDB.queue(),0);
+  if(cj({years:yrs})===cj({years:sanitizeAll(store.years)})) return;
+  store={years:yrs};
+  try{ localStorage.setItem(KEY,JSON.stringify(store)); }catch(e){}
+  CC=new Map(); ensureYear();
+  const v=g('viewMission'); if(v&&v.style.display==='block') render();
+}
+function sanitizeAll(ys){ const o={}; Object.keys(ys).forEach(y=>{ o[y]=sanitizeYear(ys[y],y); }); return o; }
+function restore(m,merge){
+  if(!m||!m.years) return 0; let n=0;
+  Object.keys(m.years).forEach(y=>{ if(merge&&store.years[y]) return; store.years[y]=sanitizeYear(m.years[y],y); n++; });
+  ensureYear(); save(); const v=g('viewMission'); if(v&&v.style.display==='block') render(); return n;
+}
+
+/* ================= ⏱ OT Control (Dashboard + รายเดือน ตามไฟล์ OT Control) ================= */
+const OT_COL=['#22d3ee','#a78bfa','#f59e0b','#34d399','#fb7185','#60a5fa','#f472b6','#a3e635','#fb923c','#2dd4bf'];
+const OT_MTH=['เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.','ม.ค.','ก.พ.','มี.ค.'];
+const OT_EN=['Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar'];
+const OT_DOW=['อา','จ','อ','พ','พฤ','ศ','ส'];
+const OT_C15='#22d3ee', OT_C30='#f59e0b';
+const OT_RE=/OT\s*\/?\s*Man\s*\/\s*Day/i;
+const otCalM=m=>(m+3)%12, otYr=(fy,m)=>+fy+(m>=9?1:0);
+const otDim=(fy,m)=>new Date(otYr(fy,m),otCalM(m)+1,0).getDate();
+const otDow=(fy,m,d)=>new Date(otYr(fy,m),otCalM(m),d).getDay();
+const otWD0=(fy,m)=>{ let n=0; for(let d=1;d<=otDim(fy,m);d++){ const w=otDow(fy,m,d); if(w>0&&w<6) n++; } return n; };
+const num=v=>{ const x=parseFloat(v); return isFinite(x)?x:0; };
+const f2=v=>(v==null||!isFinite(v))?'':String(+(+v).toFixed(2));
+const OT_SET0={tgtDay:2,tgtMonth:40,limitMonth:41};
+
+function otSan(o){
+  o=clone(o||{}); const used=new Set();
+  o.members=(Array.isArray(o.members)?o.members:[]).map((p,i)=>{ let id=String((p&&p.id)||('p'+(i+1))); while(used.has(id)) id+='x'; used.add(id);
+    return {id:id,name:String(p&&p.name!=null?p.name:('Member '+(i+1))),color:(p&&p.color)||OT_COL[i%OT_COL.length]}; });
+  const s=o.set||{}; o.set={tgtDay:num(s.tgtDay)||OT_SET0.tgtDay,tgtMonth:num(s.tgtMonth)||OT_SET0.tgtMonth,limitMonth:num(s.limitMonth)||OT_SET0.limitMonth};
+  o.link=o.link||'';
+  const ms={};
+  Object.keys(o.months||{}).forEach(k=>{ const m=+k; if(!(m>=0&&m<12)) return; const M=o.months[k]||{}; const d={};
+    Object.keys(M.d||{}).forEach(dk=>{ const r=M.d[dk], out={};
+      Object.keys(r||{}).forEach(pid=>{ const v=r[pid]; if(Array.isArray(v)){ const a=num(v[0]), b=num(v[1]); if(a||b) out[pid]=[a,b]; } });
+      if(Object.keys(out).length) d[dk]=out; });
+    const hr=parseFloat(M.hr);
+    ms[m]={wd:M.wd>0?+M.wd:null,mp:M.mp>0?+M.mp:null,hr:isFinite(hr)?hr:null,d:d}; });
+  o.months=ms; return o;
+}
+const otMon=(ot,m)=>ot.months[m]||(ot.months[m]={wd:null,mp:null,hr:null,d:{}});
+const isOtItem=it=>!!(it&&OT_RE.test(String(it.name||'')));
+function otItem(y){
+  if(y.ot&&y.ot.link){ for(const m of y.missions) for(const it of m.items) if(it.id===y.ot.link) return it; }
+  for(const m of y.missions) for(const it of m.items) if(isOtItem(it)) return it;
+  return null;
+}
+/* Actual (HR): อ่าน/เขียนที่หัวข้อ OT /Man/Day ใน Action Plan (ช่อง R) — ถ้าไม่มีหัวข้อนั้น เก็บไว้ในข้อมูล OT เอง */
+function otActual(y,m){
+  const it=otItem(y);
+  if(it){ const v=it.R[MON[m]]; return isN(v)?v:null; }
+  const M=y.ot&&y.ot.months[m]; return M&&isN(M.hr)?M.hr:null;
+}
+function otSetActual(y,m,v){
+  const it=otItem(y);
+  if(it) it.R[MON[m]]=v; else otMon(y.ot,m).hr=v;
+}
+
+/* ---------- คำนวณ ---------- */
+function otCalc(y,m){
+  const ot=y.ot, S=ot.set, M=ot.months[m]||{}, mem=ot.members, FY=ui.year;
+  const N=(M.mp>0?+M.mp:mem.length)||1, wd=M.wd>0?+M.wd:otWD0(FY,m), days=otDim(FY,m);
+  const per={}; mem.forEach(p=>{ per[p.id]={a:0,b:0}; });
+  const dl=[]; let any=false, total=0, sa=0, sb=0;
+  for(let d=1;d<=days;d++){
+    const r=(M.d&&M.d[d])||{}; let t=0;
+    mem.forEach(p=>{ const v=r[p.id]; if(v){ const a=num(v[0]), b=num(v[1]); per[p.id].a+=a; per[p.id].b+=b; sa+=a; sb+=b; t+=a+b; if(a||b) any=true; } });
+    total+=t; dl.push({d:d,w:otDow(FY,m,d),t:t,avg:t/N,j:t/N>S.tgtDay+1e-9?'X':'O'});
+  }
+  const avg=total/wd/N, lim=wd*S.tgtDay;
+  const persons=mem.map(p=>{ const a=per[p.id].a, b=per[p.id].b, t=a+b; return {p:p,a:a,b:b,t:t,lim:lim,j:any?(t>lim+1e-9?'X':'O'):'-'}; });
+  return {m:m,wd:wd,N:N,days:days,dl:dl,total:total,a:sa,b:sb,avg:avg,target:wd*S.tgtDay*N,j:any?(avg>S.tgtDay+1e-9?'X':'O'):'-',any:any,persons:persons,wdAuto:!(M.wd>0),mpAuto:!(M.mp>0)};
+}
+function otYearCalc(y){
+  const ot=y.ot, S=ot.set, ms=[]; for(let m=0;m<12;m++) ms.push(otCalc(y,m));
+  const wdt=ms.filter(x=>x.any), total=ms.reduce((s,x)=>s+x.total,0), a=ms.reduce((s,x)=>s+x.a,0), b=ms.reduce((s,x)=>s+x.b,0);
+  const overall=wdt.length?wdt.reduce((s,x)=>s+x.avg,0)/wdt.length:null;
+  const pp=ot.members.map((p,i)=>{
+    let sum=0,cnt=0,sa=0,sb=0; const series=[];
+    ms.forEach(x=>{ const q=x.persons[i]; series.push(q.t); sa+=q.a; sb+=q.b; if(q.t!==0){ sum+=q.t; cnt++; } });
+    const avgM=cnt?sum/cnt:null;
+    return {p:p,sum:sum,cnt:cnt,a:sa,b:sb,avgM:avgM,j:cnt?(avgM>S.limitMonth+1e-9?'X':'O'):'-',series:series};
+  });
+  return {ms:ms,wdt:wdt,total:total,a:a,b:b,overall:overall,j:overall==null?'-':(overall>S.tgtDay+1e-9?'X':'O'),pp:pp,
+    wdSum:ms.reduce((s,x)=>s+x.wd,0),tgtSum:ms.reduce((s,x)=>s+x.target,0)};
+}
+
+/* ---------- องค์ประกอบกราฟ / ป้าย ---------- */
+const otJb=j=>j==='O'?'<span class="jb jo">O</span>':j==='X'?'<span class="jb jx">X</span>':'<span class="jb jn">–</span>';
+const otJc=j=>j==='X'?'var(--dang)':j==='O'?'var(--ok)':'var(--mut)';
+function otDonut(a,b,size){
+  const r=44,c=2*Math.PI*r,t=a+b, la=t?a/t*c:0, lb=t?b/t*c:0, pc=t?Math.round(b/t*100):0;
+  return `<svg viewBox="0 0 120 120" width="${size}" height="${size}" role="img" aria-label="สัดส่วน OT1.5 / OT3.0">`+
+    `<circle cx="60" cy="60" r="${r}" fill="none" stroke="var(--line)" stroke-opacity=".6" stroke-width="14"/>`+
+    (la>0?`<circle cx="60" cy="60" r="${r}" fill="none" stroke="${OT_C15}" stroke-width="14" stroke-dasharray="${la} ${c-la}" transform="rotate(-90 60 60)"><title>OT1.5: ${f2(a)} ชม.</title></circle>`:'')+
+    (lb>0?`<circle cx="60" cy="60" r="${r}" fill="none" stroke="${OT_C30}" stroke-width="14" stroke-dasharray="${lb} ${c-lb}" stroke-dashoffset="${-la}" transform="rotate(-90 60 60)"><title>OT3.0: ${f2(b)} ชม.</title></circle>`:'')+
+    `<text x="60" y="58" text-anchor="middle" font-size="22" font-weight="800" fill="var(--txt)">${t?pc+'%':'–'}</text>`+
+    `<text x="60" y="76" text-anchor="middle" font-size="10" fill="var(--mut)">OT3.0</text></svg>`;
+}
+function otTrend(Yc,y){
+  const S=y.ot.set, W=780,H=280,Lm=44,Rm=16,Tm=34,Bm=34, iw=W-Lm-Rm, ih=H-Tm-Bm;
+  const act=Yc.ms.map((x,m)=>otActual(y,m));
+  const mx=Math.max(S.tgtDay*1.5,...Yc.ms.map(x=>x.any?x.avg:0),...act.map(v=>v||0))*1.12;
+  const bw=iw/12, X=m=>Lm+bw*m+bw/2, Yp=v=>Tm+(1-v/mx)*ih, step=mx>4?1:0.5;
+  let s=`<svg class="ms-trend" viewBox="0 0 ${W} ${H}" role="img" aria-label="แนวโน้ม OT เฉลี่ยต่อคนต่อวันรายเดือน">`;
+  for(let v=0;v<=mx;v+=step) s+=`<line x1="${Lm}" x2="${W-Rm}" y1="${Yp(v)}" y2="${Yp(v)}" stroke="var(--line)" stroke-opacity=".7" ${v?'stroke-dasharray="3 4"':''}/><text x="${Lm-6}" y="${Yp(v)+4}" text-anchor="end">${f2(v)}</text>`;
+  Yc.ms.forEach((x,m)=>{
+    s+=`<text x="${X(m)}" y="${H-12}" text-anchor="middle">${OT_MTH[m]}</text>`;
+    if(x.any){ const y0=Yp(x.avg), col=otJc(x.j), w=bw*.58;
+      s+=`<rect x="${X(m)-w/2}" y="${y0}" width="${w}" height="${Math.max(1,Yp(0)-y0)}" rx="6" fill="${col}" fill-opacity=".82"><title>${OT_EN[m]}: เฉลี่ยจากตาราง OT ${f2(+x.avg.toFixed(2))} ชม./คน/วัน · รวม ${f2(x.total)} ชม.</title></rect>`;
+    }
+  });
+  s+=`<line x1="${Lm}" x2="${W-Rm}" y1="${Yp(S.tgtDay)}" y2="${Yp(S.tgtDay)}" stroke="var(--warn)" stroke-width="2" stroke-dasharray="6 4"/><text x="${W-Rm}" y="${Yp(S.tgtDay)-6}" text-anchor="end" style="fill:var(--warn)" font-weight="700">เป้า ${f2(S.tgtDay)} ชม./คน/วัน</text>`;
+  let d='',pen=false; act.forEach((v,m)=>{ if(v==null){ pen=false; return; } d+=(pen?'L':'M')+X(m).toFixed(1)+' '+Yp(v).toFixed(1)+' '; pen=true; });
+  if(d){ s+=`<path d="${d}" fill="none" stroke="var(--vio)" stroke-width="2.4" stroke-linejoin="round"/>`;
+    act.forEach((v,m)=>{ if(v!=null) s+=`<circle cx="${X(m).toFixed(1)}" cy="${Yp(v).toFixed(1)}" r="4.2" fill="var(--vio)"><title>${OT_EN[m]}: Actual (HR) ${f2(v)}</title></circle>`; });
+    act.forEach((v,m)=>{ if(v!=null) s+=`<text class="otl" x="${X(m).toFixed(1)}" y="${(Yp(v)-10).toFixed(1)}" text-anchor="middle">${f2(v)}</text>`; }); }
+  return s+'</svg>';
+}
+function otSpark(vals,max,color){
+  const W=132,H=34,n=vals.length,bw=W/n; let s=`<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" aria-hidden="true">`;
+  vals.forEach((v,i)=>{ const h=max>0?Math.min(1,v/max)*(H-4):0; s+=`<rect x="${(i*bw+1).toFixed(1)}" y="${(H-2-h).toFixed(1)}" width="${(bw-2).toFixed(1)}" height="${Math.max(h,v?1.5:0).toFixed(1)}" rx="2" fill="${color}" fill-opacity="${v?.9:.18}"><title>${OT_EN[i]}: ${f2(v)} ชม.</title></rect>`; });
+  return s+'</svg>';
+}
+const otHeatBg=r=>`hsl(${Math.round((1-Math.max(0,Math.min(1.25,r))/1.25)*120)} 70% 42% / .42)`;
+
+/* ---------- หน้า: ว่าง / ตัวนำทาง ---------- */
+function otEmpty(){
+  return `<div class="ms-card ms-empty"><h2>⏱ OT Control ยังไม่มีข้อมูล</h2><p class="ms-sub">นำเข้าไฟล์ OT ของปีนี้ (JSON) หรือเริ่มสร้างตารางเองแล้วกรอก OT รายวัน/รายคน — มี Dashboard สรุปรายเดือนและทั้งปีให้อัตโนมัติ</p>`+
+    `<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:12px"><button type="button" class="btn-p" data-act="imp">📂 นำเข้า OT (JSON)</button><button type="button" class="btn-g" data-act="otstart">➕ เริ่มสร้างเอง</button></div></div>`;
+}
+function otNav(y,Yc){
+  const cur=ui.otm==null?'Y':String(ui.otm);
+  let h=`<div class="ot-nav"><button type="button" class="btn-g" data-act="vw" data-v="plan">← Action Plan</button><div class="ot-chips">`+
+    `<button type="button" class="ot-chip${cur==='Y'?' on':''}" data-act="otm" data-m="Y">📊 ทั้งปี</button>`;
+  Yc.ms.forEach((x,m)=>{ h+=`<button type="button" class="ot-chip${cur===String(m)?' on':''}" data-act="otm" data-m="${m}" data-chip="${m}" title="${OT_EN[m]}: ${x.any?f2(x.total)+' ชม.':'ยังไม่มีข้อมูล'}">${OT_MTH[m]}<i class="ot-dot ${x.j==='O'?'o':x.j==='X'?'x':''}"></i></button>`; });
+  return h+`</div><div class="ot-navr"><button type="button" class="btn-g" data-act="otset">⚙ ตั้งค่า / สมาชิก</button></div></div>`;
+}
+function viewOT(y){
+  if(!y.ot) return otEmpty();
+  const Yc=otYearCalc(y), cur=ui.otm==null?'Y':String(ui.otm);
+  return otNav(y,Yc)+(cur==='Y'?otYear(y,Yc):otMonth(y,+cur));
+}
+
+/* ---------- ภาพรวมทั้งปี ---------- */
+function otYear(y,Yc){
+  const S=y.ot.set, mem=y.ot.members, wd=Yc.wdt.length, pass=Yc.wdt.filter(x=>x.j==='O').length;
+  const worst=Yc.wdt.slice().sort((a,b)=>b.avg-a.avg)[0];
+  const sh30=Yc.total?Yc.b/Yc.total*100:0, act=otItem(y);
+  const ov=Yc.overall;
+  let h=`<div class="ms-hero ot-hero"><div class="ms-card ms-ovc"><div class="ms-ovg">${otDonut(Yc.a,Yc.b,150)}</div><div class="ms-ovt"><div class="ms-eyebrow">⏱ OT Control · FY${E(ui.year)}</div>`+
+    `<div class="ms-bigp" style="color:${otJc(Yc.j)}">${ov==null?'–':f2(+ov.toFixed(2))}</div>`+
+    `<div class="ms-mut">เฉลี่ย OT ชม./คน/วัน (เฉลี่ยรายเดือน) · เป้า ≤ ${f2(S.tgtDay)} ${Yc.j==='-'?'':otJb(Yc.j)}</div>`+
+    `<div class="ot-leg"><span><i style="background:${OT_C15}"></i>OT1.5 ${f2(Yc.a)} ชม.</span><span><i style="background:${OT_C30}"></i>OT3.0 ${f2(Yc.b)} ชม.</span></div></div></div>`+
+    `<div class="ms-kpis">`+kpi('🕒',f2(+Yc.total.toFixed(2)),'OT รวมสะสม (ชม.)')+
+    kpi('✅',wd?`${pass}/${wd}`:'–','เดือนที่ผ่านเป้า','var(--t-ok)')+
+    kpi('📈',worst?`${OT_MTH[worst.m]} ${f2(+worst.avg.toFixed(2))}`:'–','เดือน OT สูงสุด',worst&&worst.j==='X'?'var(--t-dang)':'')+
+    kpi('🌙',Yc.total?f2(+sh30.toFixed(1))+'%':'–','สัดส่วน OT3.0 (วันหยุด)')+`</div></div>`;
+  h+=`<div class="ms-card ot-card"><h3>📈 แนวโน้ม OT เฉลี่ย ชม./คน/วัน รายเดือน</h3><div class="ms-sub">เส้นม่วง (แสดงตัวเลข) = Actual (HR) — กรอก/แก้ไขได้ในช่อง “Actual (HR)” ของตารางด้านล่าง · แท่ง = เฉลี่ยจากตาราง OT (เขียว ผ่านเป้า · แดง เกินเป้า)</div><div id="otTrendBox">${otTrend(Yc,y)}</div></div>`;
+  // per person cards
+  h+=`<div class="ms-card ot-card"><h3>👥 สรุปรายบุคคล (สะสมทั้งปี)</h3><div class="ms-sub">ตัดสิน: เฉลี่ยต่อเดือนต่อคน ≤ ${f2(S.limitMonth)} ชม. · เส้นเป้ากราฟของเดือน = ${f2(S.tgtMonth)} ชม./เดือน</div><div class="ot-pgrid">`;
+  const mxm=Math.max(S.tgtMonth*1.2,...Yc.pp.flatMap(q=>q.series));
+  Yc.pp.forEach((q,i)=>{
+    const tt=q.a+q.b, w15=tt?q.a/tt*100:0;
+    h+=`<div class="ot-pc" style="--pc:${q.p.color}"><div class="ot-ph"><span class="ot-av" style="background:${q.p.color}">${E((q.p.name.replace(/^(Mr|Ms|Mrs|Miss)\.?\s*/i,'')||'?').slice(0,1).toUpperCase())}</span><b>${E(q.p.name)}</b>${q.j==='-'?'':otJb(q.j)}</div>`+
+      `<div class="ot-pv"><span class="n" style="color:${otJc(q.j)}">${q.avgM==null?'–':f2(+q.avgM.toFixed(2))}</span><small>ชม./เดือน (เฉลี่ย)</small></div>`+
+      `<div class="ot-split" title="OT1.5 ${f2(q.a)} · OT3.0 ${f2(q.b)}"><i style="width:${w15}%;background:${OT_C15}"></i><i style="width:${tt?100-w15:0}%;background:${OT_C30}"></i></div>`+
+      `<div class="ot-pm"><span>รวม ${f2(+tt.toFixed(2))} ชม.</span><span>OT1.5 ${f2(q.a)} · OT3.0 ${f2(q.b)}</span></div>${otSpark(q.series,mxm,q.p.color)}</div>`;
+  });
+  h+=`</div></div>`;
+  // heatmap
+  h+=`<div class="ms-card ot-card"><h3>🗓️ Heatmap: OT รายคน × เดือน (ชม.)</h3><div class="ms-sub">สีเขียว = ต่ำกว่าเกณฑ์ · แดง = ใกล้/เกินเกณฑ์ (WD × ${f2(S.tgtDay)} ชม./เดือน/คน)</div><div class="ms-hm"><table><thead><tr><th>สมาชิก</th>`+OT_MTH.map(n=>`<th>${n}</th>`).join('')+`<th>เฉลี่ย</th><th>รวม</th></tr></thead><tbody>`;
+  Yc.pp.forEach((q,i)=>{
+    h+=`<tr><td><span class="ot-sw" style="background:${q.p.color}"></span> ${E(q.p.name)}</td>`+Yc.ms.map(x=>{ const c=x.persons[i]; return x.any?`<td style="background:${otHeatBg(c.t/c.lim)}" title="${OT_EN[x.m]}: ${f2(c.t)} / ${f2(c.lim)} ชม.">${f2(c.t)||0}</td>`:`<td class="na">–</td>`; }).join('')+
+      `<td><b>${q.avgM==null?'–':f2(+q.avgM.toFixed(1))}</b></td><td><b>${f2(+(q.a+q.b).toFixed(2))}</b></td></tr>`;
+  });
+  h+=`<tr class="tot"><td>ทีม · เฉลี่ย/คน/วัน</td>`+Yc.ms.map(x=>x.any?`<td style="background:${otHeatBg(x.avg/S.tgtDay)}">${f2(+x.avg.toFixed(2))}</td>`:`<td class="na">–</td>`).join('')+`<td><b>${Yc.overall==null?'–':f2(+Yc.overall.toFixed(2))}</b></td><td><b>${f2(+Yc.total.toFixed(2))}</b></td></tr></tbody></table></div></div>`;
+  // summary table
+  h+=`<div class="ms-card ot-card"><h3>📋 ตารางสรุปรายเดือน (เหมือนหน้า Dashboard ใน Excel)</h3><div class="ms-sub">✏️ ช่อง <b style="color:var(--t-vio)">Actual (HR)</b> กรอก/แก้ไขได้เอง (ข้อมูลจาก HR) — ${act?'บันทึกไปที่หัวข้อ “'+E(clip(act.name,24))+'” ใน Action Plan ด้วย (ตัวเลขตรงกันทั้งสองหน้า)':'เก็บในข้อมูล OT'} · <kbd>Enter</kbd>/<kbd>↑</kbd><kbd>↓</kbd> เลื่อนช่อง · วางทั้งคอลัมน์จาก Excel ได้ · คลิกแถว (นอกช่อง Actual) เพื่อเข้าดูรายเดือน</div><div class="ms-ng"><table class="ot-sum"><thead><tr><th>เดือน</th><th>OT รวม (ชม.)</th><th>WD</th><th>MP</th><th>เป้า OT (ชม.)</th><th>เฉลี่ย/คน/วัน</th><th>เป้า/วัน</th><th class="hrh">Actual (HR)</th><th>ผล</th>`+Yc.pp.map(q=>`<th>${E(q.p.name)}</th>`).join('')+`</tr></thead><tbody>`;
+  Yc.ms.forEach((x,m)=>{
+    const a=otActual(y,m), av=a==null?'':f2(a);
+    h+=`<tr data-act="otm" data-m="${m}"><td><b>${OT_EN[m]}-${String(otYr(ui.year,m)).slice(2)}</b></td><td>${x.any?f2(x.total):'0'}</td><td>${x.wd}</td><td>${x.N}</td><td>${f2(x.target)}</td><td>${x.any?f2(+x.avg.toFixed(2)):'–'}</td><td>${f2(S.tgtDay)}</td><td class="hrc"><input class="oh" data-m="${m}" value="${av}" data-orig="${av}" placeholder="–" inputmode="decimal" autocomplete="off" title="Actual (HR) เดือน ${OT_EN[m]} — พิมพ์ตัวเลขจาก HR"></td><td>${otJb(x.j)}</td>`+x.persons.map(c=>`<td>${x.any?f2(c.t)||0:'–'}</td>`).join('')+`</tr>`;
+  });
+  h+=`<tr class="tot"><td>รวมทั้งปี</td><td>${f2(+Yc.total.toFixed(2))}</td><td>${Yc.wdSum}</td><td></td><td>${f2(Yc.tgtSum)}</td><td>${Yc.overall==null?'–':f2(+Yc.overall.toFixed(2))}</td><td>${f2(S.tgtDay)}</td><td></td><td>${otJb(Yc.j)}</td>`+Yc.pp.map(q=>`<td>${f2(+(q.a+q.b).toFixed(2))}</td>`).join('')+`</tr>`;
+  h+=`<tr class="tot"><td colspan="9" style="text-align:right">เฉลี่ยต่อเดือน/คน (ชม.) — เกณฑ์ ≤ ${f2(S.limitMonth)}</td>`+Yc.pp.map(q=>`<td>${q.avgM==null?'–':f2(+q.avgM.toFixed(2))} ${q.j==='-'?'':otJb(q.j)}</td>`).join('')+`</tr></tbody></table></div></div>`;
+  return h;
+}
+
+/* ---------- รายเดือน ---------- */
+function otPersonBars(c,S){
+  const mx=Math.max(c.persons.length?c.persons[0].lim*1.25:1,...c.persons.map(q=>q.t))||1;
+  let h=`<div class="ot-pb">`;
+  c.persons.forEach(q=>{
+    const w15=q.a/mx*100, w30=q.b/mx*100, lp=q.lim/mx*100;
+    h+=`<div class="ot-pr"><div class="ot-pn"><span class="ot-sw" style="background:${q.p.color}"></span>${E(q.p.name)}</div><div class="ot-bar" title="OT1.5 ${f2(q.a)} · OT3.0 ${f2(q.b)} · เกณฑ์ ${f2(q.lim)} ชม.">`+
+      `<i style="left:0;width:${w15}%;background:${OT_C15}"></i><i style="left:${w15}%;width:${w30}%;background:${OT_C30}"></i><em style="left:${lp}%"></em></div>`+
+      `<div class="ot-pt"><b style="color:${otJc(q.j)}">${f2(+q.t.toFixed(2))||0}</b> ${q.j==='-'?'':otJb(q.j)}</div></div>`;
+  });
+  return h+`<div class="ot-bleg"><span><i style="background:${OT_C15}"></i>OT1.5</span><span><i style="background:${OT_C30}"></i>OT3.0</span><span><i class="lim"></i>เกณฑ์ = WD × ${f2(S.tgtDay)} ชม.</span></div></div>`;
+}
+function otDaily(c,S){
+  const W=780,H=210,Lm=36,Rm=10,Tm=22,Bm=34, iw=W-Lm-Rm, ih=H-Tm-Bm, n=c.days, bw=iw/n;
+  const mx=Math.max(S.tgtDay*1.5,...c.dl.map(x=>x.avg))*1.1, X=i=>Lm+bw*i+bw/2, Yp=v=>Tm+(1-v/mx)*ih;
+  let s=`<svg class="ms-trend" viewBox="0 0 ${W} ${H}" role="img" aria-label="OT เฉลี่ยต่อคนรายวัน">`;
+  for(let v=0;v<=mx;v+=1) s+=`<line x1="${Lm}" x2="${W-Rm}" y1="${Yp(v)}" y2="${Yp(v)}" stroke="var(--line)" stroke-opacity=".6" ${v?'stroke-dasharray="3 4"':''}/><text x="${Lm-5}" y="${Yp(v)+4}" text-anchor="end">${v}</text>`;
+  c.dl.forEach((x,i)=>{
+    const we=x.w===0||x.w===6, col=x.avg>S.tgtDay+1e-9?'var(--dang)':we?OT_C30:'var(--ok)';
+    if(we) s+=`<rect x="${X(i)-bw/2}" y="${Tm}" width="${bw}" height="${ih}" fill="var(--soft2)" fill-opacity=".55"/>`;
+    if(x.avg>0) s+=`<rect x="${X(i)-bw*.34}" y="${Yp(x.avg)}" width="${bw*.68}" height="${Math.max(1,Yp(0)-Yp(x.avg))}" rx="2.5" fill="${col}" fill-opacity=".85"><title>${x.d} (${OT_DOW[x.w]}): เฉลี่ย ${f2(+x.avg.toFixed(2))} ชม./คน · รวม ${f2(x.t)} ชม.</title></rect>`;
+    s+=`<text x="${X(i)}" y="${H-18}" text-anchor="middle" style="font-size:9.5px">${x.d}</text><text x="${X(i)}" y="${H-6}" text-anchor="middle" style="font-size:8.5px;opacity:${we?1:.45}">${OT_DOW[x.w]}</text>`;
+  });
+  return s+`<line x1="${Lm}" x2="${W-Rm}" y1="${Yp(S.tgtDay)}" y2="${Yp(S.tgtDay)}" stroke="var(--warn)" stroke-width="2" stroke-dasharray="6 4"/><text x="${W-Rm}" y="${Yp(S.tgtDay)-5}" text-anchor="end" style="fill:var(--warn)" font-weight="700">เป้า ${f2(S.tgtDay)}</text></svg>`;
+}
+function otSecA(y,c){
+  const S=y.ot.set, pct=S.tgtDay?Math.min(160,c.avg/S.tgtDay*100):0, top=c.dl.slice().sort((a,b)=>b.t-a.t).filter(x=>x.t>0).slice(0,3);
+  const over=c.dl.filter(x=>x.avg>S.tgtDay+1e-9).length;
+  return `<div class="ms-hero ot-hero"><div class="ms-card ms-ovc"><div class="ms-ovg">${otDonut(c.a,c.b,138)}</div><div class="ms-ovt"><div class="ms-eyebrow">${OT_EN[c.m]}-${String(otYr(ui.year,c.m)).slice(2)} · OT ทีม ${f2(+c.total.toFixed(2))} ชม.</div>`+
+    `<div class="ms-bigp" style="color:${otJc(c.j)}">${c.any?f2(+c.avg.toFixed(2)):'–'} <small style="font-size:14px;color:var(--mut);font-weight:600">ชม./คน/วัน</small></div>`+
+    `<div class="ms-mut">เป้า ≤ ${f2(S.tgtDay)} ${c.j==='-'?'':otJb(c.j)} · เป้า OT ทีม ${f2(c.target)} ชม.</div><div class="ms-prog"><i style="width:${Math.min(100,pct)}%;${c.j==='X'?'background:var(--dang)':''}"></i></div>`+
+    `<div class="ot-leg"><span><i style="background:${OT_C15}"></i>OT1.5 ${f2(c.a)}</span><span><i style="background:${OT_C30}"></i>OT3.0 ${f2(c.b)}</span></div></div></div>`+
+    `<div class="ms-kpis">`+kpi('📅',c.wd,c.wdAuto?'วันทำงาน (WD · อัตโนมัติ)':'วันทำงาน (WD)')+kpi('👥',c.N,c.mpAuto?'MP (อัตโนมัติ)':'MP (จำนวนคน)')+
+    kpi('⚠️',over,'วันที่เฉลี่ยเกินเป้า',over?'var(--t-dang)':'var(--t-ok)')+kpi('🔝',top[0]?`${top[0].d} ${OT_DOW[top[0].w]} · ${f2(top[0].t)}`:'–','วัน OT สูงสุด (ชม.)')+`</div></div>`+
+    `<div class="ms-card ot-card"><h3>👥 OT รายบุคคลของเดือนนี้</h3><div class="ms-sub">เส้นแนวตั้ง = เกณฑ์ต่อคน (WD × ${f2(S.tgtDay)} ชม.) · เกินเกณฑ์ = X</div>${otPersonBars(c,S)}</div>`;
+}
+function otSecB(y,c){
+  return `<div class="ms-card ot-card"><h3>📊 OT เฉลี่ยต่อคนรายวัน</h3><div class="ms-sub">พื้นหลังเทา = เสาร์–อาทิตย์ · ส้ม = วันหยุดที่ไม่เกินเป้า · แดง = เกินเป้า/วัน</div>${otDaily(c,y.ot.set)}</div>`;
+}
+function otMonth(y,m){
+  const ot=y.ot, mem=ot.members, c=otCalc(y,m), S=ot.set, M=ot.months[m]||{};
+  let h=`<div class="ot-mbar"><h2>⏱ ${OT_EN[m]}-${String(otYr(ui.year,m)).slice(2)}</h2>`+
+    `<label class="ot-f">วันทำงาน (WD)<input id="otWd" type="number" min="0" max="31" step="1" value="${M.wd>0?M.wd:''}" placeholder="${c.wd}"></label>`+
+    `<label class="ot-f">MP (คน)<input id="otMp" type="number" min="0" max="99" step="1" value="${M.mp>0?M.mp:''}" placeholder="${mem.length}"></label>`+
+    `<span class="ms-sub">เว้นว่าง = อัตโนมัติ</span><span class="grow"></span>`+
+    `<button type="button" class="btn-g" data-act="otclr" data-m="${m}" style="color:var(--t-dang)">🧹 ล้างข้อมูลเดือนนี้</button></div>`;
+  h+=`<div id="otMA">${otSecA(y,c)}</div><div id="otMB">${otSecB(y,c)}</div>`;
+  const cw=[84].concat(mem.flatMap(()=>[64,64]),[70,70,64,54]); const tw=cw.reduce((a,b)=>a+b,0);
+  h+=`<div class="ms-card ot-card"><h3>📝 ตารางกรอก OT รายวัน</h3><div class="ms-note" style="margin-bottom:8px">✏️ กรอกชั่วโมง OT1.5 / OT3.0 ของแต่ละคน — ผลรวม เฉลี่ย และ O/X คำนวณอัตโนมัติ · <kbd>Enter</kbd>/<kbd>↑</kbd><kbd>↓</kbd> เลื่อนช่อง · วางข้อมูลหลายแถว/หลายช่องจาก Excel ได้ (คัดลอกบล็อกตัวเลขแล้ววางที่ช่องแรก)</div><div class="ms-scroll"><table class="ot-tbl" style="width:${tw}px"><colgroup>${cw.map(x=>`<col style="width:${x}px">`).join('')}</colgroup><thead><tr><th rowspan="2" class="s1">วันที่</th>`+
+    mem.map(p=>`<th colspan="2" style="--pc:${p.color}" class="ot-ph2">${E(p.name)}</th>`).join('')+`<th rowspan="2">รวมทีม</th><th rowspan="2">เฉลี่ย/คน</th><th rowspan="2">เป้า</th><th rowspan="2">ผล</th></tr><tr>`+mem.map(()=>`<th class="t15">OT1.5</th><th class="t30">OT3.0</th>`).join('')+`</tr></thead><tbody>`;
+  c.dl.forEach(x=>{ h+=otRowHtml(y,c,x,M); });
+  h+=`<tr class="ot-tot" id="otTot">${otTotHtml(c,S)}</tr></tbody></table></div></div>`;
+  return h;
+}
+function otRowHtml(y,c,x,M){
+  const mem=y.ot.members, S=y.ot.set, r=(M&&M.d&&M.d[x.d])||{}, we=x.w===0||x.w===6;
+  let h=`<tr data-d="${x.d}" class="${we?'wk':''}${x.avg>S.tgtDay+1e-9?' bad':''}"><td class="s1"><b>${x.d}</b> <small>${OT_DOW[x.w]}</small></td>`;
+  mem.forEach(p=>{ const v=r[p.id]||[0,0]; for(let k=0;k<2;k++){ const s=v[k]?f2(v[k]):''; h+=`<td><input class="oc ${k?'t30':'t15'}" data-m="${c.m}" data-d="${x.d}" data-p="${p.id}" data-k="${k}" value="${s}" data-orig="${s}" inputmode="decimal" autocomplete="off"></td>`; } });
+  return h+`<td class="tt">${x.t?f2(x.t):''}</td><td class="av">${x.t?f2(+x.avg.toFixed(2)):''}</td><td>${f2(S.tgtDay)}</td><td class="jj">${otJb(x.t?x.j:'')}</td></tr>`;
+}
+function otTotHtml(c,S){
+  return `<td class="s1"><b>รวม</b></td>`+c.persons.map(q=>`<td>${f2(q.a)||0}</td><td>${f2(q.b)||0}</td>`).join('')+`<td>${f2(+c.total.toFixed(2))||0}</td><td>${c.any?f2(+c.avg.toFixed(2)):''}</td><td>${f2(S.tgtDay)}</td><td>${otJb(c.j)}</td>`;
+}
+function otRefreshM(y,m,d){
+  const root=g('viewMission'); if(!root) return; const c=otCalc(y,m), S=y.ot.set;
+  const ma=g('otMA'), mb=g('otMB'); if(ma) ma.innerHTML=otSecA(y,c); if(mb) mb.innerHTML=otSecB(y,c);
+  const tr=root.querySelector(`.ot-tbl tr[data-d="${d}"]`);
+  if(tr){ const x=c.dl[d-1]; tr.classList.toggle('bad',x.avg>S.tgtDay+1e-9);
+    tr.querySelector('.tt').textContent=x.t?f2(x.t):''; tr.querySelector('.av').textContent=x.t?f2(+x.avg.toFixed(2)):''; tr.querySelector('.jj').innerHTML=otJb(x.t?x.j:''); }
+  const tot=g('otTot'); if(tot) tot.innerHTML=otTotHtml(c,S);
+  const chip=root.querySelector(`.ot-chip[data-chip="${m}"]`); if(chip){ const dot=chip.querySelector('.ot-dot'); if(dot) dot.className='ot-dot '+(c.j==='O'?'o':c.j==='X'?'x':''); chip.title=OT_EN[m]+': '+(c.any?f2(c.total)+' ชม.':'ยังไม่มีข้อมูล'); }
+}
+
+/* ---------- แก้ไขข้อมูล ---------- */
+function otSetCell(ot,m,d,pid,k,v){
+  const M=otMon(ot,m), r=M.d[d]||(M.d[d]={}), cur=r[pid]||[0,0]; cur[k]=v;
+  if(!cur[0]&&!cur[1]) delete r[pid]; else r[pid]=cur;
+  if(!Object.keys(r).length) delete M.d[d];
+}
+function otCell(el){
+  const y=Y(), ot=y&&y.ot; if(!ot) return;
+  const m=+el.dataset.m, d=+el.dataset.d, raw=String(el.value).trim().replace(/,/g,''), v=raw===''?0:parseFloat(raw);
+  if(!isFinite(v)||v<0){ el.value=el.dataset.orig; toastMsg('⚠️ กรอกตัวเลข ≥ 0 เท่านั้น','var(--t-dang)'); return; }
+  otSetCell(ot,m,d,el.dataset.p,+el.dataset.k,v);
+  el.dataset.orig=v?f2(v):''; el.value=el.dataset.orig; touch(); otRefreshM(y,m,d);
+}
+/* Actual (HR) ในตารางสรุปทั้งปี */
+function otTrendRefresh(y){ const b=g('otTrendBox'); if(b) b.innerHTML=otTrend(otYearCalc(y),y); }
+function otHr(el){
+  const y=Y(), ot=y&&y.ot; if(!ot) return;
+  const m=+el.dataset.m, raw=String(el.value).trim().replace(/,/g,'');
+  let v=null;
+  if(raw!==''){ v=parseFloat(raw); if(!isFinite(v)||v<0){ el.value=el.dataset.orig; toastMsg('⚠️ Actual: กรอกตัวเลข ≥ 0 เท่านั้น','var(--t-dang)'); return; } }
+  otSetActual(y,m,v);
+  el.dataset.orig=v==null?'':f2(v); el.value=el.dataset.orig; touch(); otTrendRefresh(y);
+}
+function otKey(e){
+  const el=e.target; if(!el.classList) return;
+  const isHr=el.classList.contains('oh'); if(!isHr&&!el.classList.contains('oc')) return;
+  if(e.key==='Enter'||e.key==='ArrowDown'||e.key==='ArrowUp'){
+    let nx;
+    if(isHr){ const all=Array.from(document.querySelectorAll('input.oh')), k=all.indexOf(el); nx=all[k+(e.key==='ArrowUp'?-1:1)]; }
+    else { const d=+el.dataset.d+(e.key==='ArrowUp'?-1:1); nx=document.querySelector(`input.oc[data-p="${el.dataset.p}"][data-k="${el.dataset.k}"][data-d="${d}"]`); }
+    e.preventDefault(); if(el.value!==el.dataset.orig) el.dispatchEvent(new Event('change',{bubbles:true}));
+    if(nx){ nx.focus(); nx.select(); }
+  }
+}
+function otPaste(e){
+  const el=e.target; if(!el.classList) return;
+  const txt=(e.clipboardData||window.clipboardData).getData('text'); if(!/[\t\n]/.test(txt.replace(/[\r\n]+$/,''))) return;
+  e.preventDefault();
+  const y=Y(), ot=y.ot, mem=ot.members;
+  const rows=txt.replace(/\r/g,'').replace(/\n+$/,'').split('\n').map(l=>l.split('\t'));
+  if(el.classList.contains('oh')){
+    let m=+el.dataset.m, n=0;
+    rows.forEach(cells=>{ if(m>11) return; const raw=String(cells[0]).trim().replace(/,/g,''); const v=raw===''?null:parseFloat(raw);
+      if(raw===''||(isFinite(v)&&v>=0)){ otSetActual(y,m,v); n++; } m++; });
+    touch(); render(); toastMsg('วาง Actual (HR) '+n+' เดือน'); return;
+  }
+  const m=+el.dataset.m, days=otDim(ui.year,m);
+  const c0=mem.findIndex(p=>p.id===el.dataset.p)*2+(+el.dataset.k), d0=+el.dataset.d; let n=0;
+  rows.forEach((cells,i)=>{ const d=d0+i; if(d>days) return;
+    cells.forEach((t,j)=>{ const c=c0+j; if(c>=mem.length*2) return; const v=String(t).trim().replace(/,/g,''); const x=v===''?0:parseFloat(v); if(!isFinite(x)||x<0) return;
+      otSetCell(ot,m,d,mem[Math.floor(c/2)].id,c%2,x); n++; }); });
+  touch(); render(); toastMsg('วางข้อมูล OT '+n+' ช่อง');
+}
+function otMeta(el){
+  const y=Y(), ot=y.ot, m=+ui.otm; if(!ot||!(m>=0)) return;
+  const M=otMon(ot,m), v=parseInt(el.value,10);
+  if(el.id==='otWd') M.wd=v>0?v:null; else M.mp=v>0?v:null;
+  touch(); render();
+}
+
+/* ---------- เริ่มต้น / ตั้งค่า / สมาชิก ---------- */
+function otNewMembers(names){ return names.map((n,i)=>({id:'p'+(i+1),name:n,color:OT_COL[i%OT_COL.length]})); }
+function otStartMod(){
+  ctx={t:'otstart'};
+  openMsMod(`<h3>➕ เริ่มสร้าง OT Control ปี ${E(ui.year)}</h3><div class="sub" style="margin-bottom:8px">พิมพ์รายชื่อสมาชิกที่ทำ OT (1 คนต่อ 1 บรรทัด) — เพิ่ม/ลบ/แก้ชื่อภายหลังได้ที่ปุ่ม ⚙ ตั้งค่า</div>`+
+    `<textarea id="osNames" rows="6" style="width:100%">Mr.Mana\nMr.Bulakorn\nMr.Chonlakarn\nMs.Natcha</textarea>`+
+    `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button type="button" class="btn-p" data-ma="otgo">สร้าง</button><button type="button" class="btn-g" data-ma="cancel">ยกเลิก</button></div>`,480);
+}
+function otMemRows(ot){
+  return ot.members.map(p=>`<div class="ot-mr" data-id="${E(p.id)}"><input type="color" class="oscol" value="${E(p.color)}"><input class="osname" value="${E(p.name)}" placeholder="ชื่อ"><button type="button" class="btn-g" data-ma="otdel" data-id="${E(p.id)}" title="ลบสมาชิก" style="color:var(--t-dang)">🗑</button></div>`).join('');
+}
+function otReadForm(){
+  const y=Y(), ot=y.ot; if(!g('osD')) return;
+  ot.set.tgtDay=num(g('osD').value)||OT_SET0.tgtDay; ot.set.tgtMonth=num(g('osM').value)||OT_SET0.tgtMonth; ot.set.limitMonth=num(g('osL').value)||OT_SET0.limitMonth;
+  ot.link=g('osK').value||'';
+  document.querySelectorAll('#osMem .ot-mr').forEach(row=>{ const p=ot.members.find(x=>x.id===row.dataset.id); if(!p) return;
+    p.name=row.querySelector('.osname').value.trim()||p.name; p.color=row.querySelector('.oscol').value||p.color; });
+}
+function otSetMod(){
+  const y=Y(), ot=y.ot; ctx={t:'otset'};
+  const items=[]; y.missions.forEach(m=>m.items.forEach(it=>items.push([it.id,m.name+' › '+clip(it.name,48)])));
+  openMsMod(`<h3>⚙ ตั้งค่า OT Control · FY${E(ui.year)}</h3><div class="ms-fld">`+
+    `<div><label>เป้า OT ต่อคนต่อวัน (ชม.)</label><input id="osD" type="number" step="0.1" min="0" value="${ot.set.tgtDay}"></div>`+
+    `<div><label>เส้นเป้า OT ต่อคนต่อเดือน (ชม.)</label><input id="osM" type="number" step="1" min="0" value="${ot.set.tgtMonth}"></div>`+
+    `<div><label>เกณฑ์ผ่าน: เฉลี่ยต่อเดือนต่อคน ≤ (ชม.)</label><input id="osL" type="number" step="0.5" min="0" value="${ot.set.limitMonth}"></div>`+
+    `<div><label>ช่อง Actual (HR) ผูกกับหัวข้อใน Action Plan</label><select id="osK"><option value="">อัตโนมัติ (หัวข้อ OT /Man/Day)</option>${items.map(i=>`<option value="${E(i[0])}"${ot.link===i[0]?' selected':''}>${E(i[1])}</option>`).join('')}</select></div></div>`+
+    `<label style="margin-top:8px">สมาชิกทีม</label><div id="osMem">${otMemRows(ot)}</div><div style="margin-top:6px"><button type="button" class="btn-g" data-ma="otadd">+ เพิ่มสมาชิก</button></div>`+
+    `<div class="ms-help">ผลตัดสิน: รายวัน = ผลรวม OT ทีม ÷ MP เกินเป้า/วัน → X · รายคนรายเดือน = OT รวม &gt; WD × เป้า/วัน → X · รายเดือน = เฉลี่ย/คน/วัน เกินเป้า → X · ทั้งปี = ค่าเฉลี่ยของเดือนที่มีข้อมูล</div>`+
+    `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button type="button" class="btn-p" data-ma="otsave">บันทึก</button><button type="button" class="btn-g" data-ma="cancel">ปิด</button></div>`,620);
+}
+function otModal(a,t){
+  if(ctx.t==='otstart'&&a==='otgo'){
+    const names=String(g('osNames').value||'').split('\n').map(s=>s.trim()).filter(Boolean);
+    if(!names.length){ alert('กรุณาใส่ชื่ออย่างน้อย 1 คน'); return; }
+    const y=Y(); y.ot=otSan({members:otNewMembers(names),set:OT_SET0,months:{}}); ui.view='ot'; ui.otm='Y'; closeMsMod(); touch(); render(); toastMsg('✅ สร้าง OT Control แล้ว — เลือกเดือนแล้วเริ่มกรอกได้เลย'); return;
+  }
+  if(ctx.t!=='otset') return;
+  const y=Y(), ot=y.ot;
+  if(a==='otsave'){ otReadForm(); closeMsMod(); touch(); render(); return; }
+  if(a==='otadd'){ otReadForm(); let n=ot.members.length+1, id='p'+n; while(ot.members.some(p=>p.id===id)) id='p'+(++n);
+    ot.members.push({id:id,name:'Member '+(ot.members.length+1),color:OT_COL[ot.members.length%OT_COL.length]}); touch(); otSetMod(); return; }
+  if(a==='otdel'){ otReadForm(); const id=t.dataset.id, p=ot.members.find(x=>x.id===id); if(!p) return;
+    if(ot.members.length<=1){ alert('ต้องมีสมาชิกอย่างน้อย 1 คน'); return; }
+    let cnt=0; Object.keys(ot.months).forEach(k=>Object.keys(ot.months[k].d||{}).forEach(d=>{ if(ot.months[k].d[d][id]) cnt++; }));
+    const del=()=>{ ot.members=ot.members.filter(x=>x.id!==id); Object.keys(ot.months).forEach(k=>{ Object.keys(ot.months[k].d||{}).forEach(d=>{ delete ot.months[k].d[d][id]; if(!Object.keys(ot.months[k].d[d]).length) delete ot.months[k].d[d]; }); }); touch(); render(); };
+    if(cnt){ closeMsMod(); ask('ลบสมาชิก “'+p.name+'”?','ข้อมูล OT ของคนนี้ '+cnt+' วัน จะถูกลบทั้งหมด',del); } else { del(); otSetMod(); }
+    return; }
+}
+function otClear(m){
+  const y=Y(), ot=y.ot; ask('ล้างข้อมูล OT เดือน '+OT_EN[m]+'-'+String(otYr(ui.year,m)).slice(2)+'?','ข้อมูล OT รายวันของเดือนนี้ทั้งหมดจะถูกลบ (WD/MP และ Actual (HR) ไม่เปลี่ยน)',()=>{ otMon(ot,m).d={}; touch(); render(); });
+}
+
+/* ---------- ส่งออก ---------- */
+function otCsv(){
+  const y=Y(); if(!y||!y.ot) return; const ot=y.ot, rows=[], cur=ui.otm==null?'Y':String(ui.otm);
+  if(cur==='Y'){
+    const Yc=otYearCalc(y);
+    rows.push(['Month','Total OT (Hr.)','WD','MP','Target OT (Hr.)','Avg OT/MP/Day','Target/Day','Actual (HR)','Judgement'].concat(ot.members.map(p=>p.name+' (Hr.)')));
+    Yc.ms.forEach((x,m)=>{ const a=otActual(y,m); rows.push([OT_EN[m]+'-'+String(otYr(ui.year,m)).slice(2),+x.total.toFixed(3),x.wd,x.N,x.target,x.any?+x.avg.toFixed(4):'',ot.set.tgtDay,a==null?'':a,x.j].concat(x.persons.map(q=>x.any?+q.t.toFixed(3):''))); });
+    rows.push(['Overall',+Yc.total.toFixed(3),Yc.wdSum,'',Yc.tgtSum,Yc.overall==null?'':+Yc.overall.toFixed(4),ot.set.tgtDay,'',Yc.j].concat(Yc.pp.map(q=>+(q.a+q.b).toFixed(3))));
+    csvOut(rows,`QE_OT_${ui.year}_Summary.csv`);
+  }else{
+    const m=+cur, c=otCalc(y,m), M=ot.months[m]||{};
+    rows.push(['Date','Weekday'].concat(ot.members.flatMap(p=>[p.name+' OT1.5',p.name+' OT3.0']),['Team total','Avg/MP','Target','Judge']));
+    c.dl.forEach(x=>{ const r=(M.d&&M.d[x.d])||{}; rows.push([`${x.d}-${OT_EN[m]}-${String(otYr(ui.year,m)).slice(2)}`,OT_DOW[x.w]].concat(ot.members.flatMap(p=>{ const v=r[p.id]||[0,0]; return [v[0]||'',v[1]||'']; }),[x.t||'',x.t?+x.avg.toFixed(4):'',ot.set.tgtDay,x.t?x.j:''])); });
+    csvOut(rows,`QE_OT_${OT_EN[m]}-${otYr(ui.year,m)}.csv`);
+  }
+}
+function otJson(){
+  const y=Y(); if(!y||!y.ot) return;
+  const ot=clone(y.ot); for(let m=0;m<12;m++){ const a=otActual(y,m); if(a!=null){ otMon(ot,m); ot.months[m].hr=a; } }
+  const txt=JSON.stringify({app:'qe_mission',version:1,exportedAt:new Date().toISOString(),years:{[ui.year]:{ot:ot}}});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([txt],{type:'application/json'})); a.download=`qe_ot_${ui.year}_`+new Date().toISOString().slice(0,10).replace(/-/g,'')+'.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+  toastMsg('💾 บันทึกไฟล์ OT แล้ว (รวม Actual (HR))');
+}
+
+/* ================= 🌴 แผนลา แลกวันหยุด อบรม (Dashboard วันลาคงเหลือ + แผนรายเดือน) ================= */
+const LV_M=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+const LV_ML=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+const LV_K={
+  L:{n:'ลาเต็มวัน',lab:'ลา',bg:'#ef4444',fg:'#fff'},
+  T:{n:'อบรม / ไปข้างนอก เต็มวัน',lab:'อบรม',bg:'#1e3a8a',fg:'#fff'},
+  W:{n:'W · มาทำงานในวันหยุด (แลกวันหยุด)',lab:'W',bg:'#7c3aed',fg:'#fff'},
+  H:{n:'H · หยุดชดเชย',lab:'H',bg:'#d946ef',fg:'#fff'},
+  O:{n:'OT · ทำ OT ในวันหยุด',lab:'OT',bg:'#4f46e5',fg:'#fff'}
+};
+const LV_PL={bg:'#facc15',fg:'#422006'}, LV_PT={bg:'#2b7cd3',fg:'#fff'};
+const LV_CAT=[['vac','พักร้อน','#14b8a6'],['sick','ลาป่วย','#f59e0b'],['pers','ลากิจ','#8b5cf6']];
+
+/* ---------- เวลา (วัน / ชม. / นาที) ---------- */
+const lvT0=()=>({d:0,h:0,m:0});
+function lvTm(t){ if(!t||typeof t!=='object') return null; return {d:Math.max(0,parseInt(t.d)||0),h:Math.max(0,parseInt(t.h)||0),m:Math.max(0,parseInt(t.m)||0)}; }
+const lvMin=(t,hpd)=>t?((t.d*hpd+t.h)*60+t.m):0;
+function lvFromMin(mi,hpd){ mi=Math.max(0,Math.round(mi)); const dm=hpd*60, d=Math.floor(mi/dm); mi-=d*dm; return {d:d,h:Math.floor(mi/60),m:mi%60}; }
+const lvDays=(t,hpd)=>t?lvMin(t,hpd)/(hpd*60):0;
+function lvFmt(t){ if(!t) return ''; const a=[]; if(t.d) a.push(t.d+' วัน'); if(t.h) a.push(t.h+' ชม.'); if(t.m) a.push(t.m+' น.'); return a.length?a.join(' '):'0'; }
+function lvParseTm(s,hpd){
+  s=String(s==null?'':s).trim(); if(s==='') return null;
+  let m=s.match(/^(\d+)\s*-\s*(\d+):(\d+)$/); if(m) return lvFromMin((+m[1]*hpd+ +m[2])*60+ +m[3],hpd);
+  const d=s.match(/(\d+(?:\.\d+)?)\s*(?:วัน|d)/i), h=s.match(/(\d+(?:\.\d+)?)\s*(?:ชม|ชั่วโมง|h)/i), mi=s.match(/(\d+(?:\.\d+)?)\s*(?:นาที|น\.|m)/i);
+  if(d||h||mi) return lvFromMin(((d?+d[1]:0)*hpd+(h?+h[1]:0))*60+(mi?+mi[1]:0),hpd);
+  if(/^\d+(\.\d+)?$/.test(s)) return lvFromMin(parseFloat(s)*hpd*60,hpd);
+  return undefined;
+}
+const lvDay1=v=>{ const x=Math.round(v*10)/10; return String(x); };
+
+/* ---------- sanitize ---------- */
+function lvCellSan(c){
+  if(!c||typeof c!=='object') return null; const k=c.k, n=String(c.n||'').trim();
+  if(k==='P'){ const p=(Array.isArray(c.p)?c.p:[]).map(x=>({h:num(x&&x.h),s:(x&&(x.s==='F'||x.s==='S'))?x.s:'',k:(x&&x.k==='T')?'T':'L',est:(x&&x.est)?1:0})).filter(x=>x.h>0); if(!p.length) return null; return {k:'P',p:p,n:n}; }
+  if(k==='L'||k==='T'||k==='W'||k==='H'||k==='O') return {k:k,n:n};
+  return null;
+}
+function lvSan(o){
+  o=clone(o||{}); const used=new Set();
+  o.people=(Array.isArray(o.people)?o.people:[]).map((p,i)=>{ let id=String((p&&p.id)||('e'+(i+1))); while(used.has(id)) id+='x'; used.add(id);
+    return {id:id,code:String((p&&p.code)||''),name:String(p&&p.name!=null?p.name:('Member '+(i+1))),color:(p&&p.color)||OT_COL[i%OT_COL.length]}; });
+  const s=o.set||{}; const hpd=num(s.hpd)>0?num(s.hpd):8, mx=isFinite(parseFloat(s.max))&&parseFloat(s.max)>=0?parseFloat(s.max):1;
+  o.set={hpd:hpd,max:mx};
+  const bal={}; o.people.forEach(p=>{ const b=(o.bal&&o.bal[p.id])||{}, out={};
+    LV_CAT.forEach(c=>{ const x=b[c[0]]||{}, e=lvTm(x.e)||lvT0(), u=lvTm(x.u)||lvT0(); let r=lvTm(x.r); if(!r) r=lvFromMin(lvMin(e,hpd)-lvMin(u,hpd),hpd); out[c[0]]={e:e,u:u,r:r}; });
+    out.out=lvTm(b.out); bal[p.id]=out; });
+  o.bal=bal; o.upd=String(o.upd||'');
+  const ms={};
+  Object.keys(o.months||{}).forEach(k=>{ const m=+k; if(!(m>=1&&m<=12)) return; const M=o.months[k]||{}, c={};
+    Object.keys(M.c||{}).forEach(ck=>{ const v=lvCellSan(M.c[ck]); if(v) c[ck]=v; });
+    ms[m]={hol:(Array.isArray(M.hol)?M.hol:[]).map(x=>parseInt(x)).filter(x=>x>=1&&x<=31),c:c}; });
+  o.months=ms; return o;
+}
+const lvMon=(lv,m)=>lv.months[m]||(lv.months[m]={hol:[],c:{}});
+
+/* ---------- คำนวณ ---------- */
+const lvLabel=c=>!c?'':c.k==='P'?c.p.map(x=>x.est?'½':(f2(x.h)+x.s)).join(','):LV_K[c.k].lab;
+function lvCellH(c,hpd){
+  if(!c) return {L:0,T:0}; if(c.k==='L') return {L:hpd,T:0}; if(c.k==='T') return {L:0,T:hpd};
+  if(c.k==='P'){ let L=0,T=0; c.p.forEach(x=>{ if(x.k==='L') L+=x.h; else T+=x.h; }); return {L:L,T:T}; }
+  return {L:0,T:0};
+}
+function lvCellTitle(c,p,d,m){
+  if(!c) return `${p.name} · ${d} ${LV_M[m-1]} — คลิกเพื่อใส่ข้อมูล`;
+  let t=''; if(c.k==='P') t=c.p.map(x=>(x.k==='L'?'ลา ':'อบรม ')+(x.est?'ครึ่งวัน (ไม่ระบุชม.)':f2(x.h)+' ชม.'+(x.s==='F'?' ช่วงเช้า':x.s==='S'?' ช่วงบ่าย':''))).join(' + ');
+  else t=LV_K[c.k].n;
+  return `${p.name} · ${d} ${LV_M[m-1]}\n${t}`+(c.n?'\n'+c.n:'');
+}
+function lvMonth(y,m){
+  const lv=y.lv, hpd=lv.set.hpd, yr=+ui.year, dim=new Date(yr,m,0).getDate(), M=lv.months[m]||{hol:[],c:{}};
+  const days=[]; for(let d=1;d<=dim;d++){ const w=new Date(yr,m-1,d).getDay(), we=w===0||w===6, hol=M.hol.indexOf(d)>=0; days.push({d:d,w:w,we:we,hol:hol,off:we||hol,away:0,part:0,wk:0}); }
+  const tot={Lh:0,Th:0,W:0,H:0,O:0}, persons=lv.people.map(p=>{
+    const s={p:p,Lh:0,Th:0,W:0,H:0,O:0,any:0};
+    days.forEach(x=>{ const c=M.c[p.id+':'+x.d]; if(!c) return; s.any++;
+      const h=lvCellH(c,hpd); s.Lh+=h.L; s.Th+=h.T;
+      if(c.k==='W'){ s.W++; x.wk++; } else if(c.k==='H') s.H++; else if(c.k==='O'){ s.O++; x.wk++; }
+      if(!x.off&&(c.k==='L'||c.k==='T'||c.k==='H')) x.away++;
+      if(c.k==='P') x.part+=h.L+h.T; });
+    tot.Lh+=s.Lh; tot.Th+=s.Th; tot.W+=s.W; tot.H+=s.H; tot.O+=s.O; return s; });
+  const conf=days.filter(x=>x.away>lv.set.max);
+  return {m:m,dim:dim,days:days,persons:persons,tot:tot,conf:conf,hpd:hpd,any:persons.some(s=>s.any>0)};
+}
+function lvYear(y){
+  const lv=y.lv, ms=[]; for(let m=1;m<=12;m++) ms.push(lvMonth(y,m));
+  const per=lv.people.map((p,i)=>{ const s={p:p,Lh:0,Th:0,W:0,H:0,O:0}; ms.forEach(x=>{ const q=x.persons[i]; s.Lh+=q.Lh; s.Th+=q.Th; s.W+=q.W; s.H+=q.H; s.O+=q.O; }); return s; });
+  const hpd=lv.set.hpd; let eV=0,uV=0,rV=0,uS=0,uP=0,out=0;
+  lv.people.forEach(p=>{ const b=lv.bal[p.id]; eV+=lvDays(b.vac.e,hpd); uV+=lvDays(b.vac.u,hpd); rV+=lvDays(b.vac.r,hpd); uS+=lvDays(b.sick.u,hpd); uP+=lvDays(b.pers.u,hpd); out+=lvDays(b.out,hpd); });
+  return {ms:ms,per:per,eV:eV,uV:uV,rV:rV,uS:uS,uP:uP,out:out,
+    Lh:per.reduce((a,x)=>a+x.Lh,0),Th:per.reduce((a,x)=>a+x.Th,0),conf:ms.reduce((a,x)=>a+x.conf.length,0)};
+}
+
+/* ---------- องค์ประกอบ UI ---------- */
+function lvRing(used,total,color,size){
+  const r=24,c=2*Math.PI*r, ratio=total>0?Math.max(0,Math.min(1,used/total)):0, d=ratio*c;
+  return `<svg viewBox="0 0 60 60" width="${size}" height="${size}" aria-hidden="true"><circle cx="30" cy="30" r="${r}" fill="none" stroke="var(--line)" stroke-opacity=".7" stroke-width="7"/>`+
+    (d>0?`<circle cx="30" cy="30" r="${r}" fill="none" stroke="${color}" stroke-width="7" stroke-linecap="round" stroke-dasharray="${d} ${c-d}" transform="rotate(-90 30 30)"/>`:'')+`</svg>`;
+}
+function lvAv(p){ return `<span class="ot-av" style="background:${p.color}">${E((p.name.replace(/^(นาย|นางสาว|นาง|น\.ส\.|Mr|Ms)\.?\s*/i,'')||'?').slice(0,1).toUpperCase())}</span>`; }
+const lvTagS=(bg,fg,t)=>`<span class="lv-tag" style="background:${bg};color:${fg||'#fff'}">${E(t)}</span>`;
+function lvCellTag(c){
+  if(!c) return '';
+  if(c.k==='P'){ const L=c.p.some(x=>x.k==='L'), T=c.p.some(x=>x.k==='T'); return lvTagS(L&&!T?LV_PL.bg:LV_PT.bg,L&&!T?LV_PL.fg:'#fff',(L&&T?'ลา+อบรม ':L?'ลา ':'อบรม ')+lvLabel(c)); }
+  return lvTagS(LV_K[c.k].bg,'#fff',LV_K[c.k].n.split(' · ')[0].replace('อบรม / ไปข้างนอก เต็มวัน','อบรมเต็มวัน'));
+}
+function lvCellStyle(c){
+  if(!c) return '';
+  if(c.k==='P'){ const L=c.p.some(x=>x.k==='L'), T=c.p.some(x=>x.k==='T');
+    if(L&&T) return `background:linear-gradient(135deg,${LV_PL.bg} 50%,${LV_PT.bg} 50%);color:#111`;
+    return L?`background:${LV_PL.bg};color:${LV_PL.fg}`:`background:${LV_PT.bg};color:${LV_PT.fg}`; }
+  return `background:${LV_K[c.k].bg};color:${LV_K[c.k].fg}`;
+}
+
+/* ---------- ว่าง / ตัวนำทาง ---------- */
+function lvEmpty(){
+  return `<div class="ms-card ms-empty"><h2>🌴 แผนลา แลกวันหยุด อบรม ยังไม่มีข้อมูล</h2><p class="ms-sub">นำเข้าไฟล์ข้อมูลของปีนี้ (JSON) หรือเริ่มสร้างเอง — มี Dashboard สรุปวันลาคงเหลือ และตารางแผนรายเดือนให้</p>`+
+    `<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:12px"><button type="button" class="btn-p" data-act="imp">📂 นำเข้า (JSON)</button><button type="button" class="btn-g" data-act="lvstart">➕ เริ่มสร้างเอง</button></div></div>`;
+}
+function lvNav(y,Ys){
+  const cur=ui.lvm==null?'S':String(ui.lvm);
+  let h=`<div class="ot-nav"><button type="button" class="btn-g" data-act="vw" data-v="plan">← Action Plan</button><div class="ot-chips">`+
+    `<button type="button" class="ot-chip${cur==='S'?' on':''}" data-act="lvm" data-m="S">📊 สรุปวันลา</button>`;
+  Ys.ms.forEach((x,i)=>{ const m=i+1; h+=`<button type="button" class="ot-chip${cur===String(m)?' on':''}" data-act="lvm" data-m="${m}" title="${LV_ML[i]}: ${x.any?'มีแผน':'ยังไม่มีข้อมูล'}${x.conf.length?' · ⚠ คนไม่อยู่ซ้อนกัน '+x.conf.length+' วัน':''}">${LV_M[i]}<i class="ot-dot ${x.conf.length?'x':x.any?'o':''}"></i></button>`; });
+  return h+`</div><div class="ot-navr"><button type="button" class="btn-g" data-act="lvset">⚙ ตั้งค่า / พนักงาน</button></div></div>`;
+}
+function viewLV(y){
+  if(!y.lv) return lvEmpty();
+  const Ys=lvYear(y), cur=ui.lvm==null?'S':String(ui.lvm);
+  return lvNav(y,Ys)+`<div id="lvBody">${cur==='S'?lvSummary(y,Ys):lvMonthView(y,+cur)}</div>`;
+}
+function lvRefresh(){
+  const y=Y(); if(!y||!y.lv) return; const b=g('lvBody'); if(!b) return; const sc=b.querySelector('.lv-scroll'), sl=sc?sc.scrollLeft:0, st=sc?sc.scrollTop:0;
+  const cur=ui.lvm==null?'S':String(ui.lvm), Ys=lvYear(y);
+  b.innerHTML=cur==='S'?lvSummary(y,Ys):lvMonthView(y,+cur);
+  const sc2=b.querySelector('.lv-scroll'); if(sc2){ sc2.scrollLeft=sl; sc2.scrollTop=st; }
+  document.querySelectorAll('.ot-chips [data-act="lvm"]').forEach(btn=>{ const m=+btn.dataset.m; if(!(m>=1)) return; const x=Ys.ms[m-1], dot=btn.querySelector('.ot-dot'); if(dot) dot.className='ot-dot '+(x.conf.length?'x':x.any?'o':''); });
+}
+
+/* ---------- หน้า: สรุปวันลา ---------- */
+function lvUpcoming(y,limit){
+  const lv=y.lv, out=[], yr=+ui.year;
+  Object.keys(lv.months).forEach(mk=>{ const m=+mk, M=lv.months[mk];
+    Object.keys(M.c).forEach(ck=>{ const i=ck.lastIndexOf(':'), pid=ck.slice(0,i), d=+ck.slice(i+1), p=lv.people.find(x=>x.id===pid); if(!p) return;
+      const ds=`${yr}-${pad(m)}-${pad(d)}`; out.push({ds:ds,m:m,d:d,p:p,c:M.c[ck]}); }); });
+  out.sort((a,b)=>a.ds<b.ds?-1:a.ds>b.ds?1:0);
+  return out;
+}
+function lvEvRow(e){
+  const w=new Date(+ui.year,e.m-1,e.d).getDay(), c=e.c;
+  return `<div class="lv-ev" data-act="lvev" data-m="${e.m}" data-d="${e.d}" data-p="${E(e.p.id)}"><div class="lv-evd"><b>${e.d}</b><small>${LV_M[e.m-1]} · ${OT_DOW[w]}</small></div><div class="lv-evt"><div class="l1"><span class="ot-sw" style="background:${e.p.color}"></span>${E(e.p.name)} ${lvCellTag(c)}</div>${c.n?`<div class="l2">${E(clip(c.n,90))}</div>`:''}</div></div>`;
+}
+function lvSummary(y,Ys){
+  const lv=y.lv, hpd=lv.set.hpd, thYr=+ui.year+543;
+  const pctU=Ys.eV>0?Ys.uV/Ys.eV*100:0;
+  let h=`<div id="lvTop">${lvTop(y,Ys)}</div>`;
+  // chart + upcoming
+  const ev=lvUpcoming(y).filter(e=>`${ui.year}-${pad(e.m)}-${pad(e.d)}`>=today).slice(0,12);
+  h+=`<div class="lv-two"><div class="ms-card"><h3>📈 แผนลา / อบรม รายเดือน (วันทำงานที่ไม่อยู่)</h3><div class="ms-sub">แท่งซ้อน: <b style="color:#ef4444">ลา</b> + <b style="color:#2b7cd3">อบรม/ไปข้างนอก</b> (ชม. ÷ ${hpd} = วัน) · จุดแดง = เดือนที่มีคนไม่อยู่ซ้อนกันเกิน ${f2(lv.set.max)} คน/วัน</div>${lvBars(Ys,hpd)}</div>`+
+    `<div class="ms-card"><h3>📅 กำหนดการถัดไป</h3><div class="ms-sub">นับจากวันนี้ · คลิกเพื่อดู/แก้ไข</div><div class="lv-up">${ev.length?ev.map(lvEvRow).join(''):'<div class="ms-sub" style="padding:14px 4px">ไม่มีรายการลา/อบรมที่ลงแผนไว้หลังวันนี้</div>'}</div></div></div>`;
+  // heatmap
+  h+=`<div class="ms-card ot-card"><h3>🗓️ Heatmap: วันที่ไม่อยู่ (ลา + อบรม) คน × เดือน</h3><div class="ms-sub">หน่วย = วัน (ชม. ÷ ${hpd}) · ยิ่งเข้มยิ่งมาก · คลิกชื่อเดือนในแถบด้านบนเพื่อดูแผน</div><div class="ms-hm"><table><thead><tr><th>พนักงาน</th>`+LV_M.map(n=>`<th>${n}</th>`).join('')+`<th>รวม</th></tr></thead><tbody>`;
+  const mxh=Math.max(1,...Ys.ms.flatMap(x=>x.persons.map(q=>(q.Lh+q.Th)/hpd)));
+  Ys.per.forEach((s,i)=>{ h+=`<tr><td><span class="ot-sw" style="background:${s.p.color}"></span> ${E(s.p.name)}</td>`+Ys.ms.map(x=>{ const q=x.persons[i], v=(q.Lh+q.Th)/hpd; return v>0?`<td style="background:color-mix(in srgb,#ef4444 ${Math.round(12+v/mxh*58)}%,transparent)" title="ลา ${lvDay1(q.Lh/hpd)} · อบรม ${lvDay1(q.Th/hpd)} วัน">${lvDay1(v)}</td>`:`<td class="na">–</td>`; }).join('')+`<td><b>${lvDay1((s.Lh+s.Th)/hpd)}</b></td></tr>`; });
+  h+=`<tr class="tot"><td>รวมทีม</td>`+Ys.ms.map(x=>{ const v=(x.tot.Lh+x.tot.Th)/hpd; return v>0?`<td>${lvDay1(v)}</td>`:`<td class="na">–</td>`; }).join('')+`<td><b>${lvDay1((Ys.Lh+Ys.Th)/hpd)}</b></td></tr></tbody></table></div></div>`;
+  // editable table
+  h+=`<div class="ms-card ot-card"><h3>📋 สิทธิ์การลาคงเหลือ ปี ${thYr} (กรอก/แก้ไขได้ — ข้อมูลจาก HR)</h3><div class="ms-sub">พิมพ์ได้หลายแบบ เช่น <b>9 วัน 4 ชม.</b> · <b>9 -4:0</b> (แบบ Excel: วัน -ชม.:นาที) · <b>9.5</b> (วัน) · ${hpd} ชม. = 1 วัน · แก้แล้วการ์ดด้านบนอัปเดตทันที</div><div class="ms-ng"><table class="lv-bt"><thead><tr class="g1"><th rowspan="2" style="text-align:left">พนักงาน</th>`+
+    LV_CAT.map(c=>`<th colspan="3" class="c${c[0]}">${c[1]}</th>`).join('')+`<th colspan="2">การโอนพักร้อน</th></tr><tr class="g1">`+LV_CAT.map(c=>`<th class="c${c[0]}">สิทธิ์</th><th class="c${c[0]}">ใช้ไป</th><th class="c${c[0]}">คงเหลือ</th>`).join('')+`<th>คงเหลือ</th><th>โอนไปปี ${thYr+1}</th></tr></thead><tbody>`;
+  lv.people.forEach(p=>{ const b=lv.bal[p.id];
+    h+=`<tr data-pid="${E(p.id)}"><td class="nm">${lvAv(p)}${E(p.name)}<small style="display:block;color:var(--mut);font-weight:600;margin-left:30px">${E(p.code)}</small></td>`+
+      LV_CAT.map(c=>['e','u','r'].map(f=>`<td class="c${c[0]}"><input class="lb${f==='r'?' r':''}" data-p="${E(p.id)}" data-c="${c[0]}" data-f="${f}" value="${E(lvFmt(b[c[0]][f]))}" data-orig="${E(lvFmt(b[c[0]][f]))}" autocomplete="off"></td>`).join('')).join('')+
+      `<td><b>${E(lvFmt(b.vac.r))}</b></td><td><input class="lb" data-p="${E(p.id)}" data-c="out" data-f="x" value="${E(b.out?lvFmt(b.out):'')}" data-orig="${E(b.out?lvFmt(b.out):'')}" placeholder="–" autocomplete="off"></td></tr>`;
+    const w=LV_CAT.map(c=>lvChk(b[c[0]],hpd,c[1])).filter(Boolean);
+    if(w.length) h+=`<tr data-warn="${E(p.id)}"><td colspan="11" style="text-align:left;padding:0 8px 6px"><span class="warn">⚠ ${E(w.join(' · '))}</span></td></tr>`;
+  });
+  h+=`</tbody></table></div><div class="lv-upd">🕒 อัปเดตข้อมูลล่าสุด <input id="lvUpd" value="${E(lv.upd)}" placeholder="เช่น 07-Oct-26 11:00" autocomplete="off"></div></div>`;
+  return h;
+}
+function lvChk(x,hpd,name){
+  const calc=lvMin(x.e,hpd)-lvMin(x.u,hpd), have=lvMin(x.r,hpd);
+  if(Math.abs(calc-have)<1) return '';
+  return `${name}: สิทธิ์ − ใช้ไป = ${lvFmt(lvFromMin(Math.max(0,calc),hpd))||'0'} (ต่างจากที่กรอกไว้)`;
+}
+function lvTop(y,Ys){
+  const lv=y.lv, hpd=lv.set.hpd, thYr=+ui.year+543, pctU=Ys.eV>0?Ys.uV/Ys.eV*100:0;
+  const rcol=Ys.rV<=0?'var(--dang)':Ys.rV/(Ys.eV||1)<.25?'var(--warn)':'var(--ok)';
+  let h=`<div class="lv-hero"><div class="ms-card lv-big"><div class="ms-ovg">`+
+    `<svg viewBox="0 0 120 120" width="150" height="150" role="img" aria-label="สัดส่วนพักร้อนที่ใช้ไป"><circle cx="60" cy="60" r="48" fill="none" stroke="var(--line)" stroke-opacity=".7" stroke-width="13"/>`+
+    (pctU>0?`<circle cx="60" cy="60" r="48" fill="none" stroke="#14b8a6" stroke-width="13" stroke-linecap="round" stroke-dasharray="${Math.min(100,pctU)/100*301.6} 301.6" transform="rotate(-90 60 60)"/>`:'')+
+    `<text x="60" y="58" text-anchor="middle" font-size="25" font-weight="800" fill="var(--txt)">${Ys.eV>0?Math.round(pctU)+'%':'–'}</text><text x="60" y="76" text-anchor="middle" font-size="10" fill="var(--mut)">ใช้พักร้อนแล้ว</text></svg></div>`+
+    `<div class="ms-ovt"><div class="ms-eyebrow">🌴 สิทธิ์การลา ปี ${thYr} · QE Electronics</div><div class="num" style="color:${rcol}">${lvDay1(Ys.rV)}<small>วัน</small></div><div class="ms-mut">พักร้อนคงเหลือรวมทีม · ใช้ไป ${lvDay1(Ys.uV)} จากสิทธิ์ ${lvDay1(Ys.eV)} วัน</div><div class="ms-prog"><i style="width:${Math.min(100,pctU)}%;background:linear-gradient(90deg,#14b8a6,var(--pri))"></i></div></div></div>`+
+    `<div class="ms-kpis">`+kpi('🏖️',lvDay1(Ys.rV),'พักร้อนคงเหลือ (วัน)',rcol)+kpi('🤒',lvDay1(Ys.uS),'ลาป่วยใช้ไป (วัน)')+kpi('📝',lvDay1(Ys.uP),'ลากิจใช้ไป (วัน)')+kpi('➡️',lvDay1(Ys.out),`โอนไปปี ${thYr+1} (วัน)`)+`</div></div>`;
+  h+=`<div class="lv-pgrid" style="margin-bottom:16px">`;
+  lv.people.forEach((p,i)=>{ const b=lv.bal[p.id], s=Ys.per[i];
+    h+=`<div class="lv-pc" style="--pc:${p.color}"><div class="lv-ph">${lvAv(p)}<div><b>${E(p.name)}</b><small>รหัส ${E(p.code)}</small></div>${b.out?`<span class="tr">โอน → ${thYr+1}: ${E(lvFmt(b.out))}</span>`:''}</div><div class="lv-rings">`+
+      LV_CAT.map(c=>{ const x=b[c[0]], eD=lvDays(x.e,hpd), uD=lvDays(x.u,hpd), rD=lvDays(x.r,hpd), col=rD<=0&&eD>0?'var(--dang)':c[2];
+        return `<div class="lv-ring"><div class="tt" style="color:${c[2]}">${c[1]}</div>${lvRing(uD,eD,col,64)}<div class="rr"><span style="font-size:10.5px;color:var(--mut)">คงเหลือ</span><br><b style="font-size:14px;color:${rD<=0&&eD>0?'var(--t-dang)':'var(--txt)'}">${E(lvFmt(x.r)||'0')}</b></div><div class="uu">ใช้ ${E(lvFmt(x.u)||'0')}<br>สิทธิ์ ${E(lvFmt(x.e)||'0')}</div></div>`; }).join('')+
+      `</div><div class="lv-plan" title="สรุปจากตารางแผนรายเดือนที่ลงไว้ (ไม่รวมกับสิทธิ์ที่ HR กรอก)">`+
+      `<span class="lv-chip"><i style="background:#ef4444"></i>ลาตามแผน ${lvDay1(s.Lh/hpd)} วัน</span><span class="lv-chip"><i style="background:#2b7cd3"></i>อบรม ${lvDay1(s.Th/hpd)} วัน</span>`+
+      `<span class="lv-chip"><i style="background:#7c3aed"></i>W ${s.W}</span><span class="lv-chip"><i style="background:#d946ef"></i>H ${s.H}</span><span class="lv-chip"><i style="background:#4f46e5"></i>OT ${s.O}</span></div></div>`; });
+  return h+`</div>`;
+}
+function lvBars(Ys,hpd){
+  const W=780,H=250,Lm=40,Rm=14,Tm=22,Bm=30, iw=W-Lm-Rm, ih=H-Tm-Bm, bw=iw/12;
+  const mx=Math.max(1,...Ys.ms.map(x=>(x.tot.Lh+x.tot.Th)/hpd))*1.18, X=i=>Lm+bw*i+bw/2, Yp=v=>Tm+(1-v/mx)*ih;
+  let s=`<svg class="ms-trend" viewBox="0 0 ${W} ${H}" role="img" aria-label="แผนลาและอบรมรายเดือน">`;
+  const step=mx>12?4:mx>6?2:1; for(let v=0;v<=mx;v+=step) s+=`<line x1="${Lm}" x2="${W-Rm}" y1="${Yp(v)}" y2="${Yp(v)}" stroke="var(--line)" stroke-opacity=".7" ${v?'stroke-dasharray="3 4"':''}/><text x="${Lm-6}" y="${Yp(v)+4}" text-anchor="end">${v}</text>`;
+  Ys.ms.forEach((x,i)=>{ const l=x.tot.Lh/hpd, t=x.tot.Th/hpd, w=bw*.56;
+    s+=`<text x="${X(i)}" y="${H-10}" text-anchor="middle">${LV_M[i]}</text>`;
+    if(l>0) s+=`<rect x="${X(i)-w/2}" y="${Yp(l)}" width="${w}" height="${Yp(0)-Yp(l)}" rx="3" fill="#ef4444" fill-opacity=".88"><title>${LV_ML[i]}: ลา ${lvDay1(l)} วัน</title></rect>`;
+    if(t>0) s+=`<rect x="${X(i)-w/2}" y="${Yp(l+t)}" width="${w}" height="${Yp(l)-Yp(l+t)}" rx="3" fill="#2b7cd3" fill-opacity=".9"><title>${LV_ML[i]}: อบรม ${lvDay1(t)} วัน</title></rect>`;
+    if(l+t>0) s+=`<text x="${X(i)}" y="${Yp(l+t)-6}" text-anchor="middle" font-weight="800" style="fill:var(--txt)">${lvDay1(l+t)}</text>`;
+    if(x.conf.length) s+=`<circle cx="${X(i)+bw*.3}" cy="${Tm-6}" r="5" fill="#ef4444"><title>${LV_ML[i]}: คนไม่อยู่ซ้อนกัน ${x.conf.length} วัน</title></circle>`; });
+  return s+'</svg>';
+}
+
+/* ---------- หน้า: แผนรายเดือน ---------- */
+function lvBrush(){
+  const b=ui.lvb||'';
+  const btns=[['L','ลาเต็มวัน',LV_K.L.bg],['T','อบรมเต็มวัน',LV_K.T.bg],['W','W',LV_K.W.bg],['H','H',LV_K.H.bg],['O','OT',LV_K.O.bg],['P','ไม่เต็มวัน (ชม.)',LV_PL.bg],['X','🧽 ลบ','#64748b']];
+  return `<div class="lv-brush"><span class="lbl">🖌️ โหมดระบายสี:</span><button type="button" class="lv-bb${b===''?' on':''} off" data-act="lvbr" data-b="">✋ ป๊อปอัป</button>`+
+    btns.map(x=>`<button type="button" class="lv-bb${b===x[0]?' on':''}" data-act="lvbr" data-b="${x[0]}" style="background:${x[2]};${x[0]==='P'?'color:#422006':''}">${x[1]}</button>`).join('')+
+    `<span class="ms-sub" style="margin-left:6px">${b===''?'คลิกช่อง = เปิดหน้าต่างกรอกรายละเอียด':b==='P'?'คลิกช่อง = เปิดหน้าต่างกรอกชั่วโมง':b==='X'?'คลิกช่อง = ลบ':'คลิกช่อง = ใส่สีนี้ (คลิกซ้ำ = ลบ)'}</span></div>`;
+}
+function lvMonthView(y,m){
+  const lv=y.lv, hpd=lv.set.hpd, X=lvMonth(y,m), thYr=+ui.year+543, T=X.tot;
+  let h=`<div class="lv-mbar"><h2>🌴 ${LV_ML[m-1]} ${thYr}</h2><span class="ms-sub">คลิกหัววัน = กำหนด/ยกเลิก วันหยุดนักขัตฤกษ์ (สีเขียว) · วันเสาร์–อาทิตย์เป็นสีส้มอัตโนมัติ</span><span class="grow"></span>`+
+    `<button type="button" class="btn-g" data-act="lvclr" data-m="${m}" style="color:var(--t-dang)">🧹 ล้างแผนเดือนนี้</button></div>`;
+  h+=`<div class="ms-kpis" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:14px">`+
+    kpi('🌴',lvDay1(T.Lh/hpd),'ลา (วัน)','var(--t-dang)')+kpi('🎓',lvDay1(T.Th/hpd),'อบรม/ไปข้างนอก (วัน)','#2b7cd3')+
+    kpi('🔁',`${T.W} / ${T.H}`,'W มาทำงาน / H หยุดชดเชย','var(--t-vio)')+kpi('🌙',T.O,'OT ในวันหยุด (ครั้ง)')+
+    kpi(X.conf.length?'⚠️':'✅',X.conf.length,X.conf.length?`วันที่คนไม่อยู่เกิน ${f2(lv.set.max)} คน`:'ไม่มีวันที่คนไม่อยู่ซ้อนกัน',X.conf.length?'var(--t-dang)':'var(--t-ok)')+`</div>`;
+  h+=lvBrush();
+  const cw=[176].concat(X.days.map(()=>38),[54,54]), tw=cw.reduce((a,b)=>a+b,0);
+  h+=`<div class="lv-scroll"><table class="lv-tbl" style="width:${tw}px"><colgroup>${cw.map(x=>`<col style="width:${x}px">`).join('')}</colgroup><thead><tr><th class="nm">พนักงาน</th>`+
+    X.days.map(x=>`<th class="d${x.hol?' hol':x.we?' wk':''}" data-act="lvhol" data-d="${x.d}" title="${x.d} ${LV_ML[m-1]} — คลิกเพื่อ${x.hol?'ยกเลิก':'กำหนดเป็น'}วันหยุดนักขัตฤกษ์">${x.d}<small>${OT_DOW[x.w]}</small></th>`).join('')+`<th class="tt">ลา<small>วัน</small></th><th class="tt">อบรม<small>วัน</small></th></tr></thead><tbody>`;
+  X.persons.forEach(s=>{ const p=s.p;
+    h+=`<tr><td class="nm">${lvAv(p)}${E(p.name)}</td>`+X.days.map(x=>{ const c=(lv.months[m]&&lv.months[m].c[p.id+':'+x.d])||null, st=lvCellStyle(c);
+      return `<td class="lc${x.hol?' hl':x.we?' off':''}${c&&c.k==='P'?' k':''}${c&&c.n?' hn':''}" data-act="lvc" data-p="${E(p.id)}" data-d="${x.d}" ${st?`style="${st}"`:''} title="${E(lvCellTitle(c,p,x.d,m))}">${E(lvLabel(c))}</td>`; }).join('')+
+      `<td class="tt">${s.Lh?lvDay1(s.Lh/hpd):'–'}</td><td class="tt">${s.Th?lvDay1(s.Th/hpd):'–'}</td></tr>`; });
+  h+=`<tr class="sum"><td class="nm">ไม่อยู่ (คน/วัน)</td>`+X.days.map(x=>`<td class="${x.away>lv.set.max?'cf':''}" title="${x.away?'ลา/อบรม/หยุดชดเชยเต็มวัน '+x.away+' คน':''}${x.part?' · ไม่เต็มวันรวม '+f2(x.part)+' ชม.':''}">${x.away?x.away:(x.part?'½':'')}</td>`).join('')+`<td class="tt">${lvDay1(T.Lh/hpd)}</td><td class="tt">${lvDay1(T.Th/hpd)}</td></tr></tbody></table></div>`;
+  h+=`<div class="lv-leg"><b style="color:var(--txt)">สัญลักษณ์:</b>`+
+    `<span><i style="background:${LV_K.L.bg}">ลา</i>ลาเต็มวัน</span><span><i style="background:${LV_PL.bg};color:${LV_PL.fg}">3F</i>ลาไม่เต็มวัน (ชม. + F เช้า / S บ่าย)</span>`+
+    `<span><i style="background:${LV_K.T.bg}">อบรม</i>อบรม/ไปข้างนอกเต็มวัน</span><span><i style="background:${LV_PT.bg}">2S</i>อบรมไม่เต็มวัน</span>`+
+    `<span><i style="background:${LV_K.W.bg}">W</i>มาทำงานในวันหยุด</span><span><i style="background:${LV_K.H.bg}">H</i>หยุดชดเชย</span><span><i style="background:${LV_K.O.bg}">OT</i>ทำ OT ในวันหยุด</span>`+
+    `<span><i style="background:#f97316"></i>เสาร์–อาทิตย์</span><span><i style="background:#16a34a"></i>นักขัตฤกษ์</span><span><i style="background:#facc15;width:9px;min-width:9px;height:9px;border-radius:0 2px 0 9px"></i>มีหมายเหตุ</span></div>`;
+  h+=`<div class="lv-cm">📌 ไม่ควรมีคนไม่อยู่เกิน ${f2(lv.set.max)} คนต่อวัน (ช่องสีแดงในแถวล่าง) เว้นแต่มีเหตุจำเป็น · วางแผนล่วงหน้าเพื่อบริหารคน/หน้างาน เปลี่ยนแปลงได้ตามสถานการณ์</div>`;
+  // per person cards
+  h+=`<div class="ms-card ot-card" style="margin-top:16px"><h3>👥 สรุปรายคนของเดือน</h3><div class="lv-pm" style="margin:6px 0 0">`+
+    X.persons.map(s=>{ const l=s.Lh/hpd, t=s.Th/hpd, tt=l+t, w1=tt?l/tt*100:0;
+      return `<div class="lv-mc" style="--pc:${s.p.color}"><div class="h">${lvAv(s.p)}${E(s.p.name)}</div><div class="bar"><i style="width:${w1}%;background:#ef4444"></i><i style="width:${tt?100-w1:0}%;background:#2b7cd3"></i></div>`+
+        `<div class="r"><span>ลา <b>${lvDay1(l)}</b> วัน</span><span>อบรม <b>${lvDay1(t)}</b> วัน</span></div><div class="r"><span>W <b>${s.W}</b> · H <b>${s.H}</b> · OT <b>${s.O}</b></span><span>${s.Th?'อบรม '+f2(s.Th)+' ชม.':''}</span></div></div>`; }).join('')+`</div></div>`;
+  // events
+  const evs=[]; X.days.forEach(x=>{ X.persons.forEach(s=>{ const c=lv.months[m]&&lv.months[m].c[s.p.id+':'+x.d]; if(c&&(c.n||c.k!=='L')) evs.push({m:m,d:x.d,p:s.p,c:c}); }); });
+  h+=`<div class="ms-card ot-card"><h3>📋 รายการ / หมายเหตุในเดือนนี้</h3><div class="ms-sub">รวมอบรม แลกวันหยุด OT และรายการที่มีหมายเหตุ — คลิกเพื่อแก้ไข</div><div class="lv-evl">${evs.length?evs.map(lvEvRow).join(''):'<div class="ms-sub" style="padding:10px 4px">ยังไม่มีรายการ</div>'}</div></div>`;
+  return h;
+}
+
+/* ---------- แก้ไข ---------- */
+function lvSetCell(lv,m,pid,d,c){
+  const M=lvMon(lv,m), key=pid+':'+d; if(c) M.c[key]=c; else delete M.c[key];
+}
+function lvCellClick(pid,d){
+  const y=Y(), lv=y.lv, m=+ui.lvm, b=ui.lvb||'', key=pid+':'+d, cur=(lv.months[m]&&lv.months[m].c[key])||null;
+  if(b==='X'){ if(cur){ lvSetCell(lv,m,pid,d,null); touch(); lvRefresh(); } return; }
+  if(b==='L'||b==='T'||b==='W'||b==='H'||b==='O'){
+    if(cur&&cur.k===b){ lvSetCell(lv,m,pid,d,null); }
+    else lvSetCell(lv,m,pid,d,{k:b,n:cur?cur.n:''});
+    touch(); lvRefresh(); return;
+  }
+  lvCellMod(pid,m,d,b==='P'?'P':null);
+}
+function lvCellMod(pid,m,d,forceType){
+  const y=Y(), lv=y.lv, cur=(lv.months[m]&&lv.months[m].c[pid+':'+d])||null;
+  ctx={t:'lvcell',pid:pid,m:m,d:d,type:forceType||(cur?cur.k:''),parts:cur&&cur.k==='P'?cur.p.map(x=>({h:x.h,s:x.s,k:x.k})):[],note:cur?cur.n:''};
+  while(ctx.parts.length<2) ctx.parts.push({h:'',s:'F',k:ctx.parts.length&&ctx.parts[0]?ctx.parts[0].k:'T'});
+  if(forceType==='P'&&!cur) ctx.parts[0].k='L';
+  lvCellModHtml();
+}
+function lvCellModHtml(){
+  const y=Y(), lv=y.lv, p=lv.people.find(x=>x.id===ctx.pid), w=new Date(+ui.year,ctx.m-1,ctx.d).getDay();
+  const types=[['','ว่าง','#64748b'],['L','ลาเต็มวัน',LV_K.L.bg],['T','อบรมเต็มวัน',LV_K.T.bg],['P','ไม่เต็มวัน (ชม.)',LV_PL.bg],['W','W มาทำงาน',LV_K.W.bg],['H','H หยุดชดเชย',LV_K.H.bg],['O','OT วันหยุด',LV_K.O.bg]];
+  openMsMod(`<h3>✏️ ${E(p?p.name:'')} · ${ctx.d} ${LV_ML[ctx.m-1]} ${+ui.year+543} (${OT_DOW[w]})</h3>`+
+    `<div class="lv-types">`+types.map(t=>`<button type="button" class="lv-tb${ctx.type===t[0]?' on':''}" data-ma="lvtype" data-v="${t[0]}" style="${ctx.type===t[0]?'background:'+t[2]+';':''}${ctx.type===t[0]&&t[0]==='P'?'color:#422006':''}">${t[1]}</button>`).join('')+`</div>`+
+    (ctx.type==='P'?`<div class="ms-help" style="margin:0 0 8px">ระบุชั่วโมง เช่น <b>3</b> ชม. ช่วงเช้า (F) หรือบ่าย (S) — ถ้ามีทั้งลาและอบรมในวันเดียวกันให้กรอกทั้ง 2 แถว</div>`+
+      [0,1].map(i=>`<div class="lv-pr"><select id="lvpk${i}"><option value="L"${ctx.parts[i].k==='L'?' selected':''}>ลา</option><option value="T"${ctx.parts[i].k==='T'?' selected':''}>อบรม/ไปข้างนอก</option></select><input id="lvph${i}" type="number" min="0" max="24" step="0.5" placeholder="ชม." value="${ctx.parts[i].h===''?'':ctx.parts[i].h}"><select id="lvps${i}"><option value="F"${ctx.parts[i].s==='F'?' selected':''}>ช่วงเช้า (F)</option><option value="S"${ctx.parts[i].s==='S'?' selected':''}>ช่วงบ่าย (S)</option><option value=""${ctx.parts[i].s===''?' selected':''}>ไม่ระบุช่วง</option></select></div>`).join(''):'')+
+    `<label style="margin-top:8px">หมายเหตุ / รายละเอียด (เช่น ชื่อหลักสูตร เวลา สถานที่)</label><textarea id="lvNote" rows="3" style="width:100%">${E(ctx.note)}</textarea>`+
+    `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button type="button" class="btn-p" data-ma="lvsave">บันทึก</button><button type="button" class="btn-g" data-ma="lvclear" style="color:var(--t-dang)">ล้างช่องนี้</button><button type="button" class="btn-g" data-ma="cancel">ยกเลิก</button></div>`,560);
+}
+function lvReadCellForm(){
+  if(g('lvNote')) ctx.note=g('lvNote').value;
+  if(ctx.type==='P'&&g('lvph0')) ctx.parts=[0,1].map(i=>({k:g('lvpk'+i).value,h:g('lvph'+i).value,s:g('lvps'+i).value}));
+}
+function lvSetMod(){
+  const y=Y(), lv=y.lv; ctx={t:'lvset'};
+  openMsMod(`<h3>⚙ ตั้งค่า แผนลา แลกวันหยุด อบรม · ปี ${E(ui.year)}</h3><div class="lv-fld">`+
+    `<div><label>ชั่วโมงทำงานต่อ 1 วัน</label><input id="lsH" type="number" min="1" max="24" step="0.5" value="${lv.set.hpd}"></div>`+
+    `<div><label>จำนวนคนที่ไม่อยู่พร้อมกันได้สูงสุด / วัน</label><input id="lsM" type="number" min="0" max="20" step="1" value="${lv.set.max}"></div></div>`+
+    `<label>พนักงาน</label><div id="lsP">`+lv.people.map(p=>`<div class="lv-mr" data-id="${E(p.id)}"><input type="color" class="lcol" value="${E(p.color)}"><input class="lcode" value="${E(p.code)}" placeholder="รหัส"><input class="lname" value="${E(p.name)}" placeholder="ชื่อ - สกุล"><button type="button" class="btn-g" data-ma="lvdel" data-id="${E(p.id)}" style="color:var(--t-dang)" title="ลบ">🗑</button></div>`).join('')+`</div>`+
+    `<div style="margin-top:6px"><button type="button" class="btn-g" data-ma="lvadd">+ เพิ่มพนักงาน</button></div>`+
+    `<div class="ms-help">ชั่วโมงต่อวัน ใช้แปลงชั่วโมงเป็นวัน (ค่าเริ่มต้น 8) · การลบพนักงานจะลบแผนและสิทธิ์ของคนนั้นด้วย</div>`+
+    `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button type="button" class="btn-p" data-ma="lvsaveset">บันทึก</button><button type="button" class="btn-g" data-ma="cancel">ปิด</button></div>`,640);
+}
+function lvReadSetForm(){
+  const y=Y(), lv=y.lv; if(!g('lsH')) return;
+  lv.set.hpd=num(g('lsH').value)>0?num(g('lsH').value):8; const mx=parseFloat(g('lsM').value); lv.set.max=isFinite(mx)&&mx>=0?mx:1;
+  document.querySelectorAll('#lsP .lv-mr').forEach(r=>{ const p=lv.people.find(x=>x.id===r.dataset.id); if(!p) return; p.code=r.querySelector('.lcode').value.trim(); p.name=r.querySelector('.lname').value.trim()||p.name; p.color=r.querySelector('.lcol').value||p.color; });
+}
+function lvModal(a,t){
+  const y=Y(), lv=y.lv;
+  if(ctx.t==='lvstart'&&a==='lvgo'){
+    const names=String(g('lsNames').value||'').split('\n').map(s=>s.trim()).filter(Boolean); if(!names.length){ alert('กรุณาใส่ชื่ออย่างน้อย 1 คน'); return; }
+    y.lv=lvSan({people:names.map((n,i)=>({id:'e'+(i+1),code:'',name:n,color:OT_COL[i%OT_COL.length]})),set:{hpd:8,max:1},months:{}}); ui.view='lv'; ui.lvm='S'; closeMsMod(); touch(); render(); toastMsg('✅ สร้างแผนแล้ว — เลือกเดือนแล้วเริ่มลงแผนได้เลย'); return;
+  }
+  if(ctx.t==='lvcell'){
+    if(a==='lvtype'){ lvReadCellForm(); ctx.type=t.dataset.v; lvCellModHtml(); return; }
+    if(a==='lvclear'){ lvSetCell(lv,ctx.m,ctx.pid,ctx.d,null); closeMsMod(); touch(); lvRefresh(); return; }
+    if(a==='lvsave'){ lvReadCellForm(); let c=null;
+      if(ctx.type==='P'){ const p=ctx.parts.map(x=>({h:num(x.h),s:x.s==='F'||x.s==='S'?x.s:'',k:x.k==='T'?'T':'L'})).filter(x=>x.h>0); if(!p.length){ alert('กรุณาระบุชั่วโมงอย่างน้อย 1 แถว'); return; } c={k:'P',p:p,n:ctx.note.trim()}; }
+      else if(ctx.type) c={k:ctx.type,n:ctx.note.trim()};
+      else if(ctx.note.trim()){ alert('ถ้าต้องการเก็บหมายเหตุ ให้เลือกประเภทก่อน'); return; }
+      lvSetCell(lv,ctx.m,ctx.pid,ctx.d,c?lvCellSan(c):null); closeMsMod(); touch(); lvRefresh(); return; }
+    return;
+  }
+  if(ctx.t==='lvset'){
+    if(a==='lvsaveset'){ lvReadSetForm(); closeMsMod(); touch(); render(); return; }
+    if(a==='lvadd'){ lvReadSetForm(); let n=lv.people.length+1, id='e'+n; while(lv.people.some(p=>p.id===id)) id='e'+(++n);
+      lv.people.push({id:id,code:'',name:'Member '+(lv.people.length+1),color:OT_COL[lv.people.length%OT_COL.length]}); lv.bal[id]=lvSan({people:[{id:id}],bal:{}}).bal[id]; touch(); lvSetMod(); return; }
+    if(a==='lvdel'){ lvReadSetForm(); const id=t.dataset.id, p=lv.people.find(x=>x.id===id); if(!p) return; if(lv.people.length<=1){ alert('ต้องมีพนักงานอย่างน้อย 1 คน'); return; }
+      closeMsMod(); ask('ลบพนักงาน “'+p.name+'”?','แผนลา/อบรมและสิทธิ์การลาของคนนี้ทั้งหมดจะถูกลบ',()=>{ lv.people=lv.people.filter(x=>x.id!==id); delete lv.bal[id]; Object.keys(lv.months).forEach(mk=>{ Object.keys(lv.months[mk].c).forEach(k=>{ if(k.indexOf(id+':')===0) delete lv.months[mk].c[k]; }); }); touch(); render(); }); return; }
+  }
+}
+function lvStartMod(){
+  ctx={t:'lvstart'};
+  openMsMod(`<h3>➕ เริ่มสร้างแผนลา แลกวันหยุด อบรม ปี ${E(ui.year)}</h3><div class="sub" style="margin-bottom:8px">พิมพ์รายชื่อพนักงาน (1 คนต่อ 1 บรรทัด) — แก้ไข/เพิ่ม/ลบได้ภายหลังที่ปุ่ม ⚙ ตั้งค่า</div><textarea id="lsNames" rows="6" style="width:100%">มานะ คำไกร\nบุลากร คงณรงค์\nชลกานต์ หริกุลสวัสติ์\nณัฐชา ชูมาศ</textarea>`+
+    `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button type="button" class="btn-p" data-ma="lvgo">สร้าง</button><button type="button" class="btn-g" data-ma="cancel">ยกเลิก</button></div>`,480);
+}
+function lvHol(d){
+  const y=Y(), lv=y.lv, m=+ui.lvm, M=lvMon(lv,m), i=M.hol.indexOf(d); if(i>=0) M.hol.splice(i,1); else M.hol.push(d); M.hol.sort((a,b)=>a-b); touch(); lvRefresh();
+}
+function lvClearMonth(m){
+  const y=Y(), lv=y.lv; ask('ล้างแผนเดือน '+LV_ML[m-1]+'?','ข้อมูลลา/อบรม/แลกวันหยุดของเดือนนี้ทั้งหมดจะถูกลบ (วันหยุดนักขัตฤกษ์ไม่เปลี่ยน)',()=>{ lvMon(lv,m).c={}; touch(); lvRefresh(); });
+}
+function lvBal(el){
+  const y=Y(), lv=y.lv, p=el.dataset.p, c=el.dataset.c, f=el.dataset.f, hpd=lv.set.hpd, b=lv.bal[p]; if(!b) return;
+  const v=lvParseTm(el.value,hpd);
+  if(v===undefined){ el.value=el.dataset.orig; toastMsg('⚠️ รูปแบบไม่ถูกต้อง — ลอง “9 วัน 4 ชม.” หรือ “9 -4:0”','var(--t-dang)'); return; }
+  if(c==='out') b.out=v;
+  else { b[c][f]=v||lvT0(); }
+  const txt=v?lvFmt(v):''; el.dataset.orig=txt; el.value=c==='out'?txt:(txt||'0');
+  touch();
+  const Ys=lvYear(y), top=g('lvTop'); if(top) top.innerHTML=lvTop(y,Ys);
+  const row=document.querySelector(`tr[data-warn="${p}"]`);
+  const w=LV_CAT.map(k=>lvChk(b[k[0]],hpd,k[1])).filter(Boolean);
+  if(row){ if(w.length) row.querySelector('.warn').textContent='⚠ '+w.join(' · '); else row.remove(); }
+  else if(w.length){ const tr=document.querySelector(`tr[data-pid="${p}"]`); if(tr){ const n=document.createElement('tr'); n.setAttribute('data-warn',p); n.innerHTML=`<td colspan="11" style="text-align:left;padding:0 8px 6px"><span class="warn">⚠ ${E(w.join(' · '))}</span></td>`; tr.after(n); } }
+  const vr=document.querySelector(`tr[data-pid="${p}"] td:nth-last-child(2) b`); if(vr) vr.textContent=lvFmt(b.vac.r);
+}
+function lvKey(e){
+  const el=e.target; if(!el.classList||!el.classList.contains('lb')) return;
+  if(e.key==='Enter'||e.key==='ArrowDown'||e.key==='ArrowUp'){
+    const all=Array.from(document.querySelectorAll(`input.lb[data-c="${el.dataset.c}"][data-f="${el.dataset.f}"]`)), k=all.indexOf(el), nx=all[k+(e.key==='ArrowUp'?-1:1)];
+    e.preventDefault(); if(el.value!==el.dataset.orig) el.dispatchEvent(new Event('change',{bubbles:true})); if(nx){ nx.focus(); nx.select(); }
+  }
+}
+
+/* ---------- ส่งออก ---------- */
+function lvCsv(){
+  const y=Y(); if(!y||!y.lv) return; const lv=y.lv, hpd=lv.set.hpd, rows=[], cur=ui.lvm==null?'S':String(ui.lvm);
+  if(cur==='S'){
+    rows.push(['รหัส','ชื่อ - สกุล','พักร้อน สิทธิ์','พักร้อน ใช้ไป','พักร้อน คงเหลือ','ลาป่วย สิทธิ์','ลาป่วย ใช้ไป','ลาป่วย คงเหลือ','ลากิจ สิทธิ์','ลากิจ ใช้ไป','ลากิจ คงเหลือ','โอนไปปีถัดไป']);
+    lv.people.forEach(p=>{ const b=lv.bal[p.id]; rows.push([p.code,p.name].concat(...LV_CAT.map(c=>['e','u','r'].map(f=>lvFmt(b[c[0]][f]))),[b.out?lvFmt(b.out):''])); });
+    csvOut(rows,`QE_Leave_${ui.year}_Balance.csv`);
+  }else{
+    const m=+cur, X=lvMonth(y,m), M=lv.months[m]||{c:{}};
+    rows.push(['พนักงาน'].concat(X.days.map(x=>`${x.d} ${OT_DOW[x.w]}`),['ลา(วัน)','อบรม(วัน)']));
+    X.persons.forEach(s=>rows.push([s.p.name].concat(X.days.map(x=>{ const c=M.c[s.p.id+':'+x.d]; return c?(lvLabel(c)+(c.n?' ('+c.n.replace(/\n/g,' / ')+')':'')):''; }),[+(s.Lh/hpd).toFixed(2),+(s.Th/hpd).toFixed(2)])));
+    csvOut(rows,`QE_Leave_${ui.year}_${pad(m)}.csv`);
+  }
+}
+function lvJson(){
+  const y=Y(); if(!y||!y.lv) return;
+  const txt=JSON.stringify({app:'qe_mission',version:1,exportedAt:new Date().toISOString(),years:{[ui.year]:{lv:y.lv}}});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([txt],{type:'application/json'})); a.download=`qe_leave_${ui.year}_`+new Date().toISOString().slice(0,10).replace(/-/g,'')+'.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+  toastMsg('💾 บันทึกไฟล์แผนลาแล้ว');
+}
+
+/* ---------- init ---------- */
+function bind(){
+  const v=g('viewMission'); if(!v) return;
+  v.addEventListener('click',onClick); v.addEventListener('change',onChange); v.addEventListener('keydown',onKey); v.addEventListener('paste',onPaste);
+  g('msOv').addEventListener('click',onModal);
+  g('msFile').addEventListener('change',e=>{ const f=e.target.files[0]; if(f) importFile(f); e.target.value=''; });
+}
+bind();
+window.MS={show:()=>{ ensureYear(); render(); },get:()=>store,records,loadRemote,restore,_calc:{calcItem,statsFor,aggVal,latestIdx}};
+})();
+</script>
+
+<script>
 /* ===== Tabs + Daily Checklist ===== */
 (function(){
   const g=id=>document.getElementById(id), K='daily_checklist_v1', KC='daily_checklist_conf', KT='daily_checklist_lasttab';
@@ -2203,17 +3838,18 @@ tr.od-soon{background:rgba(245,158,11,.15)}
 
   /* ---- tabs ---- */
   function showTab(t){
-    const s=t==='S';
-    g('viewTracker').style.display=s?'none':''; g('viewSheet').style.display=s?'block':'none';
-    g('tabT').classList.toggle('on',!s); g('tabS').classList.toggle('on',s);
+    const s=t==='S', mm=t==='M';
+    g('viewTracker').style.display=(s||mm)?'none':''; g('viewSheet').style.display=s?'block':'none';
+    if(g('viewMission')) g('viewMission').style.display=mm?'block':'none';
+    g('tabT').classList.toggle('on',!s&&!mm); g('tabS').classList.toggle('on',s); if(g('tabM')) g('tabM').classList.toggle('on',mm);
     try{ localStorage.setItem(KT,t); }catch(e){}
-    if(s) draw(); else if(typeof drawCal==='function') drawCal();
+    if(s) draw(); else if(mm){ if(window.MS) window.MS.show(); } else if(typeof drawCal==='function') drawCal();
   }
   const THEMES=['neo','holo','ember','classic'], TN={neo:'Neo',holo:'Holo',ember:'Ember',classic:'Classic'};
   function applyTheme(t){ const b=document.body; b.classList.remove('neo','holo','ember'); if(t!=='classic'){ b.classList.add('neo'); if(t==='holo'||t==='ember') b.classList.add(t); } g('themeBtn').textContent='🌗 '+TN[t]; }
   let theme='neo'; try{ theme=localStorage.getItem('ui_theme')||'neo'; }catch(e){} if(THEMES.indexOf(theme)<0) theme='neo'; applyTheme(theme);
   g('themeBtn').onclick=()=>{ theme=THEMES[(THEMES.indexOf(theme)+1)%THEMES.length]; applyTheme(theme); try{ localStorage.setItem('ui_theme',theme); }catch(e){} };
-  g('tabT').onclick=()=>showTab('T'); g('tabS').onclick=()=>showTab('S');
+  g('tabT').onclick=()=>showTab('T'); g('tabS').onclick=()=>showTab('S'); g('tabM').onclick=()=>showTab('M');
 
   /* ---- draw ---- */
   function summary(){
@@ -2485,7 +4121,7 @@ tr.od-soon{background:rgba(245,158,11,.15)}
   };
 
   persist; 
-  try{ if(localStorage.getItem(KT)==='S') showTab('S'); }catch(e){}
+  try{ const _kt=localStorage.getItem(KT); if(_kt==='S') showTab('S'); else if(_kt==='M') showTab('M'); }catch(e){}
   try{ if(typeof drawCal==='function') drawCal(); }catch(e){}   // วาดป้ายในปฏิทินหลังโหลดข้อมูล Checklist
 })();
 </script>
