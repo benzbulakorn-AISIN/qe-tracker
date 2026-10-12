@@ -840,6 +840,190 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none!importa
 @media(max-width:700px){.lv-big .num{font-size:34px}.lv-ev{grid-template-columns:48px minmax(0,1fr)}}
 #msMod{background:var(--pop)!important;-webkit-backdrop-filter:none;backdrop-filter:none;max-height:92vh;overflow:auto}
 </style>
+<style id="hsStyle">
+/* ================= 🧭 Hoshin QE Electronics ================= */
+#viewHoshin{display:none}
+#hsMod{background:var(--pop)!important;-webkit-backdrop-filter:none;backdrop-filter:none;max-height:92vh;overflow:auto}
+.hs-acts{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:14px;margin:0 0 16px}
+.hs-act{display:flex;flex-direction:column;gap:9px;border:1px solid var(--line);border-top:4px solid var(--ac);border-radius:16px;padding:14px;background:linear-gradient(180deg,color-mix(in srgb,var(--ac) 9%,transparent),transparent 50%),var(--card);box-shadow:0 1px 4px var(--sh)}
+.hs-ah{display:flex;align-items:flex-start;gap:10px}
+.hs-ai{width:40px;height:40px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;font-size:21px;background:color-mix(in srgb,var(--ac) 24%,transparent);flex:0 0 auto}
+.hs-ah small{display:block;color:var(--mut);font-size:11px;letter-spacing:.3px}
+.hs-ah b{display:block;font-size:13.5px;line-height:1.3}
+.hs-ap{margin-left:auto;text-align:right;line-height:1.05;flex:0 0 auto}
+.hs-ap b{font-size:26px;font-weight:800;display:block}
+.hs-ap span{font-size:10.5px;color:var(--mut)}
+.hs-tr{display:block;width:100%;text-align:left;cursor:pointer;border:1px solid var(--line);background:var(--soft);color:var(--txt);border-radius:12px;padding:10px 11px;font-weight:400;transition:transform .15s,box-shadow .15s,border-color .15s}
+.hs-tr:hover{transform:translateY(-2px);border-color:var(--ac);box-shadow:0 8px 20px var(--shp)}
+.hs-trh{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.hs-trh b{font-size:13px}
+.hs-trc{display:flex;flex-wrap:wrap;gap:2px 10px;font-size:11.5px;font-weight:700;margin-top:2px}
+.hs-trc em{font-style:normal;color:var(--mut);font-weight:500;margin-left:auto}
+.hs-bar{display:flex;height:9px;border-radius:99px;overflow:hidden;background:var(--line);margin:8px 0 6px}
+.hs-bar i{display:block;height:100%}
+.hs-badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:800;white-space:nowrap}
+.b-late{background:rgba(239,68,68,.20);color:var(--t-dang)}
+.b-soon{background:rgba(245,158,11,.22);color:var(--t-warn)}
+.b-ok{background:color-mix(in srgb,var(--pri) 18%,transparent);color:var(--txt)}
+.b-done{background:rgba(34,197,94,.22);color:var(--t-ok)}
+.b-open,.b-na{background:rgba(148,163,184,.22);color:var(--mut)}
+.hs-add{align-self:flex-start;padding:5px 11px;font-size:12px}
+.hs-two{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:16px;margin-bottom:16px}
+@media(max-width:980px){.hs-two{grid-template-columns:1fr}}
+.hs-card{margin:0 0 16px}
+.hs-card .ms-trend{max-width:1040px;margin:0 auto}
+.hs-rm text{fill:var(--mut);font-size:12px}
+.hs-rm text.lb{fill:var(--txt);font-size:12px;font-weight:700}
+.hs-rm text.in{fill:#fff;font-size:11px;font-weight:800}
+.hs-rm text.ms{fill:var(--txt);font-size:10.5px;font-weight:700}
+.hs-rm text.td{fill:var(--pri);font-weight:800}
+.hs-fol{display:flex;flex-direction:column;gap:8px;max-height:430px;overflow:auto}
+.hs-fc{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+@media(max-width:860px){.hs-fc{grid-template-columns:1fr}}
+.hs-fh{font-size:12px;font-weight:800;margin:4px 0 0;color:var(--mut)}
+.hs-fi{display:grid;grid-template-columns:62px minmax(0,1fr);gap:10px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-left:4px solid var(--fc);border-radius:12px;background:var(--soft);cursor:pointer}
+.hs-fi:hover{background:var(--soft2);border-color:var(--fc)}
+.hs-fd{text-align:center;line-height:1.1}
+.hs-fd b{display:block;font-size:19px}
+.hs-fd small{font-size:10.5px;color:var(--mut)}
+.hs-fx{min-width:0;font-size:12.5px}
+.hs-fx .l1{font-weight:700;display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center}
+.hs-fx .l2{color:var(--mut);font-size:11.5px;margin-top:2px}
+.hs-mx{width:100%;min-width:760px;border-collapse:collapse;font-size:12.5px}
+.hs-mx th,.hs-mx td{padding:6px 8px;text-align:center;border-bottom:1px solid var(--line)}
+.hs-mx th{font-size:11.5px;line-height:1.25;vertical-align:bottom}
+.hs-mx th small{display:block;color:var(--mut);font-weight:600;font-size:10px}
+.hs-mx td.ln{text-align:left;font-weight:800;white-space:nowrap}
+.hs-mx td.ow{color:var(--mut);font-size:11.5px;white-space:nowrap}
+.hs-mx tr:hover td{background:var(--soft)}
+.hs-c{display:inline-flex;width:32px;height:26px;border-radius:8px;align-items:center;justify-content:center;font-weight:800;font-size:13px;cursor:pointer;color:#fff;transition:transform .12s}
+.hs-c:hover{transform:scale(1.18)}
+.hs-c.na{background:transparent;color:var(--mut);opacity:.4;cursor:default}
+.hs-c.na:hover{transform:none}
+.hs-ngc{display:inline-block;min-width:24px;padding:1px 7px;border-radius:999px;font-size:11.5px;font-weight:800;background:rgba(239,68,68,.2);color:var(--t-dang)}
+.hs-ngc.z{background:rgba(34,197,94,.2);color:var(--t-ok)}
+.hs-leg{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:12px;color:var(--mut);margin:0 0 10px}
+.hs-leg span{display:inline-flex;align-items:center;gap:6px}
+.hs-leg i{display:inline-flex;width:20px;height:18px;border-radius:6px;align-items:center;justify-content:center;font-style:normal;font-size:11px;font-weight:800;color:#fff}
+/* topic page */
+.hs-tb{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:center;margin:0 0 16px;padding:16px 18px;border:1px solid var(--line);border-left:6px solid var(--ac);border-radius:16px;background:linear-gradient(135deg,color-mix(in srgb,var(--ac) 14%,var(--card)),var(--card));box-shadow:0 1px 4px var(--sh)}
+@media(max-width:700px){.hs-tb{grid-template-columns:1fr}}
+.hs-tb .ey{font-size:12px;color:var(--mut);letter-spacing:.3px}
+.hs-tb h2{margin:2px 0 8px;font-size:22px;line-height:1.25}
+.hs-tb .bd{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;font-size:12.5px;color:var(--mut)}
+.hs-tb .bt{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.hs-tb .bt .btn-g,.hs-tb .bt .btn-p{padding:7px 12px;font-size:12.5px}
+.hs-st4{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}
+.hs-sc{display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid var(--line);border-left:4px solid var(--sc);border-radius:12px;background:var(--card);font-size:12.5px;min-width:0}
+.hs-sc b{font-size:20px;line-height:1;color:var(--sc)}
+.hs-sc small{display:block;color:var(--mut);font-size:11px;line-height:1.3;max-width:300px}
+.hs-board{display:grid;grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:10px}
+.hs-tile{position:relative;display:flex;flex-direction:column;gap:2px;align-items:flex-start;padding:10px 11px;border-radius:13px;border:1px solid var(--line);border-left:5px solid var(--sc);background:linear-gradient(180deg,color-mix(in srgb,var(--sc) 12%,transparent),transparent),var(--card);cursor:pointer;color:var(--txt);font-weight:400;text-align:left;transition:transform .12s,box-shadow .12s}
+.hs-tile:hover{transform:translateY(-3px);box-shadow:0 8px 20px var(--shp)}
+.hs-tile b{font-size:14px}
+.hs-tile span{font-size:11px;color:var(--mut)}
+.hs-tile i{position:absolute;top:8px;right:9px;font-style:normal;font-weight:800;font-size:15px;color:var(--sc)}
+.hs-info{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin:0 0 16px}
+.hs-box{border:1px solid var(--line);border-radius:14px;padding:12px 14px;background:var(--card);box-shadow:0 1px 4px var(--sh)}
+.hs-box h4{margin:0 0 6px;font-size:13px}
+.hs-box p{margin:0;font-size:13px;line-height:1.6;white-space:pre-line}
+.hs-box.warn{border-color:#ef4444;background:linear-gradient(135deg,rgba(239,68,68,.10),transparent)}
+.hs-box.warn h4{color:var(--t-dang)}
+.hs-ms{display:flex;flex-wrap:wrap;gap:8px;margin-top:2px}
+.hs-m{display:inline-flex;flex-direction:column;padding:6px 11px;border-radius:12px;border:1px solid var(--line);background:var(--soft);font-size:12px;line-height:1.3}
+.hs-m b{font-size:12.5px}
+.hs-m small{color:var(--mut);font-size:10.5px}
+.hs-m.past{opacity:.6}
+.hs-m.next{border-color:var(--warn);background:rgba(245,158,11,.12)}
+.hs-tw{overflow:auto;border:1px solid var(--line);border-radius:14px;background:var(--card);max-height:75vh}
+.hs-tbl{width:100%;border-collapse:separate;border-spacing:0;min-width:760px;font-size:12.5px;background:transparent;box-shadow:none;border-radius:0}
+.hs-tbl th{position:sticky;top:0;z-index:3;background:var(--pop);padding:9px 10px;font-size:11.5px;text-align:left;color:var(--mut);text-transform:none;letter-spacing:0;border-bottom:1px solid var(--line)}
+.hs-tbl td{padding:9px 10px;vertical-align:top;border-bottom:1px solid color-mix(in srgb,var(--line) 70%,transparent);line-height:1.45;white-space:pre-line}
+.hs-tbl tr[data-act]{cursor:pointer}
+.hs-tbl tr[data-act]:hover td{background:var(--soft)}
+.hs-tbl td.c{text-align:center;white-space:nowrap}
+.hs-tbl td.n{text-align:right;font-variant-numeric:tabular-nums}
+.hs-tbl td.ln{font-weight:800;white-space:nowrap}
+.hs-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;font-size:11.5px;font-weight:800;color:#fff;background:var(--sc);cursor:pointer;border:0;white-space:nowrap}
+.hs-pill:hover{filter:brightness(1.12)}
+.hs-bad{color:var(--t-dang);font-weight:700}
+.hs-lt{display:inline-block;margin-left:6px;font-size:10.5px;padding:1px 7px;border-radius:999px;font-weight:800}
+.hs-dot{display:inline-block;width:8px;height:8px;border-radius:50%}
+/* modals */
+.hs-fld{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0}
+.hs-fld .full{grid-column:1/-1}
+.hs-fld label{margin-bottom:3px}
+.hs-sbs{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 10px}
+.hs-sb{padding:7px 12px;border-radius:10px;font-size:12.5px;font-weight:800;border:2px solid var(--line);background:transparent;color:var(--txt);cursor:pointer}
+.hs-sb.on{background:var(--sc);color:#fff;border-color:transparent;box-shadow:0 0 0 3px var(--ring)}
+.hs-ar{display:grid;grid-template-columns:44px 56px minmax(0,1fr) 40px;gap:8px;align-items:center;margin:6px 0}
+.hs-ar input[type=color]{width:44px;height:34px;padding:2px;border-radius:8px}
+@media(max-width:700px){.hs-tb h2{font-size:18px}.hs-fld{grid-template-columns:1fr}}
+/* ===== Overall status (Before → After) ===== */
+.ov-sec{margin:0 0 16px}
+.ov-fl{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:6px 0 12px}
+.ov-fl .grow{flex:1}
+.ov-card{border:1px solid var(--line);border-left:6px solid var(--lc);border-radius:16px;background:var(--card);margin:0 0 14px;box-shadow:0 1px 4px var(--sh);overflow:hidden}
+.ov-ch{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;padding:10px 14px;background:color-mix(in srgb,var(--lc) 11%,transparent)}
+.ov-ch .grow{flex:1}
+.ov-line{background:var(--lc);color:#fff;font-weight:800;font-size:14px;padding:3px 13px;border-radius:999px}
+.ov-ref{font-size:12px;font-weight:700;padding:2px 10px;border-radius:999px;border:1px solid var(--lc)}
+.ov-ttl{font-size:13px}
+.ov-mode{font-size:11px;color:var(--mut)}
+.ov-st{display:inline-flex;gap:5px;align-items:center;padding:3px 10px;border-radius:999px;font-size:11.5px;font-weight:800;background:color-mix(in srgb,var(--sc) 17%,transparent);border:1px solid var(--sc);white-space:nowrap}
+.ov-ed{padding:5px 11px;font-size:12px}
+.ov-pg{height:5px;background:var(--line)}
+.ov-pg i{display:block;height:100%}
+.ov-scroll{overflow:auto}
+.ov-tbl{border-collapse:separate;border-spacing:0;font-size:12px;background:transparent;box-shadow:none;border-radius:0;min-width:0;width:auto}
+.ov-tbl th,.ov-tbl td{padding:6px 4px;text-align:center;vertical-align:middle;border-bottom:1px solid color-mix(in srgb,var(--line) 70%,transparent);border-right:1px solid color-mix(in srgb,var(--line) 45%,transparent);text-transform:none;letter-spacing:0;white-space:normal;font-size:12px}
+.ov-tbl tbody tr:last-child td{border-bottom:0}
+.ov-lab{position:sticky;left:0;z-index:3;background:var(--pop);text-align:left!important;min-width:176px;max-width:176px;padding:7px 10px!important;box-shadow:2px 0 4px var(--sh);line-height:1.35}
+.ov-lab b{display:block;font-size:12.5px;color:var(--txt)}
+.ov-lab small{display:block;color:var(--mut);font-size:10.5px;font-weight:500;margin-top:2px}
+.ov-tbl thead .ov-lab{z-index:5;font-weight:800;color:var(--txt)}
+.ov-ph{background:color-mix(in srgb,var(--lc) 24%,var(--pop));cursor:pointer;font-weight:800;color:var(--txt);font-size:12px}
+.ov-ph:hover{filter:brightness(1.08)}
+.ov-jh{background:var(--pop);cursor:pointer;min-width:78px;position:relative;line-height:1.25}
+.ov-jh:hover{background:var(--soft2)}
+.ov-jh b{display:block;font-size:12px;color:var(--txt)}
+.ov-jh small{display:block;color:var(--mut);font-size:10.5px;font-weight:600}
+.ov-dh{background:color-mix(in srgb,#f59e0b 22%,var(--pop));font-weight:800;color:var(--txt)}
+.ov-dh small{display:block;font-size:10px;font-weight:500;color:var(--mut)}
+.ov-dn{background:color-mix(in srgb,#f59e0b 10%,var(--pop));font-size:10.5px!important;font-weight:700;min-width:80px;max-width:92px;line-height:1.3;color:var(--txt)}
+.ov-cell{background:transparent}
+.ov-cell.ov-emp{color:var(--mut);opacity:.5}
+.ov-pr{display:inline-flex;align-items:center;gap:3px;padding:2px 3px;border-radius:10px}
+.ov-pr em{font-style:normal;color:var(--mut);font-size:10px}
+.ov-cell.up .ov-pr{background:rgba(34,197,94,.16);box-shadow:inset 0 0 0 1.5px #22c55e}
+.ov-cell.dn .ov-pr{background:rgba(239,68,68,.16);box-shadow:inset 0 0 0 1.5px #ef4444}
+.ov-c{display:inline-flex;align-items:center;justify-content:center;min-width:25px;height:24px;padding:0 5px;border-radius:8px;font-weight:800;font-size:11.5px;color:#fff;background:var(--sc);cursor:pointer;position:relative;transition:transform .12s;user-select:none}
+.ov-c:hover{transform:scale(1.18);z-index:2}
+.ov-c.sNA{background:color-mix(in srgb,var(--sc) 24%,transparent);color:var(--mut);font-weight:700}
+.ov-c.sE{background:transparent;border:1px dashed var(--line);color:var(--mut)}
+.ov-c.pend{box-shadow:0 0 0 2.5px color-mix(in srgb,var(--sc) 35%,transparent)}
+.ov-nt{position:absolute;top:-3px;right:-3px;width:8px;height:8px;border-radius:50%;background:#facc15;box-shadow:0 0 0 1.5px var(--card);display:block}
+.ov-jh .ov-nt{top:4px;right:4px}
+.ov-dt{display:block;font-size:10px;color:var(--mut);margin-top:3px;font-weight:700}
+.ov-dt.late{color:var(--t-dang)}
+.ov-dt.none{color:var(--mut);font-weight:600;font-style:italic;opacity:.8}
+.ov-notes{padding:10px 14px 12px;border-top:1px dashed var(--line);display:flex;flex-direction:column;gap:5px;font-size:12px}
+.ov-n{display:flex;gap:8px;align-items:flex-start;line-height:1.45;flex-wrap:wrap}
+.ov-n b{font-weight:700}
+.ov-n span:last-child{color:var(--txt);white-space:pre-line}
+.ov-nb{font-size:11px;font-weight:800;color:var(--mut);white-space:nowrap}
+.ov-n.kadai .ov-nb{color:var(--t-dang)}
+.ov-n.kadai span:last-child{color:var(--t-dang);font-weight:600}
+
+.ov-fold{padding:2px 9px;font-size:14px;background:transparent;color:var(--mut);border:1px solid var(--line);border-radius:8px}
+.ov-fold:hover{color:var(--txt);border-color:var(--lc)}
+.ov-dbl{background:color-mix(in srgb,#94a3b8 16%,var(--pop))!important;min-width:150px}
+.ov-dbl-c{padding:6px 10px!important;min-width:150px}
+.ov-dbl-c .btn-g{padding:6px 10px;font-size:11.5px;white-space:normal}
+.ov-qe{display:inline-flex;align-items:center;gap:5px;padding:3px 11px;border-radius:999px;font-size:11.5px;font-weight:700;background:color-mix(in srgb,#6366f1 16%,transparent);border:1px solid #6366f1;color:var(--txt);white-space:nowrap}
+.ov-qe b{font-weight:800}
+.ov-qe.none{background:transparent;border:1px dashed var(--line);color:var(--mut);font-weight:600}
+</style>
 </head>
 <body>
 <script>try{var t=localStorage.getItem("ui_theme")||"neo";if(t!=="classic"){document.body.classList.add("neo");if(t==="holo"||t==="ember")document.body.classList.add(t)}}catch(e){document.body.classList.add("neo")}</script>
@@ -848,6 +1032,7 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none!importa
     <button type="button" class="tabbtn on" id="tabT">📊 Tracker</button>
     <button type="button" class="tabbtn" id="tabS">📝 Checklist รายวัน</button>
     <button type="button" class="tabbtn" id="tabM">🎯 7 Mission QE Electronics</button>
+    <button type="button" class="tabbtn" id="tabH">🧭 Hoshin QE Electronics</button>
     <button type="button" class="btn-g" id="themeBtn" title="สลับธีม Neo / Classic">🌗 ธีม</button>
     <button type="button" class="btn-g" id="spBtn" title="ตั้งค่าฐานข้อมูลกลางบน Supabase">☁ Cloud DB</button>
     <button type="button" class="btn-g" id="imgBtn" style="color:var(--t-vio)" title="ถ่ายหน้าจอที่เปิดอยู่เป็นรูป แล้วส่งเข้า LINE กลุ่มทันที (ไม่ Download)">📷 ส่งรูปเข้า LINE</button>
@@ -958,6 +1143,7 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none!importa
   </div><!-- /viewTracker -->
 
   <div id="viewMission"></div>
+  <div id="viewHoshin"></div>
   <div id="viewSheet">
     <h1 style="font-size:20px;margin:0 0 4px">📝 Checklist รายวัน</h1>
     <div class="sub" style="margin-bottom:12px">จดรายการที่ต้องทำในแต่ละวัน แบบตาราง Excel — บันทึกอัตโนมัติ แยกตามวันที่ (Cloud DB เมื่อเชื่อมต่อ และมีสำเนาในเครื่อง)</div>
@@ -1260,6 +1446,8 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none!importa
 
 <div class="ov" id="msOv"><div class="mod" id="msMod"></div></div>
 <input type="file" id="msFile" accept=".json,application/json" style="display:none">
+<div class="ov" id="hsOv"><div class="mod" id="hsMod"></div></div>
+<input type="file" id="hsFile" accept=".json,application/json" style="display:none">
 <div id="toast"></div>
 
 <script>
@@ -1268,7 +1456,7 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none!importa
   'use strict';
   const CFG='countermeasure_cloud_config_v1';
   const PREFIX='countermeasure-cloud:';
-  const MANAGED=new Set(['TrackerItem','TrashItem','ChecklistDay','AppConfig','MissionData','OTData','LVData']);
+  const MANAGED=new Set(['TrackerItem','TrashItem','ChecklistDay','AppConfig','MissionData','OTData','LVData','HoshinData']);
   const PAGE=500;
   const cj=o=>JSON.stringify(o,(k,v)=>(v&&typeof v==='object'&&!Array.isArray(v))?Object.keys(v).sort().reduce((a,x)=>{a[x]=v[x];return a;},{}):v);
   let cfg=readCfg(), cache=new Map(), ready=false, syncing=false, again=false, timer=0, lastSync='';
@@ -1321,7 +1509,7 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none!importa
   function appModel(){
     let ck={days:{},conf:{},notes:{}}; try{if(window.__checklist)ck=window.__checklist.get();}catch(e){}
     let title={}; try{title=getTitle();}catch(e){}
-    return {tracker:(typeof data!=='undefined'&&Array.isArray(data))?data:[],trash:(typeof trash!=='undefined'&&Array.isArray(trash))?trash:[],checklist:ck||{days:{},conf:{},notes:{}},title:title,missions:(window.MS?window.MS.get():null)};
+    return {tracker:(typeof data!=='undefined'&&Array.isArray(data))?data:[],trash:(typeof trash!=='undefined'&&Array.isArray(trash))?trash:[],checklist:ck||{days:{},conf:{},notes:{}},title:title,missions:(window.MS?window.MS.get():null),hoshin:(window.HS?window.HS.get():null)};
   }
   function toRecords(m){
     const a=[];
@@ -1334,6 +1522,7 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none!importa
     });
     a.push({key:PREFIX+'config:app',type:'AppConfig',payload:{title:m.title||{}},date:null});
     if(window.MS&&m.missions)window.MS.records(m.missions,PREFIX).forEach(r=>a.push(r));
+    if(window.HS&&m.hoshin)window.HS.records(m.hoshin,PREFIX).forEach(r=>a.push(r));
     return a;
   }
   function recMap(m){
@@ -1372,6 +1561,7 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none!importa
       else if(x.type==='ChecklistDay'){m.checklist.days[p.date]=p.rows||[];if(p.confirmedAt)m.checklist.conf[p.date]=p.confirmedAt;if(p.note)m.checklist.notes[p.date]=p.note;}
       else if(x.type==='AppConfig')m.title=p.title||null;
       else if(x.type==='MissionData'||x.type==='OTData'||x.type==='LVData')(m.missionRows=m.missionRows||[]).push(p);
+      else if(x.type==='HoshinData')(m.hoshinRows=m.hoshinRows||[]).push(p);
     });
     m.tracker.sort((a,b)=>(b.id||0)-(a.id||0));
     m.trash.sort((a,b)=>String(b.deletedAt||'').localeCompare(String(a.deletedAt||'')));
@@ -1383,6 +1573,7 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none!importa
     if(m.title&&m.title.title)localStorage.setItem('issue_tracker_title',JSON.stringify(m.title));
     if(window.__checklist&&window.__checklist.loadCentral)window.__checklist.loadCentral(m.checklist);
     if(window.MS&&window.MS.loadRemote)window.MS.loadRemote(m.missionRows||[]);
+    if(window.HS&&window.HS.loadRemote)window.HS.loadRemote(m.hoshinRows||[]);
     try{loadTitle();render();checkBackup();}catch(e){}
   }
   function localMoved(base){
@@ -1493,7 +1684,8 @@ const MONTHS=['มกราคม','กุมภาพันธ์','มีน�
               'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
 const MONTHS_SHORT=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 const Y_MIN=2023, Y_MAX=2032;
-const today=(()=>{const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;})();
+const ymdNow=()=>{const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;};
+let today=ymdNow();   // อัปเดตอัตโนมัติเมื่อข้ามวัน (ดูสคริปต์ท้ายไฟล์)
 const esc=s=>(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
 /* ไฮไลต์คำที่พิมพ์ในช่อง 🔍 ค้นหา (หน้า Tracker) */
 function hlq(s){
@@ -1732,7 +1924,7 @@ function stampDay(){const d=new Date();
 function payloadText(){
   return JSON.stringify({app:'issue_tracker',version:4,exportedAt:new Date().toISOString(),
     title:getTitle(),count:data.length,items:data,trash:trash,
-    checklist:(window.__checklist?window.__checklist.get():null),missions:(window.MS?window.MS.get():null)},null,2);
+    checklist:(window.__checklist?window.__checklist.get():null),missions:(window.MS?window.MS.get():null),hoshin:(window.HS?window.HS.get():null)},null,2);
 }
 function dl(txt,name){
   const a=document.createElement('a');
@@ -1786,6 +1978,7 @@ $('rsFile').onchange=e=>{
       }
       if(p.checklist&&window.__checklist){ const n=window.__checklist.restore(p.checklist,merge); if(n) toast('✅ กู้คืน Checklist '+n+' วันด้วย'); }
       if(p.missions&&window.MS){ try{ const n=window.MS.restore(p.missions,merge); if(n) toast('✅ กู้คืน Mission '+n+' ปีด้วย'); }catch(e){} }
+      if(p.hoshin&&window.HS){ try{ const n=window.HS.restore(p.hoshin,merge); if(n) toast('✅ กู้คืน Hoshin '+n+' ปีด้วย'); }catch(e){} }
       data.forEach(x=>{ x.revs=x.revs||[]; if(x.status==='Open') x.status='In Progress'; });
       data.sort((a,b)=>b.id-a.id);
       save(); render();
@@ -3737,12 +3930,812 @@ window.MS={show:()=>{ ensureYear(); render(); },get:()=>store,records,loadRemote
 </script>
 
 <script>
+/* ================= 🧭 Hoshin QE Electronics (กิจกรรมนโยบายประจำปี · สถานะรายไลน์ · แก้ไขได้ · ซิงค์ Cloud DB) ================= */
+(function(){
+'use strict';
+const KEY='qe_hoshin_v1', UIK='qe_hoshin_ui_v1';
+const g=id=>document.getElementById(id);
+const E=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const clone=o=>JSON.parse(JSON.stringify(o));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+const cj=o=>JSON.stringify(o,(k,v)=>(v&&typeof v==='object'&&!Array.isArray(v))?Object.keys(v).sort().reduce((a,x)=>{a[x]=v[x];return a;},{}):v);
+const clipT=(s,n)=>{ s=String(s||'').replace(/\s+/g,' ').trim(); return s.length>n?s.slice(0,n)+'…':s; };
+const TM=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+const isoOK=s=>/^\d{4}-\d{2}-\d{2}$/.test(String(s||''));
+const iso=s=>isoOK(s)?String(s):'';
+const dn=s=>{ const a=String(s).split('-').map(Number); return Math.round(Date.UTC(a[0],a[1]-1,a[2])/864e5); };
+const fmtD=s=>isoOK(s)?`${+s.slice(8)} ${TM[+s.slice(5,7)-1]} ${+s.slice(0,4)+543}`:'–';
+const fmtS=s=>isoOK(s)?`${+s.slice(8)} ${TM[+s.slice(5,7)-1]}`:'–';
+const PAL=['#8b5cf6','#06b6d4','#ec4899','#14b8a6','#f59e0b','#6366f1','#84cc16','#f97316'];
+const ST={ ok:{n:'OK / เสร็จ',s:'✓',c:'#22c55e'}, part:{n:'ทำบางส่วน',s:'▲',c:'#f59e0b'}, ng:{n:'NG / ยังไม่เสร็จ',s:'✗',c:'#ef4444'}, chk:{n:'กำลังตรวจสอบ',s:'…',c:'#3b82f6'} };
+const ORD=['ok','part','ng','chk'];
+
+/* ---------- แม่แบบ (สำหรับ “เริ่มสร้างเอง”) ---------- */
+const COL_TXT=[{k:'note',label:'รายละเอียด / หมายเหตุ',type:'area'}];
+function tpl(y){
+  const yy=String(y).slice(2);
+  const acts=[
+    {id:'a1',name:'Recurrence claim review : Clamp missing & Paint missing.',icon:'🔁',color:PAL[0]},
+    {id:'a2',name:'Welding : GT2 (Welded displacement) PPS & M/C matching.',icon:'⚡',color:PAL[1]},
+    {id:'a3',name:'Welding : Electrode & Holder Torque tighten control.',icon:'🔧',color:PAL[2]},
+    {id:'a4',name:'Pokayoke : Pokayoke manual survey & Making plan.',icon:'🛡️',color:PAL[3]}];
+  const mk=(id,act,name,short,icon)=>({id:id,act:act,name:name,short:short,icon:icon,due:'',dueNote:'กำหนดเสร็จ',upd:'',concl:'',temp:'',viz:'',leg:{},plan:[],cols:clone(COL_TXT),lines:[]});
+  return {label:'Y'+yy,title:'MFG#3 : Activity for Y'+yy,product:'Electronics part',by:'',upd:today,acts:acts,topics:[
+    mk('t1','a1','Clamp Half lock status','Clamp half lock','🔩'), mk('t2','a1','Skip paint line status','Skip paint','🎨'),
+    mk('t3','a2','GT2 (Welded displacement) PPS & M/C matching','GT2 matching','⚡'),
+    mk('t4','a3','Electrode & Holder — Torque tighten control','Torque control','🔧'),
+    mk('t5','a4','Pokayoke manual — survey & making plan','Pokayoke manual','🛡️')]};
+}
+
+/* ---------- model + ui state ---------- */
+let store={years:{}};
+let ui={year:'',view:'dash',topic:''};
+try{ const s=JSON.parse(localStorage.getItem(KEY)||'null'); if(s&&s.years&&typeof s.years==='object') store=s; }catch(e){}
+try{ Object.assign(ui,JSON.parse(localStorage.getItem(UIK)||'{}')||{}); }catch(e){}
+if(ui.view!=='topic') ui.view='dash';
+const saveUI=()=>{ try{ localStorage.setItem(UIK,JSON.stringify(ui)); }catch(e){} };
+const years=()=>Object.keys(store.years).sort((a,b)=>+a-+b);
+const Y=()=>store.years[ui.year];
+function ensureYear(){ const ys=years(); if(!ys.length){ ui.year=''; return; } if(!store.years[ui.year]) ui.year=ys[ys.length-1]; }
+const fT=id=>{ const y=Y(); return y&&y.topics.find(t=>t.id===id); };
+let saveT=0;
+function touch(){ clearTimeout(saveT); saveT=setTimeout(save,350); }
+function save(){
+  try{ localStorage.setItem(KEY,JSON.stringify(store)); }catch(e){}
+  try{ dirty++; checkBackup(); autoBackup(false,true); }catch(e){}
+  if(window.SPDB) window.SPDB.queue();
+}
+function sanitize(Yr,y){
+  Yr=clone(Yr||{});
+  Yr.label=Yr.label||('Y'+String(y).slice(2)); Yr.title=String(Yr.title||''); Yr.product=String(Yr.product||''); Yr.by=String(Yr.by||''); Yr.upd=iso(Yr.upd);
+  Yr.acts=(Array.isArray(Yr.acts)?Yr.acts:[]).filter(a=>a).map((a,i)=>({id:String(a.id||('a'+uid())),name:String(a.name||''),icon:String(a.icon||'🎯'),color:String(a.color||PAL[i%PAL.length])}));
+  const ids=new Set(Yr.acts.map(a=>a.id));
+  Yr.topics=(Array.isArray(Yr.topics)?Yr.topics:[]).filter(t=>t).map(t=>{
+    t.id=String(t.id||('t'+uid())); t.act=ids.has(t.act)?t.act:(Yr.acts[0]?Yr.acts[0].id:'');
+    t.name=String(t.name||''); t.short=String(t.short||t.name); t.icon=String(t.icon||'📌'); t.due=iso(t.due); t.dueNote=String(t.dueNote||''); t.upd=iso(t.upd);
+    t.concl=String(t.concl||''); t.temp=String(t.temp||''); t.viz=t.viz==='sensor'?'sensor':'';
+    t.leg=(t.leg&&typeof t.leg==='object')?t.leg:{};
+    t.plan=(Array.isArray(t.plan)?t.plan:[]).filter(m=>m&&isoOK(m.d)).map(m=>({l:String(m.l||''),d:m.d}));
+    t.cols=(Array.isArray(t.cols)?t.cols:[]).filter(c=>c&&c.k).map(c=>({k:String(c.k),label:String(c.label||c.k),type:c.type==='num'?'num':c.type==='text'?'text':'area'}));
+    t.lines=(Array.isArray(t.lines)?t.lines:[]).filter(l=>l).map(l=>({id:String(l.id||('l'+uid())),line:String(l.line||''),st:ST[l.st]?l.st:'chk',qe:String(l.qe||''),pe:String(l.pe||''),due:iso(l.due),v:(l.v&&typeof l.v==='object')?l.v:{}}));
+    t.ov=sanOv(t.ov); if(!t.ov) delete t.ov; else ovMigrate(t);       // ครั้งแรก: เติม Due date ให้ทุกช่อง X ที่ยังว่าง (ครั้งต่อไปไม่ทับ)
+    return t; });
+  return Yr;
+}
+
+/* ---------- คำนวณ ---------- */
+const effDue=(t,l)=>l.due||t.due||'';
+function tStat(t){ const c={ok:0,part:0,ng:0,chk:0}; t.lines.forEach(l=>{ c[l.st]++; }); const n=t.lines.length; return {c:c,n:n,pct:n?c.ok/n*100:null}; }
+function lateInfo(t){ let n=0,max=0; const now=dn(today); t.lines.forEach(l=>{ if(l.st==='ok') return; const d=effDue(t,l); if(!d) return; const k=now-dn(d); if(k>0){ n++; if(k>max) max=k; } }); return {n:n,max:max}; }
+function tState(t){
+  const s=tStat(t); if(!s.n) return {k:'na',lab:'ยังไม่มีข้อมูล'};
+  if(s.c.ok===s.n) return {k:'done',lab:'✓ เสร็จแล้ว'};
+  const L=lateInfo(t); if(L.n) return {k:'late',lab:`เลยกำหนด ${L.n} ไลน์ · สูงสุด ${L.max} วัน`};
+  if(t.due){ const d=dn(t.due)-dn(today); if(d<0) return {k:'late',lab:`เลยกำหนด ${-d} วัน`}; if(d<=14) return {k:'soon',lab:`ครบกำหนดอีก ${d} วัน`}; return {k:'ok',lab:`กำหนด ${fmtS(t.due)} · อีก ${d} วัน`}; }
+  return {k:'open',lab:'ยังไม่ระบุกำหนด'};
+}
+const stColor=k=>({done:'#22c55e',late:'#ef4444',soon:'#f59e0b',ok:'#3b82f6',open:'#94a3b8',na:'#94a3b8'}[k]||'#94a3b8');
+function ordered(y){ const r=[]; y.acts.forEach(a=>y.topics.filter(t=>t.act===a.id).forEach(t=>r.push(t))); y.topics.forEach(t=>{ if(r.indexOf(t)<0) r.push(t); }); return r; }
+function numbering(y){ const m={}; y.acts.forEach((a,ai)=>{ const ts=y.topics.filter(t=>t.act===a.id); ts.forEach((t,k)=>{ m[t.id]=(ai+1)+(ts.length>1?'.'+(k+1):''); }); }); y.topics.forEach(t=>{ if(!m[t.id]) m[t.id]='•'; }); return m; }
+function agg(ts){ const c={ok:0,part:0,ng:0,chk:0}; let n=0; ts.forEach(t=>{ t.lines.forEach(l=>{ c[l.st]++; n++; }); }); return {c:c,n:n,pct:n?c.ok/n*100:null}; }
+const pctColor=p=>p==null?'var(--mut)':p>=80?'var(--ok)':p>=50?'var(--warn)':'var(--dang)';
+function dueItems(y){
+  const over={},soon={},now=dn(today);
+  const add=(map,key,it)=>{ (map[key]=map[key]||Object.assign({lines:[]},it)); if(it.line) map[key].lines.push(it.line); };
+  ordered(y).forEach(t=>{
+    t.lines.forEach(l=>{ if(l.st==='ok') return; const dd=effDue(t,l); if(!dd) return; const d=dn(dd)-now;
+      if(d<0) add(over,t.id+'|'+dd,{t:t,date:dd,d:d,line:l.line}); else if(d<=30) add(soon,t.id+'|'+dd,{t:t,date:dd,d:d,line:l.line}); });
+    (t.plan||[]).forEach(m=>{ const d=dn(m.d)-now; if(d>=0&&d<=30) soon[t.id+'|ms|'+m.d+'|'+m.l]={t:t,date:m.d,d:d,lines:[],label:m.l,ms:true}; });
+  });
+  const f=o=>Object.keys(o).map(k=>o[k]).sort((a,b)=>a.d-b.d);
+  return {over:f(over),soon:f(soon)};
+}
+function nextDeadline(y){
+  const now=dn(today); let best=null;
+  const cons=(date,label,t)=>{ const d=dn(date)-now; if(d>=0&&(!best||d<best.d)) best={d:d,date:date,label:label,t:t}; };
+  ordered(y).forEach(t=>{ const s=tStat(t); if(s.n&&s.c.ok===s.n) return;
+    if(t.due) cons(t.due,t.short,t);
+    t.lines.forEach(l=>{ if(l.st!=='ok'&&l.due) cons(l.due,t.short+' · '+l.line,t); });
+    (t.plan||[]).forEach(m=>cons(m.d,t.short+' · '+m.l,t)); });
+  return best;
+}
+
+/* ---------- องค์ประกอบ UI ---------- */
+function gauge(p,size,color){
+  const r=48, c=2*Math.PI*r, v=p==null?0:Math.max(0,Math.min(100,p)), d=v/100*c;
+  return `<svg viewBox="0 0 120 120" width="${size}" height="${size}" role="img" aria-label="${p==null?'ไม่มีข้อมูล':Math.round(p)+'%'}"><circle cx="60" cy="60" r="${r}" fill="none" stroke="var(--line)" stroke-opacity=".6" stroke-width="12"/>`+
+    (v>0?`<circle cx="60" cy="60" r="${r}" fill="none" stroke="${color}" stroke-width="12" stroke-linecap="round" stroke-dasharray="${d} ${c-d}" transform="rotate(-90 60 60)"/>`:'')+
+    `<text x="60" y="${size>150?68:66}" text-anchor="middle" font-size="${size>150?27:25}" font-weight="800" fill="var(--txt)">${p==null?'–':Math.round(p)+'%'}</text></svg>`;
+}
+const kpi=(i,n,l,c)=>`<div class="ms-kpi"><span class="i">${i}</span><div class="n" style="color:${c||'var(--txt)'}">${n}</div><div class="l">${l}</div></div>`;
+const badge=s=>`<span class="hs-badge b-${s.k}">${E(s.lab)}</span>`;
+function stackBar(c,n){ return `<div class="hs-bar">`+(n?ORD.map(k=>c[k]?`<i style="width:${c[k]/n*100}%;background:${ST[k].c}" title="${ST[k].n}: ${c[k]}"></i>`:'').join(''):'')+`</div>`; }
+const counts=c=>ORD.filter(k=>c[k]).map(k=>`<span style="color:${ST[k].c}">${ST[k].s} ${c[k]}</span>`).join('');
+function lineNo(s){ const m=String(s).match(/\d+/); return m?+m[0]:1e9; }
+
+/* ---------- head / nav / ว่าง ---------- */
+function head(ys){
+  const y=Y();
+  let h=`<div class="ms-head"><h1>🧭 Hoshin QE Electronics</h1><div class="ms-sub">${y?`${E(y.title)}${y.product?' · '+E(y.product):''} · อัปเดต ${fmtD(y.upd)}${y.by?' · โดย '+E(y.by):''}`:'นโยบายประจำปี (Hoshin) — ติดตามกิจกรรม สถานะรายไลน์ และกำหนดเสร็จ ในที่เดียว'}</div>`;
+  h+=`<div class="ms-bar"><div class="ms-years">`+ys.map(k=>`<button type="button" class="ms-yr${k===ui.year?' on':''}" data-act="hyr" data-y="${k}">${k}</button>`).join('')+`<button type="button" class="ms-yr add" data-act="haddy">+ เพิ่มปี</button></div>`;
+  if(y) h+=`<div class="ms-tools"><button type="button" class="btn-g" data-act="hcsv">⬇ CSV</button><button type="button" class="btn-g" data-act="hjson" title="สำรองข้อมูล Hoshin ทุกปี">💾 JSON</button><button type="button" class="btn-g" data-act="himp">📂 นำเข้า</button><button type="button" class="btn-g" data-act="hdely" style="color:var(--t-dang)">🗑 ลบปีนี้</button></div>`;
+  return h+`</div></div>`;
+}
+function nav(y){
+  const N=numbering(y), cur=ui.view==='topic'?ui.topic:'dash';
+  let h=`<div class="ot-nav"><div class="ot-chips"><button type="button" class="ot-chip${cur==='dash'?' on':''}" data-act="hnav" data-v="dash">📊 ภาพรวม</button>`;
+  ordered(y).forEach(t=>{ const s=tState(t); h+=`<button type="button" class="ot-chip${cur===t.id?' on':''}" data-act="hnav" data-v="${E(t.id)}" title="${E(t.name)} — ${E(s.lab)}">${E(N[t.id])} ${E(t.short)}<i class="hs-dot" style="background:${stColor(s.k)}"></i></button>`; });
+  return h+`</div><div class="ot-navr"><button type="button" class="btn-g" data-act="hset">⚙ ตั้งค่า / กิจกรรม</button></div></div>`;
+}
+function empty(){
+  return `<div class="ms-card ms-empty"><h2>🧭 Hoshin QE Electronics ยังไม่มีข้อมูล</h2><p class="ms-sub">นำเข้าไฟล์ข้อมูลของปีนี้ (JSON) หรือเริ่มสร้างเองจากแม่แบบ 4 กิจกรรม — มี Dashboard สถานะรายไลน์ ไทม์ไลน์กำหนดเสร็จ และตารางติดตามให้อัตโนมัติ</p>`+
+    `<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:12px"><button type="button" class="btn-p" data-act="himp">📂 นำเข้า (JSON)</button><button type="button" class="btn-g" data-act="hnew">➕ เริ่มสร้างเอง</button></div></div>`;
+}
+
+/* ---------- ภาพรวม ---------- */
+function viewDash(y){
+  const ord=ordered(y), N=numbering(y), A=agg(ord), col=pctColor(A.pct);
+  const doneT=ord.filter(t=>tState(t).k==='done').length, D=dueItems(y), nx=nextDeadline(y);
+  const lateLines=D.over.reduce((a,x)=>a+x.lines.length,0);
+  let h=`<div class="ms-hero"><div class="ms-card ms-ovc"><div class="ms-ovg">${gauge(A.pct,170,col)}</div><div class="ms-ovt"><div class="ms-eyebrow">🧭 ${E(y.title||'Hoshin')}${y.product?' · '+E(y.product):''}</div>`+
+    `<div class="ms-bigp" style="color:${col}">${A.n?A.c.ok+' / '+A.n:'–'}</div><div class="ms-mut">จุดตรวจที่ผ่าน (OK) · นับตามจำนวนไลน์ในแต่ละหัวข้อ</div><div class="ms-prog"><i style="width:${A.pct==null?0:A.pct}%"></i></div>`+
+    `<div class="hs-trc" style="margin-top:8px">${counts(A.c)}</div></div></div>`+
+    `<div class="ms-kpis">`+kpi('🏁',`${doneT}/${ord.length}`,'หัวข้อที่เสร็จสมบูรณ์','var(--t-ok)')+
+    kpi('🚨',lateLines,'ไลน์ที่เลยกำหนด',lateLines?'var(--t-dang)':'var(--t-ok)')+
+    kpi('▲',A.c.part,'ไลน์ที่ทำบางส่วน','var(--t-warn)')+
+    kpi('🗓️',nx?fmtS(nx.date):'–',nx?`กำหนดถัดไป · ${E(clipT(nx.label,30))} (อีก ${nx.d} วัน)`:'ไม่มีกำหนดถัดไป')+`</div></div>`;
+  // activity cards
+  h+=`<div class="hs-acts">`;
+  y.acts.forEach((a,ai)=>{
+    const ts=y.topics.filter(t=>t.act===a.id), s=agg(ts);
+    h+=`<div class="hs-act" style="--ac:${E(a.color)}"><div class="hs-ah"><span class="hs-ai">${E(a.icon)}</span><div style="min-width:0"><small>กิจกรรมที่ ${ai+1}</small><b>${E(a.name)}</b></div><div class="hs-ap"><b style="color:${pctColor(s.pct)}">${s.pct==null?'–':Math.round(s.pct)+'%'}</b><span>OK</span></div></div>`;
+    ts.forEach(t=>{ const st=tStat(t), ss=tState(t);
+      h+=`<button type="button" class="hs-tr" data-act="hnav" data-v="${E(t.id)}"><div class="hs-trh"><b>${E(N[t.id])} · ${E(t.short)}</b>${badge(ss)}</div>${stackBar(st.c,st.n)}<div class="hs-trc">${counts(st.c)}<em>${st.n} ไลน์${t.due?' · กำหนด '+fmtS(t.due):''}</em></div></button>`; });
+    if(!ts.length) h+=`<div class="ms-sub">ยังไม่มีหัวข้อในกิจกรรมนี้</div>`;
+    h+=`<button type="button" class="btn-g hs-add" data-act="haddt" data-a="${E(a.id)}">＋ เพิ่มหัวข้อ</button></div>`;
+  });
+  h+=`</div>`;
+  // roadmap + follow-up
+  h+=`<div class="ms-card hs-card"><h3>🗺️ ไทม์ไลน์กำหนดเสร็จ</h3><div class="ms-sub">◆ = กำหนดเสร็จของหัวข้อ (ตัวเลข = ไลน์ที่ยังไม่เสร็จ) · ● = ไลน์ที่มีกำหนดเฉพาะ · ◇ = Milestone · เส้นประ = วันนี้</div>${roadmap(y)}</div>`+
+    `<div class="ms-card hs-card"><h3>📌 ต้องติดตาม</h3><div class="ms-sub">เลยกำหนด และครบกำหนดภายใน 30 วัน · คลิกเพื่อเปิดหัวข้อ</div>`+followUp(D,N)+`</div>`;
+  // matrix
+  h+=`<div class="ms-card hs-card"><h3>🧩 ภาพรวมรายไลน์ × หัวข้อ</h3><div class="ms-sub">ดูไลน์เดียวครบทุกกิจกรรมว่าติดตรงไหน · คลิกช่องเพื่อดู/แก้ไข</div><div class="hs-leg">${ORD.map(k=>`<span><i style="background:${ST[k].c}">${ST[k].s}</i>${ST[k].n}</span>`).join('')}<span><i style="background:transparent;color:var(--mut);border:1px dashed var(--line)">–</i>ไม่อยู่ในหัวข้อนี้</span></div>${matrix(y,ord,N)}</div>`;
+  h+=`<div style="margin:4px 0 24px"><button type="button" class="btn-g" data-act="hadda">＋ เพิ่มกิจกรรม</button></div>`;
+  return h;
+}
+function followUp(D,N){
+  const row=(it,over)=>{ const c=over?'#ef4444':(it.d<=7?'#f59e0b':'#3b82f6');
+    const txt=it.ms?E(it.label):E(it.lines.join(', '));
+    return `<div class="hs-fi" style="--fc:${c}" data-act="hnav" data-v="${E(it.t.id)}"><div class="hs-fd"><b>${+it.date.slice(8)}</b><small>${TM[+it.date.slice(5,7)-1]}</small></div><div class="hs-fx"><div class="l1">${it.ms?'◇ ':''}${txt}<span class="hs-badge ${over?'b-late':it.d<=7?'b-soon':'b-ok'}">${over?`เลย ${-it.d} วัน`:it.d===0?'วันนี้':`อีก ${it.d} วัน`}</span></div><div class="l2">${E(N[it.t.id])} · ${E(it.t.short)}</div></div></div>`; };
+  const nOver=D.over.reduce((a,x)=>a+x.lines.length,0);
+  const col=(title,items,over,emptyMsg)=>`<div><div class="hs-fh">${title}</div><div class="hs-fol">${items.length?items.map(i=>row(i,over)).join(''):`<div class="ms-sub" style="padding:10px 4px">${emptyMsg}</div>`}</div></div>`;
+  return `<div class="hs-fc">`+col(`🚨 เลยกำหนด (${nOver} ไลน์)`,D.over,true,'ไม่มีรายการเลยกำหนด 🎉')+col(`⏳ ครบกำหนดภายใน 30 วัน (${D.soon.length} รายการ)`,D.soon,false,'ไม่มีรายการที่ใกล้ครบกำหนด')+`</div>`;
+}
+function matrix(y,ord,N){
+  const map={};
+  ord.forEach(t=>t.lines.forEach(l=>{ const k=String(l.line).trim().toUpperCase(); if(!k) return; const r=map[k]||(map[k]={line:l.line,qe:'',pe:'',c:{}}); r.c[t.id]=l; if(l.qe) r.qe=l.qe; if(l.pe) r.pe=l.pe; }));
+  const rows=Object.keys(map).sort((a,b)=>lineNo(a)-lineNo(b)||a.localeCompare(b));
+  if(!rows.length) return `<div class="ms-sub" style="padding:12px 4px">ยังไม่มีข้อมูลไลน์</div>`;
+  let h=`<div class="ms-ng"><table class="hs-mx"><thead><tr><th style="text-align:left">ไลน์</th>`+ord.map(t=>`<th title="${E(t.name)}">${E(N[t.id])} ${E(t.short)}<small>${E(y.acts.find(a=>a.id===t.act)?y.acts.find(a=>a.id===t.act).icon:'')}</small></th>`).join('')+`<th>NG รวม</th><th>QE</th><th>PE</th></tr></thead><tbody>`;
+  rows.forEach(k=>{ const r=map[k]; let ng=0;
+    h+=`<tr><td class="ln">${E(r.line)}</td>`+ord.map(t=>{ const l=r.c[t.id]; if(!l) return `<td><span class="hs-c na">–</span></td>`; if(l.st==='ng') ng++;
+      return `<td><span class="hs-c" style="background:${ST[l.st].c}" data-act="hln" data-t="${E(t.id)}" data-l="${E(l.id)}" title="${E(t.short)} · ${E(ST[l.st].n)}">${ST[l.st].s}</span></td>`; }).join('')+
+      `<td><span class="hs-ngc${ng?'':' z'}">${ng}</span></td><td class="ow">${E(r.qe)}</td><td class="ow">${E(r.pe)}</td></tr>`; });
+  return h+`</tbody></table></div>`;
+}
+function roadmap(y){
+  const ord=ordered(y), now=dn(today); const pts=[now];
+  ord.forEach(t=>{ if(t.due) pts.push(dn(t.due)); (t.plan||[]).forEach(m=>pts.push(dn(m.d))); t.lines.forEach(l=>{ if(l.due&&l.st!=='ok') pts.push(dn(l.due)); }); });
+  const mn=Math.min.apply(null,pts), mxv=Math.max.apply(null,pts), sd=new Date(mn*864e5), ed=new Date(mxv*864e5);
+  const start=Date.UTC(sd.getUTCFullYear(),sd.getUTCMonth(),1)/864e5, end=Date.UTC(ed.getUTCFullYear(),ed.getUTCMonth()+1,1)/864e5;
+  const W=1000,L0=190,R0=W-40,laneH=72,top=40,H=top+Math.max(1,ord.length)*laneH+16, X=d=>L0+(d-start)/(end-start)*(R0-L0);
+  let s=`<svg class="ms-trend hs-rm" viewBox="0 0 ${W} ${H}" role="img" aria-label="ไทม์ไลน์กำหนดเสร็จของแต่ละหัวข้อ">`;
+  let cur=new Date(start*864e5), k=0;
+  while(Date.UTC(cur.getUTCFullYear(),cur.getUTCMonth(),1)/864e5<end){
+    const a=Date.UTC(cur.getUTCFullYear(),cur.getUTCMonth(),1)/864e5, b=Date.UTC(cur.getUTCFullYear(),cur.getUTCMonth()+1,1)/864e5;
+    s+=`<rect x="${X(a).toFixed(1)}" y="${top-8}" width="${(X(b)-X(a)).toFixed(1)}" height="${H-top+8-8}" fill="var(--soft)" fill-opacity="${k%2?0:.55}"/>`+
+       `<text x="${((X(a)+X(b))/2).toFixed(1)}" y="${top-16}" text-anchor="middle" class="lb">${TM[cur.getUTCMonth()]}${cur.getUTCMonth()===0||k===0?' '+String(cur.getUTCFullYear()+543).slice(2):''}</text>`;
+    cur=new Date(b*864e5); k++;
+  }
+  ord.forEach((t,i)=>{
+    const a=y.acts.find(x=>x.id===t.act)||{color:'#8b5cf6'}, cy=top+i*laneH+laneH/2, st=tState(t);
+    s+=`<line x1="${L0}" x2="${R0}" y1="${cy}" y2="${cy}" stroke="var(--line)" stroke-width="2"/>`+
+       `<circle cx="14" cy="${cy}" r="6" fill="${E(a.color)}"/><text x="28" y="${cy+4}" class="lb">${E(clipT(t.short,22))}${st.k==='done'?' ✓':''}</text>`;
+    const dots={}; t.lines.forEach(l=>{ if(l.st==='ok'||!l.due) return; (dots[l.due]=dots[l.due]||[]).push(l.line); });
+    let di=0;
+    Object.keys(dots).sort().forEach(d=>{ if(d===t.due) return; const x=X(dn(d)), over=dn(d)<now, up=(di++%2===1);
+      s+=`<circle cx="${x.toFixed(1)}" cy="${cy}" r="9" fill="${over?'#ef4444':'#f59e0b'}"><title>${E(dots[d].join(', '))} · ${fmtD(d)}</title></circle><text x="${x.toFixed(1)}" y="${cy+3.5}" text-anchor="middle" class="in">${dots[d].length}</text><text x="${x.toFixed(1)}" y="${up?cy-17:cy+25}" text-anchor="middle" class="ms">${fmtS(d)}</text>`; });
+    let j=0;
+    (t.plan||[]).forEach(m=>{ const x=X(dn(m.d)), same=m.d===t.due, above=same?true:(j++%2===0), past=dn(m.d)<now;
+      if(!same) s+=`<rect x="${(x-6).toFixed(1)}" y="${cy-6}" width="12" height="12" transform="rotate(45 ${x.toFixed(1)} ${cy})" fill="var(--card)" stroke="${E(a.color)}" stroke-width="2.4" opacity="${past?.5:1}"><title>${E(m.l)} · ${fmtD(m.d)}</title></rect>`;
+      const ly=above?cy-26:cy+22;
+      s+=`<text x="${x.toFixed(1)}" y="${ly}" text-anchor="middle" class="ms" opacity="${past?.55:1}">${E(clipT(m.l.replace(/^Plan\s*/i,''),18))}</text><text x="${x.toFixed(1)}" y="${ly+11}" text-anchor="middle" class="ms" style="font-weight:500" opacity="${past?.55:1}">${fmtS(m.d)}</text>`; });
+    if(t.due){ const x=X(dn(t.due)), done=st.k==='done', over=!done&&dn(t.due)<now, fill=done?'#22c55e':over?'#ef4444':E(a.color);
+      const open=t.lines.filter(l=>l.st!=='ok'&&effDue(t,l)===t.due).length, hasMs=(t.plan||[]).some(m=>m.d===t.due);
+      s+=`<rect x="${(x-11).toFixed(1)}" y="${cy-11}" width="22" height="22" rx="3" transform="rotate(45 ${x.toFixed(1)} ${cy})" fill="${fill}"><title>${E(t.short)} · ${E(t.dueNote||'กำหนดเสร็จ')} ${fmtD(t.due)}</title></rect>`+
+         `<text x="${x.toFixed(1)}" y="${cy+4}" text-anchor="middle" class="in">${open||'✓'}</text>`+
+         (hasMs?'':`<text x="${x.toFixed(1)}" y="${cy+28}" text-anchor="middle" class="ms">${fmtS(t.due)}</text>`); }
+    else if(st.k==='done') s+=`<text x="${L0+10}" y="${cy-8}" class="ms" style="fill:#22c55e">✓ เสร็จแล้ว (ไม่มีกำหนดค้าง)</text>`;
+  });
+  const tx=X(now);
+  s+=`<line x1="${tx.toFixed(1)}" x2="${tx.toFixed(1)}" y1="${top-8}" y2="${H-14}" stroke="var(--pri)" stroke-width="2" stroke-dasharray="5 4"/><text x="${tx.toFixed(1)}" y="${H-2}" text-anchor="middle" class="td">วันนี้ ${fmtS(today)}</text>`;
+  return s+'</svg>';
+}
+
+/* ---------- หน้าหัวข้อ ---------- */
+function sensorChart(t){
+  const L=t.lines; if(!L.length) return '';
+  const ser=[['color','Color sensor','#22c55e'],['motion','Motion sensor','#3b82f6'],['remain','Remain (ยังไม่ติดตั้ง)','#f97316']];
+  const v=(l,k)=>{ const x=parseFloat((l.v||{})[k]); return isFinite(x)?x:0; };
+  const W=780,H=250,Lm=40,Rm=12,Tm=24,Bm=34, iw=W-Lm-Rm, ih=H-Tm-Bm, bw=iw/L.length;
+  const mx=Math.max(5,...L.map(l=>ser.reduce((a,x)=>a+v(l,x[0]),0)))*1.1, Yp=n=>Tm+(1-n/mx)*ih;
+  let s=`<svg class="ms-trend" viewBox="0 0 ${W} ${H}" role="img" aria-label="จำนวนจุดติดตั้ง Sensor รายไลน์">`;
+  const step=mx>20?10:mx>10?5:2; for(let n=0;n<=mx;n+=step) s+=`<line x1="${Lm}" x2="${W-Rm}" y1="${Yp(n)}" y2="${Yp(n)}" stroke="var(--line)" stroke-opacity=".7" ${n?'stroke-dasharray="3 4"':''}/><text x="${Lm-6}" y="${Yp(n)+4}" text-anchor="end">${n}</text>`;
+  L.forEach((l,i)=>{ const x=Lm+bw*i+bw/2, w=Math.min(46,bw*.62); let acc=0;
+    ser.forEach(se=>{ const n=v(l,se[0]); if(!n) return; const y1=Yp(acc+n), h=Yp(acc)-y1;
+      s+=`<rect x="${(x-w/2).toFixed(1)}" y="${y1.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" fill="${se[2]}" fill-opacity=".9"><title>${E(l.line)} · ${se[1]}: ${n}</title></rect>`;
+      if(h>15) s+=`<text x="${x.toFixed(1)}" y="${(y1+h/2+4).toFixed(1)}" text-anchor="middle" style="fill:#fff;font-weight:800;font-size:11px">${n}</text>`; acc+=n; });
+    s+=`<text x="${x.toFixed(1)}" y="${(Yp(acc)-6).toFixed(1)}" text-anchor="middle" style="fill:var(--txt);font-weight:800">${acc}</text><text x="${x.toFixed(1)}" y="${H-12}" text-anchor="middle" style="fill:${ST[l.st].c};font-weight:700">${E(l.line)}</text>`; });
+  s+='</svg>';
+  return `<div class="ms-card hs-card"><h3>📊 จำนวนจุดติดตั้ง Sensor รายไลน์ (Sensor position)</h3><div class="hs-leg">${ser.map(x=>`<span><i style="background:${x[2]}"> </i>${x[1]}</span>`).join('')}</div>${s}</div>`;
+}
+function fmtCell(v){
+  v=String(v==null?'':v); const tr=v.trim();
+  if(tr==='O') return `<span class="jb jo">O</span>`;
+  if(tr==='x'||tr==='X') return `<span class="jb jx">X</span>`;
+  const e=E(v);
+  return /Not specified|No control/i.test(v)?e.replace(/([^\n]*(Not specified|No control)[^\n]*)/gi,'<span class="hs-bad">$1</span>'):e;
+}
+function viewTopic(y,t){
+  const N=numbering(y), a=y.acts.find(x=>x.id===t.act)||{icon:'📌',color:'#8b5cf6',name:''}, ai=y.acts.indexOf(a), s=tStat(t), ss=tState(t);
+  let h=`<div class="hs-tb" style="--ac:${E(a.color)}"><div><div class="ey">${E(a.icon)} กิจกรรมที่ ${ai+1} · ${E(a.name)}</div><h2>${E(t.icon)} ${E(N[t.id])} · ${E(t.name)}</h2><div class="bd">${badge(ss)}`+
+    (t.due?`<span>📅 ${E(t.dueNote||'กำหนดเสร็จ')}: <b style="color:var(--txt)">${fmtD(t.due)}</b></span>`:'')+(t.upd?`<span>🕒 ข้อมูลอัปเดต ${fmtD(t.upd)}</span>`:'')+`</div>`+
+    `<div class="bt"><button type="button" class="btn-p" data-act="haddl" data-t="${E(t.id)}">＋ เพิ่มไลน์</button><button type="button" class="btn-g" data-act="hedt" data-t="${E(t.id)}">✎ แก้ไขหัวข้อ</button>${t.ov?'<button type="button" class="btn-g" data-act="ovgo">🧾 Overall status ↓</button>':`<button type="button" class="btn-g" data-act="ovnew" data-t="${E(t.id)}">＋ Overall status</button>`}<button type="button" class="btn-g" data-act="hnav" data-v="dash">← ภาพรวม</button></div></div>`+
+    `<div style="text-align:center">${gauge(s.pct,128,pctColor(s.pct))}<div class="ms-mut">OK ${s.c.ok} / ${s.n} ไลน์</div></div></div>`;
+  h+=`<div class="hs-st4">`+ORD.filter(k=>s.c[k]||k==='ok'||k==='ng').map(k=>`<div class="hs-sc" style="--sc:${ST[k].c}"><b>${s.c[k]}</b><div>${ST[k].s} ${ST[k].n}<small>${E(t.leg&&t.leg[k]||'')}${s.n?` · ${Math.round(s.c[k]/s.n*100)}%`:''}</small></div></div>`).join('')+`</div>`;
+  // board
+  h+=`<div class="ms-card hs-card"><h3>🗂️ สถานะรายไลน์</h3><div class="ms-sub">คลิกแท่งสถานะเพื่อสลับ · คลิกการ์ดเพื่อแก้ไขรายละเอียด</div>`+(t.lines.length?`<div class="hs-board">`+t.lines.slice().sort((x,y2)=>lineNo(x.line)-lineNo(y2.line)).map(l=>`<button type="button" class="hs-tile" style="--sc:${ST[l.st].c}" data-act="hln" data-t="${E(t.id)}" data-l="${E(l.id)}"><i>${ST[l.st].s}</i><b>${E(l.line)}</b><span>${E(ST[l.st].n)}</span>${effDue(t,l)&&l.st!=='ok'?`<span>📅 ${fmtS(effDue(t,l))}</span>`:''}</button>`).join('')+`</div>`:`<div class="ms-sub">ยังไม่มีไลน์ — กด “＋ เพิ่มไลน์”</div>`)+`</div>`;
+  if(t.viz==='sensor') h+=sensorChart(t);
+  // info
+  const now=dn(today), nextI=(t.plan||[]).findIndex(m=>dn(m.d)>=now);
+  const info=[];
+  if(t.concl) info.push(`<div class="hs-box"><h4>📝 สรุป / Conclusion</h4><p>${E(t.concl)}</p></div>`);
+  if(t.temp) info.push(`<div class="hs-box warn"><h4>🛑 Temporary action</h4><p>${E(t.temp)}</p></div>`);
+  if((t.plan||[]).length) info.push(`<div class="hs-box"><h4>🗓️ แผนงาน / Milestone</h4><div class="hs-ms">`+t.plan.map((m,i)=>{ const d=dn(m.d)-now; return `<span class="hs-m${d<0?' past':''}${i===nextI?' next':''}"><b>${E(m.l)}</b><small>${fmtD(m.d)} · ${d<0?'ผ่านแล้ว':d===0?'วันนี้':'อีก '+d+' วัน'}</small></span>`; }).join('')+`</div></div>`);
+  if(info.length) h+=`<div class="hs-info">${info.join('')}</div>`;
+  h+=ovSection(t);
+  // table
+  const hasQ=t.lines.some(l=>l.qe||l.pe), hasD=t.lines.some(l=>l.due);
+  h+=`<div class="ms-card hs-card"><h3>📋 รายละเอียดรายไลน์</h3><div class="ms-sub">คลิกแถวเพื่อแก้ไข · คลิกป้ายสถานะเพื่อสลับ (OK → บางส่วน → NG → กำลังตรวจสอบ)</div><div class="hs-tw"><table class="hs-tbl"><thead><tr><th>#</th><th>ไลน์</th><th>สถานะ</th>`+
+    t.cols.map(c=>`<th>${E(c.label)}</th>`).join('')+(hasQ?`<th>QE</th><th>PE</th>`:'')+(hasD?`<th>กำหนด</th>`:'')+`</tr></thead><tbody>`;
+  t.lines.forEach((l,i)=>{ const d=effDue(t,l), late=l.st!=='ok'&&d&&dn(d)<now;
+    h+=`<tr data-act="hln" data-t="${E(t.id)}" data-l="${E(l.id)}"><td class="c">${i+1}</td><td class="ln">${E(l.line)}</td><td class="c"><button type="button" class="hs-pill" style="--sc:${ST[l.st].c}" data-act="hcyc" data-t="${E(t.id)}" data-l="${E(l.id)}">${ST[l.st].s} ${ST[l.st].n}</button></td>`+
+      t.cols.map(c=>`<td class="${c.type==='num'?'n':(c.type==='text'?'c':'')}">${c.type==='num'?E((l.v||{})[c.k]==null?'':(l.v||{})[c.k]):fmtCell((l.v||{})[c.k])}</td>`).join('')+
+      (hasQ?`<td class="c">${E(l.qe)}</td><td class="c">${E(l.pe)}</td>`:'')+
+      (hasD?`<td class="c">${l.due?fmtS(l.due):'–'}${late?`<span class="hs-lt b-late">เลย ${now-dn(d)} วัน</span>`:''}</td>`:'')+`</tr>`; });
+  if(!t.lines.length) h+=`<tr><td colspan="${3+t.cols.length+(hasQ?2:0)+(hasD?1:0)}" style="color:var(--mut);padding:18px">ยังไม่มีไลน์</td></tr>`;
+  return h+`</tbody></table></div></div>`;
+}
+
+/* ---------- Overall status (Before → After รายไลน์ × Jig) ---------- */
+const OVS={O:{n:'ผ่าน / มีแล้ว',s:'O',c:'#22c55e'},X:{n:'ไม่ผ่าน / ยังไม่มี',s:'X',c:'#ef4444'},NA:{n:'ไม่เกี่ยวข้อง',s:'N/A',c:'#94a3b8'},E:{n:'ยังไม่ระบุ',s:'–',c:'#64748b'}};
+const OVORD=['O','X','NA',''];
+const ovK=s=>s?s:'E';
+const OV_ITEMS0=[
+  {n:'Touch sensor',d:'ไฟต้อง On หลัง Clamp สนิทเท่านั้น (ไฟ Status OK ห้าม On ก่อน Clamp full stroke)'},
+  {n:'Fiber sensor · ไม่มีชิ้นงาน',d:'หากไม่มีชิ้นงานสามารถตรวจจับได้ (ไฟ Status OK ต้องไม่ On · M/C เดินงานไม่ได้)'},
+  {n:'Fiber sensor · ชิ้นงานเด้ง',d:'หากชิ้นงานประกอบแล้วเด้งตรวจจับได้ (ไฟ Status OK ต้องไม่ On หลังประกอบแล้วเด้ง)'}];
+const OV_DOCS0=['PPS (PE)','Q-COM (PE)','Drawing Gauge Go/NoGo','Gauge Go/NoGo หรือ Master','Pokayoke manual (PE)','Pokayoke check sheet (MFG)'];
+const OV_LC=['#ec4899','#f59e0b','#8b5cf6','#14b8a6','#3b82f6','#f97316','#84cc16','#06b6d4'];
+function sanOv(o){
+  if(!o||typeof o!=='object') return null;
+  o=clone(o); const S=s=>({O:'O',X:'X',NA:'NA','N/A':'NA'}[String(s||'').toUpperCase()]||'');
+  const items=(Array.isArray(o.items)&&o.items.length?o.items:OV_ITEMS0).map(x=>({n:String(x&&x.n||''),d:String(x&&x.d||'')}));
+  const docs=(Array.isArray(o.docs)&&o.docs.length?o.docs:OV_DOCS0).map(x=>String(x||''));
+  const K=items.length, D=docs.length, used=new Set();
+  const ID=(v,p)=>{ v=String(v||''); if(!v||used.has(v)) v=p+uid(); used.add(v); return v; };
+  const arr=(a,f)=>{ const r=[]; for(let i=0;i<K;i++) r.push(f(Array.isArray(a)?a[i]:undefined)); return r; };
+  const blocks=(Array.isArray(o.blocks)?o.blocks:[]).filter(b=>b).map(b=>{
+    const mode=b.mode==='one'?'one':'ba';
+    const procs=(Array.isArray(b.procs)?b.procs:[]).filter(p=>p).map(p=>({id:ID(p.id,'op'),n:String(p.n||'Process'),
+      jigs:(Array.isArray(p.jigs)?p.jigs:[]).filter(j=>j).map(j=>({id:ID(j.id,'oj'),j:String(j.j==null?'':j.j),c:String(j.c==null?'':j.c),n:String(j.n||''),
+        b:arr(j.b,S),a:(mode==='ba'||Array.isArray(j.a))?arr(j.a,S):null,d:arr(j.d,x=>iso(x)),bn:arr(j.bn,x=>String(x||'')),an:arr(j.an,x=>String(x||''))}))}));
+    const dc=[]; for(let k=0;k<K;k++){ const row=[]; for(let i=0;i<D;i++){ const c=(b.dc&&b.dc[k]&&b.dc[k][i])||{}; row.push({s:S(c.s),a:S(c.a),d:iso(c.d),n:String(c.n||'')}); } dc.push(row); }
+    return {id:ID(b.id,'ob'),line:String(b.line||''),ref:String(b.ref||''),title:String(b.title||''),mode:mode,dm:b.dm?1:0,note:String(b.note||''),extra:String(b.extra||''),procs:procs,dc:dc,rem:arr(b.rem,x=>String(x||''))};
+  });
+  return {items:items,docs:docs,blocks:blocks,mig:o.mig?1:0};
+}
+function ovBlockStats(b,K){
+  const r={n:0,ox:0,xx:0,bx:0,ax:0,imp:0,reg:0,jigs:0,dx:0,dok:0,dimp:0,due:'',sdue:''}, ba=b.mode==='ba';
+  b.procs.forEach(p=>p.jigs.forEach(j=>{ r.jigs++;
+    for(let k=0;k<K;k++){ const bf=j.b[k], cur=ba?(j.a?j.a[k]:''):((j.a&&j.a[k])||bf);          // สถานะหลังแก้: one-mode ถ้ายังไม่ระบุ = เท่ากับสถานะเดิม
+      if(cur==='O'){ r.ox++; r.n++; } else if(cur==='X'){ r.xx++; r.n++; const d=j.d&&j.d[k]; if(d&&(!r.sdue||d<r.sdue)) r.sdue=d; }
+      if(ba){ if(bf==='X') r.bx++; if(cur==='X') r.ax++; }
+      if(bf==='X'&&cur==='O') r.imp++; if(bf==='O'&&cur==='X') r.reg++; } }));
+  (b.dm?b.dc.slice(0,1):b.dc).forEach(row=>row.forEach(c=>{ const cur=c.a||c.s;
+    if(cur==='X'){ r.dx++; if(c.d&&(!r.due||c.d<r.due)) r.due=c.d; } else if(cur==='O') r.dok++;
+    if(c.s==='X'&&c.a==='O') r.dimp++; }));
+  return r;
+}
+/* ----- Due date ของช่อง X: ตั้งค่า / เติมอัตโนมัติ (ครั้งแรก) ----- */
+function ovSetDue(b,K,dS,dD,over){                     // dS = วันที่สำหรับ Sensor · dD = วันที่สำหรับเอกสาร · over = เขียนทับช่องที่มีวันที่แล้ว
+  let n=0;
+  b.procs.forEach(p=>p.jigs.forEach(j=>{ j.d=j.d||new Array(K).fill('');
+    for(let k=0;k<K;k++){ const cur=b.mode==='ba'?(j.a?j.a[k]:''):((j.a&&j.a[k])||j.b[k]);
+      if(cur==='X'&&dS&&(over||!j.d[k])){ j.d[k]=dS; n++; } } }));
+  const rows=b.dm?b.dc:b.dc, seen=new Set();
+  rows.forEach((row,k)=>row.forEach((c,i)=>{ if((c.a||c.s)!=='X'||!dD||!(over||!c.d)) return; c.d=dD; if(!b.dm||!seen.has(i)){ n++; seen.add(i); } }));
+  return n;
+}
+const ovLineKey=x=>String(x||'').trim().toUpperCase();
+function ovFillDue(t,blocks){
+  const o=t.ov, K=o.items.length;
+  (blocks||o.blocks).forEach(b=>{
+    let docD=''; (b.dm?b.dc.slice(0,1):b.dc).forEach(r=>r.forEach(c=>{ if((c.a||c.s)==='X'&&c.d&&(!docD||c.d<docD)) docD=c.d; }));
+    const ln=t.lines.find(l=>ovLineKey(l.line)===ovLineKey(b.line)), lineD=(ln&&ln.due)||t.due||'';
+    ovSetDue(b,K,lineD||docD,docD||lineD,false);       // Sensor → กำหนดเสร็จของไลน์/หัวข้อ · เอกสาร → วันที่ค้างของเอกสารในตารางนั้น
+  });
+}
+function ovMigrate(t){ const o=t&&t.ov; if(!o||o.mig) return; ovFillDue(t); o.mig=1; }
+const ovChip=(s,at,note,title,extraCls)=>`<span class="ov-c s${ovK(s)}${extraCls||''}" style="--sc:${OVS[ovK(s)].c}" ${at} title="${E(title)}">${OVS[ovK(s)].s}${note?'<i class="ov-nt"></i>':''}</span>`;
+const ovDueTag=(d,effX,now)=>{ if(!effX) return ''; if(!d) return '<small class="ov-dt none">ใส่ Due</small>'; const late=dn(d)<now; return `<small class="ov-dt${late?' late':''}">${fmtS(d)}</small>`; };
+function ovCellHtml(t,b,p,j,k){
+  const at0=`data-t="${E(t.id)}" data-b="${E(b.id)}" data-p="${E(p.id)}" data-j="${E(j.id)}" data-k="${k}"`, it=t.ov.items[k].n, ba=b.mode==='ba';
+  const bs=j.b[k], as=ba?(j.a?j.a[k]:''):((j.a&&j.a[k])||bs);          // one-mode: ช่องที่เป็น X แสดงเป็น X → (หลังแก้) ซึ่งเริ่มต้น = X
+  const pair=ba||bs==='X'||!!(j.a&&j.a[k]), d=(j.d&&j.d[k])||'', effX=(pair?as:bs)==='X';
+  const tt=(side,s,n)=>`${it} · ${pair?(side==='a'?'หลังแก้ไข (After)':'ก่อนแก้ไข (Before)'):'ปัจจุบัน'} · ${OVS[ovK(s)].n}${d&&effX?'\nDue '+fmtD(d):''}${n?'\n'+n:''}\nคลิกเพื่อแก้ไข`;
+  const cB=ovChip(bs,at0+' data-act="ovc" data-s="b"',j.bn[k],tt('b',bs,j.bn[k]));
+  if(!pair) return `<td class="ov-cell"><div class="ov-pr">${cB}</div></td>`;
+  const cls=bs==='X'&&as==='O'?' up':(bs==='O'&&as==='X'?' dn':'');
+  return `<td class="ov-cell${cls}"><div class="ov-pr">${cB}<em>→</em>${ovChip(as,at0+' data-act="ovc" data-s="a"',j.an[k],tt('a',as,j.an[k]),effX&&d?' pend':'')}</div>${ovDueTag(d,effX,dn(today))}</td>`;
+}
+function ovNotes(t,b){
+  const o=t.ov, K=o.items.length, rows=[];
+  b.rem.forEach((r,k)=>{ if(r) rows.push(`<div class="ov-n kadai"><span class="ov-nb">⚠ Kadai</span><b>${E(o.items[k].n)}</b><span>${E(r)}</span></div>`); });
+  b.procs.forEach(p=>p.jigs.forEach(j=>{
+    const lab=`${p.n} · Jig ${j.j||'–'}${j.c?' ('+j.c+')':''}`;
+    if(j.n) rows.push(`<div class="ov-n"><span class="ov-nb">📝</span><b>${E(lab)}</b><span>${E(j.n)}</span></div>`);
+    for(let k=0;k<K;k++){
+      if(j.bn[k]) rows.push(`<div class="ov-n"><span class="ov-nb">📝</span><b>${E(lab)} · ${b.mode==='ba'?'Before · ':''}${E(o.items[k].n)}</b><span>${E(j.bn[k])}</span></div>`);
+      if(j.an&&j.an[k]) rows.push(`<div class="ov-n"><span class="ov-nb">📝</span><b>${E(lab)} · After · ${E(o.items[k].n)}</b><span>${E(j.an[k])}</span></div>`);
+    } }));
+  (b.dm?b.dc.slice(0,1):b.dc).forEach((row,k)=>row.forEach((c,i)=>{ if(c.n) rows.push(`<div class="ov-n"><span class="ov-nb">📄</span><b>${E(o.docs[i])}${b.dm?'':' · '+E(o.items[k].n)}</b><span>${E(c.n)}</span></div>`); }));
+  if(b.extra) rows.push(`<div class="ov-n"><span class="ov-nb">⚙</span><span>${E(b.extra)}</span></div>`);
+  if(b.note) rows.push(`<div class="ov-n"><span class="ov-nb">📌</span><span>${E(b.note)}</span></div>`);
+  return rows.length?`<div class="ov-notes">${rows.join('')}</div>`:'';
+}
+/* QE ที่รับผิดชอบรายไลน์ — อ่านจากข้อมูลไลน์ในทุกหัวข้อ (ชุดเดียวกับตาราง ภาพรวมรายไลน์ × หัวข้อ) */
+function qeOfLine(line){
+  const y=Y(), key=String(line||'').trim().toUpperCase(); if(!y||!key) return '';
+  let q='';                                                  // กติกาเดียวกับตารางภาพรวม: ใช้ค่า QE ที่ไม่ว่างของหัวข้อล่าสุดตามลำดับหัวข้อ
+  ordered(y).forEach(tp=>tp.lines.forEach(l=>{ if(String(l.line).trim().toUpperCase()===key&&String(l.qe||'').trim()) q=String(l.qe).trim(); }));
+  return q;
+}
+function ovCard(t,b,s,col){
+  const o=t.ov, K=o.items.length, D=o.docs.length, at=`data-t="${E(t.id)}" data-b="${E(b.id)}"`;
+  const pct=s.n?s.ox/s.n*100:null, now=dn(today);
+  const collapsed=!!(ui.ovc&&ui.ovc[b.id]);
+  let h=`<div class="ov-card" style="--lc:${col}"><div class="ov-ch"><button type="button" class="ms-fold ov-fold" data-act="ovfold" ${at} title="ย่อ / ขยาย">${collapsed?'▸':'▾'}</button><span class="ov-line">${E(b.line||'—')}</span>${b.ref?`<span class="ov-ref">ID ${E(b.ref)}</span>`:''}${b.title?`<b class="ov-ttl">${E(b.title)}</b>`:''}`+
+    `<span class="ov-mode">${b.mode==='ba'?'Before → After':'สถานะปัจจุบัน'}</span>`;
+  if(s.n) h+=s.xx?`<span class="ov-st" style="--sc:#ef4444" title="จำนวนจุดตรวจ Sensor ที่ยังไม่ผ่าน (X) จากทั้งหมด ${s.n} จุดที่ประเมินแล้ว">Sensor X ${s.xx}/${s.n}${s.sdue?' · Due '+fmtS(s.sdue):''}</span>`:`<span class="ov-st" style="--sc:#22c55e" title="Touch sensor / Fiber sensor ผ่านทุกจุดที่ประเมิน (${s.n} จุด)">✓ Sensor ผ่านครบ ${s.ox}/${s.n}</span>`;
+  if(b.mode==='ba'&&s.bx) h+=`<span class="ov-st" style="--sc:#3b82f6" title="X ก่อนแก้ → X หลังแก้">Before ${s.bx} → After ${s.ax}</span>`;
+  if(s.imp) h+=`<span class="ov-st" style="--sc:#22c55e">↗ ปรับปรุงแล้ว ${s.imp} จุด</span>`;
+  if(s.reg) h+=`<span class="ov-st" style="--sc:#ef4444">⚠ แย่ลง ${s.reg} จุด</span>`;
+  if(s.dimp) h+=`<span class="ov-st" style="--sc:#22c55e">↗ เอกสารเสร็จแล้ว ${s.dimp} รายการ</span>`;
+  if(s.dx) h+=`<span class="ov-st" style="--sc:${s.due&&dn(s.due)<now?'#ef4444':'#f59e0b'}" title="เอกสาร / Pokayoke ที่ยังไม่เสร็จ (X)">📄 ค้าง ${s.dx}${s.due?' · '+fmtS(s.due):''}</span>`;
+  else if(s.dok) h+=`<span class="ov-st" style="--sc:#22c55e">📄 เอกสารครบ</span>`;
+  { const qe=qeOfLine(b.line); h+=qe?`<span class="ov-qe" title="QE ที่รับผิดชอบไลน์ ${E(b.line)} (ข้อมูลจากตารางภาพรวมรายไลน์ × หัวข้อ — แก้ไขได้ที่การ์ดไลน์ในแต่ละหัวข้อ)">👤 QE · <b>${E(qe)}</b></span>`:`<span class="ov-qe none" title="ยังไม่ได้ระบุ QE ของไลน์นี้ — กรอกได้ที่การ์ดไลน์ในแต่ละหัวข้อ (ช่อง QE)">👤 QE · ยังไม่ระบุ</span>`; }
+  h+=`<span class="grow"></span><button type="button" class="btn-g ov-ed" data-act="ovb" ${at}>✎ แก้ไข</button></div>`;
+  if(pct!=null) h+=`<div class="ov-pg" title="Sensor ที่ผ่าน ${s.ox}/${s.n} (${Math.round(pct)}%)"><i style="width:${pct}%;background:${pct>=100?'#22c55e':pct>=60?'#f59e0b':'#ef4444'}"></i></div>`;
+  if(collapsed) return h+`</div>`;
+  const cols=[]; b.procs.forEach(p=>p.jigs.forEach((j,ji)=>cols.push({p:p,j:j,i:ji})));
+  const docBlank=b.dc.every(r=>r.every(c=>!c.s&&!c.a&&!c.d&&!c.n))&&!(ui.ovx&&ui.ovx[b.id]);
+  let tb=`<div class="ov-scroll"><table class="ov-tbl"><thead><tr><th rowspan="2" class="ov-lab"><div>รายการตรวจสอบ</div><small>${b.mode==='ba'?'ซ้าย = Before (ก่อนแก้) → ขวา = After (หลังแก้)':'ช่อง X: ซ้าย = ปัจจุบัน → ขวา = หลังแก้ (คลิกขวาเพื่อเปลี่ยนเป็น O)'}</small></th>`;
+  if(cols.length) b.procs.forEach(p=>{ if(p.jigs.length) tb+=`<th colspan="${p.jigs.length}" class="ov-ph" data-act="ovp" ${at} data-p="${E(p.id)}" title="คลิกเพื่อแก้ไข Process / เพิ่ม Jig">${E(p.n)}</th>`; });
+  else tb+=`<th class="ov-ph" style="cursor:default">ยังไม่มี Jig</th>`;
+  tb+=docBlank?`<th rowspan="2" class="ov-dh ov-dbl">📄 เอกสาร / Pokayoke<small>ยังไม่มีข้อมูล</small></th></tr><tr>`:`<th colspan="${D}" class="ov-dh">📄 เอกสาร / Pokayoke <small>(ตัวเลขใต้ปุ่ม = กำหนดเสร็จ)</small></th></tr><tr>`;
+  if(cols.length) cols.forEach(c=>{ tb+=`<th class="ov-jh" data-act="ovj" ${at} data-p="${E(c.p.id)}" data-j="${E(c.j.id)}" title="${E(c.j.n||'คลิกเพื่อแก้ไข Jig')}"><b>${c.j.j?'Jig '+E(c.j.j):(c.p.jigs.length>1?'Jig #'+(c.i+1):'Jig –')}</b><small>${E(c.j.c)}</small>${c.j.n?'<i class="ov-nt"></i>':''}</th>`; });
+  else tb+=`<th class="ov-jh" style="cursor:default"><small>—</small></th>`;
+  if(!docBlank) o.docs.forEach(d=>{ tb+=`<th class="ov-dn">${E(d)}</th>`; });
+  tb+=`</tr></thead><tbody>`;
+  for(let k=0;k<K;k++){
+    tb+=`<tr><td class="ov-lab"><b>${E(o.items[k].n)}</b><small>${E(o.items[k].d)}</small></td>`;
+    if(cols.length) cols.forEach(c=>{ tb+=ovCellHtml(t,b,c.p,c.j,k); }); else tb+=`<td class="ov-cell ov-emp">—</td>`;
+    if(b.dm&&k>0&&!docBlank){ tb+=`</tr>`; continue; }
+    if(docBlank){ if(k===0) tb+=`<td rowspan="${K}" class="ov-dbl-c"><button type="button" class="btn-g" data-act="ovdoc" ${at}>＋ กรอกสถานะเอกสาร</button></td>`; tb+=`</tr>`; continue; }
+    for(let i=0;i<D;i++){ const c=b.dc[k][i], bs=c.s, as=c.a||c.s, pair=bs==='X'||!!c.a, effX=(pair?as:bs)==='X';
+      const atD=`data-act="ovd" ${at} data-k="${k}" data-i="${i}"`, cls=bs==='X'&&as==='O'?' up':(bs==='O'&&as==='X'?' dn':''), late=effX&&c.d&&dn(c.d)<now;
+      const tt=(side,st)=>`${o.docs[i]}${b.dm?'':' · '+o.items[k].n} · ${pair?(side==='a'?'หลังแก้ไข (After)':'ก่อนแก้ไข (Before)'):''} ${OVS[ovK(st)].n}${effX&&c.d?'\nDue '+fmtD(c.d)+' · '+(late?'เลย '+(now-dn(c.d))+' วัน':'อีก '+(dn(c.d)-now)+' วัน'):''}${c.n?'\n'+c.n:''}\nคลิกเพื่อแก้ไข`;
+      const cB=ovChip(bs,atD+' data-s="b"',c.n,tt('b',bs),(!pair&&effX&&c.d)?' pend':'');
+      tb+=`<td class="ov-cell ov-dc${pair?cls:''}"${b.dm?` rowspan="${K}"`:''}>${pair?`<div class="ov-pr">${cB}<em>→</em>${ovChip(as,atD+' data-s="a"',c.n,tt('a',as),effX&&c.d?' pend':'')}</div>`:cB}${ovDueTag(c.d,effX,now)}</td>`; }
+    tb+=`</tr>`;
+  }
+  tb+=`</tbody></table></div>`;
+  return h+tb+ovNotes(t,b)+`</div>`;
+}
+function ovSection(t){
+  const o=t.ov; if(!o) return '';
+  const K=o.items.length, lines=[]; o.blocks.forEach(b=>{ if(lines.indexOf(b.line)<0) lines.push(b.line); });
+  const lc=l=>OV_LC[Math.max(0,lines.indexOf(l))%OV_LC.length];
+  const stats=o.blocks.map(b=>ovBlockStats(b,K));
+  const T={n:0,ox:0,xx:0,bx:0,ax:0,imp:0,reg:0,jigs:0,dx:0,dok:0,dimp:0,due:'',sdue:''};
+  stats.forEach(s=>{ Object.keys(T).forEach(k=>{ if(k==='due'||k==='sdue'){ if(s[k]&&(!T[k]||s[k]<T[k])) T[k]=s[k]; } else T[k]+=s[k]; }); });
+  const f=lines.indexOf(ui.ovf)>=0?ui.ovf:'', now=dn(today);
+  let h=`<div class="ms-card hs-card ov-sec" id="ovSec"><h3>🧾 Overall status — รายไลน์ × Jig (Before → After)</h3>`+
+    `<div class="ms-sub">ดูสถานะ Touch sensor / Fiber sensor ของแต่ละ Jig และความพร้อมของเอกสาร / Pokayoke รายไลน์ · <b>คลิกวงกลมสถานะเพื่อแก้ไข</b> (จุดเหลืองมุมขวา = มีหมายเหตุ) · ช่องที่เป็น <b>X</b> แสดงเป็น <b>X → X</b> (ปัจจุบัน → หลังแก้) <b>คลิกวงกลมขวา</b>เพื่อเปลี่ยนเป็น <b>O</b> เมื่อแก้ไขเสร็จ · ใต้ทุกช่อง X มี <b>Due date</b> (ตัวแดง = เลยกำหนด) · กรอบเขียว = ปรับปรุงแล้ว (X → O)</div>`;
+  h+=`<div class="hs-st4">`+
+    `<div class="hs-sc" style="--sc:#ef4444"><b>${T.xx}</b><div>✗ Sensor ยังไม่ผ่าน<small>จาก ${T.n} จุดที่ประเมิน${T.bx?` · Before ${T.bx} → After ${T.ax}`:''}${T.sdue?` · Due ถัดไป ${fmtS(T.sdue)}`:''}</small></div></div>`+
+    `<div class="hs-sc" style="--sc:#22c55e"><b>${T.ox}</b><div>✓ Sensor ผ่านแล้ว<small>${T.imp?`ปรับปรุงแล้ว ${T.imp} จุด`:'ยังไม่มีจุดที่ปรับปรุงเพิ่ม'}${T.dimp?` · เอกสารเสร็จ ${T.dimp}`:''}${T.reg?` · แย่ลง ${T.reg}`:''}</small></div></div>`+
+    `<div class="hs-sc" style="--sc:#f59e0b"><b>${T.dx}</b><div>📄 เอกสาร / Pokayoke ค้าง<small>${T.due?`กำหนดถัดไป ${fmtS(T.due)} · ${dn(T.due)<now?'เลย '+(now-dn(T.due))+' วัน':'อีก '+(dn(T.due)-now)+' วัน'}`:'ไม่มีกำหนดค้าง'}</small></div></div>`+
+    `<div class="hs-sc" style="--sc:#8b5cf6"><b>${T.jigs}</b><div>🧩 Jig ที่ตรวจสอบ<small>${o.blocks.length} ตาราง · ${lines.length} ไลน์</small></div></div></div>`;
+  h+=`<div class="ms-sub" style="margin:-4px 0 8px">จุดสีท้ายชื่อไลน์: <b style="color:#22c55e">เขียว</b> = Sensor และเอกสารครบ · <b style="color:#f59e0b">เหลือง</b> = Sensor ผ่านแล้ว แต่เอกสาร/Pokayoke ยังค้าง · <b style="color:#ef4444">แดง</b> = มี Sensor ที่ยังไม่ผ่าน</div>`;
+  h+=`<div class="hs-leg">${['O','X','NA','E'].map(k=>`<span><i style="background:${OVS[k].c}">${OVS[k].s}</i>${OVS[k].n}</span>`).join('')}<span><i style="background:rgba(34,197,94,.2);color:#22c55e;box-shadow:inset 0 0 0 1.5px #22c55e">↗</i>ปรับปรุงแล้ว (X → O)</span></div>`;
+  h+=`<div class="ov-fl"><button type="button" class="ot-chip${f===''?' on':''}" data-act="ovf" data-v="">ทั้งหมด (${o.blocks.length})</button>`+
+    lines.map(l=>{ const bs=o.blocks.map((b,i)=>b.line===l?stats[i]:null).filter(Boolean), sx=bs.reduce((a,s)=>a+s.xx,0), dx=bs.reduce((a,s)=>a+s.dx,0), col=sx?'#ef4444':dx?'#f59e0b':'#22c55e';
+      return `<button type="button" class="ot-chip${f===l?' on':''}" data-act="ovf" data-v="${E(l)}" style="${f===l?'':`border-color:${lc(l)}`}" title="${sx?'Sensor ยังไม่ผ่าน '+sx+' จุด':'Sensor ผ่านครบ'}${dx?' · เอกสารค้าง '+dx:''}">${E(l)} (${bs.length})<i class="hs-dot" style="background:${col}"></i></button>`; }).join('')+
+    `<span class="grow"></span><button type="button" class="btn-g" data-act="ovz" data-t="${E(t.id)}" style="padding:6px 12px;font-size:12px" title="ตั้ง Due date ให้ทุกช่อง X พร้อมกัน">📅 ตั้ง Due ทุกช่อง X</button><button type="button" class="btn-g" data-act="ovall" data-v="open" style="padding:6px 12px;font-size:12px">▾ ขยายทั้งหมด</button><button type="button" class="btn-g" data-act="ovall" data-v="close" style="padding:6px 12px;font-size:12px">▸ ย่อทั้งหมด</button><button type="button" class="btn-g" data-act="ovcsv" style="padding:6px 12px;font-size:12px">⬇ CSV Overall</button></div>`;
+  let shown=0;
+  o.blocks.forEach((b,i)=>{ if(f&&b.line!==f) return; shown++; h+=ovCard(t,b,stats[i],lc(b.line)); });
+  if(!shown) h+=`<div class="ms-sub" style="padding:14px 4px">ยังไม่มีตาราง — กด “＋ เพิ่มตาราง”</div>`;
+  h+=`<div><button type="button" class="btn-g" data-act="ovadd" data-t="${E(t.id)}">＋ เพิ่มตาราง (ไลน์ / ID)</button></div></div>`;
+  return h;
+}
+/* ----- ตัวช่วยค้นหา + ฟอร์ม ----- */
+function ovFind(tid,bid){ const t=fT(tid), b=t&&t.ov&&t.ov.blocks.find(x=>x.id===bid); return b?{t:t,b:b}:null; }
+function ovJig(b,pid,jid){ const p=b.procs.find(x=>x.id===pid), j=p&&p.jigs.find(x=>x.id===jid); return j?{p:p,j:j}:null; }
+const ovStBtns=cur=>`<div class="hs-sbs">`+OVORD.map(k=>`<button type="button" class="hs-sb${(cur||'')===k?' on':''}" data-ha="ovsb" data-v="${k}" style="--sc:${OVS[ovK(k)].c}">${OVS[ovK(k)].s} ${OVS[ovK(k)].n}</button>`).join('')+`</div>`;
+const ovBtns=(a,extra)=>`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">${a}${extra||''}<button type="button" class="btn-g" data-ha="hcancel">ยกเลิก</button></div>`;
+function ovOpenCell(tid,bid,pid,jid,k,side){
+  const f=ovFind(tid,bid); if(!f) return; const jj=ovJig(f.b,pid,jid); if(!jj) return;
+  const K=f.t.ov.items.length, ba=f.b.mode==='ba'; if(side==='a'&&!jj.j.a) jj.j.a=new Array(K).fill(''); jj.j.d=jj.j.d||new Array(K).fill('');
+  const arr=side==='a'?jj.j.a:jj.j.b, note=(side==='a'?jj.j.an:jj.j.bn)[k], it=f.t.ov.items[k];
+  cx={t:'ovc',tid:tid,bid:bid,pid:pid,jid:jid,k:k,side:side,s:arr[k]||((side==='a'&&!ba)?jj.j.b[k]:'')};
+  const lab=side==='a'?'หลังแก้ไข (After) — เปลี่ยนเป็น O เมื่อแก้ไขเสร็จ':(ba?'ก่อนแก้ไข (Before)':'ก่อนแก้ไข / สถานะปัจจุบัน');
+  openMod(`<h3>✏️ ${E(f.b.line)}${f.b.ref?' · ID '+E(f.b.ref):''} · ${E(jj.p.n)} · Jig ${E(jj.j.j||'–')}${jj.j.c?' ('+E(jj.j.c)+')':''}</h3>`+
+    `<div class="sub" style="margin-bottom:8px"><b>${E(it.n)}</b> · ${lab}<br>${E(it.d)}</div>`+
+    `<label>สถานะ — คลิกเพื่อเลือกและบันทึกทันที</label>`+ovStBtns(cx.s)+
+    `<div class="hs-fld"><div><label>Due date (กำหนดเสร็จ — ใช้เมื่อสถานะยังเป็น X)</label><input id="ovDue" type="date" value="${E(jj.j.d[k]||'')}"></div></div>`+
+    `<label>หมายเหตุ (เช่น เหตุผล / วันที่ตรวจ)</label><textarea id="ovNote" rows="3">${E(note)}</textarea>`+
+    ovBtns(`<button type="button" class="btn-p" data-ha="ovsave">บันทึก</button>`),560);
+}
+function ovOpenDoc(tid,bid,k,i,side){
+  const f=ovFind(tid,bid); if(!f) return; const c=f.b.dc[k][i], o=f.t.ov; side=side==='a'?'a':'b';
+  cx={t:'ovd',tid:tid,bid:bid,k:k,i:i,side:side,s:side==='a'?(c.a||c.s):c.s};
+  openMod(`<h3>📄 ${E(f.b.line)}${f.b.ref?' · ID '+E(f.b.ref):''} · ${E(o.docs[i])}</h3><div class="sub" style="margin-bottom:8px">${f.b.dm?'ใช้ร่วมกันทั้ง 3 รายการตรวจ (ช่องรวมใน Excel)':'สำหรับรายการ: <b>'+E(o.items[k].n)+'</b>'} · ${side==='a'?'หลังแก้ไข (After) — เปลี่ยนเป็น O เมื่อทำเสร็จ':'สถานะปัจจุบัน (Before)'}</div>`+
+    `<label>สถานะ — คลิกเพื่อเลือกและบันทึกทันที</label>`+ovStBtns(cx.s)+
+    `<div class="hs-fld"><div><label>Due date (กำหนดเสร็จ — ใช้เมื่อสถานะยังเป็น X)</label><input id="ovDue" type="date" value="${E(c.d)}"></div></div>`+
+    `<label>หมายเหตุ</label><textarea id="ovNote" rows="3">${E(c.n)}</textarea>`+ovBtns(`<button type="button" class="btn-p" data-ha="ovsave">บันทึก</button>`),560);
+}
+function ovApply(){
+  const f=ovFind(cx.tid,cx.bid); if(!f) return closeMod();
+  const note=g('ovNote')?g('ovNote').value.trim():'', K=f.t.ov.items.length;
+  if(cx.t==='ovc'){ const jj=ovJig(f.b,cx.pid,cx.jid); if(!jj) return closeMod();
+    if(cx.side==='a'&&!jj.j.a) jj.j.a=new Array(K).fill('');
+    (cx.side==='a'?jj.j.a:jj.j.b)[cx.k]=cx.s||''; (cx.side==='a'?jj.j.an:jj.j.bn)[cx.k]=note;
+    if(g('ovDue')){ jj.j.d=jj.j.d||new Array(K).fill(''); jj.j.d[cx.k]=iso(g('ovDue').value); } }
+  else { const due=g('ovDue')?iso(g('ovDue').value):null;
+    (f.b.dm?f.b.dc.map((_,k)=>k):[cx.k]).forEach(k=>{ const c=f.b.dc[k][cx.i]; if(cx.side==='a') c.a=cx.s||''; else c.s=cx.s||''; c.n=note; if(due!==null) c.d=due; }); }
+  closeMod(); touch(); render();
+}
+function ovOpenBulk(tid){
+  const t=fT(tid); if(!t||!t.ov) return; const o=t.ov, K=o.items.length; let all=0,empty=0,mn='';
+  o.blocks.forEach(b=>{ if(ui.ovf&&b.line!==ui.ovf) return;
+    b.procs.forEach(p=>p.jigs.forEach(j=>{ for(let k=0;k<K;k++){ const cur=b.mode==='ba'?(j.a?j.a[k]:''):((j.a&&j.a[k])||j.b[k]); if(cur!=='X') continue; all++; const d=j.d&&j.d[k]; if(!d) empty++; else if(!mn||d<mn) mn=d; } }));
+    (b.dm?b.dc.slice(0,1):b.dc).forEach(r=>r.forEach(c=>{ if((c.a||c.s)!=='X') return; all++; if(!c.d) empty++; else if(!mn||c.d<mn) mn=c.d; })); });
+  cx={t:'ovz',tid:tid};
+  openMod(`<h3>📅 ตั้ง Due date ให้ทุกช่องที่เป็น X</h3><div class="sub" style="margin-bottom:8px">${ui.ovf?'เฉพาะไลน์ '+E(ui.ovf):'ทุกตารางในหัวข้อนี้'} · พบช่อง X ทั้งหมด <b>${all}</b> ช่อง (ยังไม่มี Due date <b>${empty}</b> ช่อง)</div>`+
+    `<label>Due date ที่ต้องการ</label><input id="ovZD" type="date" value="${E(mn)}">`+
+    `<label style="display:flex;gap:8px;align-items:center;color:var(--txt);cursor:pointer;margin-top:10px"><input type="checkbox" id="ovZA" style="width:16px;height:16px"> เขียนทับช่องที่มี Due date อยู่แล้วด้วย (ไม่ติ๊ก = ใส่เฉพาะช่องที่ยังว่าง)</label>`+
+    ovBtns(`<button type="button" class="btn-p" data-ha="ovzgo">ตั้งค่า</button>`),520);
+}
+function ovOpenJig(tid,bid,pid,jid){
+  const f=ovFind(tid,bid); if(!f) return; const jj=ovJig(f.b,pid,jid); if(!jj) return;
+  cx={t:'ovj',tid:tid,bid:bid,pid:pid,jid:jid};
+  openMod(`<h3>🧩 แก้ไข Jig · ${E(f.b.line)}${f.b.ref?' · ID '+E(f.b.ref):''} · ${E(jj.p.n)}</h3><div class="hs-fld"><div><label>ชื่อ Jig</label><input id="ojN" value="${E(jj.j.j)}"></div><div><label>ID Component part</label><input id="ojC" value="${E(jj.j.c)}"></div>`+
+    `<div class="full"><label>หมายเหตุของ Jig (เช่น ใช้ร่วมกับ Jig อื่น)</label><textarea id="ojT" rows="2">${E(jj.j.n)}</textarea></div></div>`+
+    ovBtns(`<button type="button" class="btn-p" data-ha="ovjsave">บันทึก</button>`,`<button type="button" class="btn-d" data-ha="ovjdel">🗑 ลบ Jig</button>`),560);
+}
+function ovOpenProc(tid,bid,pid){
+  const f=ovFind(tid,bid); if(!f) return; const p=f.b.procs.find(x=>x.id===pid); if(!p) return;
+  cx={t:'ovp',tid:tid,bid:bid,pid:pid};
+  openMod(`<h3>⚙ แก้ไข Process · ${E(f.b.line)}${f.b.ref?' · ID '+E(f.b.ref):''}</h3><div class="hs-fld"><div class="full"><label>ชื่อ Process</label><input id="opN" value="${E(p.n)}"></div></div>`+
+    ovBtns(`<button type="button" class="btn-p" data-ha="opsave">บันทึก</button><button type="button" class="btn-g" data-ha="opjig">＋ เพิ่ม Jig</button>`,`<button type="button" class="btn-d" data-ha="opdel">🗑 ลบ Process</button>`),520);
+}
+function ovOpenBlock(tid,bid,isNew){
+  const t=fT(tid); if(!t||!t.ov) return; let b=bid?ovFind(tid,bid).b:null; const K=t.ov.items.length;
+  const lines=[]; t.ov.blocks.forEach(x=>{ if(lines.indexOf(x.line)<0) lines.push(x.line); });
+  if(isNew){
+    cx={t:'ova',tid:tid};
+    openMod(`<h3>➕ เพิ่มตาราง Overall status</h3><div class="hs-fld"><div><label>ไลน์</label><input id="obL" list="obLines" placeholder="เช่น AS-273"><datalist id="obLines">${lines.map(l=>`<option value="${E(l)}">`).join('')}</datalist></div><div><label>ID (ถ้ามี)</label><input id="obR" placeholder="เช่น 7342"></div>`+
+      `<div class="full"><label>รูปแบบ</label><select id="obM"><option value="ba">Before → After (เทียบก่อน/หลังแก้)</option><option value="one">สถานะปัจจุบัน (ช่องเดียว)</option></select></div></div>`+ovBtns(`<button type="button" class="btn-p" data-ha="ovago">สร้าง</button>`),520);
+    return;
+  }
+  cx={t:'ovb',tid:tid,bid:bid};
+  openMod(`<h3>✎ แก้ไขตาราง · ${E(b.line)}${b.ref?' · ID '+E(b.ref):''}</h3><div class="hs-fld"><div><label>ไลน์</label><input id="obL" value="${E(b.line)}"></div><div><label>ID</label><input id="obR" value="${E(b.ref)}"></div>`+
+    `<div class="full"><label>หัวข้อ / ชื่อเรียก (ไม่บังคับ)</label><input id="obT" value="${E(b.title)}"></div><div class="full"><label>หมายเหตุของ Gauge / เครื่องมือ</label><input id="obX" value="${E(b.extra)}"></div>`+
+    `<div class="full"><label>หมายเหตุทั่วไป</label><textarea id="obN" rows="3">${E(b.note)}</textarea></div>`+
+    `<div class="full"><label style="display:flex;gap:8px;align-items:center;color:var(--txt);cursor:pointer"><input type="checkbox" id="obDm" style="width:16px;height:16px"${b.dm?' checked':''}> สถานะเอกสาร / Pokayoke ใช้ร่วมกันทั้ง 3 รายการตรวจ (ช่องรวม)</label></div>`+
+    t.ov.items.map((it,k)=>`<div class="full"><label>⚠ Kadai — ${E(it.n)}</label><input class="obRem" data-k="${k}" value="${E(b.rem[k])}"></div>`).join('')+`</div>`+
+    ovBtns(`<button type="button" class="btn-p" data-ha="ovbsave">บันทึก</button><button type="button" class="btn-g" data-ha="ovbproc">＋ เพิ่ม Process</button><button type="button" class="btn-g" data-ha="ovbup">↑</button><button type="button" class="btn-g" data-ha="ovbdn">↓</button>`,`<button type="button" class="btn-d" data-ha="ovbdel">🗑 ลบตาราง</button>`),640);
+}
+const ovBlank=(K,ba)=>({id:'oj'+uid(),j:'',c:'',n:'',b:new Array(K).fill(''),a:ba?new Array(K).fill(''):null,d:new Array(K).fill(''),bn:new Array(K).fill(''),an:new Array(K).fill('')});
+function ovModal(a,btn){
+  const f=ovFind(cx.tid,cx.bid), t=fT(cx.tid);
+  if(cx.t==='ovz'&&a==='ovzgo'&&t){ const d=iso(g('ovZD').value); if(!d){ alert('กรุณาเลือกวันที่'); return; } const over=g('ovZA').checked; let n=0, K=t.ov.items.length;
+    t.ov.blocks.forEach(b=>{ if(ui.ovf&&b.line!==ui.ovf) return; n+=ovSetDue(b,K,d,d,over); }); closeMod(); touch(); render(); toastMsg('✅ ตั้ง Due date '+fmtD(d)+' ให้ '+n+' ช่อง X แล้ว'); return; }
+  if(a==='ovsb'){ cx.s=btn.dataset.v; return ovApply(); }
+  if(a==='ovsave') return ovApply();
+  if(cx.t==='ovj'&&f){ const jj=ovJig(f.b,cx.pid,cx.jid); if(!jj) return closeMod();
+    if(a==='ovjsave'){ jj.j.j=g('ojN').value.trim(); jj.j.c=g('ojC').value.trim(); jj.j.n=g('ojT').value.trim(); closeMod(); touch(); render(); return; }
+    if(a==='ovjdel'){ const nm='Jig '+(jj.j.j||'–'); closeMod(); ask('ลบ '+nm+'?','สถานะทั้งหมดของ Jig นี้ใน '+jj.p.n+' จะถูกลบ',()=>{ jj.p.jigs.splice(jj.p.jigs.indexOf(jj.j),1); if(!jj.p.jigs.length) f.b.procs.splice(f.b.procs.indexOf(jj.p),1); touch(); render(); }); return; } }
+  if(cx.t==='ovp'&&f){ const p=f.b.procs.find(x=>x.id===cx.pid); if(!p) return closeMod();
+    if(a==='opsave'){ p.n=g('opN').value.trim()||p.n; closeMod(); touch(); render(); return; }
+    if(a==='opjig'){ p.n=g('opN').value.trim()||p.n; const nj=ovBlank(t.ov.items.length,f.b.mode==='ba'); p.jigs.push(nj); touch(); render(); ovOpenJig(cx.tid,cx.bid,p.id,nj.id); return; }
+    if(a==='opdel'){ closeMod(); ask('ลบ '+p.n+'?','Jig ทั้งหมด '+p.jigs.length+' รายการใน Process นี้จะถูกลบ',()=>{ f.b.procs.splice(f.b.procs.indexOf(p),1); touch(); render(); }); return; } }
+  if(cx.t==='ovb'&&f){ const b=f.b;
+    if(a==='ovbsave'){ b.line=g('obL').value.trim(); b.ref=g('obR').value.trim(); b.title=g('obT').value.trim(); b.extra=g('obX').value.trim(); b.note=g('obN').value.trim();
+      const dm=g('obDm').checked?1:0; if(dm&&!b.dm) b.dc.forEach((r,k)=>{ if(k>0) b.dc[k]=r.map((c,i)=>Object.assign({},b.dc[0][i])); }); b.dm=dm;
+      document.querySelectorAll('#hsMod .obRem').forEach(el=>{ b.rem[+el.dataset.k]=el.value.trim(); }); closeMod(); touch(); render(); return; }
+    if(a==='ovbproc'){ b.line=g('obL').value.trim()||b.line; b.ref=g('obR').value.trim(); const p={id:'op'+uid(),n:'Process '+(b.procs.length+1),jigs:[]}; p.jigs.push(ovBlank(t.ov.items.length,b.mode==='ba')); b.procs.push(p); touch(); render(); ovOpenProc(cx.tid,cx.bid,p.id); return; }
+    if(a==='ovbup'||a==='ovbdn'){ const bl=t.ov.blocks, i=bl.indexOf(b), j=i+(a==='ovbup'?-1:1); if(j>=0&&j<bl.length){ bl[i]=bl[j]; bl[j]=b; touch(); render(); } return; }
+    if(a==='ovbdel'){ closeMod(); ask('ลบตาราง “'+b.line+(b.ref?' · ID '+b.ref:'')+'”?','Jig และสถานะทั้งหมดในตารางนี้จะถูกลบ',()=>{ t.ov.blocks.splice(t.ov.blocks.indexOf(b),1); touch(); render(); }); return; } }
+  if(cx.t==='ova'&&a==='ovago'&&t){ const line=g('obL').value.trim(); if(!line){ alert('กรุณาใส่ชื่อไลน์'); return; }
+    const ba=g('obM').value==='ba', K=t.ov.items.length, D=t.ov.docs.length;
+    const dc=[]; for(let k=0;k<K;k++){ const r=[]; for(let i=0;i<D;i++) r.push({s:'',a:'',d:'',n:''}); dc.push(r); }
+    const nb={id:'ob'+uid(),line:line,ref:g('obR').value.trim(),title:'',mode:ba?'ba':'one',note:'',extra:'',procs:[{id:'op'+uid(),n:'Process 1',jigs:[ovBlank(K,ba)]}],dc:dc,rem:new Array(K).fill('')};
+    t.ov.blocks.push(nb); ui.ovf=''; closeMod(); touch(); render(); const el=document.getElementById('ovSec'); if(el) el.scrollIntoView({block:'end'}); return; }
+}
+function ovCsv(){
+  const y=Y(), t=ui.view==='topic'?fT(ui.topic):null; if(!t||!t.ov) return; const o=t.ov, rows=[];
+  rows.push(['Line','ID','Mode','Process','Jig','Component','Item','Before','After','Due','Note']);
+  const S=s=>s==='NA'?'N/A':s;
+  o.blocks.forEach(b=>b.procs.forEach(p=>p.jigs.forEach(j=>o.items.forEach((it,k)=>rows.push([b.line,b.ref,b.mode==='ba'?'Before/After':'Current',p.n,j.j,j.c,it.n,S(j.b[k]),j.a?S(j.a[k]):'',(j.d&&j.d[k])||'',[j.bn[k],j.an&&j.an[k],j.n].filter(Boolean).join(' | ')])))));
+  rows.push([]); rows.push(['Line','ID','Item','Document','Before','After','Due','Note']);
+  o.blocks.forEach(b=>b.dc.forEach((r,k)=>r.forEach((c,i)=>rows.push([b.line,b.ref,o.items[k].n,o.docs[i],S(c.s),S(c.a),c.d,c.n]))));
+  csvOut(rows,`QE_Hoshin_${ui.year}_Overall_${t.short.replace(/[^\w\u0E00-\u0E7F]+/g,'_')}.csv`);
+}
+
+/* ---------- render ---------- */
+function render(){
+  const el=g('viewHoshin'); if(!el) return; ensureYear();
+  const ys=years(); let h=head(ys);
+  if(!ys.length) h+=empty(); else { const y=Y(); h+=nav(y); const t=ui.view==='topic'?fT(ui.topic):null; if(ui.view==='topic'&&!t){ ui.view='dash'; } h+=t?viewTopic(y,t):viewDash(y); }
+  const sc=window.scrollY; el.innerHTML=h; saveUI(); if(window.scrollY!==sc) window.scrollTo(0,sc);
+}
+
+/* ---------- modal ---------- */
+let cx=null;
+function openMod(html,w){ const m=g('hsMod'); m.style.maxWidth=(w||560)+'px'; m.innerHTML=html; g('hsOv').classList.add('on'); }
+function closeMod(){ g('hsOv').classList.remove('on'); cx=null; }
+const toastMsg=(m,c)=>{ try{ toast(m,c); }catch(e){} };
+function openLine(tid,lid){
+  const t=fT(tid); if(!t) return; let l=t.lines.find(x=>x.id===lid); const isNew=!l;
+  if(isNew) l={id:'l'+uid(),line:'',st:'chk',qe:'',pe:'',due:'',v:{}};
+  cx={t:'line',tid:tid,isNew:isNew,st:l.st,id:l.id};
+  openMod(`<h3>${isNew?'➕ เพิ่มไลน์':'✏️ แก้ไขไลน์'} · ${E(t.short)}</h3><div class="hs-fld"><div><label>ไลน์ (Line No.)</label><input id="hlLine" value="${E(l.line)}" placeholder="เช่น AS-151"></div><div><label>กำหนดเสร็จเฉพาะไลน์ (เว้นว่าง = ใช้กำหนดของหัวข้อ)</label><input id="hlDue" type="date" value="${E(l.due)}"></div>`+
+    `<div><label>QE</label><input id="hlQe" value="${E(l.qe)}"></div><div><label>PE</label><input id="hlPe" value="${E(l.pe)}"></div></div>`+
+    `<label>สถานะ</label><div class="hs-sbs">`+ORD.map(k=>`<button type="button" class="hs-sb${l.st===k?' on':''}" data-ha="hsb" data-v="${k}" style="--sc:${ST[k].c}" title="${E((t.leg&&t.leg[k])||'')}">${ST[k].s} ${ST[k].n}</button>`).join('')+`</div>`+
+    (ORD.some(k=>t.leg&&t.leg[k])?`<div class="ms-help">`+ORD.filter(k=>t.leg&&t.leg[k]).map(k=>`<b style="color:${ST[k].c}">${ST[k].s} ${ST[k].n}</b> = ${E(t.leg[k])}`).join('<br>')+`</div>`:'')+
+    `<div class="hs-fld">`+t.cols.map(c=>`<div class="${c.type==='area'?'full':''}"><label>${E(c.label)}</label>${c.type==='area'?`<textarea class="hlv" data-k="${E(c.k)}" rows="3">${E((l.v||{})[c.k]==null?'':(l.v||{})[c.k])}</textarea>`:`<input class="hlv" data-k="${E(c.k)}" ${c.type==='num'?'type="number" step="any"':''} value="${E((l.v||{})[c.k]==null?'':(l.v||{})[c.k])}">`}</div>`).join('')+`</div>`+
+    `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button type="button" class="btn-p" data-ha="hlsave">บันทึก</button>${isNew?'':'<button type="button" class="btn-d" data-ha="hldel">🗑 ลบไลน์</button>'}<button type="button" class="btn-g" data-ha="hcancel">ยกเลิก</button></div>`,620);
+}
+function saveLine(){
+  const t=fT(cx.tid); if(!t) return closeMod();
+  const name=g('hlLine').value.trim(); if(!name){ alert('กรุณาใส่ชื่อไลน์'); return; }
+  const v={}; document.querySelectorAll('#hsMod .hlv').forEach(el=>{ v[el.dataset.k]=el.value; });
+  const o={id:cx.id,line:name,st:cx.st,qe:g('hlQe').value.trim(),pe:g('hlPe').value.trim(),due:iso(g('hlDue').value),v:v};
+  const i=t.lines.findIndex(x=>x.id===cx.id); if(i>=0) t.lines[i]=o; else t.lines.push(o);
+  closeMod(); touch(); render();
+}
+function openTopic(tid,actId){
+  const y=Y(); let t=tid?fT(tid):null; const isNew=!t;
+  if(isNew) t={id:'t'+uid(),act:actId||(y.acts[0]&&y.acts[0].id)||'',name:'',short:'',icon:'📌',due:'',dueNote:'กำหนดเสร็จ',upd:'',concl:'',temp:'',viz:'',leg:{},plan:[],cols:clone(COL_TXT),lines:[]};
+  cx={t:'topic',isNew:isNew,tid:t.id,draft:isNew?t:null};
+  openMod(`<h3>${isNew?'➕ เพิ่มหัวข้อ':'✎ แก้ไขหัวข้อ'}</h3><div class="hs-fld"><div class="full"><label>ชื่อหัวข้อ</label><input id="htName" value="${E(t.name)}"></div><div><label>ชื่อสั้น (ใช้ในแท็บ / ตาราง)</label><input id="htShort" value="${E(t.short)}"></div><div><label>ไอคอน</label><input id="htIcon" value="${E(t.icon)}"></div>`+
+    `<div><label>กิจกรรม</label><select id="htAct">${y.acts.map((a,i)=>`<option value="${E(a.id)}"${a.id===t.act?' selected':''}>${i+1}. ${E(clipT(a.name,40))}</option>`).join('')}</select></div><div><label>ข้อมูลอัปเดตเมื่อ</label><input id="htUpd" type="date" value="${E(t.upd)}"></div>`+
+    `<div><label>กำหนดเสร็จของหัวข้อ</label><input id="htDue" type="date" value="${E(t.due)}"></div><div><label>คำอธิบายกำหนดเสร็จ</label><input id="htDueNote" value="${E(t.dueNote)}" placeholder="เช่น All line complete"></div>`+
+    `<div class="full"><label>สรุป / Conclusion</label><textarea id="htConcl" rows="3">${E(t.concl)}</textarea></div><div class="full"><label>Temporary action (เว้นว่างได้)</label><textarea id="htTemp" rows="3">${E(t.temp)}</textarea></div>`+
+    `<div class="full"><label>Milestone — 1 บรรทัดต่อ 1 รายการ รูปแบบ  ชื่อ | YYYY-MM-DD</label><textarea id="htPlan" rows="4" placeholder="Plan PV4 | 2026-10-22">${E((t.plan||[]).map(m=>m.l+' | '+m.d).join('\n'))}</textarea></div>`+
+    `<div class="full"><label>ความหมายของสถานะ (ไม่บังคับ)</label>`+ORD.map(k=>`<div style="display:grid;grid-template-columns:90px 1fr;gap:8px;align-items:center;margin:4px 0"><b style="color:${ST[k].c};font-size:12px">${ST[k].s} ${ST[k].n.split(' ')[0]}</b><input class="htLeg" data-k="${k}" value="${E((t.leg&&t.leg[k])||'')}"></div>`).join('')+`</div></div>`+
+    `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button type="button" class="btn-p" data-ha="htsave">บันทึก</button>${isNew?'':'<button type="button" class="btn-g" data-ha="htup">↑ เลื่อนขึ้น</button><button type="button" class="btn-g" data-ha="htdn">↓ เลื่อนลง</button><button type="button" class="btn-d" data-ha="htdel">🗑 ลบหัวข้อ</button>'}<button type="button" class="btn-g" data-ha="hcancel">ยกเลิก</button></div>`,680);
+}
+function saveTopic(){
+  const y=Y(); const t=cx.isNew?cx.draft:fT(cx.tid); if(!t) return closeMod();
+  const nm=g('htName').value.trim(); if(!nm){ alert('กรุณาใส่ชื่อหัวข้อ'); return; }
+  t.name=nm; t.short=g('htShort').value.trim()||nm; t.icon=g('htIcon').value.trim()||'📌'; t.act=g('htAct').value; t.upd=iso(g('htUpd').value);
+  t.due=iso(g('htDue').value); t.dueNote=g('htDueNote').value.trim(); t.concl=g('htConcl').value; t.temp=g('htTemp').value;
+  t.plan=g('htPlan').value.split('\n').map(s=>s.trim()).filter(Boolean).map(s=>{ const i=s.lastIndexOf('|'); return i<0?null:{l:s.slice(0,i).trim(),d:s.slice(i+1).trim()}; }).filter(m=>m&&isoOK(m.d));
+  t.leg={}; document.querySelectorAll('#hsMod .htLeg').forEach(el=>{ if(el.value.trim()) t.leg[el.dataset.k]=el.value.trim(); });
+  if(cx.isNew){ y.topics.push(t); ui.view='topic'; ui.topic=t.id; }
+  closeMod(); touch(); render();
+}
+function moveTopic(d){
+  const y=Y(), t=fT(cx.tid); if(!t) return; const sib=y.topics.filter(x=>x.act===t.act), i=sib.indexOf(t), j=i+d; if(j<0||j>=sib.length) return;
+  const a=y.topics.indexOf(t), b=y.topics.indexOf(sib[j]); y.topics[a]=sib[j]; y.topics[b]=t; closeMod(); touch(); render();
+}
+function openSettings(){
+  const y=Y(); cx={t:'set'};
+  openMod(`<h3>⚙ ตั้งค่า Hoshin · ปี ${E(ui.year)}</h3><div class="hs-fld"><div class="full"><label>ชื่อหัวเรื่อง (แสดงใต้ชื่อ Hoshin)</label><input id="hsTitle" value="${E(y.title)}"></div><div><label>Product group</label><input id="hsProd" value="${E(y.product)}"></div><div><label>อัปเดตโดย</label><input id="hsBy" value="${E(y.by)}"></div><div><label>อัปเดตข้อมูลล่าสุด</label><input id="hsUpd" type="date" value="${E(y.upd)}"></div></div>`+
+    `<label>กิจกรรม</label><div id="hsActs">`+y.acts.map(a=>`<div class="hs-ar" data-id="${E(a.id)}"><input type="color" class="ac" value="${E(a.color)}"><input class="ai" value="${E(a.icon)}"><input class="an" value="${E(a.name)}"><button type="button" class="btn-g" data-ha="hadel" data-id="${E(a.id)}" style="color:var(--t-dang)" title="ลบกิจกรรม">🗑</button></div>`).join('')+`</div>`+
+    `<div style="margin-top:6px"><button type="button" class="btn-g" data-ha="haadd">+ เพิ่มกิจกรรม</button></div><div class="ms-help">การลบกิจกรรมจะลบหัวข้อและไลน์ทั้งหมดในกิจกรรมนั้นด้วย</div>`+
+    `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button type="button" class="btn-p" data-ha="hssave">บันทึก</button><button type="button" class="btn-g" data-ha="hcancel">ปิด</button></div>`,640);
+}
+function readSettings(){
+  const y=Y(); if(!g('hsTitle')) return;
+  y.title=g('hsTitle').value.trim(); y.product=g('hsProd').value.trim(); y.by=g('hsBy').value.trim(); y.upd=iso(g('hsUpd').value);
+  document.querySelectorAll('#hsActs .hs-ar').forEach(r=>{ const a=y.acts.find(x=>x.id===r.dataset.id); if(!a) return; a.color=r.querySelector('.ac').value; a.icon=r.querySelector('.ai').value.trim()||'🎯'; a.name=r.querySelector('.an').value.trim()||a.name; });
+}
+function addAct(){ const y=Y(); y.acts.push({id:'a'+uid(),name:'กิจกรรมใหม่',icon:'🎯',color:PAL[y.acts.length%PAL.length]}); }
+function openYear(){
+  const ys=years(), next=ys.length?String(+ys[ys.length-1]+1):String(new Date().getFullYear()); cx={t:'year'};
+  openMod(`<h3>➕ เพิ่มปีใหม่</h3><div class="hs-fld"><div><label>ปี (ค.ศ.)</label><input id="hyY" type="number" min="2000" max="2100" value="${next}"></div><div><label>คัดลอกโครงสร้างจากปี</label><select id="hyS">${ys.map(k=>`<option value="${k}"${k===ui.year?' selected':''}>${k}</option>`).join('')}<option value="">— เริ่มว่าง (แม่แบบ 4 กิจกรรม) —</option></select></div></div>`+
+    `<div class="ms-help">การคัดลอกจะเก็บกิจกรรม หัวข้อ และรายชื่อไลน์ แต่ล้างสถานะเป็น “กำลังตรวจสอบ” และล้างกำหนดเสร็จ / สรุป / Milestone เพื่อกรอกใหม่</div>`+
+    `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button type="button" class="btn-p" data-ha="hyok">สร้างปี</button><button type="button" class="btn-g" data-ha="hcancel">ยกเลิก</button></div>`,520);
+}
+function newYear(y,src){
+  let Yn;
+  if(src&&store.years[src]){ Yn=clone(store.years[src]); Yn.topics.forEach(t=>{ t.due=''; t.upd=''; t.concl=''; t.temp=''; t.plan=[]; t.lines.forEach(l=>{ l.st='chk'; l.due=''; });
+    if(t.ov) t.ov.blocks.forEach(b=>{ b.procs.forEach(p=>p.jigs.forEach(j=>{ j.b=j.b.map(()=>''); if(j.a) j.a=j.a.map(()=>''); j.bn=j.bn.map(()=>''); j.an=j.an.map(()=>''); j.n=''; j.d=(j.d||[]).map(()=>''); if(j.a&&b.mode!=='ba') j.a=null; })); b.dc=b.dc.map(r=>r.map(()=>({s:'',a:'',d:'',n:''}))); b.rem=b.rem.map(()=>''); b.note=''; }); }); const yy=String(y).slice(2); Yn.label='Y'+yy; Yn.title='MFG#3 : Activity for Y'+yy; Yn.upd=today; }
+  else Yn=tpl(y);
+  return sanitize(Yn,y);
+}
+function onModal(e){
+  if(e.target===g('hsOv')){ closeMod(); return; }
+  const b=e.target.closest('[data-ha]'); if(!b||!cx) return; const a=b.dataset.ha;
+  if(a==='hcancel') return closeMod();
+  if(cx.t&&cx.t.indexOf('ov')===0) return ovModal(a,b);
+  if(cx.t==='line'){
+    if(a==='hsb'){ cx.st=b.dataset.v; document.querySelectorAll('#hsMod .hs-sb').forEach(x=>x.classList.toggle('on',x.dataset.v===cx.st)); return; }
+    if(a==='hlsave') return saveLine();
+    if(a==='hldel'){ const t=fT(cx.tid), l=t&&t.lines.find(x=>x.id===cx.id); if(!l) return closeMod(); closeMod(); ask('ลบไลน์ “'+l.line+'”?','ไลน์นี้จะถูกลบออกจากหัวข้อ “'+t.short+'”',()=>{ t.lines.splice(t.lines.indexOf(l),1); touch(); render(); }); return; }
+  }
+  if(cx.t==='topic'){
+    if(a==='htsave') return saveTopic();
+    if(a==='htup') return moveTopic(-1); if(a==='htdn') return moveTopic(1);
+    if(a==='htdel'){ const t=fT(cx.tid); if(!t) return closeMod(); closeMod(); ask('ลบหัวข้อ “'+t.short+'”?','ไลน์ทั้งหมด '+t.lines.length+' รายการในหัวข้อนี้จะถูกลบ',()=>{ const y=Y(); y.topics.splice(y.topics.indexOf(t),1); ui.view='dash'; touch(); render(); }); return; }
+  }
+  if(cx.t==='set'){
+    if(a==='hssave'){ readSettings(); closeMod(); touch(); render(); return; }
+    if(a==='haadd'){ readSettings(); addAct(); touch(); openSettings(); return; }
+    if(a==='hadel'){ readSettings(); const y=Y(), id=b.dataset.id, ac=y.acts.find(x=>x.id===id); if(!ac) return; const n=y.topics.filter(t=>t.act===id).length;
+      closeMod(); ask('ลบกิจกรรม “'+clipT(ac.name,40)+'”?',n?'หัวข้อ '+n+' รายการและไลน์ในกิจกรรมนี้จะถูกลบด้วย':'กิจกรรมนี้ยังไม่มีหัวข้อ',()=>{ y.topics=y.topics.filter(t=>t.act!==id); y.acts.splice(y.acts.indexOf(ac),1); if(ui.view==='topic'&&!fT(ui.topic)) ui.view='dash'; touch(); render(); }); return; }
+  }
+  if(cx.t==='year'&&a==='hyok'){
+    const y=String(parseInt(g('hyY').value,10)); if(!/^\d{4}$/.test(y)){ alert('กรุณาใส่ปี ค.ศ. 4 หลัก'); return; }
+    if(store.years[y]){ alert('มีข้อมูลปี '+y+' อยู่แล้ว'); return; }
+    store.years[y]=newYear(y,g('hyS').value); ui.year=y; ui.view='dash'; closeMod(); save(); render(); toastMsg('✅ สร้างปี '+y+' แล้ว'); return;
+  }
+}
+
+/* ---------- ส่งออก / นำเข้า ---------- */
+function csvOut(rows,name){
+  const q=v=>{ v=v==null?'':String(v); if(/^[=+\-@]/.test(v)&&isNaN(+v)) v=' '+v; return '"'+v.replace(/"/g,'""')+'"'; };
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob(['\ufeff'+rows.map(r=>r.map(q).join(',')).join('\n')],{type:'text/csv;charset=utf-8'})); a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+}
+function exportCsv(){
+  const y=Y(); if(!y) return; const t=ui.view==='topic'?fT(ui.topic):null, rows=[];
+  if(t){ rows.push(['Line','Status','QE','PE','Due'].concat(t.cols.map(c=>c.label))); t.lines.forEach(l=>rows.push([l.line,ST[l.st].n,l.qe,l.pe,effDue(t,l)].concat(t.cols.map(c=>(l.v||{})[c.k]==null?'':l.v[c.k])))); csvOut(rows,`QE_Hoshin_${ui.year}_${t.short.replace(/[^\w\u0E00-\u0E7F]+/g,'_')}.csv`); return; }
+  const ord=ordered(y), N=numbering(y), map={};
+  ord.forEach(tt=>tt.lines.forEach(l=>{ const k=String(l.line).trim().toUpperCase(); const r=map[k]||(map[k]={line:l.line,qe:'',pe:'',c:{}}); r.c[tt.id]=l.st; if(l.qe) r.qe=l.qe; if(l.pe) r.pe=l.pe; }));
+  rows.push(['Line'].concat(ord.map(tt=>N[tt.id]+' '+tt.short),['QE','PE']));
+  Object.keys(map).sort((a,b)=>lineNo(a)-lineNo(b)).forEach(k=>{ const r=map[k]; rows.push([r.line].concat(ord.map(tt=>r.c[tt.id]?ST[r.c[tt.id]].n:''),[r.qe,r.pe])); });
+  csvOut(rows,`QE_Hoshin_${ui.year}_Matrix.csv`);
+}
+function exportJson(){
+  const txt=JSON.stringify({app:'qe_hoshin',version:1,exportedAt:new Date().toISOString(),years:store.years},null,1);
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([txt],{type:'application/json'})); a.download='qe_hoshin_'+new Date().toISOString().slice(0,10).replace(/-/g,'')+'.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+  toastMsg('💾 บันทึกไฟล์ Hoshin แล้ว');
+}
+function importFile(f){
+  const fr=new FileReader();
+  fr.onload=()=>{ try{
+    const p=JSON.parse(fr.result);
+    if(p&&p.app==='qe_hoshin'&&p.patch&&p.patch.mode==='addblocks'&&Array.isArray(p.patch.blocks)){        // ไฟล์เพิ่มตารางใหม่ใน Overall status (ไม่ทับตารางเดิม / สถานะที่แก้ไว้)
+      const pt=p.patch, Yr=store.years[pt.year], tp=Yr&&Yr.topics.find(x=>x.id===pt.topic);
+      if(!tp){ alert('❌ ไม่พบหัวข้อ '+pt.topic+' ของปี '+pt.year+' ในระบบ — นำเข้าไฟล์ Hoshin หลักก่อน'); return; }
+      const base=tp.ov||sanOv({blocks:[]}), add=sanOv({items:base.items,docs:base.docs,blocks:pt.blocks}).blocks;
+      const key=b=>[b.line,b.ref,b.title,b.mode].join('|'), have=new Set(base.blocks.map(key)), fresh=add.filter(b=>!have.has(key(b)));
+      if(!fresh.length){ alert('ℹ️ ตารางในไฟล์นี้มีอยู่ในระบบครบแล้ว — ไม่มีอะไรต้องเพิ่ม'); return; }
+      ask('เพิ่มตารางใหม่ใน Overall status','หัวข้อ: '+tp.short+' · ปี '+pt.year+'\nเพิ่ม '+fresh.length+' ตาราง: '+fresh.map(b=>b.line).join(', ')+'\nตารางเดิมและสถานะที่แก้ไขไว้จะไม่เปลี่ยน',()=>{
+        fresh.forEach(nb=>{ nb.id='ob'+uid(); nb.procs.forEach(q=>{ q.id='op'+uid(); q.jigs.forEach(j=>{ j.id='oj'+uid(); }); });
+          const ln=lineNo(nb.line); let at=base.blocks.findIndex(x=>lineNo(x.line)>ln); if(at<0) at=base.blocks.length; base.blocks.splice(at,0,nb); });
+        ovFillDue(tp,fresh); base.mig=1; tp.ov=base; ui.year=String(pt.year); ui.view='topic'; ui.topic=tp.id; ui.ovf=''; save(); render(); toastMsg('✅ เพิ่ม '+fresh.length+' ตารางใน Overall status แล้ว'); });
+      return;
+    }
+    if(p&&p.app==='qe_hoshin'&&p.patch&&p.patch.ov){                                  // ไฟล์อัปเดตเฉพาะ Overall status (ไม่ทับข้อมูลส่วนอื่น)
+      const pt=p.patch, Yr=store.years[pt.year], tp=Yr&&Yr.topics.find(x=>x.id===pt.topic);
+      if(!tp){ alert('❌ ไม่พบหัวข้อ '+pt.topic+' ของปี '+pt.year+' ในระบบ — นำเข้าไฟล์ Hoshin หลักก่อน'); return; }
+      ask('อัปเดต Overall status','หัวข้อ: '+tp.short+' · ปี '+pt.year+'\nตาราง Overall status เดิมของหัวข้อนี้จะถูกแทนที่ · สถานะไลน์และข้อมูลส่วนอื่นไม่เปลี่ยน',()=>{
+        tp.ov=sanOv(pt.ov); ovMigrate(tp); ui.year=String(pt.year); ui.view='topic'; ui.topic=tp.id; ui.ovf=''; save(); render(); toastMsg('✅ อัปเดต Overall status แล้ว'); });
+      return;
+    }
+    const yrs=p&&p.years; if(!yrs||typeof yrs!=='object'||!Object.keys(yrs).length) throw 0;
+    const names=Object.keys(yrs); if(!names.every(k=>yrs[k]&&Array.isArray(yrs[k].topics))) throw 0;
+    ask('นำเข้าข้อมูล Hoshin','พบข้อมูลปี: '+names.join(', ')+'\nปีที่มีอยู่แล้วในระบบจะถูกเขียนทับด้วยข้อมูลในไฟล์',()=>{
+      names.forEach(y=>{ store.years[y]=sanitize(yrs[y],y); }); ui.year=names[names.length-1]; ui.view='dash'; save(); render(); toastMsg('✅ นำเข้า Hoshin '+names.length+' ปีแล้ว'); });
+  }catch(err){ alert('❌ ไฟล์ไม่ถูกต้อง — ต้องเป็นไฟล์ JSON ของ Hoshin (จากปุ่ม 💾 JSON ในแท็บนี้ หรือไฟล์ที่ได้รับ)'); } };
+  fr.readAsText(f);
+}
+
+/* ---------- events ---------- */
+function onClick(e){
+  const t=e.target.closest('[data-act]'); if(!t) return; const a=t.dataset.act;
+  switch(a){
+    case 'hyr': ui.year=t.dataset.y; ui.view='dash'; render(); break;
+    case 'haddy': openYear(); break;
+    case 'hnew': { const y=String(new Date().getFullYear()); store.years[y]=sanitize(tpl(y),y); ui.year=y; ui.view='dash'; save(); render(); break; }
+    case 'hdely': ask('ลบข้อมูล Hoshin ปี '+ui.year+'?','กิจกรรม หัวข้อ และไลน์ทั้งหมดของปีนี้จะถูกลบ — กู้คืนได้จากไฟล์สำรอง JSON เท่านั้น',()=>{ delete store.years[ui.year]; ui.year=''; ui.view='dash'; touch(); render(); }); break;
+    case 'hcsv': exportCsv(); break;
+    case 'hjson': exportJson(); break;
+    case 'himp': g('hsFile').click(); break;
+    case 'hnav': ui.view=t.dataset.v==='dash'?'dash':'topic'; ui.topic=t.dataset.v==='dash'?'':t.dataset.v; render(); window.scrollTo({top:0,behavior:'smooth'}); break;
+    case 'hset': openSettings(); break;
+    case 'hln': openLine(t.dataset.t,t.dataset.l); break;
+    case 'hcyc': { e.stopPropagation(); const tp=fT(t.dataset.t), l=tp&&tp.lines.find(x=>x.id===t.dataset.l); if(!l) break; l.st=ORD[(ORD.indexOf(l.st)+1)%ORD.length]; touch(); render(); break; }
+    case 'haddl': openLine(t.dataset.t,'new'); break;
+    case 'hedt': openTopic(t.dataset.t); break;
+    case 'haddt': openTopic(null,t.dataset.a); break;
+    case 'ovgo': { const el=g('ovSec'); if(el) el.scrollIntoView({behavior:'smooth',block:'start'}); break; }
+    case 'ovnew': { const tp=fT(t.dataset.t); if(tp){ tp.ov=sanOv({blocks:[],mig:1}); touch(); render(); } break; }
+    case 'ovf': ui.ovf=t.dataset.v; render(); break;
+    case 'ovc': ovOpenCell(t.dataset.t,t.dataset.b,t.dataset.p,t.dataset.j,+t.dataset.k,t.dataset.s); break;
+    case 'ovd': ovOpenDoc(t.dataset.t,t.dataset.b,+t.dataset.k,+t.dataset.i,t.dataset.s); break;
+    case 'ovz': ovOpenBulk(t.dataset.t); break;
+    case 'ovj': ovOpenJig(t.dataset.t,t.dataset.b,t.dataset.p,t.dataset.j); break;
+    case 'ovp': ovOpenProc(t.dataset.t,t.dataset.b,t.dataset.p); break;
+    case 'ovb': ovOpenBlock(t.dataset.t,t.dataset.b,false); break;
+    case 'ovadd': ovOpenBlock(t.dataset.t,null,true); break;
+    case 'ovcsv': ovCsv(); break;
+    case 'ovfold': { const bid=t.dataset.b; ui.ovc=ui.ovc||{}; if(ui.ovc[bid]) delete ui.ovc[bid]; else ui.ovc[bid]=1; render(); break; }
+    case 'ovall': { const tp=fT(ui.topic); ui.ovc={}; if(t.dataset.v==='close'&&tp&&tp.ov) tp.ov.blocks.forEach(b=>{ ui.ovc[b.id]=1; }); render(); break; }
+    case 'ovdoc': { ui.ovx=ui.ovx||{}; ui.ovx[t.dataset.b]=1; render(); break; }
+    case 'hadda': { const y=Y(); addAct(); touch(); render(); toastMsg('➕ เพิ่มกิจกรรมแล้ว — ตั้งชื่อได้ที่ ⚙ ตั้งค่า / กิจกรรม'); break; }
+  }
+}
+
+/* ---------- sync กับ Cloud DB ---------- */
+function records(model,P){
+  const a=[]; if(!model||!model.years) return a;
+  Object.keys(model.years).forEach(y=>{ const Yr=model.years[y]; if(!Yr) return;
+    a.push({key:P+'hoshin:'+y+':meta',type:'HoshinData',payload:{k:'hy',year:y,meta:{label:Yr.label,title:Yr.title,product:Yr.product,by:Yr.by,upd:Yr.upd,acts:Yr.acts}},date:null});
+    (Yr.topics||[]).forEach((t,i)=>a.push({key:P+'hoshin:'+y+':t:'+t.id,type:'HoshinData',payload:{k:'ht',year:y,o:i,topic:t},date:null}));
+  });
+  return a;
+}
+function loadRemote(rows){
+  rows=(rows||[]).filter(p=>p&&(p.k==='hy'||p.k==='ht'));
+  if(!rows.length){ if(years().length&&window.SPDB) window.SPDB.queue(); return; }
+  const yrs={};
+  rows.forEach(p=>{ if(!p.year) return; const Yr=yrs[p.year]||(yrs[p.year]={_t:[]});
+    if(p.k==='hy'&&p.meta) Object.assign(Yr,p.meta); else if(p.k==='ht'&&p.topic) Yr._t.push([p.o||0,p.topic]); });
+  Object.keys(yrs).forEach(y=>{ const Yr=yrs[y]; Yr.topics=Yr._t.sort((a,b)=>a[0]-b[0]).map(x=>x[1]); delete Yr._t; yrs[y]=sanitize(Yr,y); });
+  const cur={}; Object.keys(store.years).forEach(y=>{ cur[y]=sanitize(store.years[y],y); });
+  if(cj({years:yrs})===cj({years:cur})) return;
+  store={years:yrs}; try{ localStorage.setItem(KEY,JSON.stringify(store)); }catch(e){}
+  ensureYear(); const v=g('viewHoshin'); if(v&&v.style.display==='block') render();
+}
+function restore(m,merge){
+  if(!m||!m.years) return 0; let n=0;
+  Object.keys(m.years).forEach(y=>{ if(merge&&store.years[y]) return; store.years[y]=sanitize(m.years[y],y); n++; });
+  ensureYear(); save(); const v=g('viewHoshin'); if(v&&v.style.display==='block') render(); return n;
+}
+function bind(){
+  const v=g('viewHoshin'); if(!v) return;
+  v.addEventListener('click',onClick); g('hsOv').addEventListener('click',onModal);
+  g('hsFile').addEventListener('change',e=>{ const f=e.target.files[0]; if(f) importFile(f); e.target.value=''; });
+}
+bind();
+window.HS={show:()=>{ ensureYear(); render(); },get:()=>store,records:records,loadRemote:loadRemote,restore:restore};
+})();
+</script>
+
+<script>
 /* ===== Tabs + Daily Checklist ===== */
 (function(){
   const g=id=>document.getElementById(id), K='daily_checklist_v1', KC='daily_checklist_conf', KT='daily_checklist_lasttab';
   const pd=n=>String(n).padStart(2,'0');
   const iso=d=>`${d.getFullYear()}-${pd(d.getMonth()+1)}-${pd(d.getDate())}`;
-  const todayS=iso(new Date());
+  let todayS=iso(new Date());
   let store={}; try{ store=JSON.parse(localStorage.getItem(K)||'{}')||{}; }catch(e){ store={}; }
   let conf={}; try{ conf=JSON.parse(localStorage.getItem(KC)||'{}')||{}; }catch(e){ conf={}; }
   const KN='daily_checklist_notes';
@@ -3769,6 +4762,11 @@ window.MS={show:()=>{ ensureYear(); render(); },get:()=>store,records,loadRemote
     },
     open:ds=>{ showTab('S'); go(ds); },
     markSent:(r,id)=>{ r.tk=id; persist(); },
+    rollDay:(old,nt)=>{                                   // ข้ามวัน: ย้ายหน้า Checklist ไปวันใหม่ ถ้ายังอยู่ที่ "วันนี้" เดิม และไม่ได้กำลังพิมพ์อยู่
+      todayS=nt;
+      const typing=document.activeElement&&g('viewSheet').contains(document.activeElement);
+      if(cur===old&&!typing){ if(ntT){ clearTimeout(ntT); ntT=null; saveNote(); } cur=nt; noteShown=null; draw(); }
+    },
     get:()=>({days:store,conf:conf,notes:notes}),
     loadCentral:(ck)=>{
       Object.keys(store).forEach(k=>delete store[k]); Object.keys(conf).forEach(k=>delete conf[k]); Object.keys(notes).forEach(k=>delete notes[k]);
@@ -3838,18 +4836,19 @@ window.MS={show:()=>{ ensureYear(); render(); },get:()=>store,records,loadRemote
 
   /* ---- tabs ---- */
   function showTab(t){
-    const s=t==='S', mm=t==='M';
-    g('viewTracker').style.display=(s||mm)?'none':''; g('viewSheet').style.display=s?'block':'none';
+    const s=t==='S', mm=t==='M', hh=t==='H';
+    g('viewTracker').style.display=(s||mm||hh)?'none':''; g('viewSheet').style.display=s?'block':'none';
     if(g('viewMission')) g('viewMission').style.display=mm?'block':'none';
-    g('tabT').classList.toggle('on',!s&&!mm); g('tabS').classList.toggle('on',s); if(g('tabM')) g('tabM').classList.toggle('on',mm);
+    if(g('viewHoshin')) g('viewHoshin').style.display=hh?'block':'none';
+    g('tabT').classList.toggle('on',!s&&!mm&&!hh); g('tabS').classList.toggle('on',s); if(g('tabM')) g('tabM').classList.toggle('on',mm); if(g('tabH')) g('tabH').classList.toggle('on',hh);
     try{ localStorage.setItem(KT,t); }catch(e){}
-    if(s) draw(); else if(mm){ if(window.MS) window.MS.show(); } else if(typeof drawCal==='function') drawCal();
+    if(s) draw(); else if(mm){ if(window.MS) window.MS.show(); } else if(hh){ if(window.HS) window.HS.show(); } else if(typeof drawCal==='function') drawCal();
   }
   const THEMES=['neo','holo','ember','classic'], TN={neo:'Neo',holo:'Holo',ember:'Ember',classic:'Classic'};
   function applyTheme(t){ const b=document.body; b.classList.remove('neo','holo','ember'); if(t!=='classic'){ b.classList.add('neo'); if(t==='holo'||t==='ember') b.classList.add(t); } g('themeBtn').textContent='🌗 '+TN[t]; }
   let theme='neo'; try{ theme=localStorage.getItem('ui_theme')||'neo'; }catch(e){} if(THEMES.indexOf(theme)<0) theme='neo'; applyTheme(theme);
   g('themeBtn').onclick=()=>{ theme=THEMES[(THEMES.indexOf(theme)+1)%THEMES.length]; applyTheme(theme); try{ localStorage.setItem('ui_theme',theme); }catch(e){} };
-  g('tabT').onclick=()=>showTab('T'); g('tabS').onclick=()=>showTab('S'); g('tabM').onclick=()=>showTab('M');
+  g('tabT').onclick=()=>showTab('T'); g('tabS').onclick=()=>showTab('S'); g('tabM').onclick=()=>showTab('M'); g('tabH').onclick=()=>showTab('H');
 
   /* ---- draw ---- */
   function summary(){
@@ -4121,7 +5120,7 @@ window.MS={show:()=>{ ensureYear(); render(); },get:()=>store,records,loadRemote
   };
 
   persist; 
-  try{ const _kt=localStorage.getItem(KT); if(_kt==='S') showTab('S'); else if(_kt==='M') showTab('M'); }catch(e){}
+  try{ const _kt=localStorage.getItem(KT); if(_kt==='S') showTab('S'); else if(_kt==='M') showTab('M'); else if(_kt==='H') showTab('H'); }catch(e){}
   try{ if(typeof drawCal==='function') drawCal(); }catch(e){}   // วาดป้ายในปฏิทินหลังโหลดข้อมูล Checklist
 })();
 </script>
@@ -4288,6 +5287,258 @@ if(window.SPDB) window.SPDB.bind();
     try{ await navigator.clipboard.writeText(link); say('🔗 คัดลอกลิงก์แล้ว — ส่งให้เฉพาะคนในทีม (ลิงก์มีรหัสผ่าน)'); }
     catch(e){ prompt('คัดลอกลิงก์นี้ (Ctrl+C) แล้วส่งให้เฉพาะคนในทีม',link); }
   };
+})();
+</script>
+<script>
+/* ===== ข้ามวันอัตโนมัติ: อัปเดต "วันนี้" ของปฏิทิน / ตาราง / ฟอร์ม / Checklist / แผนลา โดยไม่ต้องกด F5 ===== */
+(function(){
+  let pendingLine=false;
+  function tick(){
+    const nt=ymdNow(); if(nt===today) return;
+    const old=today; today=nt;
+    if(calY===+old.slice(0,4)&&calM===+old.slice(5,7)-1){ calY=+nt.slice(0,4); calM=+nt.slice(5,7)-1; }   // ปฏิทินตามไปเดือนใหม่ (ถ้ากำลังดูเดือนปัจจุบันอยู่)
+    try{ if(!editId&&getD('dd','mm','yy')===old) setD('dd','mm','yy',nt,false); }catch(e){}                // วันที่แจ้งในฟอร์มตามไปวันใหม่ (ถ้าไม่ได้เปลี่ยนเอง/ไม่ได้กำลังแก้ไข)
+    try{ render(); }catch(e){}
+    try{ if(window.__checklist&&window.__checklist.rollDay) window.__checklist.rollDay(old,nt); }catch(e){}
+    try{                                                                                                    // หน้า Mission: วาดใหม่เฉพาะตอนไม่ได้กำลังพิมพ์
+      const v=document.getElementById('viewMission'), a=document.activeElement;
+      if(window.MS&&v&&v.style.display==='block'&&!(a&&v.contains(a)&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))) window.MS.show();
+    }catch(e){}
+    try{                                                                                                    // หน้า Hoshin: วาดใหม่ (นับเลยกำหนด/อีก N วัน ตามวันใหม่)
+      const v=document.getElementById('viewHoshin'), a=document.activeElement;
+      if(window.HS&&v&&v.style.display==='block'&&!(a&&v.contains(a)&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))) window.HS.show();
+    }catch(e){}
+    try{ toast('📅 เปลี่ยนเป็นวันที่ '+fmt(nt)+' แล้ว'); }catch(e){}
+    if(document.hidden) pendingLine=true; else if(window.__runLineCheck) setTimeout(window.__runLineCheck,800);
+  }
+  function back(){ tick(); if(pendingLine&&!document.hidden){ pendingLine=false; if(window.__runLineCheck) setTimeout(window.__runLineCheck,800); } }
+  setInterval(tick,30000);
+  document.addEventListener('visibilitychange',()=>{ if(!document.hidden) back(); });
+  window.addEventListener('focus',back);
+  window.addEventListener('pageshow',back);
+  window.__dayTick=tick;
+})();
+</script>
+<script>
+/* ===== Hoshin add-on v1 : เรียงลำดับตาราง (สถานะ / ชื่อไลน์ / QE / PE / กำหนด) + คลิกแก้ไขวันที่ Milestone ===== */
+(function(){
+'use strict';
+if(window.__hsAddon) return; window.__hsAddon=true;
+const g=id=>document.getElementById(id);
+const view=()=>g('viewHoshin');
+if(!view()||!window.HS||typeof window.HS.get!=='function'||typeof window.HS.restore!=='function'){
+  console.warn('[Hoshin add-on] ไม่พบ #viewHoshin / window.HS — วางโค้ดนี้ไว้ท้ายไฟล์ index.html (เหนือบรรทัดปิด body)'); return;
+}
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad=n=>String(n).padStart(2,'0');
+const isoOK=s=>/^\d{4}-\d{2}-\d{2}$/.test(String(s||''))&&!isNaN(new Date(s+'T00:00:00'));
+const dn=s=>{ const a=String(s).split('-').map(Number); return Math.round(Date.UTC(a[0],a[1]-1,a[2])/864e5); };
+const todayS=()=>{ const d=new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); };
+const fmtD=s=>isoOK(s)?new Date(s+'T00:00:00').toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric'}):'–';
+const say=(m,c)=>{ try{ if(typeof toast==='function') toast(m,c); else console.log(m); }catch(e){} };
+const nat=(a,b)=>String(a).localeCompare(String(b),'th',{numeric:true,sensitivity:'base'});
+const RANK={'✗':0,'▲':1,'…':2,'✓':3};
+const rankOf=s=>{ s=String(s||'').trim().charAt(0); return Object.prototype.hasOwnProperty.call(RANK,s)?RANK[s]:99; };
+
+/* ---------- สไตล์ (ใช้ตัวแปรสีของธีมเดิม) ---------- */
+const st=document.createElement('style'); st.id='hsxStyle'; st.textContent=`
+.hsx-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin:0 0 10px;padding:8px 12px;border:1px dashed var(--line);border-radius:12px;background:var(--soft);font-size:12.5px;color:var(--mut)}
+.hsx-bar b{color:var(--txt);font-size:12.5px}
+.hsx-bar select.hsx-sel{width:auto;min-width:200px;padding:6px 10px;font-size:12.5px}
+.hsx-bar .btn-g{padding:6px 12px;font-size:12px}
+.hsx-bar.on{border-style:solid;border-color:var(--pri)}
+.hsx-hint{font-size:11px;color:var(--mut);font-weight:500}
+th.hsx-th{cursor:pointer;user-select:none}
+th.hsx-th:hover{color:var(--txt);background:var(--soft2)}
+.hsx-ar{font-style:normal;font-size:10px;margin-left:5px;opacity:.35}
+.hsx-ar.on{opacity:1;color:var(--pri);font-weight:800}
+.hs-m.hsx-edit{cursor:pointer;position:relative;padding-right:30px;transition:transform .12s,box-shadow .12s,border-color .12s}
+.hs-m.hsx-edit::after{content:"✎";position:absolute;right:10px;top:8px;font-size:11px;opacity:.5}
+.hs-m.hsx-edit:hover,.hs-m.hsx-edit:focus-visible{border-color:var(--pri);box-shadow:0 8px 20px var(--shp);transform:translateY(-2px);outline:none}
+.hs-m.hsx-edit:hover::after,.hs-m.hsx-edit:focus-visible::after{opacity:1;color:var(--pri)}
+.hsx-addm{margin-top:10px;padding:5px 12px;font-size:12px}
+.hsx-ov{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:16px;z-index:40}
+.hsx-ov.on{display:flex}
+.hsx-mod{background:var(--pop,#fff);color:var(--txt);border:1px solid var(--line);border-radius:14px;padding:22px;width:100%;max-width:460px;max-height:92vh;overflow:auto;box-shadow:0 18px 50px rgba(0,0,0,.45)}
+.hsx-mod h3{margin:0 0 4px;font-size:18px}
+.hsx-mod .sub{color:var(--mut);font-size:13px;margin-bottom:6px}
+.hsx-mod label{display:block;font-size:12px;color:var(--mut);margin:12px 0 4px}
+.hsx-qk{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.hsx-qk button{padding:5px 11px;font-size:12px}
+.hsx-df{font-size:12px;margin-top:8px;color:var(--mut);line-height:1.6}
+.hsx-df b{color:var(--txt)}
+.hsx-act{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+`;
+document.head.appendChild(st);
+
+/* ---------- สถานะการเรียง (จำไว้ในเครื่อง) ---------- */
+const LS='qe_hoshin_sort_v1';
+let S={mx:null,dt:null};
+try{ const x=JSON.parse(localStorage.getItem(LS)||'null'); if(x&&typeof x==='object'){ S.mx=x.mx||null; S.dt=x.dt||null; } }catch(e){}
+const saveS=()=>{ try{ localStorage.setItem(LS,JSON.stringify(S)); }catch(e){} };
+const DIRS={text:['A → Z','Z → A'],num:['น้อย → มาก','มาก → น้อย'],st:['✗ NG ก่อน','✓ OK ก่อน'],date:['เร็ว → ช้า','ช้า → เร็ว']};
+const defDir=c=>c.t==='num'?-1:1;
+
+function makeSorter(o){
+  const tb=o.tb, body=tb.tBodies[0], ths=Array.from(tb.tHead.rows[0].cells), rows=o.rows, cols=o.cols, key=o.key;
+  rows.forEach((r,i)=>{ r.dataset.hsxO=String(i); });
+  const firstTxt=o.num?rows.map(r=>r.cells[0].textContent):[];
+  const bar=document.createElement('div'); bar.className='hsx-bar';
+  bar.innerHTML='<b>↕ เรียงตาม</b><select class="hsx-sel"></select><button type="button" class="btn-g hsx-dir"></button><button type="button" class="btn-g hsx-clr">✕ ล้างการเรียง</button><span class="hsx-hint">หรือคลิกหัวคอลัมน์ในตาราง</span>';
+  const sel=bar.querySelector('.hsx-sel'), dirB=bar.querySelector('.hsx-dir'), clr=bar.querySelector('.hsx-clr');
+  sel.innerHTML='<option value="">ลำดับเดิม</option>'+cols.map(c=>c?`<option value="${esc(c.k)}">${esc(c.lab)}</option>`:'').join('');
+  o.anchor.parentNode.insertBefore(bar,o.anchor);
+  const colOf=k=>cols.find(c=>c&&c.k===k)||null;
+  cols.forEach((c,i)=>{
+    if(!c) return; const th=ths[i]; th.classList.add('hsx-th'); th.title=(th.title?th.title+' · ':'')+'คลิกเพื่อเรียงลำดับ';
+    const ar=document.createElement('i'); ar.className='hsx-ar'; ar.textContent='↕'; th.insertBefore(ar,th.querySelector('small')); c.ar=ar;
+    th.addEventListener('click',()=>toggle(c));
+  });
+  function toggle(c){
+    const s=S[key];
+    if(!s||s.k!==c.k) S[key]={k:c.k,d:defDir(c)};
+    else if(s.d===defDir(c)) S[key]={k:c.k,d:-defDir(c)};
+    else S[key]=null;
+    saveS(); apply();
+  }
+  sel.addEventListener('change',()=>{ const c=colOf(sel.value); S[key]=c?{k:c.k,d:defDir(c)}:null; saveS(); apply(); });
+  dirB.addEventListener('click',()=>{ const s=S[key]; if(!s) return; S[key]={k:s.k,d:-s.d}; saveS(); apply(); });
+  clr.addEventListener('click',()=>{ S[key]=null; saveS(); apply(); });
+  function apply(){
+    const s=S[key], c=s?colOf(s.k):null, ci=c?cols.indexOf(c):-1;
+    const arr=rows.slice();
+    if(!c) arr.sort((a,b)=>a.dataset.hsxO-b.dataset.hsxO);
+    else arr.sort((a,b)=>{
+      const va=o.val(a,c,ci), vb=o.val(b,c,ci); let r=0;
+      if(c.t==='st'){ const na=va>=99, nb=vb>=99; if(na!==nb) return na?1:-1; r=(va-vb)*s.d; }
+      else if(c.t==='num') r=(va-vb)*s.d;
+      else { const na=!va, nb=!vb; if(na!==nb) return na?1:-1; r=(c.t==='date'?(va<vb?-1:va>vb?1:0):nat(va,vb))*s.d; }
+      if(r) return r;
+      return nat(o.line(a),o.line(b))||(a.dataset.hsxO-b.dataset.hsxO);
+    });
+    arr.forEach(r=>body.appendChild(r));
+    if(o.num) arr.forEach((r,i)=>{ r.cells[0].textContent=c?String(i+1):firstTxt[rows.indexOf(r)]; });
+    cols.forEach(cc=>{ if(!cc) return; const on=!!c&&cc===c; cc.ar.className='hsx-ar'+(on?' on':''); cc.ar.textContent=on?(s.d===1?'▲':'▼'):'↕'; });
+    sel.value=c?c.k:''; dirB.style.display=clr.style.display=c?'':'none';
+    if(c) dirB.textContent=DIRS[c.t][s.d===1?0:1];
+    bar.classList.toggle('on',!!c);
+  }
+  apply();
+}
+
+/* ---------- ตารางภาพรวม: ไลน์ × หัวข้อ ---------- */
+function enhMatrix(){
+  const tb=view().querySelector('table.hs-mx'); if(!tb||tb.dataset.hsx||!tb.tHead||!tb.tBodies[0]) return; tb.dataset.hsx='1';
+  const ths=Array.from(tb.tHead.rows[0].cells), n=ths.length; if(n<4) return;
+  const rows=Array.from(tb.tBodies[0].rows).filter(r=>r.cells.length===n); if(rows.length<2) return;
+  const lab=th=>(th.firstChild&&th.firstChild.nodeType===3?th.firstChild.textContent:th.textContent).trim().replace(/\s+/g,' ');
+  const cols=ths.map((th,i)=>{
+    if(i===0) return {k:'line',t:'text',lab:'ไลน์'};
+    if(i>=n-3) return [{k:'ng',t:'num',lab:'NG รวม'},{k:'qe',t:'text',lab:'QE'},{k:'pe',t:'text',lab:'PE'}][i-(n-3)];
+    let tid=''; for(const r of rows){ const e=r.cells[i].querySelector('.hs-c[data-t]'); if(e){ tid=e.dataset.t; break; } }
+    return tid?{k:'t:'+tid,t:'st',lab:lab(th)}:null;
+  });
+  makeSorter({tb:tb,key:'mx',cols:cols,rows:rows,anchor:tb.parentElement,
+    line:r=>r.cells[0].textContent,
+    val:(r,c,i)=>{ const cell=r.cells[i];
+      if(c.t==='st'){ const e=cell.querySelector('.hs-c[data-t]'); return e?rankOf(e.textContent):99; }
+      if(c.t==='num') return parseFloat(cell.textContent)||0;
+      return cell.textContent.trim(); }});
+}
+
+/* ---------- ตารางรายละเอียดรายไลน์ (หน้าหัวข้อ) ---------- */
+function curYear(){ const b=view().querySelector('.ms-yr.on[data-y]'); return b?b.dataset.y:''; }
+function getTopic(tid){ try{ const y=window.HS.get().years[curYear()]; return (y&&y.topics.find(t=>t.id===tid))||null; }catch(e){ return null; } }
+function enhDetail(){
+  const tb=view().querySelector('table.hs-tbl'); if(!tb||tb.dataset.hsx||!tb.tHead||!tb.tBodies[0]) return; tb.dataset.hsx='1';
+  const ths=Array.from(tb.tHead.rows[0].cells), rows=Array.from(tb.tBodies[0].rows).filter(r=>r.dataset.l); if(rows.length<2) return;
+  const map={'ไลน์':{k:'line',t:'text'},'สถานะ':{k:'st',t:'st'},'QE':{k:'qe',t:'text'},'PE':{k:'pe',t:'text'},'กำหนด':{k:'due',t:'date'}}, used={};
+  const cols=ths.map(th=>{ const tx=th.textContent.trim(), m=map[tx]; if(!m||used[m.k]) return null; used[m.k]=1; return Object.assign({lab:tx},m); });
+  if(!cols.some(Boolean)) return;
+  const li=cols.findIndex(c=>c&&c.k==='line');
+  makeSorter({tb:tb,key:'dt',cols:cols,rows:rows,anchor:tb.closest('.hs-tw')||tb.parentElement,num:true,
+    line:r=>r.cells[li>=0?li:1].textContent,
+    val:(r,c,i)=>{
+      if(c.t==='st'){ const p=r.cells[i].querySelector('.hs-pill'); return p?rankOf(p.textContent):99; }
+      if(c.t==='date'){ const t=getTopic(r.dataset.t), l=t&&t.lines.find(x=>x.id===r.dataset.l); return (l&&(l.due||t.due))||''; }
+      return r.cells[i].textContent.trim(); }});
+}
+
+/* ---------- Milestone: คลิกแก้ไขชื่อ / วันที่ ---------- */
+let ovEl=null, ovCx=null;
+function openOv(html){
+  if(!ovEl){
+    ovEl=document.createElement('div'); ovEl.className='hsx-ov'; ovEl.innerHTML='<div class="hsx-mod" id="hsxMod"></div>'; document.body.appendChild(ovEl);
+    ovEl.addEventListener('click',e=>{ if(e.target===ovEl) closeOv(); });
+    document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&ovEl.classList.contains('on')) closeOv(); });
+  }
+  g('hsxMod').innerHTML=html; ovEl.classList.add('on');
+}
+function closeOv(){ if(ovEl) ovEl.classList.remove('on'); ovCx=null; }
+function diffTxt(d){
+  if(!isoOK(d)) return '<span style="color:var(--t-dang)">กรุณาเลือกวันที่</span>';
+  const k=dn(d)-dn(todayS());
+  return `<b>${fmtD(d)}</b> · ${k<0?'ผ่านมาแล้ว '+(-k)+' วัน':k===0?'วันนี้':'อีก '+k+' วัน'}`;
+}
+function openMs(tid,i){
+  const t=getTopic(tid); if(!t){ alert('ไม่พบหัวข้อ — ลองเปิดหน้าหัวข้อใหม่อีกครั้ง'); return; }
+  const m=i>=0&&t.plan?t.plan[i]:null; ovCx={tid:tid,i:i,y:curYear()};
+  openOv(`<h3>${m?'✏️ แก้ไข Milestone':'➕ เพิ่ม Milestone'}</h3><div class="sub">หัวข้อ: ${esc(t.short||t.name)}</div>`+
+    `<label>ชื่อ Milestone</label><input id="hsxL" value="${esc(m?m.l:'')}" placeholder="เช่น Plan PV4" autocomplete="off">`+
+    `<label>วันที่</label><input id="hsxD" type="date" value="${esc(m?m.d:'')}">`+
+    `<div class="hsx-qk"><span class="hsx-hint" style="align-self:center">เลื่อนวันที่:</span><button type="button" class="btn-g" data-sh="-7">−1 สัปดาห์</button><button type="button" class="btn-g" data-sh="7">+1 สัปดาห์</button><button type="button" class="btn-g" data-sh="14">+2 สัปดาห์</button><button type="button" class="btn-g" data-sh="30">+1 เดือน</button></div>`+
+    `<div class="hsx-df" id="hsxDf">${m?'ค่าเดิม: '+diffTxt(m.d)+'<br>':''}ค่าใหม่: <span id="hsxNew">${diffTxt(m?m.d:'')}</span></div>`+
+    `<div class="hsx-act"><button type="button" class="btn-p" data-hs="save">บันทึก</button>${m?'<button type="button" class="btn-d" data-hs="del">🗑 ลบ</button>':''}<button type="button" class="btn-g" data-hs="cancel">ยกเลิก</button></div>`);
+  const D=g('hsxD'), upd=()=>{ g('hsxNew').innerHTML=diffTxt(D.value); };
+  D.addEventListener('input',upd); D.addEventListener('change',upd);
+  g('hsxMod').querySelectorAll('[data-sh]').forEach(b=>b.addEventListener('click',()=>{
+    const base=isoOK(D.value)?D.value:todayS(), d=new Date(base+'T00:00:00'); d.setDate(d.getDate()+(+b.dataset.sh));
+    D.value=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); upd(); }));
+  g('hsxMod').querySelectorAll('[data-hs]').forEach(b=>b.addEventListener('click',()=>{ const a=b.dataset.hs; if(a==='cancel') closeOv(); else if(a==='save') saveMs(); else if(a==='del') delMs(); }));
+  setTimeout(()=>{ const L=g('hsxL'); if(L){ L.focus(); L.select(); } },30);
+}
+function commit(mut){
+  const c=ovCx; if(!c) return false;
+  const store=window.HS.get(), Y=store.years[c.y], t=Y&&Y.topics.find(x=>x.id===c.tid); if(!t) return false;
+  if(!Array.isArray(t.plan)) t.plan=[];
+  mut(t, c);
+  t.plan.sort((a,b)=>a.d<b.d?-1:a.d>b.d?1:0);
+  window.HS.restore({years:{[c.y]:Y}},false);          // บันทึก (localStorage + Cloud DB) และวาดหน้าใหม่ด้วยฟังก์ชันของระบบเอง
+  return true;
+}
+function saveMs(){
+  const l=g('hsxL').value.trim(), d=g('hsxD').value;
+  if(!l){ alert('กรุณาใส่ชื่อ Milestone'); g('hsxL').focus(); return; }
+  if(!isoOK(d)){ alert('กรุณาเลือกวันที่'); g('hsxD').focus(); return; }
+  const isNew=ovCx.i<0;
+  if(commit((t,c)=>{ if(c.i>=0&&t.plan[c.i]) t.plan[c.i]={l:l,d:d}; else t.plan.push({l:l,d:d}); })){ closeOv(); say(isNew?'✅ เพิ่ม Milestone แล้ว':'✅ อัปเดต Milestone แล้ว'); }
+}
+function delMs(){
+  const t=getTopic(ovCx.tid), m=t&&t.plan[ovCx.i]; if(!m) return closeOv();
+  const nm=m.l, c=ovCx;
+  const run=()=>{ ovCx=c; if(commit((tp,cc)=>{ tp.plan.splice(cc.i,1); })){ closeOv(); say('🗑 ลบ Milestone แล้ว'); } };
+  if(typeof window.ask==='function'){ closeOv(); window.ask('ลบ Milestone “'+nm+'”?','รายการนี้จะถูกลบออกจากแผนงานและไทม์ไลน์',run); }
+  else if(confirm('ลบ Milestone “'+nm+'” ?')) run();
+}
+function enhMilestones(){
+  const eb=view().querySelector('[data-act="hedt"][data-t]'), tid=eb?eb.dataset.t:''; if(!tid) return;
+  Array.from(view().querySelectorAll('.hs-box')).forEach(box=>{
+    const h4=box.querySelector('h4'), wrap=box.querySelector('.hs-ms');
+    if(!h4||!wrap||!/Milestone/i.test(h4.textContent)||box.dataset.hsx) return; box.dataset.hsx='1';
+    h4.insertAdjacentHTML('beforeend',' <span class="hsx-hint">· คลิกที่รายการเพื่อแก้ไขวันที่</span>');
+    Array.from(wrap.querySelectorAll('.hs-m')).forEach((chip,i)=>{
+      chip.classList.add('hsx-edit'); chip.tabIndex=0; chip.setAttribute('role','button'); chip.title='คลิกเพื่อแก้ไขชื่อ / วันที่';
+      const go=()=>openMs(tid,i);
+      chip.addEventListener('click',go); chip.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); go(); } });
+    });
+    const add=document.createElement('button'); add.type='button'; add.className='btn-g hsx-addm'; add.textContent='＋ เพิ่ม Milestone'; add.addEventListener('click',()=>openMs(tid,-1)); box.appendChild(add);
+  });
+}
+
+/* ---------- ทำงานทุกครั้งที่ระบบวาดหน้า Hoshin ใหม่ ---------- */
+function run(){ try{ enhMatrix(); }catch(e){ console.error('[hsx matrix]',e); } try{ enhDetail(); }catch(e){ console.error('[hsx detail]',e); } try{ enhMilestones(); }catch(e){ console.error('[hsx milestone]',e); } }
+new MutationObserver(run).observe(view(),{childList:true});
+run();
 })();
 </script>
 </body>
