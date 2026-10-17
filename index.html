@@ -6245,6 +6245,11 @@ const CSS=`
 .cp-it .ch .cp-pill{cursor:pointer}
 .cp-it .bt{display:flex;gap:5px;margin-top:2px;flex-wrap:wrap}
 .cp-it .bt button{padding:3px 9px;font-size:11px;border-radius:8px;background:transparent;border:1px solid var(--line);color:var(--mut);font-weight:700}
+.cp-it .bt button.tk{border-color:#00B0F0;color:var(--txt)}
+.cp-it .bt button.tk.on{background:color-mix(in srgb,#00B0F0 22%,transparent);font-weight:800}
+.cp-sepv{width:1px;height:22px;background:var(--line);margin:0 2px}
+.cp-auto{padding:7px 12px;font-size:12px;border-radius:9px;background:transparent;color:var(--mut);border:1px solid var(--line);font-weight:700}
+.cp-auto.on{background:rgba(34,197,94,.2);color:var(--t-ok);border-color:var(--ok)}
 .cp-it .bt button:hover{border-color:var(--pri);color:var(--txt);background:var(--soft2)}
 .cp-ch{--cc:#ddd;--ct:#222;display:flex;flex-direction:column;align-items:flex-start;gap:1px;width:100%;padding:3px 6px;margin:2px 0;border-radius:8px;border:1px solid rgba(0,0,0,.28);font-size:10.5px;line-height:1.25;text-align:left;cursor:pointer;color:var(--ct);background:var(--cc);font-weight:700;box-shadow:none;font-family:inherit}
 .cp-ch:hover{filter:brightness(1.06);box-shadow:0 0 0 2px var(--ring)}
@@ -6322,7 +6327,9 @@ function defaults(){
       models:[
         {id:'v1',name:'SEMI 737D',cells:[cell('Jun-25','done'),cell('23-Sep-25','done'),cell('10-Mar-26','done'),cell('14-May-26','done'),cell('7-Sep-26','done'),cell('1-Oct-26','warn'),cell('B-Jan-27','plan')]},
         {id:'v2',name:'SEMI 611D',cells:[cell('18-Jun-26','done'),cell('18-Sep-26','done'),cell('B-Mar-27','plan'),cell('B-May-27','plan'),cell('M-Aug-27','plan'),cell('E-Sep-27','plan'),cell('B-Jan-28','plan')]},
-        {id:'v3',name:'SEMI 783D',cells:[cell('19-Nov-26','plan'),cell('E-Mar-27','plan'),cell('M-Sep-27','plan'),cell('M-Oct-27','plan'),cell('B-Mar-28','plan'),cell('B-Apr-28','plan'),cell('B-Aug-28','plan')]}]},
+        {id:'v3',name:'SEMI 783D',cells:[cell('19-Nov-26','plan'),cell('E-Mar-27','plan'),cell('M-Sep-27','plan'),cell('M-Oct-27','plan'),cell('B-Mar-28','plan'),cell('B-Apr-28','plan'),cell('B-Aug-28','plan')]},
+        {id:'v4',name:'SEMI 581D',cells:[cell('','done'),cell('','done'),cell('','done'),cell('','done'),cell('8-Jul-25','done'),cell('16-Jul-25','done'),cell('PV9-1 : 24-Dec-25, PV9-2 : 29-Oct-26','warn')]},
+        {id:'v5',name:'SEMI 583D',cells:[cell('','done'),cell('','done'),cell('','done'),cell('','done'),cell('21-Oct-25','done'),cell('12-Nov-25','done'),cell('PV9-1 : 24-Dec-25, PV9-2 : 29-Oct-26','warn')]}]},
     doc:{label:"PV Activity Control Start Y'24-Y'26.xlsx",unc:P_`\\sa-fs02\public\QS Promotion\01_QS\PV activity\PV Activity Control Start Y'24-Y'26.xlsx`}},
   audit:{title:'PCR / PV audit matching',note:'',links:[{t:'Drive share',u:U.audit}]},
   ssa:{title:'SSA Update',note:'',links:[{t:'Drive share',u:U.ssa}]}};
@@ -6626,6 +6633,7 @@ function show(){
     `<div id="mjBody">${cur[2]()}</div><div class="mj-foot">ข้อมูลตั้งต้น: QE Main jobs.xlsx · Action plan Q-patrol audit.xlsx · ข้อมูลที่แก้ไขบันทึกในเบราว์เซอร์นี้</div>`;
   cpAfter(keep);
   window.scrollTo(0,y);
+  cpTkTick();
 }
 
 /* ===================== CLAIM · แผนกิจกรรม Q-patrol audit (ตามไฟล์ Action plan Q-patrol audit.xlsx) ===================== */
@@ -6689,12 +6697,12 @@ function planDefaults(){
 function normPlan(p,def){
   if(!p||typeof p!=='object'||!Array.isArray(p.items)) return def||planDefaults();
   const s=x=>String(x==null?'':x);
-  p.v=1; p.title=s(p.title); p.product=s(p.product);
+  p.v=1; p.title=s(p.title); p.product=s(p.product); p.autoTk=p.autoTk?1:0;
   p.items=p.items.filter(x=>x&&typeof x==='object').map(it=>{
     const o={id:s(it.id)||uid(),grp:s(it.grp),cat:s(it.cat),line:s(it.line),found:s(it.found),proc:s(it.proc),part:s(it.part),topic:s(it.topic),inc:s(it.inc),
       stM:CPQ.indexOf(it.stM)>=0?it.stM:'On-plan',stQ:CPQ.indexOf(it.stQ)>=0?it.stQ:'On-plan'};
     o.evs=(Array.isArray(it.evs)?it.evs:[]).filter(e=>e&&typeof e==='object'&&cpOK(e.pd)).map(e=>({
-      id:s(e.id)||uid(),type:CPT[e.type]?e.type:'other',label:s(e.label),pd:e.pd,pt:s(e.pt),st:CPS[e.st]?e.st:'plan',ad:cpIso(e.ad),at:s(e.at),note:s(e.note),
+      id:s(e.id)||uid(),type:CPT[e.type]?e.type:'other',label:s(e.label),pd:e.pd,pt:s(e.pt),st:CPS[e.st]?e.st:'plan',ad:cpIso(e.ad),at:s(e.at),note:s(e.note),tk:(+e.tk>0?Math.floor(+e.tk):0),tkx:e.tkx?1:0,
       hist:(Array.isArray(e.hist)?e.hist:[]).filter(h=>h&&cpOK(h.f)).map(h=>({f:h.f,t:cpIso(h.t),at:h.at||null,why:s(h.why)}))}));
     return o;
   });
@@ -6731,7 +6739,7 @@ function cpChip(it,e,kind,d,extra){
   let sty=`--cc:${T.c};--ct:${T.t}`, body='';
   if(kind==='plan'){
     if(e.st==='done') c.push('done'); else if(e.st==='cancel') c.push('cancel'); else if(e.st==='postponed') c.push('pp'); else if(e.st==='past') c.push('ghost'); else if(cpLate(e)) c.push('late');
-    body=`<b>${E(cpName(e))}${e.hist.length?`<span class="rv">Rev.${e.hist.length}</span>`:''}</b><small>${cpDM(d)}${e.pt?' · '+E(e.pt):''}</small>`;
+    body=`<b>${E(cpName(e))}${e.hist.length?`<span class="rv">Rev.${e.hist.length}</span>`:''}</b><small>${cpDM(d)}${e.pt?' · '+E(e.pt):''}${e.tk?' · 📅':''}</small>`;
     if(e.st==='past') sty='';
   }else if(kind==='ghost'){ c.push('ghost'); sty=''; body=`<b>${E(cpName(e))}</b><small>${cpDM(d)}</small>`; }
   else if(kind==='done'){ c.push('a-done'); sty=''; body=`<b>✓ Done</b><small>${cpDM(d)}${e.at?' · '+E(e.at):''}</small>`; }
@@ -6781,7 +6789,7 @@ function cpGantt(P){
     const left=`<td class="L1" rowspan="2"><div class="cp-it"><div class="l1"><span class="ln">${E(it.line)}</span><span class="gp">${E(it.grp)}${it.cat?' · '+E(it.cat):''}</span>${late?`<span class="cp-pill late">เลย ${late}</span>`:''}</div>`+
       `<div class="tp">${E(it.topic)}</div><div class="ps">${it.found?'พบ '+E(it.found)+' · ':''}${E(it.proc)}${it.part?'\n'+E(it.part):''}</div>`+
       `<div class="ch"><span class="cp-pill cx" data-mje="cp-it" data-it="${it.id}" title="ผู้รับผิดชอบ">👤 ${E(it.inc||'–')}</span><span class="cp-pill ${cpQCls(it.stM)}" data-mje="cp-it" data-it="${it.id}" title="Status Meeting">Meeting: ${E(it.stM)}</span><span class="cp-pill ${cpQCls(it.stQ)}" data-mje="cp-it" data-it="${it.id}" title="Status Q-patrol">Q-patrol: ${E(it.stQ)}</span></div>`+
-      `<div class="bt"><button type="button" data-mje="cp-evadd" data-it="${it.id}">＋ กิจกรรม</button><button type="button" data-mje="cp-it" data-it="${it.id}">✎ แก้ไขรายการ</button></div></div></td>`;
+      `<div class="bt"><button type="button" data-mje="cp-evadd" data-it="${it.id}">＋ กิจกรรม</button><button type="button" data-mje="cp-it" data-it="${it.id}">✎ แก้ไขรายการ</button>${(()=>{ const k=cpTkCnt(it); return `<button type="button" class="tk${k.n?' on':''}" data-mje="cp-tk" data-it="${it.id}" title="ส่งกิจกรรมของรายการนี้เข้าปฏิทินหน้า Tracker (ซิงก์ต่อเองเมื่อเลื่อนแผน / ปิดงาน)">📤 Tracker ${k.n}/${k.m}</button>`; })()}</div></div></td>`;
     [['pl','Plan',pm],['ac','Actual',am]].forEach((r,ri)=>{
       h+=`<tr class="${r[0]}">`+(ri===0?left:'')+`<td class="L2">${r[1]}</td>`;
       cols.forEach(c=>{ if(c.gap){ h+=`<td class="gap"></td>`; return; } h+=`<td class="wk${c.key===tk?' now':''}">${(r[2][c.key]||[]).join('')}</td>`; });
@@ -6818,7 +6826,8 @@ function cpView(){
   const P=S.claimPlan, v=ui.cpView==='list'?'list':'gantt';
   let h=`<div class="cp-head"><div><h3>📅 ${E(P.title||'Action plan')}</h3><small>Product: ${E(P.product||'–')} · วันนี้ ${cpDMY(cpToday())}</small></div><button type="button" class="mje-ic" data-mje="cp-head" title="แก้ไขชื่อแผน / Product">✎</button><span class="grow"></span>`+
     `<div class="cp-views"><button type="button" class="${v==='gantt'?'on':''}" data-mje="cp-v" data-v="gantt">🗓 ไทม์ไลน์</button><button type="button" class="${v==='list'?'on':''}" data-mje="cp-v" data-v="list">📋 รายการ</button></div>`+
-    `<button type="button" class="btn-p" style="padding:7px 13px;font-size:12.5px" data-mje="cp-itadd">＋ เพิ่มรายการ</button><button type="button" class="btn-g" style="padding:7px 12px;font-size:12px" data-mje="cp-csv">⬇ CSV</button></div>`;
+    `<button type="button" class="btn-p" style="padding:7px 13px;font-size:12.5px" data-mje="cp-itadd">＋ เพิ่มรายการ</button><button type="button" class="btn-g" style="padding:7px 12px;font-size:12px" data-mje="cp-csv">⬇ CSV</button>`+
+    `<span class="cp-sepv"></span><button type="button" class="btn-p" style="padding:7px 13px;font-size:12.5px;animation:none" data-mje="cp-tkall" title="ส่งทุกกิจกรรมที่ยังเป็นแผนเข้าปฏิทินหน้า Tracker">📤 ส่งทั้งหมดเข้า Tracker</button><button type="button" class="btn-g" style="padding:7px 12px;font-size:12px" data-mje="cp-tkcal" title="ไปที่ปฏิทินหน้า Tracker (เดือนของกิจกรรมถัดไป)">📅 ดูในปฏิทิน Tracker</button><button type="button" class="cp-auto${P.autoTk?' on':''}" data-mje="cp-tkauto" title="เปิด = กิจกรรมที่ลงแผนใหม่จะขึ้นปฏิทิน Tracker เองทันที (ไม่ต้องกดปุ่ม)">🔄 อัตโนมัติ: ${P.autoTk?'เปิด':'ปิด'}</button></div>`;
   h+=cpSummary(P)+cpLegend();
   h+=`<div class="mje-hint2" style="margin-bottom:8px">✏️ <b>คลิกที่กิจกรรม</b> เพื่อเลื่อนวัน (ระบบเก็บวันที่เดิมไว้เป็น Rev. และแสดงเป็นตัวขีดฆ่า) · เปลี่ยนสถานะเป็น Done / เลื่อน / ยกเลิก · ติ๊ก “เลื่อนกิจกรรมถัดไปตามด้วย” เพื่อขยับแผนที่เหลือทั้งชุด · แต่ละรายการมี 2 แถว Plan / Actual เหมือนไฟล์ Excel (สัปดาห์ W1–W5 นับจากวันจันทร์)</div>`;
   return h+(v==='gantt'?cpGantt(P):cpList(P));
@@ -6853,9 +6862,10 @@ function cpEvModal(iid,eid,preset){
     `<div><label>วันที่ทำจริง (Actual)</label><input name="ad" type="date" value="${E(d.ad)}"></div>`+
     `<div><label>เวลาจริง</label><input name="at" value="${E(d.at)}" autocomplete="off"></div>`+
     `<div class="full"><label>หมายเหตุ</label><textarea name="note" rows="2">${E(d.note)}</textarea></div>`+
-    `<div class="full"><label style="display:flex;gap:8px;align-items:center;color:var(--txt);cursor:pointer;font-weight:600"><input type="checkbox" name="shiftNext" style="width:auto"> เลื่อนกิจกรรมถัดไปของรายการนี้ (ที่ยังเป็นแผน) ตามจำนวนวันที่เปลี่ยนด้วย</label></div>`+hist+`</div>`;
+    `<div class="full"><label style="display:flex;gap:8px;align-items:center;color:var(--txt);cursor:pointer;font-weight:600"><input type="checkbox" name="shiftNext" style="width:auto"> เลื่อนกิจกรรมถัดไปของรายการนี้ (ที่ยังเป็นแผน) ตามจำนวนวันที่เปลี่ยนด้วย</label></div>`+
+    `<div class="full"><label style="display:flex;gap:8px;align-items:center;color:var(--txt);cursor:pointer;font-weight:600"><input type="checkbox" name="toTk" style="width:auto"${(d.tk||(isNew&&S.claimPlan.autoTk))?' checked':''}> 📅 แสดงในปฏิทินหน้า Tracker (อัปเดตเองเมื่อเลื่อนแผน / ปิดงาน)</label></div>`+hist+`</div>`;
   modal({title:(isNew?'➕ เพิ่มกิจกรรม':'✏️ แก้ไข / เลื่อนแผน')+' · '+it.line,sub:E(it.topic)+' · '+E(it.inc),wide:true,html:html,noFocus:!isNew,
-    del:isNew?null:{label:'🗑 ลบกิจกรรมนี้',confirm:'ลบกิจกรรมนี้ออกจากแผน?',run:()=>change(T_CP,`ลบกิจกรรม ${it.line} · ${CPT[old.type].n} ${old.pd}`,()=>{ const I=cpIt(iid); if(I) I.evs=I.evs.filter(x=>x.id!==eid); })},
+    del:isNew?null:{label:'🗑 ลบกิจกรรมนี้',confirm:'ลบกิจกรรมนี้ออกจากแผน?',run:()=>change(T_CP,`ลบกิจกรรม ${it.line} · ${CPT[old.type].n} ${old.pd}`,()=>{ const I=cpIt(iid); if(I){ const ev=I.evs.find(x=>x.id===eid); if(ev&&ev.tk&&cpTkB()) cpTkB().remove(ev.tk); I.evs=I.evs.filter(x=>x.id!==eid); } })},
     init(form){
       const f=n=>form.elements[n], orig=isNew?'':d.pd, upd=()=>{ g('cpPrev').innerHTML=cpPrevTxt(f('pd').value,orig); };
       upd(); f('pd').addEventListener('input',upd); f('pd').addEventListener('change',upd);
@@ -6876,6 +6886,8 @@ function cpEvModal(iid,eid,preset){
           if(sn){ const dl=cpDn(pd)-cpDn(oldPd); I.evs.forEach(x=>{ if(x!==e&&x.st==='plan'&&x.pd>oldPd){ const np=cpAdd(x.pd,dl); x.hist.push({f:x.pd,t:np,at:now,why:'ขยับตาม '+nm+(why?' · '+why:'')}); x.pd=np; } }); }
         }
         e.pd=pd; I.evs.sort((a,b)=>a.pd<b.pd?-1:a.pd>b.pd?1:0);
+        { const wantTk=!!(f('toTk')&&f('toTk').checked), B=cpTkB();
+          if(B){ if(wantTk){ if(e.st==='plan'||e.tk) cpTkRun([{it:I,e:e}],{create:true,force:true}); } else if(e.tk){ B.remove(e.tk); e.tk=0; e.tkx=1; } } }
       });
     }});
 }
@@ -6893,7 +6905,7 @@ function cpItemModal(iid){
     `<div><label>Status Meeting</label><select name="stM">${opt(CPQ,d.stM)}</select></div><div><label>Status Q-patrol (ใช้สรุป Done / Delay / On-plan)</label><select name="stQ">${opt(CPQ,d.stQ)}</select></div></div>`+
     (isNew?'':`<div class="mje-qk" style="margin-top:12px"><button type="button" class="btn-g" data-mv="-1">↑ เลื่อนรายการขึ้น</button><button type="button" class="btn-g" data-mv="1">↓ เลื่อนรายการลง</button></div>`);
   modal({title:isNew?'➕ เพิ่มรายการ (Q-patrol audit)':'✎ แก้ไขรายการ · '+d.line,wide:true,html:html,
-    del:isNew?null:{label:'🗑 ลบรายการนี้',confirm:`ลบรายการ “${d.line} · ${d.topic}” พร้อมกิจกรรมทั้งหมด ${it.evs.length} รายการ?`,run:()=>change(T_CP,`ลบรายการ ${d.line}`,()=>{ S.claimPlan.items=S.claimPlan.items.filter(x=>x.id!==iid); })},
+    del:isNew?null:{label:'🗑 ลบรายการนี้',confirm:`ลบรายการ “${d.line} · ${d.topic}” พร้อมกิจกรรมทั้งหมด ${it.evs.length} รายการ?`,run:()=>change(T_CP,`ลบรายการ ${d.line}`,()=>{ if(cpTkB()) (cpIt(iid)||{evs:[]}).evs.forEach(ev=>{ if(ev.tk) cpTkB().remove(ev.tk); }); S.claimPlan.items=S.claimPlan.items.filter(x=>x.id!==iid); })},
     init(form){ form.querySelectorAll('[data-mv]').forEach(b=>b.addEventListener('click',()=>{ const k=+b.dataset.mv, arr=S.claimPlan.items, i=arr.findIndex(x=>x.id===iid), j=i+k; if(j<0||j>=arr.length) return; closeModal(); change(T_CP,`ย้ายรายการ ${d.line}`,()=>{ const t=arr[i]; arr[i]=arr[j]; arr[j]=t; }); })); },
     onSave(v,form){
       const f=n=>form.elements[n].value.trim(); if(!f('line')) return 'กรุณาใส่ Line';
@@ -6922,10 +6934,87 @@ function cpAct(a,b){
   else if(a==='cp-itadd') cpItemModal(null);
   else if(a==='cp-head') cpHeadModal();
   else if(a==='cp-csv') cpCsv();
+  else if(a==='cp-tk') cpTkItem(d.it);
+  else if(a==='cp-tkall') cpTkAll();
+  else if(a==='cp-tkcal') cpTkCal();
+  else if(a==='cp-tkauto') cpTkAuto();
   else if(a==='cp-v'){ ui.cpView=d.v; saveUI(); show(); }
   else if(a==='cp-f'){ ui.cpFilter=d.v; saveUI(); show(); }
   else return false;
   return true;
+}
+
+/* ---------- ส่งกิจกรรมเข้า “ปฏิทินหน้า Tracker” (ปุ่ม 📤 Tracker บนไทม์ไลน์) ----------
+   • 1 กิจกรรม = 1 รายการใน Tracker (Due Date = วันที่ตามแผน) → ขึ้นในปฏิทินหน้า Tracker เอง
+   • id ของรายการ Tracker คำนวณจาก id กิจกรรม (คงที่) → สองเครื่องส่งพร้อมกันก็ไม่ซ้ำ
+   • ซิงก์ต่อเอง: เลื่อนแผน → เพิ่ม Rev. ใน Tracker · ปิดงานฝั่งไหนก็ได้ → อีกฝั่งตาม */
+const cpOwner=s=>{ const t=String(s||'').replace(/^\s*(P['’]|P\.|พี่|K\.?|คุณ)\s*/i,'').trim(); return t||String(s||'').trim()||'QE'; };
+const cpTkHash=x=>{ let h=2166136261; x=String(x); for(let i=0;i<x.length;i++){ h^=x.charCodeAt(i); h=Math.imul(h,16777619); } return h>>>0; };
+const cpTkId=e=>1780000000000+(cpTkHash('qp:'+e.id)%900000000);
+const cpTkB=()=>window.__TKB||null;
+function cpTkSpec(it,e){
+  const part=String(it.part||'').split('\n').map(x=>x.trim()).filter(Boolean).join(', ');
+  const last=e.hist.length?e.hist[e.hist.length-1]:null;
+  return {id:cpTkId(e),qpk:e.id,due:e.pd,done:e.st==='done',ad:e.ad||'',
+    issue:'🔎 '+it.line+' · '+cpName(e)+(e.pt?' ('+e.pt+')':'')+' · '+String(it.topic||'').replace(/\s+/g,' ').trim(),
+    owner:cpOwner(it.inc),
+    cm:'แผน Q-patrol audit · '+CPT[e.type].n+(e.pt?' · '+e.pt:'')+(part?'\nPart: '+part:'')+(e.note?'\n'+e.note:''),
+    reason:'เลื่อนแผน Q-patrol'+(last&&last.why?': '+last.why:'')};
+}
+function cpTkRun(pairs,o){
+  o=o||{}; const B=cpTkB(), r={c:0,u:0,p:0,rm:0,skip:0,mut:false}; if(!B) return r;
+  pairs.forEach(x=>{ const it=x.it, e=x.e, linked=!!e.tk;
+    if(e.st==='past'||e.st==='postponed') return;                       // ผ่านมาแล้ว / รอวันใหม่ → ไม่มีวันที่ให้ขึ้นปฏิทิน
+    if(e.st==='cancel'){ if(linked){ B.remove(e.tk); e.tk=0; r.rm++; r.mut=true; } return; }
+    if(!linked){ if(e.st!=='plan'||!o.create) return; if(e.tkx&&!o.force){ r.skip++; return; } }
+    if(o.force&&e.tkx){ e.tkx=0; r.mut=true; }
+    const res=B.upsert(cpTkSpec(it,e),{linked:linked,force:!!o.force});
+    if(res.missing){ if(res.missing==='trash'){ e.tk=0; e.tkx=1; r.mut=true; r.skip++; } return; }   // ถูกลบจาก Tracker → เลิกส่งอัตโนมัติ · ไม่พบ (ข้อมูลยังโหลดไม่ครบ) → รอไว้
+    if(res.id&&e.tk!==res.id){ e.tk=res.id; r.mut=true; }
+    if(res.created) r.c++; else if(res.updated) r.u++;
+    if(res.pull){ e.st='done'; if(!e.ad) e.ad=res.doneDate||cpToday(); r.p++; r.mut=true; }
+  });
+  return r;
+}
+const cpAllPairs=()=>{ const a=[]; S.claimPlan.items.forEach(it=>it.evs.forEach(e=>a.push({it:it,e:e}))); return a; };
+let cpTkT=0;
+function cpTkTick(){
+  clearTimeout(cpTkT);
+  cpTkT=setTimeout(()=>{ try{
+    if(!S||!S.claimPlan||!cpTkB()) return;
+    const r=cpTkRun(cpAllPairs(),{create:!!S.claimPlan.autoTk});
+    if(r.mut){ logIt(T_CP,`ซิงก์ปฏิทิน Tracker อัตโนมัติ (สร้าง ${r.c} · อัปเดต ${r.u}`+(r.p?` · รับสถานะ Done ${r.p}`:'')+')'); save();
+      if(r.c) toast('📅 ส่งกิจกรรม Q-patrol เข้าปฏิทิน Tracker อัตโนมัติ '+r.c+' รายการ');
+      if(R()&&R().style.display==='block'&&!MO) show(); }
+  }catch(err){ console.error('[qp→tracker]',err); } },500);
+}
+function cpTkCnt(it){ return {n:it.evs.filter(e=>e.tk).length,m:it.evs.filter(e=>e.st==='plan'||e.tk).length}; }
+function cpTkReport(r,label){
+  const a=[]; if(r.c) a.push('สร้างใหม่ '+r.c); if(r.u) a.push('อัปเดต '+r.u); if(r.p) a.push('รับสถานะ Done จาก Tracker '+r.p); if(r.rm) a.push('เอาออก '+r.rm);
+  return a.length?'📤 '+label+': '+a.join(' · ')+' — ดูได้ที่ปฏิทินหน้า Tracker':'ส่งไว้แล้ว — ข้อมูลใน Tracker เป็นปัจจุบันอยู่แล้ว'+(r.skip?' (ข้าม '+r.skip+' รายการที่ถูกลบจาก Tracker)':'');
+}
+function cpTkItem(iid){
+  const it=cpIt(iid); if(!it) return; if(!cpTkB()){ toast('ไม่พบ Tracker หน้าแรกในไฟล์นี้',true); return; }
+  if(!it.evs.some(e=>e.st==='plan'||e.tk)){ toast('รายการนี้ยังไม่มีกิจกรรมที่เป็นแผน — กด “＋ กิจกรรม” ก่อน',true); return; }
+  let r=null; change(T_CP,`ส่งเข้าปฏิทิน Tracker · ${it.line}`,()=>{ const I=cpIt(iid); r=cpTkRun(I.evs.map(e=>({it:I,e:e})),{create:true,force:true}); },{noRender:true});
+  show(); toast(cpTkReport(r||{c:0,u:0,p:0,rm:0,skip:0},it.line));
+}
+function cpTkAll(){
+  if(!cpTkB()){ toast('ไม่พบ Tracker หน้าแรกในไฟล์นี้',true); return; }
+  let r=null; change(T_CP,'ส่งทุกกิจกรรมเข้าปฏิทิน Tracker',()=>{ r=cpTkRun(cpAllPairs(),{create:true,force:true}); },{noRender:true});
+  show(); toast(cpTkReport(r||{c:0,u:0,p:0,rm:0,skip:0},'ทั้งแผน'));
+}
+function cpTkAuto(){
+  const on=!S.claimPlan.autoTk; let r=null;
+  change(T_CP,on?'เปิดส่งเข้าปฏิทิน Tracker อัตโนมัติ':'ปิดส่งเข้าปฏิทิน Tracker อัตโนมัติ',()=>{ S.claimPlan.autoTk=on?1:0; if(on) r=cpTkRun(cpAllPairs(),{create:true}); },{noRender:true});
+  show(); toast(on?'🔄 เปิดอัตโนมัติ — กิจกรรมใหม่ที่ลงแผนจะขึ้นปฏิทิน Tracker เอง'+(r&&r.c?' · ส่งแล้ว '+r.c+' รายการ':''):'ปิดอัตโนมัติแล้ว — รายการที่ส่งไปแล้วยังอัปเดตตามแผน');
+}
+function cpTkCal(){
+  const B=cpTkB(); if(!B){ toast('ไม่พบ Tracker หน้าแรกในไฟล์นี้',true); return; }
+  const t=cpToday(); let best='';
+  S.claimPlan.items.forEach(it=>it.evs.forEach(e=>{ if(e.tk&&e.pd>=t&&(!best||e.pd<best)) best=e.pd; }));
+  if(!best) S.claimPlan.items.forEach(it=>it.evs.forEach(e=>{ if(e.tk&&(!best||e.pd>best)) best=e.pd; }));
+  B.showCal(best||t);
 }
 
 /* ===================== MODALS / ACTIONS ===================== */
@@ -7197,7 +7286,7 @@ function boot(){
     if(anchor&&anchor.parentNode) anchor.parentNode.insertBefore(root,anchor.nextSibling); else (document.querySelector('.wrap')||document.body).appendChild(root);
   }
   root.addEventListener('click',onClick); root.addEventListener('keydown',onKey); root.addEventListener('input',onInput); root.addEventListener('change',onChange); root.addEventListener('focusin',onFocusIn);
-  window.MJ={show:show,editable:true,getData:function(){ try{ return JSON.parse(JSON.stringify(S)); }catch(e){ return null; } },setData:function(d){ try{ if(!d||!d.pcr||!d.claim||!d.newproj) return false; pushUndo(JSON.stringify(S)); S=normalize(JSON.parse(JSON.stringify(d))); logIt('ระบบ','กู้คืนจากไฟล์ Backup ทั้งหมด'); save(); if(R()&&R().style.display==='block') show(); return true; }catch(e){ return false; } },snapshot:function(){ try{ return JSON.parse(JSON.stringify(S)); }catch(e){ return null; } },reload:function(){ try{ const raw=localStorage.getItem(KEY); if(!raw||raw===JSON.stringify(S)||MO) return; load(); if(R()&&R().style.display==='block'&&!(document.activeElement&&/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName))) show(); }catch(e){} }};
+  window.MJ={show:show,editable:true,tkTick:cpTkTick,getData:function(){ try{ return JSON.parse(JSON.stringify(S)); }catch(e){ return null; } },setData:function(d){ try{ if(!d||!d.pcr||!d.claim||!d.newproj) return false; pushUndo(JSON.stringify(S)); S=normalize(JSON.parse(JSON.stringify(d))); logIt('ระบบ','กู้คืนจากไฟล์ Backup ทั้งหมด'); save(); if(R()&&R().style.display==='block') show(); return true; }catch(e){ return false; } },snapshot:function(){ try{ return JSON.parse(JSON.stringify(S)); }catch(e){ return null; } },reload:function(){ try{ const raw=localStorage.getItem(KEY); if(!raw||raw===JSON.stringify(S)||MO) return; load(); if(R()&&R().style.display==='block'&&!(document.activeElement&&/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName))) show(); cpTkTick(); }catch(e){} }};
   if(injected){
     const tj=document.createElement('button'); tj.type='button'; tj.className='tabbtn'; tj.id='tabJ'; tj.textContent='🧰 Main QE Jobs';
     const tabH=g('tabH')||g('tabM')||g('tabS')||g('tabT');
@@ -7207,6 +7296,7 @@ function boot(){
     others.forEach(o=>{ const b=g(o); if(b) b.addEventListener('click',()=>{ root.style.display='none'; tj.classList.remove('on'); },true); });
   }
   if(root.style.display==='block') show();
+  setTimeout(cpTkTick,2500);
 }
 if(document.readyState==='complete') boot(); else window.addEventListener('load',boot);
 })();
@@ -8025,6 +8115,7 @@ const st=document.createElement('style'); st.id='uxStyle'; st.textContent=`
 .ux-fx:first-of-type{border-top:0}
 .ux-fx small{color:var(--mut)}
 .ux-li{margin:4px 0;font-size:13px;line-height:1.6}
+.npf-open{display:inline-block;margin-left:8px;padding:2px 9px;border:1px solid rgba(255,255,255,.5);border-radius:99px;font-size:9.5px;font-weight:600;opacity:.92;vertical-align:1px}
 `; document.head.appendChild(st);
 
 /* ---------- ฟอร์ม: ประเภทงาน + ปุ่มวันที่ด่วน ---------- */
@@ -8143,6 +8234,20 @@ function checkWarn(){
 warn.addEventListener('click',e=>{ const b=e.target.closest('[data-w]'); if(!b) return; if(b.dataset.w==='bk') g('bkBtn').click(); else{ g('spBtn').click(); setTimeout(()=>{ try{ window.SPDB.diagnose(); }catch(err){} },200); } });
 setInterval(checkWarn,4000); setTimeout(checkWarn,1500);
 
+/* ---------- ตาราง PV (New project) ที่กู้จากรูปหน้าจอเดิม: 5 รุ่น ---------- */
+const SEED_PV=[
+ {name:'SEMI 737D',cells:[['Jun-25','done'],['23-Sep-25','done'],['10-Mar-26','done'],['14-May-26','done'],['7-Sep-26','done'],['1-Oct-26','warn'],['B-Jan-27','plan']]},
+ {name:'SEMI 611D',cells:[['18-Jun-26','done'],['18-Sep-26','done'],['B-Mar-27','plan'],['B-May-27','plan'],['M-Aug-27','plan'],['E-Sep-27','plan'],['B-Jan-28','plan']]},
+ {name:'SEMI 783D',cells:[['19-Nov-26','plan'],['E-Mar-27','plan'],['M-Sep-27','plan'],['M-Oct-27','plan'],['B-Mar-28','plan'],['B-Apr-28','plan'],['B-Aug-28','plan']]},
+ {name:'SEMI 581D',cells:[['','done'],['','done'],['','done'],['','done'],['8-Jul-25','done'],['16-Jul-25','done'],['PV9-1 : 24-Dec-25, PV9-2 : 29-Oct-26','warn']]},
+ {name:'SEMI 583D',cells:[['','done'],['','done'],['','done'],['','done'],['21-Oct-25','done'],['12-Nov-25','done'],['PV9-1 : 24-Dec-25, PV9-2 : 29-Oct-26','warn']]}];
+function pvMissing(){
+  try{ if(localStorage.getItem('seed_v12_pv_done')) return []; }catch(e){}
+  if(!window.MJ||!window.MJ.getData) return [];
+  const S=window.MJ.getData(); if(!S||!S.newproj||!S.newproj.pv||!Array.isArray(S.newproj.pv.models)) return [];
+  const have=new Set(S.newproj.pv.models.map(m=>norm(m.name)));
+  return SEED_PV.filter(m=>!have.has(norm(m.name)));
+}
 /* ---------- กู้ข้อมูลเดิม (seed จากไฟล์ snapshot) ---------- */
 function seedPlan(){
   const S=window.__SEED_V12; if(!S) return null;
@@ -8152,17 +8257,23 @@ function seedPlan(){
   const days=Object.keys(S.checklist.days).filter(k=>{ const cur=(ck.days||{})[k]; return !cur||!cur.some(r=>r.t||r.n||r.st); });
   const ms=window.MS?window.MS.get():{years:{}}, my=Object.keys(S.mission.years).filter(y=>!ms.years[y]||!ms.years[y].lv);
   const hs=window.HS?window.HS.get():{years:{}}, hy=Object.keys(S.hoshin.years).filter(y=>!hs.years[y]);
-  return {tr:tr,days:days,my:my,hy:hy,n:tr.length+days.length+my.length+hy.length};
+  const pv=pvMissing();
+  return {tr:tr,days:days,my:my,hy:hy,pv:pv,n:tr.length+days.length+my.length+hy.length+pv.length};
 }
 function seedApply(p){
-  const S=window.__SEED_V12, r={tr:0,days:0,my:0,hy:0};
+  const S=window.__SEED_V12, r={tr:0,days:0,my:0,hy:0,pv:0};
   if(p.tr.length){ p.tr.forEach(d=>data.push(clone(d))); data.sort((a,b)=>b.id-a.id); r.tr=p.tr.length; save();
     try{ if(!localStorage.getItem('issue_tracker_title')&&S.title){ localStorage.setItem('issue_tracker_title',JSON.stringify(S.title)); loadTitle(); } }catch(e){} }
   if(p.days.length&&window.__checklist){ const sub={}; p.days.forEach(k=>{ sub[k]=clone(S.checklist.days[k]); }); r.days=window.__checklist.restore({days:sub,conf:{},notes:{}},true)||0; }
   p.my.forEach(y=>{ if(!window.MS) return; const st=window.MS.get(), cur=st.years[y], sy=clone(S.mission.years[y]);
     if(!cur) window.MS.restore({years:{[y]:sy}},true); else { cur.lv=sy.lv; window.MS.restore({years:{[y]:cur}},false); } r.my++; });
   p.hy.forEach(y=>{ if(window.HS){ window.HS.restore({years:{[y]:clone(S.hoshin.years[y])}},true); r.hy++; } });
-  render(); say('🧩 กู้ข้อมูลเดิมแล้ว: Tracker '+r.tr+' · Checklist '+r.days+' วัน · แผนลา '+r.my+' ปี · Hoshin '+r.hy+' ปี');
+  if(p.pv&&p.pv.length&&window.MJ&&window.MJ.setData){ const D=window.MJ.getData(), codes=(D.newproj.pv.codes||[]).length, ex=new Set(D.newproj.pv.models.map(m=>m.id));
+    p.pv.forEach(m=>{ let id='seed-'+norm(m.name).replace(/[^a-z0-9]+/g,'-'); while(ex.has(id)) id+='x'; ex.add(id);
+      const cells=[]; for(let i=0;i<codes;i++){ const c=m.cells[i]||['','plan']; cells.push({v:c[0],k:c[1],hist:[],note:''}); }
+      D.newproj.pv.models.push({id:id,name:m.name,cells:cells}); r.pv++; });
+    if(window.MJ.setData(D)){ try{ localStorage.setItem('seed_v12_pv_done','1'); }catch(e){} } else r.pv=0; }
+  render(); say('🧩 กู้ข้อมูลเดิมแล้ว: Tracker '+r.tr+' · Checklist '+r.days+' วัน · แผนลา '+r.my+' ปี · Hoshin '+r.hy+' ปี · ตาราง PV เพิ่ม '+r.pv+' รุ่น');
 }
 function seedModal(){
   const p=seedPlan(); if(!p||!p.n){ say('ไม่มีข้อมูลเดิมที่ต้องกู้เพิ่ม — มีอยู่ครบแล้ว'); return; }
@@ -8171,6 +8282,7 @@ function seedModal(){
   if(p.tr.length) items.push('<div class="ux-li">📊 <b>Tracker</b> '+p.tr.length+' รายการ <span class="ux-sub">(เช่น '+p.tr.slice(0,3).map(d=>E(String(d.issue).replace(/\s+/g,' ').slice(0,36))).join(' · ')+' …) — ครบทุกช่อง รวม Rev. และวันที่เสร็จ</span></div>');
   if(p.days.length) items.push('<div class="ux-li">📝 <b>Checklist</b> '+p.days.length+' วัน ('+p.days.join(', ')+')</div>');
   if(p.my.length) items.push('<div class="ux-li">🌴 <b>แผนลา / อบรม</b> ปี '+p.my.join(', ')+' — พนักงาน 4 คน สิทธิ์การลา และรายการลา/อบรม/W/H/OT ที่ระบุวันที่ 12 รายการ</div>');
+  if(p.pv&&p.pv.length) items.push('<div class="ux-li">🚀 <b>ตาราง PV (New project)</b> เพิ่มรุ่นที่ยังไม่มี: <b>'+p.pv.map(m=>E(m.name)).join(', ')+'</b> พร้อมวันที่และสถานะของทุก Stage (PV4 → PV9)</div>');
   if(p.hy.length) items.push('<div class="ux-li">🧭 <b>Hoshin</b> ปี '+p.hy.join(', ')+' — 4 กิจกรรม 5 หัวข้อ 54 จุดตรวจ (สถานะ ✓▲✗ ทุกไลน์ · QE/PE · กำหนดเสร็จ · Milestone)</div>');
   ov.innerHTML='<div class="ux-md"><h3>🧩 กู้ข้อมูลเดิมที่ฝังไว้ในไฟล์</h3><div class="ux-sub">ข้อมูลชุดนี้อ่านกลับจากไฟล์ snapshot ที่คุณส่งมา ('+E(S.source||'')+') ระบบจะ <b>เติมเฉพาะส่วนที่ยังไม่มี</b> ไม่ทับข้อมูลที่คุณมีอยู่ และกด ↩ ย้อนกลับได้สำหรับส่วน Tracker</div>'+items.join('')+
     '<div class="ux-sub" style="margin-top:8px">ส่วนที่ไฟล์ snapshot ไม่เก็บไว้ (เช่น แผนลารายวันของเดือนก่อน/หลังรายการที่เห็น, 7 Mission Action Plan, OT, รายละเอียด/Overall status ของ Hoshin, Follow-up ที่กรอกแล้ว) กู้ไม่ได้จากไฟล์นี้ — ถ้าเบราว์เซอร์เดิมยังเปิดข้อมูลได้ ให้กด 💾 Backup ที่นั่นแล้วนำเข้า (📂 Restore) ที่นี่</div>'+
@@ -8302,6 +8414,7 @@ function conflictModal(){
     else if(b.dataset.c==='copy'){ const t=JSON.stringify(list,null,1); try{ await navigator.clipboard.writeText(t); say('📋 คัดลอกแล้ว'); }catch(err){ window.prompt('คัดลอก (Ctrl+C):',t); } } });
 }
 window.addEventListener('spdb-conflict',()=>uxAfter());
+window.addEventListener('load',()=>{ setTimeout(()=>{ try{ uxAfter(); }catch(e){} },300); });
 
 /* ---------- ปุ่มทำซ้ำ ---------- */
 g('tb').addEventListener('click',e=>{
@@ -8320,6 +8433,414 @@ document.addEventListener('input',e=>{ if(!e.target||e.target.id!=='q') return; 
 const clr=g('clearBtn'); if(clr) clr.addEventListener('click',()=>{ ['q','fStatus','fDate','fOwner','fFlag'].forEach(id=>{ P[id]=''; }); P.view=''; P.pri=''; P.mine=false; savePrefs(); uxAfter(); });
 ['q','fStatus','fDate','fOwner','fFlag'].forEach(id=>{ const el=g(id); if(!el||!P[id]) return; if(el.tagName==='SELECT'){ if(Array.from(el.options).some(o=>o.value===P[id])) el.value=P[id]; } else el.value=P[id]; });
 render();
+})();
+
+</script>
+<script id="todayAddon">
+/* ===== Today add-on v14 : หน้า “☀️ วันนี้” รวมงานที่ต้องทำ + ปุ่มลัดเข้าแผน Q-patrol จากหน้า Tracker =====
+   รวมจาก: Tracker · Checklist · แผน Q-patrol audit · QE Follow-up (New project) · Hoshin · แผนลา
+   ไม่เก็บข้อมูลเอง — อ่านจากข้อมูลเดิมทุกแท็บ จึงตรงกับหน้าจริงเสมอ */
+(function(){
+'use strict';
+if(window.__TODAY_ADDON) return; window.__TODAY_ADDON=true;
+const g=id=>document.getElementById(id);
+try{ if(typeof data==='undefined'||typeof render!=='function'||typeof curDue!=='function'||typeof dayNum!=='function'||!g('tabT')||!g('viewTracker')||!document.querySelector('.tabbar')) return; }catch(e){ return; }
+
+const E=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm=s=>String(s||'').toLowerCase().replace(/\s+/g,' ').trim();
+const clip=(s,n)=>{ s=String(s==null?'':s).replace(/\s+/g,' ').trim(); return s.length>n?s.slice(0,n-1)+'…':s; };
+const first=s=>String(s||'').split('\n')[0];
+const KM='ux_today_mine', KS='ux_today_start';
+const getP=k=>{ try{ return localStorage.getItem(k)==='1'; }catch(e){ return false; } };
+const setP=(k,v)=>{ try{ localStorage.setItem(k,v?'1':'0'); }catch(e){} };
+const ME=()=>{ try{ return (localStorage.getItem('ux_me')||'').trim(); }catch(e){ return ''; } };
+const pad=n=>String(n).padStart(2,'0');
+const isoOf=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const addDays=(iso,n)=>{ const a=iso.split('-').map(Number); return isoOf(new Date(a[0],a[1]-1,a[2]+n)); };
+const dd=iso=>dayNum(iso)-dayNum(today);
+const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const dmy=s=>/^\d{4}-\d{2}-\d{2}$/.test(String(s||''))?(+s.slice(8))+'-'+MON[+s.slice(5,7)-1]:'–';
+const mj=()=>{ try{ return (window.MJ&&window.MJ.getData)?window.MJ.getData():null; }catch(e){ return null; } };
+const mine=o=>{ if(!getP(KM)||!ME()) return true; const a=norm(o), b=norm(ME()); return !!a&&(a.indexOf(b)>=0||b.indexOf(a)>=0); };
+function whenOf(n){ return n<0?{t:'เลย '+(-n)+' วัน',c:'late'}:n===0?{t:'วันนี้',c:'today'}:{t:'อีก '+n+' วัน',c:n<=3?'soon':'ok'}; }
+const PRI={urgent:{n:'Urgent',c:'#dc2626',o:0},trial:{n:'Trial',c:'#7c3aed',o:1},transfer:{n:'Transfer',c:'#0ea5e9',o:2},prod:{n:'Production',c:'#16a34a',o:3},other:{n:'อื่นๆ',c:'#64748b',o:4}};
+const priO=d=>(d.pri&&PRI[d.pri])?PRI[d.pri].o:9;
+
+/* ---------- CSS ---------- */
+const st=document.createElement('style'); st.id='tdStyle'; st.textContent=`
+#viewToday{display:none}
+.td-head{display:flex;flex-wrap:wrap;align-items:flex-end;gap:8px 16px;margin:0 0 12px}
+.td-head h1{margin:0;font-size:26px;line-height:1.2}
+.td-head .td-sub{color:var(--mut);font-size:13px}
+.td-grow{flex:1}
+.td-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 14px;padding:9px 12px;border:1px solid var(--line);border-radius:12px;background:var(--card);box-shadow:0 1px 4px var(--sh)}
+.td-tools label{display:inline-flex;align-items:center;gap:6px;margin:0;font-size:12.5px;color:var(--txt);cursor:pointer}
+.td-tools label input{width:auto}
+.td-tools .btn-g,.td-tools .btn-p{padding:6px 12px;font-size:12.5px}
+.td-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:0 0 14px}
+.td-k{padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--card);box-shadow:0 1px 4px var(--sh)}
+.td-k b{display:block;font-size:28px;line-height:1.1}
+.td-k small{display:block;color:var(--mut);font-size:11.5px;margin-top:3px;line-height:1.4}
+.td-ok{padding:26px;text-align:center;border:1px dashed var(--ok);border-radius:14px;background:rgba(34,197,94,.08);color:var(--t-ok);font-weight:700;margin:0 0 14px}
+.td-sys{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:9px 13px;margin:0 0 8px;border:1px solid var(--warn);border-radius:12px;background:rgba(245,158,11,.12);color:var(--t-warn);font-size:12.5px;line-height:1.6}
+.td-sys button{padding:4px 10px;font-size:12px}
+.td-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(440px,1fr));gap:14px;align-items:start}
+@media(max-width:560px){.td-grid{grid-template-columns:1fr}}
+.td-card{border:1px solid var(--line);border-top:4px solid var(--tc,var(--pri));border-radius:14px;padding:13px 14px;background:var(--card);box-shadow:0 1px 4px var(--sh);min-width:0}
+.td-card h3{margin:0;font-size:15px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.td-card h3 .td-n{font-size:11.5px;font-weight:800;padding:2px 9px;border-radius:99px;background:var(--soft2);color:var(--txt)}
+.td-card h3 .td-n.late{background:rgba(239,68,68,.2);color:var(--t-dang)}
+.td-card .td-ds{color:var(--mut);font-size:11.5px;margin:3px 0 8px;line-height:1.5}
+.td-it{display:grid;grid-template-columns:78px minmax(0,1fr) auto;gap:9px;align-items:center;padding:7px 4px;border-top:1px dashed var(--line);cursor:pointer;border-radius:8px}
+.td-it:first-of-type{border-top:0}
+.td-it:hover{background:var(--soft)}
+.td-dt{font-size:11px;font-weight:800;text-align:center;padding:3px 4px;border-radius:8px;border:1px solid var(--line);line-height:1.25}
+.td-dt.late{background:rgba(239,68,68,.18);color:var(--t-dang);border-color:var(--dang)}
+.td-dt.today{background:rgba(245,158,11,.22);color:var(--t-warn);border-color:var(--warn)}
+.td-dt.soon{background:rgba(250,204,21,.2);color:var(--t-warn);border-color:rgba(250,204,21,.6)}
+.td-dt.ok{background:rgba(59,130,246,.14);color:var(--txt)}
+.td-dt.info{background:var(--soft2);color:var(--txt)}
+.td-tx{min-width:0}
+.td-tx b{display:block;font-size:13px;line-height:1.35;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.td-tx small{display:block;color:var(--mut);font-size:11.5px;line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.td-pri{display:inline-block;margin-right:5px;padding:0 7px;border-radius:99px;font-size:10px;font-weight:800;color:#fff;background:var(--pc,#64748b);vertical-align:1px}
+.td-ac{display:flex;gap:4px}
+.td-ac button{padding:3px 8px;font-size:12px;border-radius:8px;background:transparent;border:1px solid var(--line);color:var(--mut);font-weight:700}
+.td-ac button:hover{border-color:var(--pri);color:var(--txt);background:var(--soft2)}
+.td-more{display:flex;flex-wrap:wrap;gap:8px;margin-top:9px}
+.td-more button{padding:5px 11px;font-size:12px}
+.td-empty{padding:12px 4px;color:var(--mut);font-size:12.5px}
+.td-bar{height:8px;border-radius:99px;background:var(--line);overflow:hidden;margin:6px 0 4px}
+.td-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--ok),var(--pri))}
+.td-sec{font-size:11.5px;font-weight:800;color:var(--mut);margin:10px 0 2px;letter-spacing:.2px}
+.td-lv{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0}
+.td-lc{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:700;border:1px solid var(--line);background:var(--soft)}
+.td-lc i{width:9px;height:9px;border-radius:50%;display:inline-block}
+/* ===== แถบแท็บ: กว้างเท่ากัน · ไม่ตัดคำกลางคำ · คำรองลงบรรทัดล่าง ===== */
+.tabbar{flex-wrap:wrap;align-items:stretch;gap:6px 6px}
+.tabbar .tabbtn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;flex:1 1 0;min-width:max-content;min-height:54px;padding:8px 12px;font-size:14.5px;line-height:1.25;white-space:nowrap;text-align:center}
+.tabbar .tabbtn .tb-m{display:block;font-weight:700;white-space:nowrap}
+.tabbar .tabbtn .tb-s{display:block;font-size:11.5px;font-weight:600;opacity:.8;white-space:nowrap}
+.tabbar>.btn-g,.tabbar>#imgBtn{flex:0 0 auto;align-self:center;white-space:nowrap}
+@keyframes tdFl{0%,55%{box-shadow:0 0 0 4px var(--pri),0 0 18px var(--ring)}100%{box-shadow:0 0 0 0 transparent}}
+.td-fl{animation:tdFl 2.6s ease-out}
+/* ปุ่มลัดบนหน้า Tracker */
+.td-q{display:flex;flex-wrap:wrap;gap:8px;margin:-4px 0 14px}
+.td-qb{display:inline-flex;align-items:center;gap:8px;padding:9px 14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--txt);font-weight:700;font-size:13px;cursor:pointer;box-shadow:0 1px 4px var(--sh);text-align:left;line-height:1.3}
+.td-qb:hover{border-color:var(--pri);box-shadow:0 0 0 2px var(--ring)}
+.td-qb small{color:var(--mut);font-weight:600;font-size:11.5px}
+.td-qb.qp{border-left:5px solid #00B0F0}
+.td-qb.td{border-left:5px solid #f59e0b}
+.td-bd{display:inline-block;padding:1px 8px;border-radius:99px;font-size:11px;font-weight:800;background:var(--soft2)}
+.td-bd.late{background:rgba(239,68,68,.2);color:var(--t-dang)}
+.td-bd.today{background:rgba(245,158,11,.25);color:var(--t-warn)}
+`; document.head.appendChild(st);
+
+/* ---------- สะพาน Tracker ↔ แผน Q-patrol (ใช้โดยปุ่ม 📤 Tracker บนไทม์ไลน์) ---------- */
+const saveBase=save;                                                      // save เดิม (รวม Undo / Cloud sync) — ไม่เรียก tick ซ้ำ
+const inTrash=id=>{ try{ return Array.isArray(trash)&&trash.some(x=>x.id===id); }catch(e){ return false; } };
+const tkSig=sp=>sp.issue+'|'+sp.owner+'|'+sp.cm;
+window.__TKB={
+  upsert(sp,o){
+    o=o||{}; let d=data.find(x=>x.id===sp.id), ch=false; const res={id:sp.id};
+    if(d&&d.qpk!==sp.qpk){ let id=sp.id; while(data.some(x=>x.id===id)) id++; sp=Object.assign({},sp,{id:id}); res.id=id; d=null; }   // เลข id ไปชนกับงานอื่น (โอกาสน้อยมาก)
+    if(!d){
+      if(o.linked&&!o.force) return {missing:inTrash(sp.id)?'trash':'unknown'};
+      d={id:sp.id,date:today,due:sp.due,owner:sp.owner,issue:sp.issue,cm:sp.cm,status:sp.done?'Done':'In Progress',revs:[],qpk:sp.qpk,qpPd:sp.due,qpS:sp.done?'done':'plan',qpSig:tkSig(sp),qpCm:sp.cm};
+      if(sp.done) d.doneDate=sp.ad||today;
+      data.unshift(d); res.created=true; ch=true;
+    }else{
+      const sg=tkSig(sp);
+      if(d.qpSig!==sg){ if(d.issue!==sp.issue||d.owner!==sp.owner){ d.issue=sp.issue; d.owner=sp.owner; } if(d.cm===d.qpCm&&d.cm!==sp.cm) d.cm=sp.cm; d.qpCm=sp.cm; d.qpSig=sg; ch=true; }
+      if(d.qpPd!==sp.due){                                                // แผนเลื่อนวัน → ปรับ Due ใน Tracker (เพิ่ม Rev.) · ถ้าแก้ใน Tracker เองแต่แผนไม่เปลี่ยน จะไม่ถูกทับ
+        const cur=curDue(d);
+        if(!d.due) d.due=sp.due; else if(cur!==sp.due){ d.revs=d.revs||[]; d.revs.push({date:sp.due,reason:sp.reason||'เลื่อนแผน Q-patrol',at:today}); }
+        d.qpPd=sp.due; res.updated=true; ch=true;
+      }
+      if(sp.done){
+        if(d.status!=='Done'){ d.status='Done'; d.doneDate=sp.ad||today; res.updated=true; ch=true; }
+        if(d.qpS!=='done'){ d.qpS='done'; ch=true; }
+      }else if(d.status==='Done'){
+        if(d.qpS==='done'){ d.status='In Progress'; delete d.doneDate; d.qpS='plan'; res.updated=true; ch=true; }   // แผนเปิดงานซ้ำ
+        else { res.pull=true; res.doneDate=d.doneDate||''; d.qpS='done'; ch=true; }                                  // ปิดงานใน Tracker → แผนตาม
+      }else if(d.qpS!=='plan'){ d.qpS='plan'; ch=true; }
+    }
+    if(ch){ try{ saveBase(); render(); }catch(e){ console.error(e); } }
+    return res;
+  },
+  remove(id){
+    const i=data.findIndex(x=>x.id===id); if(i<0) return false;
+    trash.unshift(Object.assign({},data[i],{deletedAt:new Date().toISOString()})); data.splice(i,1);
+    try{ saveTrash(); saveBase(); render(); }catch(e){ console.error(e); } return true;
+  },
+  showCal(iso){
+    g('tabT').click();
+    try{ calY=+iso.slice(0,4); calM=+iso.slice(5,7)-1; if(!calOpen){ calOpen=true; localStorage.setItem('issue_tracker_cal','open'); } tipHide(); drawCal(); }catch(e){}
+    setTimeout(()=>{ const c=g('calBox'); if(!c) return; c.scrollIntoView({behavior:'smooth',block:'start'}); const cell=c.querySelector('.cal-day[data-d="'+iso+'"]'); if(cell){ cell.classList.remove('td-fl'); void cell.offsetWidth; cell.classList.add('td-fl'); setTimeout(()=>cell.classList.remove('td-fl'),2800); } },90);
+  }
+};
+/* ---------- แท็บ + หน้า ---------- */
+const bar=document.querySelector('.tabbar');
+const tab=document.createElement('button'); tab.type='button'; tab.className='tabbtn'; tab.id='tabD'; tab.textContent='☀️ วันนี้'; tab.title='รวมงานที่ต้องทำวันนี้ จากทุกแท็บ';
+bar.insertBefore(tab,g('tabT'));
+{ const L={tabD:['☀️ วันนี้',''],tabT:['📊 Tracker',''],tabS:['📝 Checklist','รายวัน'],tabM:['🎯 7 Mission','QE Electronics'],tabH:['🧭 Hoshin','QE Electronics'],tabJ:['🧰 Main QE','Jobs']};
+  Object.keys(L).forEach(id=>{ const b=g(id); if(!b) return; b.innerHTML='<span class="tb-m">'+L[id][0]+'</span>'+(L[id][1]?'<span class="tb-s">'+L[id][1]+'</span>':''); }); }
+const view=document.createElement('div'); view.id='viewToday'; view.style.display='none';
+g('viewTracker').parentNode.insertBefore(view,g('viewTracker'));
+const OTHER_TABS=['tabT','tabS','tabM','tabH','tabJ'], OTHER_VIEWS=['viewTracker','viewSheet','viewMission','viewHoshin','viewMainJobs'];
+const shown=()=>view.style.display==='block';
+function hideToday(){ view.style.display='none'; tab.classList.remove('on'); }
+function showToday(){
+  OTHER_VIEWS.forEach(v=>{ const e=g(v); if(e) e.style.display='none'; }); OTHER_TABS.forEach(t=>{ const b=g(t); if(b) b.classList.remove('on'); });
+  tab.classList.add('on'); view.style.display='block'; renderToday(); window.scrollTo(0,0);
+}
+tab.addEventListener('click',showToday);
+OTHER_TABS.forEach(t=>{ const b=g(t); if(b) b.addEventListener('click',hideToday,true); });
+
+/* ---------- เก็บข้อมูลจากทุกแท็บ ---------- */
+function collect(){
+  const S={tr:[],ck:null,qp:[],qpMore:0,qpPost:[],fu:[],fuMore:0,hs:[],hsMore:0,lv:{today:[],info:[],next:[]},sys:[]};
+  /* Tracker: เลยกำหนด / ครบวันนี้ / ภายใน 3 วัน */
+  data.filter(d=>d.status!=='Done'&&curDue(d)&&!d.qpk&&mine(d.owner)).forEach(d=>{ const n=dd(curDue(d)); if(n<=3) S.tr.push({d:d,n:n}); });
+  S.tr.sort((a,b)=>a.n-b.n||priO(a.d)-priO(b.d)||String(a.d.issue).localeCompare(String(b.d.issue),'th'));
+  S.trNoDue=data.filter(d=>d.status!=='Done'&&!curDue(d)&&!d.qpk&&mine(d.owner)).length;
+  /* Checklist */
+  let ck={days:{},conf:{}}; try{ ck=window.__checklist.get(); }catch(e){}
+  const rows=ds=>((ck.days||{})[ds]||[]).filter(r=>r&&String(r.t||'').trim()&&r.st!==2);
+  const tr0=rows(today), seenT=new Set(tr0.map(r=>norm(r.t)));
+  const carry=[]; Object.keys(ck.days||{}).filter(k=>k<today&&k>=addDays(today,-14)).sort().reverse().forEach(ds=>rows(ds).filter(r=>r.st===0).forEach(r=>{ const k=norm(r.t); if(seenT.has(k)) return; seenT.add(k); carry.push({ds:ds,r:r}); }));
+  S.ck={today:tr0,pend:tr0.filter(r=>r.st===0),done:tr0.filter(r=>r.st===1).length,carry:carry,confirmed:!!(ck.conf&&ck.conf[today])};
+  /* Q-patrol audit */
+  const D=mj(), items=(D&&D.claimPlan&&D.claimPlan.items)||[];
+  items.forEach(it=>(it.evs||[]).forEach(e=>{
+    if(!mine(it.inc)) return;
+    if(e.st==='postponed') S.qpPost.push({it:it,e:e});
+    else if(e.st==='plan'){ const n=dd(e.pd); if(n<=14) S.qp.push({it:it,e:e,n:n}); }
+  }));
+  S.qp.sort((a,b)=>a.n-b.n);
+  /* QE Follow-up (New project) */
+  const F=(D&&D.newproj&&D.newproj.followup)||{};
+  Object.keys(F).forEach(pk=>{ const p=F[pk]; if(!p||typeof p!=='object') return;
+    ['Supplier','In-house','Customer'].forEach(c=>((p.cats||{})[c]||[]).forEach(it=>{
+      if(it.status==='done'||it.status==='na'||!it.target||!mine(it.owner)) return;
+      const n=dd(it.target); if(n>7) return;
+      const L=(p.ins&&p.ins[c])||[], x=L.find(i=>i.id===it.ins)||L[0], nm=x?String(x.name||'').trim():'', tag=nm?' ['+nm+']':(L.length>1?' [#'+(L.indexOf(x)+1)+']':'');
+      S.fu.push({pk:pk,name:p.name||pk,cat:c,ins:it.ins,tag:tag,it:it,n:n}); })); });
+  S.fu.sort((a,b)=>a.n-b.n);
+  /* Hoshin */
+  try{
+    const H=window.HS.get(), ys=Object.keys(H.years||{}).sort(), cy=String(new Date().getFullYear()), y=H.years[ys.indexOf(cy)>=0?cy:ys[ys.length-1]];
+    if(y){ const map={};
+      (y.topics||[]).forEach(t=>{
+        (t.lines||[]).forEach(l=>{ if(l.st==='ok') return; const d=l.due||t.due; if(!d||!mine(l.qe)) return; const n=dd(d); if(n>14) return;
+          const k=t.id+'|'+d, o=map[k]||(map[k]={t:t,date:d,n:n,lines:[],ms:false}); o.lines.push(l.line); });
+        (t.plan||[]).forEach(m=>{ const n=dd(m.d); if(n<0||n>14) return; map[t.id+'|ms|'+m.d+'|'+m.l]={t:t,date:m.d,n:n,lines:[],ms:true,label:m.l}; });
+      });
+      S.hs=Object.keys(map).map(k=>map[k]).sort((a,b)=>a.n-b.n);
+    }
+  }catch(e){}
+  /* แผนลา: วันนี้ + 7 วันข้างหน้า */
+  try{
+    const Y=window.MS.get().years;
+    for(let i=0;i<=7;i++){ const iso=addDays(today,i), y=iso.slice(0,4), m=+iso.slice(5,7), d=+iso.slice(8), lv=Y[y]&&Y[y].lv; if(!lv||!lv.months||!lv.months[m]) continue;
+      (lv.people||[]).forEach(p=>{ const c=lv.months[m].c[p.id+':'+d]; if(!c) return; const o={i:i,iso:iso,p:p,c:c}; if(i===0){ (c.k==='L'||c.k==='T'||c.k==='H'?S.lv.today:S.lv.info).push(o); } else S.lv.next.push(o); }); }
+  }catch(e){}
+  /* ระบบ */
+  const sp=g('spStatus'), ss=sp?sp.dataset.state:'';
+  if(ss==='error'||ss==='off') S.sys.push({k:'diag',t:'☁️ Cloud DB '+(ss==='off'?'ยังไม่ได้เชื่อมต่อ':'เชื่อมต่อไม่สำเร็จ')+' — ข้อมูลอยู่เฉพาะเบราว์เซอร์นี้'});
+  let lb=null; try{ lb=localStorage.getItem('issue_tracker_lastbackup'); }catch(e){}
+  if(!lb) S.sys.push({k:'backup',t:'💾 ยังไม่เคยสำรองข้อมูล'}); else { const k=Math.floor((Date.now()-new Date(lb))/864e5); if(k>=7) S.sys.push({k:'backup',t:'💾 สำรองข้อมูลล่าสุดเมื่อ '+k+' วันที่แล้ว'}); }
+  try{ const nc=window.SPDB.conflicts().length; if(nc) S.sys.push({k:'conf',t:'⚠ มีรายการที่ถูกแก้ซ้ำพร้อมกัน '+nc+' รายการ'}); }catch(e){}
+  return S;
+}
+const qpName=e=>e.label||({meeting:'Meeting',pre:'Pre Q-Patrol',patrol:'Q-Patrol'}[e.type])||'กิจกรรม';
+
+/* สรุปสำหรับปุ่มลัดบนหน้า Tracker (ไม่กรอง “ของฉัน” เพื่อให้เห็นภาพรวมแผนเสมอ) */
+function qpInfo(){
+  const D=mj(), items=(D&&D.claimPlan&&D.claimPlan.items)||[]; let late=0,next=null,post=0;
+  items.forEach(it=>(it.evs||[]).forEach(e=>{ if(e.st==='postponed') post++; if(e.st!=='plan') return; const n=dd(e.pd); if(n<0) late++; else if(!next||n<next.n) next={it:it,e:e,n:n}; }));
+  return {late:late,next:next,post:post,items:items.length};
+}
+function counts(S){
+  const trL=S.tr.filter(x=>x.n<0).length, trT=S.tr.filter(x=>x.n===0).length, trS=S.tr.filter(x=>x.n>0).length;
+  const qpL=S.qp.filter(x=>x.n<0).length, qpT=S.qp.filter(x=>x.n===0).length, qpS=S.qp.filter(x=>x.n>0&&x.n<=3).length;
+  const fuL=S.fu.filter(x=>x.n<0).length, fuT=S.fu.filter(x=>x.n===0).length, fuS=S.fu.filter(x=>x.n>0&&x.n<=3).length;
+  const hsL=S.hs.filter(x=>x.n<0).length, hsT=S.hs.filter(x=>x.n===0).length, hsS=S.hs.filter(x=>x.n>0&&x.n<=3).length;
+  return {late:trL+qpL+fuL+hsL, today:trT+qpT+fuT+hsT, soon:trS+qpS+fuS+hsS};
+}
+
+/* ---------- วาดหน้า ---------- */
+function row(o){
+  return '<div class="td-it" data-td="'+o.a+'" '+(o.at||'')+'><div class="td-dt '+o.c+'">'+E(o.when)+'</div><div class="td-tx"><b>'+o.title+'</b><small>'+E(o.sub||'')+'</small></div><div class="td-ac">'+(o.btns||'')+'</div></div>';
+}
+function card(color,title,n,late,desc,body,foot){
+  return '<section class="td-card" style="--tc:'+color+'"><h3>'+title+(n!=null?'<span class="td-n'+(late?' late':'')+'">'+n+'</span>':'')+'</h3>'+(desc?'<div class="td-ds">'+desc+'</div>':'')+body+(foot?'<div class="td-more">'+foot+'</div>':'')+'</section>';
+}
+const empty=t=>'<div class="td-empty">'+t+'</div>';
+const LVL={L:'ลา',T:'อบรม/ไปข้างนอก',W:'มาทำงานวันหยุด (W)',H:'หยุดชดเชย (H)',O:'OT วันหยุด',P:'ไม่เต็มวัน'};
+function lvLabel(c){ if(c.k==='P') return (c.p||[]).map(x=>(x.k==='L'?'ลา ':'อบรม ')+x.h+' ชม.').join(' + '); return LVL[c.k]||c.k; }
+function renderToday(){
+  const S=collect(), C=counts(S), now=new Date(), ds=new Date(+today.slice(0,4),+today.slice(5,7)-1,+today.slice(8));
+  let h='<div class="td-head"><div><h1>☀️ วันนี้ · '+E(ds.toLocaleDateString('th-TH',{weekday:'long',day:'numeric',month:'long',year:'numeric'}))+'</h1><div class="td-sub">รวมงานที่ต้องทำจากทุกแท็บ · อัปเดตเอง · คลิกรายการเพื่อไปที่ต้นทาง</div></div><span class="td-grow"></span></div>';
+  h+='<div class="td-tools"><button type="button" class="btn-p" data-td="add">➕ เพิ่มงานใหม่</button><button type="button" class="btn-g" data-td="copy">📋 คัดลอกสรุป</button><button type="button" class="btn-g" data-td="refresh">↻ รีเฟรช</button><span class="td-grow"></span>'+
+    (ME()?'<label title="แสดงเฉพาะรายการที่ผู้รับผิดชอบคือ “'+E(ME())+'” (ไม่กรองแผนลา)"><input type="checkbox" id="tdMine"'+(getP(KM)?' checked':'')+'> 👤 เฉพาะของฉัน ('+E(ME())+')</label>':'<span class="td-sub" title="ตั้งชื่อที่หน้า Tracker แถบ 👤 ฉันคือ">👤 ตั้งชื่อที่หน้า Tracker เพื่อกรอง “ของฉัน”</span>')+
+    '<label title="เปิดเว็บแล้วเริ่มที่หน้านี้"><input type="checkbox" id="tdStart"'+(getP(KS)?' checked':'')+'> เปิดเป็นหน้าแรก</label></div>';
+  S.sys.forEach(x=>{ h+='<div class="td-sys"><span>'+E(x.t)+'</span>'+(x.k==='backup'?'<button type="button" class="btn-p" data-td="backup">💾 Backup ทั้งหมด</button>':x.k==='diag'?'<button type="button" class="btn-g" data-td="diag">🔍 ตรวจสอบการเชื่อมต่อ</button>':'')+'</div>'; });
+  const away=S.lv.today.length, pendT=S.ck.pend.length, carryN=S.ck.carry.length;
+  h+='<div class="td-kpis" style="margin-top:8px">'+
+    '<div class="td-k"><b style="color:'+(C.late?'var(--t-dang)':'var(--t-ok)')+'">'+C.late+'</b><small>🔴 เลยกำหนด (ทุกแท็บ)</small></div>'+
+    '<div class="td-k"><b style="color:'+(C.today?'var(--t-warn)':'var(--txt)')+'">'+C.today+'</b><small>🟠 ครบกำหนดวันนี้</small></div>'+
+    '<div class="td-k"><b>'+C.soon+'</b><small>🟡 ภายใน 3 วัน</small></div>'+
+    '<div class="td-k"><b>'+S.ck.done+'/'+(S.ck.today.length)+'</b><small>📝 Checklist วันนี้ เสร็จแล้ว'+(carryN?'<br>+ ค้างจากวันก่อน '+carryN+' รายการ':'')+'</small></div>'+
+    '<div class="td-k"><b>'+away+'</b><small>🌴 คนไม่อยู่วันนี้ (ลา/อบรม/H)</small></div></div>';
+  const nothing=!C.late&&!C.today&&!C.soon&&!pendT&&!carryN;
+  if(nothing) h+='<div class="td-ok">🎉 ไม่มีงานเลยกำหนดหรือครบกำหนดใน 3 วันข้างหน้า — Checklist วันนี้ก็เรียบร้อย</div>';
+  h+='<div class="td-grid">';
+
+  /* 1) Tracker */
+  {
+    const lim=8, list=S.tr.slice(0,lim);
+    const body=list.length?list.map(x=>{ const d=x.d, w=whenOf(x.n), p=d.pri&&PRI[d.pri];
+      return row({a:'go',at:'data-id="'+d.id+'"',c:w.c,when:w.t,title:(p?'<span class="td-pri" style="--pc:'+p.c+'">'+p.n+'</span>':'')+E(clip(first(d.issue),90)),sub:(d.owner||'-')+' · '+(first(d.cm)?clip(first(d.cm),60):'ยังไม่มี Countermeasure')+((d.revs&&d.revs.length)?' · Rev.'+d.revs.length:''),
+        btns:'<button type="button" data-td="done" data-id="'+d.id+'" title="ทำเสร็จแล้ว">✓</button><button type="button" data-td="rev" data-id="'+d.id+'" title="เลื่อนกำหนด (Rev.)">📅</button>'}); }).join(''):empty('ไม่มีงาน Tracker ที่เลยกำหนด/ครบกำหนดใน 3 วัน 🎉');
+    const foot='<button type="button" class="btn-g" data-td="trview" data-v="late">🔴 เลยกำหนดทั้งหมด</button><button type="button" class="btn-g" data-td="trview" data-v="soon">🟡 ภายใน 3 วัน</button><button type="button" class="btn-g" data-td="trview" data-v="">เปิด Tracker</button>';
+    h+=card('#6366f1','📊 งานใน Tracker',S.tr.length,S.tr.some(x=>x.n<0),'เลยกำหนด · ครบวันนี้ · ภายใน 3 วัน (เรียงตามความเร่งด่วน)'+(S.trNoDue?' · ⚠ มี '+S.trNoDue+' งานที่ยังไม่ระบุ Due':''),body+(S.tr.length>lim?'<div class="td-empty">…และอีก '+(S.tr.length-lim)+' รายการ — กด “เปิด Tracker”</div>':''),foot);
+  }
+  /* 2) Checklist */
+  {
+    let body='';
+    if(!S.ck.today.length) body+=empty('ยังไม่มีรายการ Checklist ของวันนี้ — เปิด Checklist แล้วกด “⤵ ดึงงานค้างจากวันก่อน” หรือเพิ่มเอง');
+    else{ const pct=Math.round(S.ck.done/S.ck.today.length*100); body+='<div class="td-bar" title="เสร็จ '+S.ck.done+' / '+S.ck.today.length+'"><i style="width:'+pct+'%"></i></div><div class="td-ds">เสร็จ '+S.ck.done+' · ค้าง '+S.ck.pend.length+' · '+pct+'%'+(S.ck.confirmed?' · ✔ Confirm แล้ว':' · ยังไม่ Confirm')+'</div>';
+      body+=S.ck.pend.slice(0,8).map(r=>row({a:'ck',at:'data-ds="'+today+'"',c:'today',when:'วันนี้',title:E(clip(r.t,100)),sub:r.n?clip(r.n,70):''})).join('');
+      if(S.ck.pend.length>8) body+='<div class="td-empty">…และอีก '+(S.ck.pend.length-8)+' รายการ</div>'; }
+    if(S.ck.carry.length){ body+='<div class="td-sec">⤵ ค้างจากวันก่อน (14 วันล่าสุด · '+S.ck.carry.length+' รายการ)</div>'+S.ck.carry.slice(0,6).map(x=>{ const n=-dd(x.ds); return row({a:'ck',at:'data-ds="'+x.ds+'"',c:'soon',when:n+' วันก่อน',title:E(clip(x.r.t,100)),sub:dmy(x.ds)+(x.r.n?' · '+clip(x.r.n,60):'')}); }).join('')+(S.ck.carry.length>6?'<div class="td-empty">…และอีก '+(S.ck.carry.length-6)+' รายการ</div>':''); }
+    h+=card('#16a34a','📝 Checklist รายวัน',S.ck.pend.length+S.ck.carry.length,false,'',body,'<button type="button" class="btn-p" data-td="ck" data-ds="'+today+'" style="animation:none">เปิด Checklist วันนี้</button>');
+  }
+  /* 3) Q-patrol audit */
+  {
+    const lim=6, list=S.qp.slice(0,lim);
+    const body=(list.length?list.map(x=>{ const w=whenOf(x.n); return row({a:'qp',at:'data-it="'+x.it.id+'" data-ev="'+x.e.id+'"',c:w.c,when:w.t,title:E(x.it.line)+' · '+E(qpName(x.e))+(x.e.pt?' · '+E(x.e.pt):''),sub:dmy(x.e.pd)+' · '+clip(x.it.topic,50)+' · '+(x.it.inc||'-')+(x.e.tk?' · 📅 อยู่ในปฏิทิน Tracker':'')}); }).join(''):empty('ไม่มีกิจกรรม Q-patrol ใน 14 วันข้างหน้า'))+
+      (S.qpPost.length?'<div class="td-sec">⏸ เลื่อน — รอกำหนดวันใหม่ ('+S.qpPost.length+')</div>'+S.qpPost.slice(0,3).map(x=>row({a:'qp',at:'data-it="'+x.it.id+'" data-ev="'+x.e.id+'"',c:'info',when:'รอวันใหม่',title:E(x.it.line)+' · '+E(qpName(x.e)),sub:clip(x.it.topic,60)})).join(''):'');
+    h+=card('#00B0F0','🔎 แผน Q-patrol audit',S.qp.length,S.qp.some(x=>x.n<0),'กิจกรรมตามแผนที่เลยกำหนดหรือถึงใน 14 วัน · คลิกเพื่อเปิดและเลื่อน/อัปเดตสถานะ',body+(S.qp.length>lim?'<div class="td-empty">…และอีก '+(S.qp.length-lim)+' รายการ</div>':''),'<button type="button" class="btn-p" data-td="qpall" style="animation:none">🔎 เปิดแผน Q-patrol ทั้งหมด</button>');
+  }
+  /* 4) QE Follow-up */
+  {
+    const lim=8, list=S.fu.slice(0,lim);
+    const body=list.length?list.map(x=>{ const w=whenOf(x.n); return row({a:'fu',at:'data-pk="'+E(x.pk)+'" data-cat="'+x.cat+'" data-ins="'+E(x.ins||'')+'" data-name="'+E(x.name)+'"',c:w.c,when:w.t,title:E(x.name)+' · '+x.cat+E(x.tag)+' · '+E(x.it.no)+' '+E(clip(x.it.task,60)),sub:'Owner: '+(x.it.owner||'-')+' · Plan '+dmy(x.it.target)+(x.it.rev?' · Rev.'+x.it.rev:'')}); }).join(''):empty('ไม่มีหัวข้อ Follow-up ที่ Plan เลยกำหนดหรือถึงใน 7 วัน');
+    h+=card('#0d9488','🚀 QE Follow-up (New project)',S.fu.length,S.fu.some(x=>x.n<0),'หัวข้อที่ Plan เลยกำหนดหรือถึงใน 7 วัน (ยังไม่ Done)',body+(S.fu.length>lim?'<div class="td-empty">…และอีก '+(S.fu.length-lim)+' รายการ</div>':''),'');
+  }
+  /* 5) Hoshin */
+  {
+    const lim=8, list=S.hs.slice(0,lim);
+    const body=list.length?list.map(x=>{ const w=x.ms?(x.n===0?{t:'วันนี้',c:'today'}:{t:'อีก '+x.n+' วัน',c:'ok'}):whenOf(x.n);
+      return row({a:'hs',at:'data-t="'+E(x.t.id)+'"',c:w.c,when:w.t,title:(x.ms?'◇ '+E(x.label):E(x.lines.join(', '))),sub:E(x.t.short||x.t.name)+' · '+dmy(x.date)}); }).join(''):empty('ไม่มีกำหนด Hoshin ที่เลยหรือถึงใน 14 วัน');
+    h+=card('#8b5cf6','🧭 Hoshin QE',S.hs.length,S.hs.some(x=>x.n<0),'ไลน์ที่ยังไม่ OK ซึ่งถึงกำหนดภายใน 14 วัน + Milestone',body+(S.hs.length>lim?'<div class="td-empty">…และอีก '+(S.hs.length-lim)+' รายการ</div>':''),'<button type="button" class="btn-g" data-td="hs" data-t="dash">เปิด Hoshin</button>');
+  }
+  /* 6) แผนลา */
+  {
+    const chip=o=>'<span class="td-lc" title="'+E(lvLabel(o.c)+(o.c.n?' · '+o.c.n:''))+'"><i style="background:'+E(o.p.color||'#64748b')+'"></i>'+E(o.p.name)+' · '+E(lvLabel(o.c))+'</span>';
+    let body='<div class="td-sec" style="margin-top:2px">วันนี้ไม่อยู่</div>'+(S.lv.today.length?'<div class="td-lv">'+S.lv.today.map(chip).join('')+'</div>':empty('ทุกคนอยู่ครบ'));
+    if(S.lv.info.length) body+='<div class="td-sec">วันนี้ (W / OT / ไม่เต็มวัน)</div><div class="td-lv">'+S.lv.info.map(chip).join('')+'</div>';
+    if(S.lv.next.length){ const by={}; S.lv.next.forEach(o=>{ (by[o.iso]=by[o.iso]||[]).push(o); });
+      body+='<div class="td-sec">7 วันข้างหน้า</div>'+Object.keys(by).sort().map(k=>'<div class="td-it" style="cursor:default"><div class="td-dt info">'+dmy(k)+'<br>อีก '+dd(k)+' วัน</div><div class="td-tx"><div class="td-lv" style="margin:0">'+by[k].map(chip).join('')+'</div></div><span></span></div>').join(''); }
+    h+=card('#f59e0b','🌴 คนไม่อยู่ (แผนลา)',S.lv.today.length,false,'จากแท็บ 7 Mission › แผนลา แลกวันหยุด อบรม',body,'<button type="button" class="btn-g" data-td="lv">เปิดแผนลา</button>');
+  }
+  h+='</div>';
+  const keepY=window.scrollY; view.innerHTML=h; if(window.scrollY!==keepY) window.scrollTo(0,keepY);
+  view._S=S;
+}
+
+/* ---------- ข้อความสรุป (คัดลอกไปวางใน Teams / LINE) ---------- */
+function textOf(S){
+  const C=counts(S), L=['☀️ งานวันนี้ '+fmt(today)+(getP(KM)&&ME()?' · '+ME():''),'🔴 เลยกำหนด '+C.late+' · 🟠 ครบวันนี้ '+C.today+' · 🟡 ภายใน 3 วัน '+C.soon];
+  const sec=(t,a)=>{ if(a.length){ L.push('','■ '+t); a.forEach(x=>L.push('- '+x)); } };
+  sec('Tracker',S.tr.map(x=>'['+(x.d.owner||'-')+'] '+clip(first(x.d.issue),80)+' — '+whenOf(x.n).t));
+  sec('Checklist วันนี้ (ค้าง)',S.ck.pend.map(r=>clip(r.t,90)));
+  sec('Checklist ค้างจากวันก่อน',S.ck.carry.map(x=>'('+dmy(x.ds)+') '+clip(x.r.t,90)));
+  sec('Q-patrol audit',S.qp.map(x=>x.it.line+' · '+qpName(x.e)+' '+dmy(x.e.pd)+' — '+whenOf(x.n).t));
+  sec('QE Follow-up',S.fu.map(x=>x.name+' · '+x.cat+x.tag+' · '+x.it.no+' '+clip(x.it.task,50)+' ['+(x.it.owner||'-')+'] — '+whenOf(x.n).t));
+  sec('Hoshin',S.hs.map(x=>(x.ms?'◇ '+x.label:x.lines.join(', '))+' ('+(x.t.short||x.t.name)+') '+dmy(x.date)));
+  sec('ไม่อยู่วันนี้',S.lv.today.map(o=>o.p.name+' — '+lvLabel(o.c)));
+  return L.join('\n');
+}
+
+/* ---------- ไปยังต้นทาง ---------- */
+function goTracker(id,v){
+  g('tabT').click();
+  if(v!==undefined){ const c=document.querySelector('#uxBar [data-uxv="'+v+'"]'); if(c&&(v===''||!c.classList.contains('on'))) c.click(); }
+  if(id!=null) setTimeout(()=>{ try{ goToItem(id); }catch(e){} },80);
+}
+function openQP(itId,evId){
+  g('tabJ').click();
+  const q=sel=>document.querySelector('#viewMainJobs '+sel);
+  const c=q('[data-mj-tab="claim"]'); if(c) c.click();
+  const v=q('[data-mje="claimv"][data-v="plan"]'); if(v&&!v.classList.contains('on')) v.click();
+  window.scrollTo(0,0);
+  if(evId) setTimeout(()=>{ const ch=document.querySelector('#viewMainJobs [data-mje="cp-ev"][data-ev="'+evId+'"]'); if(ch) ch.click(); },80);
+}
+function openFU(name,cat,ins){
+  g('tabJ').click(); const n=window.__NF; if(!n) return; hideToday();
+  const nm=name; g('tabT'); n.open(nm);
+  setTimeout(()=>{ const ov=document.getElementById('nfOv'); if(!ov) return;
+    const t=ov.querySelector('[data-a="tab"][data-v="'+cat+'"]'); if(t) t.click();
+    if(ins){ const i=ov.querySelector('[data-a="ins"][data-v="'+ins+'"]'); if(i) i.click(); } },60);
+}
+function openHS(tid){
+  g('tabH').click();
+  setTimeout(()=>{ const b=document.querySelector('#viewHoshin [data-act="hnav"][data-v="'+tid+'"]'); if(b) b.click(); },40);
+}
+function openCk(ds){ hideToday(); try{ window.__checklist.open(ds); }catch(e){ g('tabS').click(); } }
+
+view.addEventListener('click',async e=>{
+  const b=e.target.closest('[data-td]'); if(!b) return; const a=b.dataset.td, d=b.dataset;
+  if(a==='done') toggle(+d.id);
+  else if(a==='rev') openRev(+d.id);
+  else if(a==='go') goTracker(+d.id);
+  else if(a==='trview') goTracker(null,d.v);
+  else if(a==='ck') openCk(d.ds||today);
+  else if(a==='qp') openQP(d.it,d.ev);
+  else if(a==='qpall') openQP();
+  else if(a==='fu') openFU(d.name,d.cat,d.ins);
+  else if(a==='hs') openHS(d.t);
+  else if(a==='lv'){ g('tabM').click(); setTimeout(()=>{ const v=document.querySelector('#viewMission [data-act="vw"][data-v="lv"]'); if(v) v.click(); },40); }
+  else if(a==='add'){ goTracker(null); setTimeout(()=>{ const f=g('f'); if(f){ f.scrollIntoView({behavior:'smooth',block:'center'}); const o=g('owner'); if(o) setTimeout(()=>{ try{ o.focus({preventScroll:true}); }catch(err){} },350); } },60); }
+  else if(a==='refresh') renderToday();
+  else if(a==='backup') g('bkBtn').click();
+  else if(a==='diag'){ g('spBtn').click(); setTimeout(()=>{ try{ window.SPDB.diagnose(); }catch(err){} },200); }
+  else if(a==='copy'){ const t=textOf(view._S||collect()); try{ await navigator.clipboard.writeText(t); try{ toast('📋 คัดลอกสรุปวันนี้แล้ว — วางใน Teams / LINE ได้เลย'); }catch(err){} }catch(err){ window.prompt('คัดลอก (Ctrl+C):',t); } }
+});
+view.addEventListener('change',e=>{
+  if(e.target.id==='tdMine'){ setP(KM,e.target.checked); renderToday(); refreshQuick(); }
+  else if(e.target.id==='tdStart'){ setP(KS,e.target.checked); try{ toast(e.target.checked?'✅ จะเปิดที่หน้า “วันนี้” ทุกครั้งที่เข้าเว็บ':'ยกเลิกแล้ว — เปิดที่แท็บล่าสุดที่ใช้'); }catch(err){} }
+});
+
+/* ---------- ปุ่มลัดบนหน้า Tracker ---------- */
+const quick=document.createElement('div'); quick.className='td-q'; quick.id='uxQuick';
+{ const sp=g('spStatus'); if(sp&&sp.parentNode) sp.parentNode.insertBefore(quick,sp.nextSibling); else { const t=g('viewTracker'); t.insertBefore(quick,t.firstChild); } }
+function refreshQuick(){
+  let S=null; try{ S=collect(); }catch(e){ S={tr:[],ck:{pend:[],carry:[]},qp:[],fu:[],hs:[],lv:{today:[]}}; }
+  const C=counts(S), Q=qpInfo();
+  const bd=(n,c,t)=>n?'<span class="td-bd '+c+'">'+t+' '+n+'</span>':'';
+  const nx=Q.next?'ถัดไป '+dmy(Q.next.e.pd)+' · '+E(Q.next.it.line)+' · '+E(qpName(Q.next.e))+(Q.next.n===0?' (วันนี้)':' (อีก '+Q.next.n+' วัน)'):(Q.items?'ไม่มีกิจกรรมที่รอดำเนินการ':'ยังไม่มีรายการ');
+  quick.innerHTML='<button type="button" class="td-qb td" data-qk="today" title="รวมงานที่ต้องทำวันนี้จากทุกแท็บ">☀️ <span>วันนี้ <small>งานที่ต้องทำ</small></span>'+bd(C.late,'late','เลย')+bd(C.today,'today','วันนี้')+(S.ck.pend.length?'<span class="td-bd">Checklist '+S.ck.pend.length+'</span>':'')+'</button>'+
+    '<button type="button" class="td-qb qp" data-qk="qp" title="เปิดแผนกิจกรรม Q-patrol audit (Claim & Complaint)">🔎 <span>Q-patrol audit <small>'+nx+'</small></span>'+bd(Q.late,'late','เลยกำหนด')+(Q.post?'<span class="td-bd">เลื่อน '+Q.post+'</span>':'')+'</button>';
+}
+quick.addEventListener('click',e=>{ const b=e.target.closest('[data-qk]'); if(!b) return; if(b.dataset.qk==='today') showToday(); else openQP(); });
+
+/* ---------- รีเฟรชอัตโนมัติ ---------- */
+function decorate(){
+  const m=new Map(); data.forEach(d=>{ if(d.qpk) m.set(String(d.id),d); }); if(!m.size) return;
+  document.querySelectorAll('#tb tr[data-id]').forEach(tr=>{ const d=m.get(tr.dataset.id); if(!d) return; const row=tr.querySelector('.act-row');
+    if(row&&!row.querySelector('[data-td-qp]')){ const b=document.createElement('button'); b.type='button'; b.className='btn-g'; b.dataset.tdQp=d.qpk; b.title='เปิดกิจกรรมนี้ในแผน Q-patrol audit'; b.textContent='🔎'; b.style.color='#00B0F0'; row.insertBefore(b,row.firstChild); } });
+}
+g('tb').addEventListener('click',e=>{ const b=e.target.closest('[data-td-qp]'); if(!b) return; e.stopPropagation(); openQP(null,b.dataset.tdQp); });
+const _render=render; render=function(){ const r=_render.apply(this,arguments); try{ decorate(); refreshQuick(); if(shown()) renderToday(); }catch(e){} return r; };
+save=function(){ const r=saveBase.apply(this,arguments); try{ if(window.MJ&&window.MJ.tkTick) window.MJ.tkTick(); }catch(e){} return r; };      // แก้ใน Tracker (เช่น ปิดงาน) → แผน Q-patrol ตาม
+setInterval(()=>{ if(document.hidden) return; try{ refreshQuick(); if(shown()&&!document.querySelector('.ov.on')&&!document.getElementById('nfOv')) renderToday(); }catch(e){} },30000);
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden){ try{ refreshQuick(); if(shown()) renderToday(); }catch(e){} } });
+window.addEventListener('load',()=>{ setTimeout(()=>{ try{ refreshQuick(); if(getP(KS)) showToday(); }catch(e){} },80); });
+refreshQuick(); try{ decorate(); }catch(e){}
+window.__TODAY={show:showToday,refresh:renderToday,collect:collect,text:()=>textOf(collect())};
 })();
 
 </script>
