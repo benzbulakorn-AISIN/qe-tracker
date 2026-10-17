@@ -8844,4 +8844,812 @@ window.__TODAY={show:showToday,refresh:renderToday,collect:collect,text:()=>text
 })();
 
 </script>
+<script id="mtgAddon">
+/* ===== Meetings add-on v16 : 🗓️ ประชุม — ดึงประชุมจาก Outlook อัตโนมัติ + ลงคนเข้าร่วม (Earn / Natcha / Mana / Benz / All) =====
+   • เชื่อม Outlook (Microsoft Graph, ล็อกอินบัญชีบริษัทครั้งเดียว): ดึงปฏิทินของคุณ + ของทีมเอง ทุกวัน → คนที่มีประชุมนั้นในปฏิทินถูกลงชื่อให้
+   • สำรอง: นำเข้าไฟล์ .ics หรือวางข้อความ “📢 Schedule QE Electronics …” เดิม
+   • เตือนเวลาซ้อนกัน / คนที่ลา-อบรมในแผนลา / ประชุมที่ยังไม่ระบุคน · สร้างข้อความ Schedule กดคัดลอกไปวาง Teams
+   • เก็บข้อมูลเป็นรายวัน (qe_mtg_d_YYYY-MM-DD) → ซิงก์ Cloud DB อัตโนมัติ · โทเคน Outlook เก็บเฉพาะเครื่อง (ไม่ซิงก์) */
+(function(){
+'use strict';
+if(window.__MTG_ADDON) return; window.__MTG_ADDON=true;
+const g=id=>document.getElementById(id);
+try{ if(!g('tabT')||!g('tabD')||!g('viewToday')||typeof today==='undefined') return; }catch(e){ return; }
+const KD='qe_mtg_d_', KC='qe_mtg_cfg', UIK='ux_mtg_ui';
+const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const THM=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+const DOWS=['อา','จ','อ','พ','พฤ','ศ','ส'], DOWL=['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
+const PAL=['#f59e0b','#34d399','#22d3ee','#a78bfa','#fb7185','#60a5fa','#f472b6','#a3e635'];
+const E=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad=n=>String(n).padStart(2,'0');
+const isoOf=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const parseISO=s=>{ const a=String(s).split('-').map(Number); return new Date(a[0],a[1]-1,a[2]); };
+const addD=(s,n)=>{ const d=parseISO(s); d.setDate(d.getDate()+n); return isoOf(d); };
+const dowOf=s=>parseISO(s).getDay();
+const isoOK=s=>/^\d{4}-\d{2}-\d{2}$/.test(String(s||''))&&!isNaN(parseISO(s));
+const fmtD=s=>(+s.slice(8))+'-'+MON[+s.slice(5,7)-1]+'-'+s.slice(2,4);
+const fmtTh=s=>DOWL[dowOf(s)]+' '+(+s.slice(8))+' '+THM[+s.slice(5,7)-1]+' '+(+s.slice(0,4)+543);
+const tmin=s=>{ const m=/^(\d{1,2}):(\d{2})$/.exec(String(s||'')); return m?(+m[1])*60+ +m[2]:null; };
+const hrs=min=>String(Math.round(min/6)/10);
+const uid=()=>'g'+Math.random().toString(36).slice(2,9)+Date.now().toString(36).slice(-3);
+const escRe=s=>String(s).replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+const say=(m,c)=>{ try{ toast(m,c); }catch(e){} };
+const nkey=s=>String(s||'').toLowerCase().replace(/\s+/g,' ').trim();
+
+/* ================= ทีม / ตั้งค่า ================= */
+const DEF_PEOPLE=[
+  {id:'earn',  name:'Earn',  out:'Earn',  mail:'chonlakarn_ha@siamaisin.co.th',color:'#f59e0b',alias:['earn','chonla','chonlakarn_ha','ชลกานต์','เอิร์น','เอิน','อาร์น','アーン']},
+  {id:'natcha',name:'Natcha',out:'Natcha',mail:'natcha_ch@siamaisin.co.th',color:'#34d399',alias:['natcha','natcha_ch','ณัฐชา','ณัฐ']},
+  {id:'mana',  name:'Mana',  out:'Mana',  mail:'mana_ku@siamaisin.co.th',color:'#22d3ee',alias:['mana','mana_ku','มานะ']},
+  {id:'benz',  name:'Benz',  out:'Benz',  mail:'bulakorn_ko@siamaisin.co.th',color:'#a78bfa',alias:['benz','bulakorn','bulakorn_ko','เบนซ์','บุลากร']}
+];
+function normPeople(src){
+  const used=new Set();
+  return src.map((p,i)=>{ let id=String((p&&p.id)||('p'+(i+1))).replace(/[^\w-]/g,'')||('p'+(i+1)); if(id==='all') id='all_'; while(used.has(id)) id+='x'; used.add(id);
+    const name=String((p&&p.name)||('คน '+(i+1))).trim()||('คน '+(i+1));
+    const mail=String((p&&p.mail)||'').trim().toLowerCase(), alias=(Array.isArray(p&&p.alias)?p.alias:[]).map(a=>String(a).trim().toLowerCase()).filter(Boolean);
+    const lp=mail.split('@')[0]; if(lp.length>=4&&alias.indexOf(lp)<0) alias.push(lp);
+    return {id:id,name:name,out:String((p&&p.out)||name).trim()||name,mail:mail,color:(p&&p.color)||PAL[i%PAL.length],alias:alias}; });
+}
+let cfg=readCfg();
+function readCfg(){
+  let o=null; try{ o=JSON.parse(localStorage.getItem(KC)||'null'); }catch(e){}
+  const src=(o&&Array.isArray(o.people)&&o.people.length)?o.people:DEF_PEOPLE;
+  return {people:normPeople(src),skip:Array.isArray(o&&o.skip)?o.skip.map(String):[]};
+}
+function saveCfg(){ try{ localStorage.setItem(KC,JSON.stringify({v:1,people:cfg.people,skip:cfg.skip})); }catch(e){} }
+let ui={date:today,view:'day',at:true};
+try{ const u=JSON.parse(localStorage.getItem(UIK)||'null'); if(u){ if(u.view==='week') ui.view='week'; if(u.at===false) ui.at=false; } }catch(e){}
+const saveUI=()=>{ try{ localStorage.setItem(UIK,JSON.stringify({view:ui.view,at:ui.at})); }catch(e){} };
+const P=id=>cfg.people.find(p=>p.id===id);
+const hasAll=t=>/(^|[^a-z])all([^a-z]|$)/i.test(t)||/ทุกคน/.test(t);
+function aliasHit(a,t){ return /^[\x00-\x7f]+$/.test(a)?new RegExp('(?<![a-z0-9])'+escRe(a)).test(t):t.indexOf(a)>=0; }
+function matchPeople(text){ const t=String(text||'').toLowerCase(); return cfg.people.filter(p=>p.alias.concat([p.name.toLowerCase()]).some(a=>a.length>=2&&aliasHit(a,t))).map(p=>p.id); }
+const skipHit=t=>{ const n=nkey(t); return cfg.skip.some(k=>{ k=nkey(k); return !!k&&(n===k||(k.length>=4&&n.indexOf(k)===0)); }); };
+
+/* ================= ข้อมูลรายวัน ================= */
+function normM(m){
+  if(!m||typeof m!=='object') return null;
+  const who=(Array.isArray(m.who)?m.who:[]).map(String), inv=(Array.isArray(m.inv)?m.inv:[]).map(String);
+  return {id:String(m.id||uid()),s:String(m.s||''),e:String(m.e||''),t:String(m.t||''),room:String(m.room||''),who:who.indexOf('all')>=0?['all']:who,inv:inv,note:String(m.note||''),src:String(m.src||''),uid:String(m.uid||''),wa:m.wa==='manual'?'manual':'',gr:String(m.gr||'')};
+}
+function getDay(ds){ try{ const a=JSON.parse(localStorage.getItem(KD+ds)||'[]'); return Array.isArray(a)?a.map(normM).filter(Boolean):[]; }catch(e){ return []; } }
+function setDay(ds,arr){ arr=arr.filter(Boolean); try{ if(arr.length) localStorage.setItem(KD+ds,JSON.stringify(arr)); else localStorage.removeItem(KD+ds); }catch(e){ say('⚠ บันทึกไม่สำเร็จ — พื้นที่เบราว์เซอร์เต็ม?',true); } }
+const bySt=(a,b)=>(tmin(a.s)==null?9999:tmin(a.s))-(tmin(b.s)==null?9999:tmin(b.s))||(tmin(a.e)||0)-(tmin(b.e)||0)||a.t.localeCompare(b.t,'th');
+const durOf=m=>{ const a=tmin(m.s), b=tmin(m.e); return (a!=null&&b!=null&&b>a)?b-a:60; };
+const whoIds=m=>m.who.indexOf('all')>=0?cfg.people.map(p=>p.id):m.who.filter(id=>P(id));
+const overlap=(a,b)=>{ const as=tmin(a.s),ae=tmin(a.e),bs=tmin(b.s),be=tmin(b.e); return as!=null&&ae!=null&&bs!=null&&be!=null&&as<be&&bs<ae; };
+function allDays(){ const r=[]; try{ for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k&&k.indexOf(KD)===0) r.push(k.slice(KD.length)); } }catch(e){} return r.sort(); }
+
+/* ลา / อบรม จากแท็บ 7 Mission › แผนลา */
+function leaveOf(p,ds){
+  try{
+    const Y=window.MS&&window.MS.get&&window.MS.get().years; if(!Y) return null;
+    const lv=Y[ds.slice(0,4)]&&Y[ds.slice(0,4)].lv; if(!lv||!lv.months) return null;
+    const M=lv.months[+ds.slice(5,7)]; if(!M||!M.c) return null;
+    const hint=p.alias.concat([p.name.toLowerCase()]);
+    const lp=(lv.people||[]).find(q=>{ const t=(q.name+' '+q.code).toLowerCase(); return hint.some(a=>a.length>=2&&aliasHit(a,t)); });
+    if(!lp) return null; const c=M.c[lp.id+':'+(+ds.slice(8))]; if(!c) return null;
+    if(c.k==='L') return {k:'L',t:'ลา'}; if(c.k==='T') return {k:'T',t:'อบรม/ไปข้างนอก'}; if(c.k==='H') return {k:'H',t:'หยุดชดเชย'}; if(c.k==='P') return {k:'P',t:'ลา/อบรมบางช่วง'};
+  }catch(e){}
+  return null;
+}
+const leaveFull=l=>!!l&&(l.k==='L'||l.k==='T'||l.k==='H');
+
+function analyze(list,ds){
+  const per={}, conf={}, lv={};
+  cfg.people.forEach(p=>{ per[p.id]={n:0,min:0,items:[],conf:false}; lv[p.id]=ds?leaveOf(p,ds):null; });
+  list.forEach(m=>{ whoIds(m).forEach(id=>{ const q=per[id]; if(!q) return; q.n++; q.min+=durOf(m); q.items.push(m); }); });
+  cfg.people.forEach(p=>{ const it=per[p.id].items.slice().sort(bySt);
+    for(let i=0;i<it.length;i++) for(let j=i+1;j<it.length;j++) if(overlap(it[i],it[j])){ per[p.id].conf=true; (conf[it[i].id]=conf[it[i].id]||[]).push(p.id); (conf[it[j].id]=conf[it[j].id]||[]).push(p.id); } });
+  return {per:per,conf:conf,lv:lv,un:list.filter(m=>!m.who.length).length};
+}
+
+/* ================= แปลงข้อความ Schedule (วาง) ================= */
+const TIMERE=/^[^\d\n]{0,14}?(\d{1,2})[:.](\d{2})\s*(?:-|–|—|~|to)\s*(\d{1,2})[:.](\d{2})\s*(.*)$/i;
+const ARROW=/\s*(?:-{1,3}>|—>|–>|=>|⇒|→)\s*/;
+const MONI={jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};
+function findDate(line){
+  let m=/(\d{1,2})[-\s\/.]+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*[-\s\/.'’]*(\d{2,4})/i.exec(line);
+  if(m){ const y=+m[3]<100?2000+ +m[3]:+m[3]; return y+'-'+pad(MONI[m[2].toLowerCase()])+'-'+pad(+m[1]); }
+  m=/(\d{4})-(\d{2})-(\d{2})/.exec(line); if(m&&isoOK(m[0])) return m[0];
+  m=/(\d{1,2})\/(\d{1,2})\/(\d{2,4})/.exec(line); if(m){ const y=+m[3]<100?2000+ +m[3]:(+m[3]>2400?+m[3]-543:+m[3]); const s=y+'-'+pad(+m[2])+'-'+pad(+m[1]); if(isoOK(s)) return s; }
+  return null;
+}
+const cleanTitle=s=>String(s||'').replace(/^[\s⚠️❗‼️•·▪▶►*\-–—📌🔹🔸]+/u,'').replace(/[\s\-–—>]+$/,'').replace(/\s{2,}/g,' ').trim();
+function parseWho(str){
+  const t=String(str||''); const ids=matchPeople(t);
+  if(hasAll(t)) return {who:['all'],left:''};
+  return {who:ids,left:ids.length?'':t.trim()};
+}
+function normTime(h,m){ return pad(Math.min(23,+h))+':'+pad(Math.min(59,+m)); }
+function parseText(text,defDate){
+  const out=[]; let cur=defDate||ui.date, pend=null, dated=0;
+  const flush=()=>{ if(pend&&pend.t){ pend.t=cleanTitle(pend.t); if(pend.t) out.push(pend); } pend=null; };
+  String(text||'').replace(/\r/g,'').split('\n').forEach(raw=>{
+    const line=raw.replace(/[\u200b\u00a0]/g,' ').trim(); if(!line) return;
+    const tm=TIMERE.exec(line);
+    if(tm){
+      flush();
+      const s=normTime(tm[1],tm[2]), e=normTime(tm[3],tm[4]); let rest=tm[5]||'', title=rest, who=[], room='', note='';
+      const am=ARROW.exec(rest);
+      if(am){ title=rest.slice(0,am.index); let tail=rest.slice(am.index+am[0].length); const sl=tail.search(/\s*\/\s*/);
+        let ws=tail; if(sl>=0){ ws=tail.slice(0,sl); room=tail.slice(sl).replace(/^\s*\/\s*/,'').trim(); }
+        const w=parseWho(ws); who=w.who; if(w.left){ if(/room|ห้อง|zone|hall|team|abs|rest/i.test(w.left)&&!room) room=w.left; else note=w.left; }
+      }
+      pend={date:cur,s:s,e:e,t:title,room:room,who:who,inv:[],note:note,src:'text',uid:''};
+      if(title.trim()) flush();
+      return;
+    }
+    if(pend&&!pend.t){ pend.t=line; const m2=ARROW.exec(line); if(m2){ pend.t=line.slice(0,m2.index); } flush(); return; }
+    const pl=/^(?:place|สถานที่|ห้อง)\s*[:：]\s*(.+)$/i.exec(line); if(pl&&out.length){ out[out.length-1].room=out[out.length-1].room||pl[1].trim(); return; }
+    const pw=/^(?:ผู้เข้าร่วม|participants?|attendees?)\s*[:：]\s*(.+)$/i.exec(line); if(pw&&out.length){ const w=parseWho(pw[1]); if(w.who.length) out[out.length-1].who=w.who; return; }
+    const d=findDate(line); if(d){ cur=d; dated++; return; }
+  });
+  flush();
+  return {items:out,dated:dated};
+}
+
+/* ================= อ่านไฟล์ Outlook (.ics) ================= */
+const TZ={'se asia standard time':7,'asia/bangkok':7,'tokyo standard time':9,'asia/tokyo':9,'singapore standard time':8,'asia/singapore':8,'china standard time':8,'asia/shanghai':8,'india standard time':5.5,'utc':0,'greenwich standard time':0,'gmt standard time':0};
+const tzOff=z=>{ if(!z) return null; const v=TZ[String(z).toLowerCase()]; return v==null?null:v; };
+function icsLine(ln){
+  let q=false, ci=-1; for(let i=0;i<ln.length;i++){ const c=ln[i]; if(c==='"') q=!q; else if(c===':'&&!q){ ci=i; break; } }
+  if(ci<0) return null; const head=ln.slice(0,ci), val=ln.slice(ci+1), parts=[]; let b='', qq=false;
+  for(const c of head){ if(c==='"'){ qq=!qq; b+=c; } else if(c===';'&&!qq){ parts.push(b); b=''; } else b+=c; } parts.push(b);
+  const params={}; parts.slice(1).forEach(x=>{ const k=x.indexOf('='); if(k>0) params[x.slice(0,k).toUpperCase()]=x.slice(k+1).replace(/^"|"$/g,''); });
+  return {name:parts[0].toUpperCase(),params:params,val:val};
+}
+const unesc=s=>String(s||'').replace(/\\[nN]/g,' ').replace(/\\([,;\\])/g,'$1').trim();
+function icsDT(p){
+  if(!p) return null; const m=/^(\d{4})(\d{2})(\d{2})(?:T(\d{2})(\d{2})(\d{2})?(Z)?)?$/.exec(p.val.trim()); if(!m) return null;
+  const allday=!m[4]; let ms=Date.UTC(+m[1],+m[2]-1,+m[3],+(m[4]||0),+(m[5]||0));
+  if(!allday){ if(m[7]) ms+=7*36e5; else { const off=tzOff(p.params.TZID); if(off!=null) ms+=(7-off)*36e5; } }
+  return {ms:ms,allday:allday};
+}
+const dkey=ms=>new Date(ms).toISOString().slice(0,10);
+function parseDur(v){ const m=/^P(?:(\d+)W)?(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?$/i.exec(String(v).trim()); if(!m) return 0; return (((+m[1]||0)*7+(+m[2]||0))*24*60+(+m[3]||0)*60+(+m[4]||0))*60000+(+m[5]||0)*1000; }
+function parseRule(v){ const o={}; String(v).split(';').forEach(x=>{ const k=x.indexOf('='); if(k>0) o[x.slice(0,k).toUpperCase()]=x.slice(k+1); }); return o; }
+const WD={SU:0,MO:1,TU:2,WE:3,TH:4,FR:5,SA:6};
+function ruleMatch(R,x,sx,startDow){
+  const n=x-sx, d=new Date(x*864e5), sd=new Date(sx*864e5), itv=Math.max(1,+R.INTERVAL||1), f=R.FREQ;
+  if(f==='DAILY') return n%itv===0;
+  const dw=d.getUTCDay();
+  if(f==='WEEKLY'){
+    const wk=WD[(R.WKST||'MO').toUpperCase()], w0=(wk===undefined)?1:wk;
+    const widx=y=>Math.floor((y+4-w0)/7), okw=((widx(x)-widx(sx))%itv===0);
+    const days=R.BYDAY?R.BYDAY.split(',').map(t=>WD[t.replace(/[^A-Z]/g,'')]):[startDow];
+    return okw&&days.indexOf(dw)>=0;
+  }
+  const mo=(d.getUTCFullYear()*12+d.getUTCMonth())-(sd.getUTCFullYear()*12+sd.getUTCMonth());
+  if(f==='MONTHLY'){
+    if(mo<0||mo%itv!==0) return false;
+    const dim=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+1,0)).getUTCDate(), day=d.getUTCDate();
+    if(R.BYDAY){
+      const toks=R.BYDAY.split(',').map(t=>{ const m=/^(-?\d+)?([A-Z]{2})$/.exec(t.trim()); return m?{o:m[1]?+m[1]:0,w:WD[m[2]]}:null; }).filter(Boolean);
+      const mine=[]; for(let k=1;k<=dim;k++){ const w=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),k)).getUTCDay(); if(toks.some(t=>t.w===w)) mine.push(k); }
+      if(R.BYSETPOS){ const sp=+R.BYSETPOS.split(',')[0], pick=sp>0?mine[sp-1]:mine[mine.length+sp]; return pick===day; }
+      return toks.some(t=>{ if(t.w!==dw) return false; if(!t.o) return true; const same=mine.filter(k=>new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),k)).getUTCDay()===t.w); const pick=t.o>0?same[t.o-1]:same[same.length+t.o]; return pick===day; });
+    }
+    const bm=R.BYMONTHDAY?R.BYMONTHDAY.split(',').map(Number):[sd.getUTCDate()];
+    return bm.some(v=>v>0?v===day:dim+v+1===day);
+  }
+  if(f==='YEARLY'){ const ym=Math.floor(mo/12)===mo/12; return ym&&d.getUTCMonth()===sd.getUTCMonth()&&d.getUTCDate()===sd.getUTCDate(); }
+  return false;
+}
+function normRoom(loc){
+  let teams=false; const keep=[];
+  String(loc||'').split(/[;|]/).forEach(x=>{ let t=x.replace(/^[\s,]+|[\s,]+$/g,'').trim(); if(!t) return; if(/^microsoft teams( meeting)?$/i.test(t)){ teams=true; return; } if(/microsoft teams meeting/i.test(t)){ teams=true; t=t.replace(/microsoft teams meeting/ig,'').replace(/^[\s,&]+|[\s,&]+$/g,''); if(!t) return; } keep.push(t); });
+  if(teams) keep.push('MS. Team');
+  return keep.join(' & ');
+}
+function icsEvents(text,from,to){
+  const lines=String(text).replace(/\r\n?/g,'\n').replace(/\n[ \t]/g,'').split('\n'), raw=[]; let cur=null;
+  lines.forEach(ln=>{ if(/^BEGIN:VEVENT/i.test(ln)){ cur={}; return; } if(/^END:VEVENT/i.test(ln)){ if(cur) raw.push(cur); cur=null; return; } if(!cur) return; const p=icsLine(ln); if(p) (cur[p.name]=cur[p.name]||[]).push(p); });
+  const stats={all:raw.length,allday:0,cancelled:0}, out=[], ov={};
+  const val=(e,k)=>e[k]&&e[k][0]?e[k][0].val:'';
+  raw.forEach(e=>{ if(e['RECURRENCE-ID']){ const d=icsDT(e['RECURRENCE-ID'][0]); if(d) ov[val(e,'UID')+'|'+dkey(d.ms)]=1; } });
+  raw.forEach(e=>{
+    if(/CANCEL/i.test(val(e,'STATUS'))||/^(canceled|cancelled)\b/i.test(unesc(val(e,'SUMMARY')))){ stats.cancelled++; return; }
+    const st=icsDT(e.DTSTART&&e.DTSTART[0]); if(!st) return; if(st.allday){ stats.allday++; return; }
+    let en=icsDT(e.DTEND&&e.DTEND[0]), dur=en?en.ms-st.ms:(e.DURATION?parseDur(val(e,'DURATION')):0); if(!(dur>0)) dur=30*6e4;
+    const U=val(e,'UID'), title=unesc(val(e,'SUMMARY')), room=normRoom(unesc(val(e,'LOCATION')));
+    const inv=[]; ['ORGANIZER','ATTENDEE'].forEach(k=>(e[k]||[]).forEach(a=>{ const t=(a.params.CN||'')+' '+a.val.replace(/^mailto:/i,''); matchPeople(t).forEach(id=>{ if(inv.indexOf(id)<0) inv.push(id); }); }));
+    const startDay=dkey(st.ms), tod=st.ms-Date.parse(startDay+'T00:00:00Z');
+    const push=ds=>{ if(ds<from||ds>to) return; const sMs=Date.parse(ds+'T00:00:00Z')+tod, eMs=sMs+dur, sameDay=dkey(eMs)===ds; out.push({date:ds,s:new Date(sMs).toISOString().slice(11,16),e:sameDay?new Date(eMs).toISOString().slice(11,16):'23:59',t:title,room:room,inv:inv.slice(),who:[],note:'',src:'ics',uid:U+'|'+ds}); };
+    const rr=e.RRULE&&e.RRULE[0]; if(e['RECURRENCE-ID']||!rr){ push(startDay); return; }
+    const R=parseRule(rr.val), sx=Math.floor(Date.parse(startDay+'T00:00:00Z')/864e5), sdow=new Date(sx*864e5).getUTCDay();
+    const ex=new Set(); (e.EXDATE||[]).forEach(a=>a.val.split(',').forEach(v=>{ const d=icsDT({val:v,params:a.params}); if(d) ex.add(dkey(d.ms)); }));
+    let until=null; if(R.UNTIL){ const d=icsDT({val:R.UNTIL,params:{}}); if(d) until=dkey(d.ms); }
+    const toIdx=Math.floor(Date.parse(to+'T00:00:00Z')/864e5), maxCount=R.COUNT?+R.COUNT:Infinity; let count=0;
+    for(let x=sx,guard=0;x<=toIdx&&guard<9000;x++,guard++){
+      if(!ruleMatch(R,x,sx,sdow)&&!(x===sx)) continue;
+      const ds=new Date(x*864e5).toISOString().slice(0,10); if(until&&ds>until) break;
+      count++; if(count>maxCount) break; if(ex.has(ds)||ov[U+'|'+ds]) continue; push(ds);
+    }
+  });
+  return {items:out,stats:stats};
+}
+
+/* ================= สร้างข้อความ Schedule ================= */
+function scheduleText(ds,withAt){
+  const list=getDay(ds).sort(bySt), nm=id=>{ const p=P(id); return p?p.out:id; };
+  const L=['📢 Schedule QE Electronics '+fmtD(ds)+' @All',''];
+  list.forEach(m=>{
+    let w; if(m.who.indexOf('all')>=0) w=(withAt?'@':'')+'All'; else if(!m.who.length) w='(ยังไม่ระบุคน)'; else w=m.who.map(id=>(withAt?'@':'')+nm(id)).join(', ');
+    L.push('📌 '+m.s+' - '+m.e+' '+m.t+' --> '+w+(m.room?' / '+m.room:''));
+  });
+  if(!list.length) L.push('(ไม่มีประชุม)');
+  return L.join('\n');
+}
+async function copyText(t){
+  try{ await navigator.clipboard.writeText(t); return true; }catch(e){}
+  try{ const ta=document.createElement('textarea'); ta.value=t; ta.style.cssText='position:fixed;left:-9999px;top:0;opacity:0'; document.body.appendChild(ta); ta.select(); const ok=document.execCommand('copy'); ta.remove(); if(ok) return true; }catch(e){}
+  window.prompt('คัดลอกข้อความนี้ (Ctrl+C):',t); return false;
+}
+
+/* ================= CSS ================= */
+const st=document.createElement('style'); st.id='mgStyle'; st.textContent=`
+#viewMeet{display:none}
+.mg-head{display:flex;flex-wrap:wrap;align-items:flex-end;gap:6px 16px;margin:0 0 12px}
+.mg-head h1{margin:0;font-size:26px}.mg-head small{color:var(--mut);font-size:13px}
+.mg-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 12px;padding:9px 12px;border:1px solid var(--line);border-radius:12px;background:var(--card);box-shadow:0 1px 4px var(--sh)}
+.mg-bar .btn-g,.mg-bar .btn-p{padding:6px 12px;font-size:12.5px}
+.mg-bar input[type=date]{width:auto;font-weight:700;padding:6px 10px}
+.mg-sep{width:1px;height:22px;background:var(--line);margin:0 2px}
+.mg-grow{flex:1}
+.mg-seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.mg-seg button{padding:6px 14px;font-size:12.5px;border:0;border-radius:0;background:transparent;color:var(--mut);font-weight:700}
+.mg-seg button.on{background:var(--pri);color:var(--on-pri)}
+.mg-day{font-size:17px;font-weight:800;margin:2px 0 10px}
+.mg-day small{font-weight:600;color:var(--mut);font-size:12.5px;margin-left:8px}
+.mg-people{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin:0 0 12px}
+.mg-pc{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-left:5px solid var(--pc);border-radius:12px;background:var(--card);box-shadow:0 1px 4px var(--sh);min-width:0}
+.mg-pc b{display:block;font-size:14px}
+.mg-pc small{display:block;color:var(--mut);font-size:11.5px;line-height:1.4}
+.mg-pc.cf{border-color:var(--dang);background:rgba(239,68,68,.08)}
+.mg-pc.lv{opacity:.85;background:repeating-linear-gradient(135deg,transparent 0 8px,rgba(245,158,11,.10) 8px 16px)}
+.mg-av{width:32px;height:32px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:#06101c;background:var(--pc);flex:0 0 auto}
+.mg-flag{display:inline-block;margin:2px 4px 0 0;padding:0 7px;border-radius:99px;font-size:10.5px;font-weight:800}
+.mg-flag.w{background:rgba(245,158,11,.22);color:var(--t-warn)}
+.mg-flag.d{background:rgba(239,68,68,.2);color:var(--t-dang)}
+.mg-flag.i{background:var(--soft2);color:var(--txt)}
+.mg-list{display:flex;flex-direction:column;gap:8px}
+.mg-row{display:grid;grid-template-columns:96px minmax(0,1.5fr) minmax(0,1.1fr) auto;gap:10px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-left:5px solid var(--line);border-radius:12px;background:var(--card);box-shadow:0 1px 4px var(--sh)}
+.mg-row.un{border-left-color:#f59e0b;background:linear-gradient(90deg,rgba(245,158,11,.10),transparent 40%),var(--card)}
+.mg-row.ok{border-left-color:var(--ok)}
+.mg-row.cf{border-left-color:var(--dang)}
+.mg-t{text-align:center;line-height:1.25}
+.mg-t b{display:block;font-size:17px;font-variant-numeric:tabular-nums}
+.mg-t span{display:block;color:var(--mut);font-size:12.5px;font-variant-numeric:tabular-nums}
+.mg-t small{display:block;color:var(--mut);font-size:11px}
+.mg-ti{font-weight:700;font-size:14px;line-height:1.4;cursor:pointer;word-break:break-word}
+.mg-ti:hover{text-decoration:underline}
+.mg-sub{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:5px;font-size:12px;color:var(--mut)}
+.mg-room{width:auto;min-width:150px;flex:1 1 150px;max-width:260px;padding:4px 8px;font-size:12.5px;border-radius:8px}
+.mg-who{display:flex;flex-wrap:wrap;gap:6px}
+.mg-ch{padding:6px 12px;border-radius:99px;font-size:12.5px;font-weight:800;border:2px solid var(--pc,var(--line));background:transparent;color:var(--txt);cursor:pointer;line-height:1.2}
+.mg-ch:hover{background:color-mix(in srgb,var(--pc,var(--pri)) 18%,transparent)}
+.mg-ch.on{background:var(--pc,var(--pri));color:#06101c;box-shadow:0 2px 10px color-mix(in srgb,var(--pc,var(--pri)) 55%,transparent)}
+.mg-ch.al{background:color-mix(in srgb,var(--pc,var(--pri)) 45%,transparent);color:var(--txt)}
+.mg-ch.inv:not(.on):not(.al){border-style:dashed}
+.mg-ch.lv{text-decoration:line-through;opacity:.7}
+.mg-ch.all{--pc:#64748b}
+.mg-ch.all.on{background:#64748b;color:#fff}
+.mg-ac{display:flex;gap:4px}
+.mg-ac button{padding:4px 9px;font-size:12px;border-radius:8px;background:transparent;border:1px solid var(--line);color:var(--mut)}
+.mg-ac button:hover{border-color:var(--pri);color:var(--txt);background:var(--soft2)}
+.mg-bad{display:inline-block;padding:1px 8px;border-radius:99px;font-size:11px;font-weight:800;background:rgba(239,68,68,.18);color:var(--t-dang)}
+.mg-un{display:inline-block;padding:1px 8px;border-radius:99px;font-size:11px;font-weight:800;background:rgba(245,158,11,.22);color:var(--t-warn)}
+.mg-src{font-size:10.5px;padding:0 6px;border-radius:99px;background:var(--soft2);color:var(--mut)}
+.mg-empty{padding:34px 16px;text-align:center;color:var(--mut);border:1px dashed var(--line);border-radius:14px;line-height:1.8}
+.mg-hint{font-size:12px;color:var(--mut);margin:10px 0 0;line-height:1.7}
+.mg-hint b{color:var(--txt)}
+.mg-wk{width:100%;border-collapse:separate;border-spacing:0;min-width:760px;font-size:13px;background:transparent;box-shadow:none;border-radius:0}
+.mg-wk th,.mg-wk td{padding:8px 8px;text-align:center;border-bottom:1px solid var(--line);border-right:1px solid color-mix(in srgb,var(--line) 55%,transparent);text-transform:none;letter-spacing:0;vertical-align:middle}
+.mg-wk thead th{background:var(--th);color:var(--txt);font-weight:800}
+.mg-wk thead th.td{background:color-mix(in srgb,var(--pri) 24%,var(--th))}
+.mg-wk thead th.we{opacity:.65}
+.mg-wk th small{display:block;color:var(--mut);font-size:11px;font-weight:600}
+.mg-wk td.nm{text-align:left;font-weight:800;white-space:nowrap}
+.mg-wk td.c{cursor:pointer;min-width:92px}
+.mg-wk td.c:hover{background:var(--soft2)}
+.mg-wk td.c b{font-size:15px}
+.mg-wk td.c small{display:block;color:var(--mut);font-size:11px}
+.mg-wk td.z{color:var(--mut);opacity:.5}
+.mg-wk td.cf{background:rgba(239,68,68,.16)}
+.mg-wk td.lv{background:repeating-linear-gradient(135deg,transparent 0 6px,rgba(245,158,11,.16) 6px 12px)}
+.mg-wk tr.tot td{font-weight:800;background:var(--soft)}
+.mg-ov{position:fixed;inset:0;z-index:220;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px}
+.mg-md{background:var(--pop,#fff);color:var(--txt);border:1px solid var(--line);border-radius:14px;padding:20px;width:100%;max-width:560px;max-height:92vh;overflow:auto;box-shadow:0 18px 50px rgba(0,0,0,.45)}
+.mg-md.wide{max-width:980px}
+.mg-md h3{margin:0 0 4px;font-size:18px}
+.mg-md .mg-sb{color:var(--mut);font-size:12.5px;line-height:1.6;margin-bottom:8px}
+.mg-fg{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px}.mg-fg .full{grid-column:1/-1}
+.mg-fg label{display:block;margin:8px 0 3px;font-weight:700;font-size:12px}
+.mg-act{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;align-items:center}
+.mg-tabs{display:flex;gap:6px;margin:6px 0 10px}
+.mg-tabs button{padding:7px 14px;border-radius:10px;font-size:13px;font-weight:700;border:1px solid var(--line);background:transparent;color:var(--mut)}
+.mg-tabs button.on{background:var(--pri);color:var(--on-pri);border-color:var(--pri)}
+.mg-ta{width:100%;min-height:170px;font-family:Consolas,"Cascadia Mono",monospace;font-size:12.5px;line-height:1.55}
+.mg-pv{max-height:46vh;overflow:auto;border:1px solid var(--line);border-radius:10px;margin-top:8px}
+.mg-pv table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:640px;background:transparent;box-shadow:none;border-radius:0}
+.mg-pv th,.mg-pv td{padding:5px 8px;text-align:left;border-bottom:1px solid var(--line);text-transform:none;letter-spacing:0;font-size:12.5px;vertical-align:middle}
+.mg-pv th{position:sticky;top:0;background:var(--th);z-index:2}
+.mg-pv tr.dup td{opacity:.7}
+.mg-pv tr.off td{opacity:.4;text-decoration:line-through}
+.mg-pv tr.dh td{background:var(--soft);font-weight:800;color:var(--pri)}
+.mg-rep{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 0}
+.mg-rep button{padding:3px 10px;font-size:11.5px;border-radius:99px;border:1px solid var(--line);background:transparent;color:var(--txt)}
+.mg-rep button.off{opacity:.5;text-decoration:line-through}
+.mg-tr{display:grid;grid-template-columns:34px 100px minmax(0,1fr) minmax(0,1.4fr) minmax(0,1.4fr) 34px;gap:6px;align-items:center;margin:6px 0}
+.mg-tr input[type=color]{width:34px;height:32px;padding:2px;border-radius:8px}
+.mg-tr.h{font-size:11.5px;color:var(--mut);font-weight:700;margin-bottom:0}
+.mg-ol{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:-4px 0 12px;font-size:12.5px;color:var(--mut)}
+.mg-ol b{color:var(--txt)}.mg-ol .ok{color:var(--t-ok);font-weight:700}.mg-ol .no{color:var(--t-warn);font-weight:700}
+.mg-stp{margin:6px 0;padding:8px 12px;border:1px dashed var(--line);border-radius:10px;background:var(--soft);font-size:12.5px;line-height:1.85}
+.mg-stp code{background:var(--inp);border:1px solid var(--line);border-radius:6px;padding:1px 6px;font-size:12px;word-break:break-all;user-select:all}
+.mg-pr{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}.mg-pr span{padding:2px 10px;border-radius:99px;font-size:12px;font-weight:700;border:1px solid var(--line)}.mg-pr .g{background:rgba(34,197,94,.18);color:var(--t-ok)}.mg-pr .b{background:rgba(239,68,68,.16);color:var(--t-dang)}
+@media(max-width:860px){.mg-row{grid-template-columns:78px 1fr}.mg-who,.mg-ac{grid-column:1/-1}.mg-fg{grid-template-columns:1fr}.mg-tr{grid-template-columns:34px 1fr}.mg-tr input:nth-child(n+3){grid-column:1/-1}}
+`; document.head.appendChild(st);
+
+/* ================= แท็บ + หน้า ================= */
+const tab=document.createElement('button'); tab.type='button'; tab.className='tabbtn'; tab.id='tabG'; tab.title='สรุปประชุมรายวัน และลงคนเข้าร่วม';
+tab.innerHTML='<span class="tb-m">🗓️ ประชุม</span><span class="tb-s">ลงคนเข้าร่วม</span>';
+g('tabD').parentNode.insertBefore(tab,g('tabD').nextSibling);
+const view=document.createElement('div'); view.id='viewMeet'; view.style.display='none';
+g('viewToday').parentNode.insertBefore(view,g('viewToday').nextSibling);
+const ALLV=['viewToday','viewTracker','viewSheet','viewMission','viewHoshin','viewMainJobs'], ALLT=['tabD','tabT','tabS','tabM','tabH','tabJ'];
+const shown=()=>view.style.display==='block';
+function openMeet(ds){
+  if(ds) ui.date=ds;
+  ALLV.forEach(v=>{ const e=g(v); if(e) e.style.display='none'; }); ALLT.forEach(t=>{ const b=g(t); if(b) b.classList.remove('on'); });
+  tab.classList.add('on'); view.style.display='block'; render(); window.scrollTo(0,0);
+  if(connected()&&gcfg.auto&&Date.now()-(gst.at||0)>5*60000) gSync(false);
+}
+tab.addEventListener('click',()=>openMeet());
+ALLT.forEach(t=>{ const b=g(t); if(b) b.addEventListener('click',()=>{ view.style.display='none'; tab.classList.remove('on'); },true); });
+
+/* ================= วาดหน้า ================= */
+function mondayOf(ds){ const d=dowOf(ds); return addD(ds,-((d+6)%7)); }
+function chips(m,A,ds){
+  const all=m.who.indexOf('all')>=0, cf=A.conf[m.id]||[];
+  return '<div class="mg-who">'+cfg.people.map(p=>{
+    const on=!all&&m.who.indexOf(p.id)>=0, al=all, inv=m.inv.indexOf(p.id)>=0, l=A.lv[p.id], lvf=leaveFull(l);
+    const tip=(on||al?'ลงชื่อแล้ว':'คลิกเพื่อลงชื่อ')+(inv?' · ถูกเชิญใน Outlook':'')+(l?' · ⚠ '+l.t+'วันนี้':'')+(cf.indexOf(p.id)>=0?' · ⚠ เวลาซ้อนกัน':'');
+    return '<button type="button" class="mg-ch'+(on?' on':'')+(al?' al':'')+(inv?' inv':'')+(lvf&&(on||al)?' lv':'')+'" style="--pc:'+E(p.color)+'" data-mg="who" data-m="'+E(m.id)+'" data-p="'+E(p.id)+'" title="'+E(tip)+'">'+E(p.name)+((lvf&&(on||al))?' 🌴':'')+'</button>';
+  }).join('')+'<button type="button" class="mg-ch all'+(all?' on':'')+'" data-mg="who" data-m="'+E(m.id)+'" data-p="all" title="ทุกคนเข้าร่วม (@All)">All</button></div>';
+}
+function rowHtml(m,A,ds){
+  const un=!m.who.length, cf=A.conf[m.id]||[], bad=[];
+  if(cf.length) bad.push('<span class="mg-bad" title="คนที่มีประชุมซ้อนเวลา">⚠ ซ้อนเวลา: '+E(Array.from(new Set(cf)).map(id=>P(id)&&P(id).name).join(', '))+'</span>');
+  whoIds(m).forEach(id=>{ const l=A.lv[id], p=P(id); if(l&&leaveFull(l)&&p) bad.push('<span class="mg-bad" title="จากแท็บแผนลา">🌴 '+E(p.name)+' '+E(l.t)+'</span>'); });
+  const invOnly=m.inv.filter(id=>m.who.indexOf(id)<0&&m.who.indexOf('all')<0&&P(id)).map(id=>P(id).name);
+  return '<div class="mg-row'+(un?' un':(cf.length?' cf':' ok'))+'" data-m="'+E(m.id)+'">'+
+    '<div class="mg-t"><b>'+E(m.s||'--:--')+'</b><span>'+E(m.e||'--:--')+'</span><small>'+hrs(durOf(m))+' ชม.</small></div>'+
+    '<div><div class="mg-ti" data-mg="edit" data-m="'+E(m.id)+'" title="คลิกเพื่อแก้ไข">'+E(m.t||'(ไม่มีชื่อ)')+'</div>'+
+      '<div class="mg-sub"><span>📍</span><input class="mg-room" data-mg="room" data-m="'+E(m.id)+'" value="'+E(m.room)+'" placeholder="ห้องประชุม (ว่างไว้ได้)" autocomplete="off">'+
+      (un?'<span class="mg-un">ยังไม่ระบุคน</span>':'')+bad.join('')+
+      (m.src==='graph'?'<span class="mg-src" title="ดึงจาก Outlook อัตโนมัติ">Outlook ⟳</span>':m.src==='ics'?'<span class="mg-src" title="นำเข้าจากไฟล์ .ics">.ics</span>':'')+
+      (invOnly.length&&un?'<span class="mg-src" title="ถูกเชิญใน Outlook แต่ยังไม่ได้ลงชื่อ">เชิญ: '+E(invOnly.join(', '))+'</span>':'')+'</div></div>'+
+    chips(m,A,ds)+
+    '<div class="mg-ac"><button type="button" data-mg="edit" data-m="'+E(m.id)+'" title="แก้ไข">✎</button><button type="button" data-mg="dup" data-m="'+E(m.id)+'" title="ทำซ้ำ">⧉</button><button type="button" data-mg="del" data-m="'+E(m.id)+'" title="ลบ">🗑</button></div></div>';
+}
+function renderDay(){
+  const ds=ui.date, list=getDay(ds).sort(bySt), A=analyze(list,ds);
+  let h='<div class="mg-day">'+E(fmtTh(ds))+'<small>'+list.length+' ประชุม'+(A.un?' · <span class="mg-un">ยังไม่ระบุคน '+A.un+'</span>':'')+'</small></div>';
+  h+='<div class="mg-people">'+cfg.people.map(p=>{ const q=A.per[p.id], l=A.lv[p.id];
+    return '<div class="mg-pc'+(q.conf?' cf':'')+(leaveFull(l)?' lv':'')+'" style="--pc:'+E(p.color)+'"><span class="mg-av">'+E(p.name.slice(0,1).toUpperCase())+'</span><div><b>'+E(p.name)+'</b><small>'+q.n+' ประชุม · '+hrs(q.min)+' ชม.</small>'+
+      (q.conf?'<span class="mg-flag d">⚠ เวลาซ้อน</span>':'')+(l?'<span class="mg-flag w">🌴 '+E(l.t)+'</span>':'')+(!q.n&&!l?'<span class="mg-flag i">ว่าง</span>':'')+'</div></div>'; }).join('')+'</div>';
+  if(!list.length){
+    h+='<div class="mg-empty">ยังไม่มีประชุมวันนี้<br>'+(connected()?'กด <b>🔄 ซิงก์ Outlook</b> เพื่อดึงล่าสุด':'กด <b>🔗 เชื่อม Outlook อัตโนมัติ</b> เพื่อให้ระบบดึงประชุมเอง')+' — หรือ <b>📥 นำเข้า</b> ไฟล์ .ics / ข้อความ Schedule, <b>➕ เพิ่มประชุม</b> พิมพ์เอง</div>';
+  }else h+='<div class="mg-list">'+list.map(m=>rowHtml(m,A,ds)).join('')+'</div>';
+  h+='<div class="mg-hint">💡 คลิกชื่อ <b>Earn / Natcha / Mana / Benz</b> เพื่อลงคนเข้าร่วม (เลือกได้หลายคน) · <b>All</b> = ทุกคน · กรอบประ = ถูกเชิญใน Outlook แต่ยังไม่ได้ลงชื่อ · ที่คุณแก้เองจะไม่ถูกซิงก์ Outlook ทับ · <b>📋 คัดลอกข้อความ</b> ได้ข้อความ Schedule พร้อมวางใน Teams</div>';
+  return h;
+}
+function renderWeek(){
+  const mon=mondayOf(ui.date), days=[]; for(let i=0;i<7;i++) days.push(addD(mon,i));
+  const data=days.map(ds=>{ const list=getDay(ds); return {ds:ds,list:list,A:analyze(list,ds)}; });
+  const show=days.map((ds,i)=>i<5||data[i].list.length>0);
+  let h='<div class="mg-day">สัปดาห์ '+E(fmtD(days[0]))+' – '+E(fmtD(days[6]))+'<small>คลิกช่องเพื่อเปิดวันนั้น</small></div><div style="overflow:auto;border:1px solid var(--line);border-radius:12px"><table class="mg-wk"><thead><tr><th style="text-align:left">คน / วัน</th>'+
+    days.map((ds,i)=>show[i]?'<th class="'+(ds===today?'td':'')+(i>=5?' we':'')+'">'+DOWS[dowOf(ds)]+'<small>'+(+ds.slice(8))+' '+THM[+ds.slice(5,7)-1]+'</small></th>':'').join('')+'<th>รวม</th></tr></thead><tbody>';
+  cfg.people.forEach(p=>{
+    let n=0,min=0;
+    const tds=data.map((d,i)=>{ const q=d.A.per[p.id], l=d.A.lv[p.id]; n+=q.n; min+=q.min; if(!show[i]) return '';
+      const cls='c'+(q.conf?' cf':'')+(leaveFull(l)?' lv':'')+(!q.n&&!l?' z':'');
+      return '<td class="'+cls+'" data-mg="goday" data-d="'+d.ds+'" title="'+E(p.name+' · '+fmtD(d.ds))+'">'+(q.n?'<b>'+q.n+'</b><small>'+hrs(q.min)+' ชม.</small>':(l?'':'–'))+(q.conf?'<small style="color:var(--t-dang)">⚠ ซ้อน</small>':'')+(l?'<small>🌴 '+E(l.t)+'</small>':'')+'</td>'; }).join('');
+    h+='<tr><td class="nm"><span class="mg-av" style="--pc:'+E(p.color)+';width:22px;height:22px;font-size:11px;margin-right:6px;vertical-align:-6px">'+E(p.name.slice(0,1).toUpperCase())+'</span>'+E(p.name)+'</td>'+tds+'<td><b>'+n+'</b><small style="display:block;color:var(--mut);font-size:11px">'+hrs(min)+' ชม.</small></td></tr>';
+  });
+  h+='<tr class="tot"><td class="nm">ประชุมทั้งหมด</td>'+data.map((d,i)=>show[i]?'<td class="c" data-mg="goday" data-d="'+d.ds+'">'+(d.list.length?'<b>'+d.list.length+'</b>':'–')+(d.A.un?'<small style="color:var(--t-warn)">ยังไม่ระบุ '+d.A.un+'</small>':'')+'</td>':'').join('')+'<td><b>'+data.reduce((a,d)=>a+d.list.length,0)+'</b></td></tr></tbody></table></div>';
+  h+='<div class="mg-hint">ตัวเลขใหญ่ = จำนวนประชุมที่คนนั้นต้องเข้า · ใต้ตัวเลข = จำนวนชั่วโมง · พื้นแดง = มีประชุมซ้อนเวลาของคนเดียวกัน · แถบเฉียงส้ม = ลา/อบรม (จากแท็บแผนลา) · “All” นับให้ทุกคน</div>';
+  return h;
+}
+function sigNow(){ const a=[localStorage.getItem(KC)||'']; const base=ui.view==='week'?mondayOf(ui.date):ui.date, n=ui.view==='week'?7:1; for(let i=0;i<n;i++) a.push(localStorage.getItem(KD+addD(base,i))||''); return a.join('\u0001'); }
+let lastSig='';
+function render(){
+  if(!shown()) return;
+  const y=window.scrollY;
+  let h='<div class="mg-head"><h1>🗓️ ประชุม · ลงคนเข้าร่วม</h1><small>ดึงประชุมจาก Outlook อัตโนมัติ · เลือกว่าใครเข้า · เตือนเวลาซ้อน/คนลา</small></div>'+
+    '<div class="mg-bar"><button type="button" class="btn-g" data-mg="prev" title="วันก่อนหน้า">◀</button><input type="date" id="mgDate" value="'+E(ui.date)+'"><button type="button" class="btn-g" data-mg="next" title="วันถัดไป">▶</button><button type="button" class="btn-g" data-mg="today">วันนี้</button>'+
+    '<span class="mg-seg"><button type="button" class="'+(ui.view==='day'?'on':'')+'" data-mg="vday">วัน</button><button type="button" class="'+(ui.view==='week'?'on':'')+'" data-mg="vweek">สัปดาห์</button></span><span class="mg-sep"></span>'+
+    '<button type="button" class="btn-p" data-mg="add" style="animation:none">➕ เพิ่มประชุม</button>'+
+    '<button type="button" class="'+(connected()?'btn-p':'btn-g')+'" data-mg="ol" '+(connected()?'style="animation:none"':'')+' title="ดึงประชุมจาก Outlook อัตโนมัติ">'+(connected()?'🔄 ซิงก์ Outlook':'🔗 เชื่อม Outlook อัตโนมัติ')+'</button>'+
+    '<button type="button" class="btn-g" data-mg="imp">📥 นำเข้า (ไฟล์ / ข้อความ)</button>'+
+    '<button type="button" class="btn-g" data-mg="copy" title="คัดลอกข้อความ “📢 Schedule QE Electronics …” ของวันที่เลือก">📋 คัดลอกข้อความ Schedule</button><label style="margin:0;display:inline-flex;gap:5px;align-items:center;font-size:12px;color:var(--txt);cursor:pointer"><input type="checkbox" id="mgAt" '+(ui.at?'checked':'')+' style="width:auto"> ใส่ @</label>'+
+    '<span class="mg-grow"></span><button type="button" class="btn-g" data-mg="team" title="ชื่อทีม / อีเมล / ชื่อประชุมที่ข้ามเสมอ">👥 ตั้งค่าทีม</button><button type="button" class="btn-g" data-mg="exp" title="สำรองข้อมูลประชุมทั้งหมด">💾 JSON</button><button type="button" class="btn-g" data-mg="impjson" title="นำเข้าไฟล์สำรอง">📂</button><input type="file" id="mgJson" accept=".json,application/json" style="display:none"></div>';
+  h+=olLine();
+  h+=ui.view==='week'?renderWeek():renderDay();
+  view.innerHTML=h; lastSig=sigNow(); if(window.scrollY!==y) window.scrollTo(0,y);
+}
+
+/* ================= แก้ไขข้อมูล ================= */
+function mutate(ds,fn){ const L=getDay(ds); fn(L); setDay(ds,L); render(); refreshTodayCard(); }
+function toggleWho(id,pid){
+  mutate(ui.date,L=>{ const m=L.find(x=>x.id===id); if(!m) return; m.wa='manual';
+    if(pid==='all') m.who=m.who.indexOf('all')>=0?[]:['all'];
+    else { let w=m.who.filter(x=>x!=='all'); if(w.indexOf(pid)>=0) w=w.filter(x=>x!==pid); else w.push(pid); m.who=w; } });
+}
+function editModal(id){
+  imp=null; const L=getDay(ui.date), m=id?L.find(x=>x.id===id):null, isNew=!m;
+  const d=m||{date:ui.date,s:'09:00',e:'10:00',t:'',room:'',who:[],inv:[],note:'',src:'',uid:'',gr:'',wa:''};
+  openMd('<h3>'+(isNew?'➕ เพิ่มประชุม':'✎ แก้ไขประชุม')+'</h3><form id="mgF"><div class="mg-fg">'+
+    '<div class="full"><label>หัวข้อประชุม</label><input name="t" value="'+E(d.t)+'" autocomplete="off"></div>'+
+    '<div><label>วันที่</label><input type="date" name="date" value="'+E(ui.date)+'"></div><div><label>ห้องประชุม (ว่างไว้ได้)</label><input name="room" value="'+E(d.room)+'" autocomplete="off"></div>'+
+    '<div><label>เริ่ม</label><input type="time" name="s" value="'+E(d.s)+'"></div><div><label>สิ้นสุด</label><input type="time" name="e" value="'+E(d.e)+'"></div>'+
+    '<div class="full"><label>คนเข้าร่วม</label><div class="mg-who" id="mgWho">'+cfg.people.map(p=>'<button type="button" class="mg-ch'+(d.who.indexOf(p.id)>=0?' on':'')+(d.inv.indexOf(p.id)>=0?' inv':'')+'" style="--pc:'+E(p.color)+'" data-p="'+E(p.id)+'">'+E(p.name)+'</button>').join('')+'<button type="button" class="mg-ch all'+(d.who.indexOf('all')>=0?' on':'')+'" data-p="all">All</button></div></div>'+
+    '<div class="full"><label>หมายเหตุ</label><textarea name="note" rows="2">'+E(d.note)+'</textarea></div></div><div class="mg-act"><button type="submit" class="btn-p" style="animation:none">💾 บันทึก</button><button type="button" class="btn-g" data-x="cancel">ยกเลิก</button></div></form>',md=>{
+    const W=new Set(d.who);
+    md.querySelector('#mgWho').addEventListener('click',e=>{ const b=e.target.closest('[data-p]'); if(!b) return; const p=b.dataset.p;
+      if(p==='all'){ if(W.has('all')) W.clear(); else { W.clear(); W.add('all'); } } else { W.delete('all'); if(W.has(p)) W.delete(p); else W.add(p); }
+      md.querySelectorAll('#mgWho [data-p]').forEach(x=>x.classList.toggle('on',W.has(x.dataset.p))); });
+    md.querySelector('#mgF').addEventListener('submit',ev=>{ ev.preventDefault(); const f=ev.target.elements, t=f.t.value.trim(), s=f.s.value, e=f.e.value, nd=f.date.value;
+      if(!t){ say('กรุณาใส่หัวข้อประชุม',true); return; } if(!isoOK(nd)){ say('กรุณาเลือกวันที่',true); return; } if(!s||!e||tmin(e)<=tmin(s)){ say('เวลาสิ้นสุดต้องหลังเวลาเริ่ม',true); return; }
+      const rec={id:m?m.id:uid(),s:s,e:e,t:t,room:f.room.value.trim(),who:Array.from(W),inv:d.inv,note:f.note.value.trim(),src:d.src,uid:d.uid,gr:d.gr||'',wa:(m&&JSON.stringify(m.who)===JSON.stringify(Array.from(W)))?(m.wa||''):'manual'};
+      closeMd();
+      if(m&&nd!==ui.date){ mutate(ui.date,L=>{ const i=L.findIndex(x=>x.id===m.id); if(i>=0) L.splice(i,1); }); rec.uid=''; const T=getDay(nd); T.push(rec); setDay(nd,T); ui.date=nd; render(); refreshTodayCard(); }
+      else if(m) mutate(ui.date,L=>{ const i=L.findIndex(x=>x.id===m.id); if(i>=0) L[i]=rec; });
+      else { if(nd!==ui.date) ui.date=nd; mutate(nd,L=>{ L.push(rec); }); }
+    });
+  });
+}
+let md=null;
+function closeMd(){ if(md){ md.remove(); md=null; } }
+function openMd(html,init,wide){
+  closeMd(); md=document.createElement('div'); md.className='mg-ov'; md.innerHTML='<div class="mg-md'+(wide?' wide':'')+'">'+html+'</div>'; document.body.appendChild(md);
+  md.addEventListener('mousedown',e=>{ if(e.target===md) closeMd(); });
+  md.addEventListener('click',e=>{ if(e.target.closest('[data-x="cancel"]')) closeMd(); });
+  if(init) init(md); const f=md.querySelector('input:not([type=checkbox]):not([type=file]),textarea'); if(f&&!wide) setTimeout(()=>{ try{ f.focus(); }catch(e){} },30);
+  return md;
+}
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&md){ e.stopPropagation(); closeMd(); } },true);
+
+/* ---------- นำเข้า (ไฟล์ .ics / ข้อความ) ---------- */
+let imp=null;
+function importModal(mode){
+  imp={mode:mode||'text',text:'',ics:'',cands:[],from:ui.date,to:addD(ui.date,13),stats:null,skip:new Set(cfg.skip.map(nkey)),off:new Set()};
+  openMd('<h3>📥 นำเข้าประชุม</h3><div class="mg-sb">เลือกวิธีนำเข้า — ระบบดึง <b>หัวข้อ · เวลา · ห้อง</b> แล้วคุณเลือกคนเข้าร่วมเองในหน้าประชุม (ถ้านำเข้าซ้ำ จะไม่ทับคนที่ลงไว้แล้ว) · ถ้าเชื่อม Outlook อัตโนมัติแล้ว ไม่ต้องใช้หน้านี้</div>'+
+    '<div class="mg-tabs"><button type="button" id="mgTT" data-m="text">📋 วางข้อความ Schedule</button><button type="button" id="mgTI" data-m="ics">📅 ไฟล์ Outlook (.ics)</button></div><div id="mgImpBody"></div><div id="mgImpPv"></div>',()=>drawImp(),true);
+}
+function drawImp(){
+  if(!md||!imp) return; const b=md.querySelector('#mgImpBody');
+  md.querySelector('#mgTT').classList.toggle('on',imp.mode==='text'); md.querySelector('#mgTI').classList.toggle('on',imp.mode==='ics');
+  if(imp.mode==='text'){
+    b.innerHTML='<div class="mg-sb">วางข้อความที่คุณส่งทุกวัน (ขึ้นต้น “📢 Schedule QE Electronics 14-Oct-26 @All” แล้วตามด้วยบรรทัด 📌 เวลา หัวข้อ --&gt; คน / ห้อง) — วางหลายวันต่อกันได้ ระบบแยกวันจากบรรทัดหัว</div><textarea class="mg-ta" id="mgTa" placeholder="📢 Schedule QE Electronics 14-Oct-26 @All&#10;📌 10:00 - 11:00 Problem AS151 --> @ณัฐชา, Benz / Room 9">'+E(imp.text)+'</textarea><div class="mg-act" style="margin-top:8px"><button type="button" class="btn-p" data-i="parse" style="animation:none">วิเคราะห์ข้อความ</button><span class="mg-sb" style="margin:0">ถ้าข้อความไม่มีบรรทัดวันที่ จะใช้วันที่ ' + E(fmtD(ui.date)) + '</span></div>';
+  }else{
+    b.innerHTML='<div class="mg-sb">เลือกไฟล์ .ics ที่ได้จาก Outlook แล้วเลือกช่วงวันที่ — รองรับประชุมซ้ำทุกวัน/สัปดาห์/เดือน</div>'+
+      '<div class="mg-fg"><div class="full"><input type="file" id="mgIcs" accept=".ics,text/calendar"></div><div><label>ตั้งแต่วันที่</label><input type="date" id="mgFr" value="'+E(imp.from)+'"></div><div><label>ถึงวันที่</label><input type="date" id="mgTo" value="'+E(imp.to)+'"></div></div>';
+    if(imp.ics) reparseIcs();
+  }
+  drawPv();
+}
+function reparseIcs(){ try{ const r=icsEvents(imp.ics,imp.from,imp.to); imp.cands=r.items; imp.stats=r.stats; imp.off=new Set(); }catch(e){ console.error(e); imp.cands=[]; imp.stats=null; say('อ่านไฟล์ .ics ไม่สำเร็จ',true); } drawPv(); }
+function dupOf(c){ const L=getDay(c.date); return L.find(m=>(c.uid&&m.uid===c.uid)||(m.s===c.s&&m.e===c.e&&nkey(m.t)===nkey(c.t)))||null; }
+function drawPv(){
+  if(!md||!imp) return; const box=md.querySelector('#mgImpPv'); const c=imp.cands; const _sc=box.querySelector('.mg-pv'), _top=_sc?_sc.scrollTop:0;
+  if(!c.length){ box.innerHTML=imp.stats?'<div class="mg-sb" style="margin-top:10px">ไม่พบประชุมในช่วงวันที่ที่เลือก (ไฟล์มี '+imp.stats.all+' รายการ · ข้ามเต็มวัน '+imp.stats.allday+' · ยกเลิก '+imp.stats.cancelled+')</div>':''; return; }
+  c.sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:bySt(a,b));
+  const cnt={}; c.forEach(x=>{ const k=nkey(x.t); cnt[k]=(cnt[k]||0)+1; });
+  const reps=Object.keys(cnt).filter(k=>cnt[k]>=3).sort((a,b)=>cnt[b]-cnt[a]);
+  const isOff=(x,i)=>imp.off.has(i)||imp.skip.has(nkey(x.t));
+  let h='<div class="mg-sb" style="margin-top:10px"><b>พบ '+c.length+' ประชุม</b>'+(imp.stats?' · ข้ามเต็มวัน '+imp.stats.allday+' · ยกเลิก '+imp.stats.cancelled:'')+' — ติ๊กเฉพาะที่ต้องการนำเข้า</div>';
+  if(reps.length) h+='<div class="mg-sb" style="margin:0">ประชุมที่ซ้ำบ่อย (คลิกเพื่อ <b>ข้ามเสมอ</b> / เอากลับ):</div><div class="mg-rep">'+reps.map(k=>{ const t=(c.find(x=>nkey(x.t)===k)||{}).t; return '<button type="button" class="'+(imp.skip.has(k)?'off':'')+'" data-i="rep" data-k="'+E(k)+'">'+E(t)+' ×'+cnt[k]+'</button>'; }).join('')+'</div>';
+  h+='<div class="mg-pv"><table><thead><tr><th style="width:30px"><input type="checkbox" id="mgAll" checked style="width:auto"></th><th>วันที่</th><th>เวลา</th><th>หัวข้อ</th><th>ห้อง</th><th>คน / เชิญ</th><th></th></tr></thead><tbody>';
+  let last='';
+  c.forEach((x,i)=>{ const off=isOff(x,i), du=dupOf(x);
+    if(x.date!==last){ last=x.date; h+='<tr class="dh"><td colspan="7">'+E(fmtTh(x.date))+'</td></tr>'; }
+    h+='<tr class="'+(off?'off':'')+(du?' dup':'')+'"><td><input type="checkbox" data-i="row" data-n="'+i+'" '+(off?'':'checked')+' style="width:auto"></td><td>'+E(fmtD(x.date))+'</td><td>'+E(x.s)+'–'+E(x.e)+'</td><td>'+E(x.t)+'</td><td>'+E(x.room)+'</td>'+
+      '<td>'+(x.who.length?E(x.who.map(id=>id==='all'?'All':(P(id)||{name:id}).name).join(', ')):'')+(x.inv.length?'<span class="mg-src" title="ถูกเชิญใน Outlook">เชิญ: '+E(x.inv.map(id=>(P(id)||{name:id}).name).join(', '))+'</span>':'')+'</td><td>'+(du?'<span class="mg-src">มีแล้ว</span>':'')+'</td></tr>'; });
+  h+='</tbody></table></div><div class="mg-act"><button type="button" class="btn-p" data-i="commit" style="animation:none">📥 นำเข้า <span id="mgN">'+c.filter((x,i)=>!isOff(x,i)).length+'</span> รายการ</button><button type="button" class="btn-g" data-x="cancel">ยกเลิก</button></div>';
+  box.innerHTML=h; const _n=box.querySelector('.mg-pv'); if(_n) _n.scrollTop=_top;
+}
+function commitImport(){
+  const c=imp.cands.filter((x,i)=>!(imp.off.has(i)||imp.skip.has(nkey(x.t))));
+  if(!c.length){ say('ไม่มีรายการที่เลือก',true); return; }
+  const by={}; let add=0, fill=0, same=0, first=null;
+  c.forEach(x=>{ const L=by[x.date]||(by[x.date]=getDay(x.date)); const ex=L.find(m=>(x.uid&&m.uid===x.uid)||(m.s===x.s&&m.e===x.e&&nkey(m.t)===nkey(x.t)));
+    if(ex){ let ch=false; if(!ex.room&&x.room){ ex.room=x.room; ch=true; } if(!ex.who.length&&x.who.length){ ex.who=x.who.slice(); ch=true; } x.inv.forEach(id=>{ if(ex.inv.indexOf(id)<0){ ex.inv.push(id); ch=true; } }); if(!ex.uid&&x.uid){ ex.uid=x.uid; } if(ch) fill++; else same++; }
+    else{ L.push(normM(Object.assign({},x,{id:uid()}))); add++; }
+    if(!first||x.date<first) first=x.date; });
+  Object.keys(by).forEach(ds=>setDay(ds,by[ds]));
+  if(imp.mode==='ics'){ const seen=new Set(); imp.cands.forEach(x=>seen.add(nkey(x.t))); const keep=cfg.skip.filter(k=>!seen.has(nkey(k))); imp.skip.forEach(k=>{ if(seen.has(k)&&keep.indexOf(k)<0) keep.push(k); }); cfg.skip=keep; saveCfg(); }
+  closeMd(); if(first&&(ui.date<first||by[ui.date]===undefined)) ui.date=by[ui.date]!==undefined?ui.date:first;
+  render(); refreshTodayCard(); say('📥 นำเข้าแล้ว: เพิ่มใหม่ '+add+(fill?' · เติมข้อมูลที่ยังว่าง '+fill:'')+(same?' · ซ้ำ (ข้าม) '+same:''));
+}
+function onImpInput(e){ const t=e.target; if(!imp) return; if(t.id==='mgTa') imp.text=t.value; }
+function onImpChange(e){
+  const t=e.target; if(!imp) return;
+  if(t.id==='mgIcs'&&t.files&&t.files[0]){ const fr=new FileReader(); fr.onload=()=>{ imp.ics=String(fr.result||''); reparseIcs(); }; fr.readAsText(t.files[0]); }
+  else if(t.id==='mgFr'||t.id==='mgTo'){ if(isoOK(md.querySelector('#mgFr').value)) imp.from=md.querySelector('#mgFr').value; if(isoOK(md.querySelector('#mgTo').value)) imp.to=md.querySelector('#mgTo').value; if(imp.ics) reparseIcs(); }
+  else if(t.id==='mgAll'){ imp.off=new Set(); if(!t.checked) imp.cands.forEach((x,i)=>imp.off.add(i)); drawPv(); }
+  else if(t.dataset&&t.dataset.i==='row'){ const n=+t.dataset.n; if(t.checked) imp.off.delete(n); else imp.off.add(n); drawPv(); }
+}
+function onImpClick(e){
+  const b=e.target.closest('[data-i],[data-m]'); if(!b||!imp) return;
+  if(b.id==='mgTT'||b.id==='mgTI'){ imp.mode=b.dataset.m; imp.cands=[]; imp.stats=null; imp.off=new Set(); drawImp(); return; }
+  const a=b.dataset.i;
+  if(a==='parse'){ const r=parseText(imp.text,ui.date); imp.cands=r.items; imp.stats=null; imp.off=new Set(); if(!r.items.length) say('ไม่พบบรรทัดที่มี “เวลา เริ่ม - สิ้นสุด” ในข้อความ',true); drawPv(); }
+  else if(a==='rep'){ const k=b.dataset.k; if(imp.skip.has(k)) imp.skip.delete(k); else imp.skip.add(k); drawPv(); }
+  else if(a==='commit') commitImport();
+}
+
+/* ---------- ทีม ---------- */
+function teamModal(){
+  imp=null; const T=cfg.people.map(p=>({id:p.id,name:p.name,out:p.out,mail:p.mail||'',color:p.color,alias:p.alias.join(', ')}));
+  const draw=()=>{ const b=md.querySelector('#mgTm'); b.innerHTML='<div class="mg-tr h"><span></span><span>ชื่อ</span><span>ชื่อในข้อความ Schedule</span><span>อีเมล Outlook (ใช้ดึงปฏิทิน)</span><span>คำที่ใช้จับคู่ (คั่นด้วย ,)</span><span></span></div>'+
+    T.map((p,i)=>'<div class="mg-tr" data-i="'+i+'"><input type="color" data-f="color" value="'+E(p.color)+'"><input data-f="name" value="'+E(p.name)+'" autocomplete="off"><input data-f="out" value="'+E(p.out)+'" autocomplete="off"><input data-f="mail" value="'+E(p.mail)+'" placeholder="name@siamaisin.co.th" autocomplete="off"><input data-f="alias" value="'+E(p.alias)+'" autocomplete="off"><button type="button" class="btn-g" data-t="del" data-i="'+i+'" style="color:var(--t-dang)" title="ลบ">🗑</button></div>').join(''); };
+  openMd('<h3>👥 ตั้งค่าทีม</h3><div class="mg-sb">รายชื่อที่ใช้เลือกคนเข้าร่วม · <b>อีเมล Outlook</b> ใช้ดึงปฏิทินของคนนั้นอัตโนมัติ (ต้องเป็นปฏิทินที่คุณเปิดดูได้) · “คำที่ใช้จับคู่” ใช้อ่านชื่อจากข้อความที่วางและจับคู่กับแผนลา</div><div id="mgTm"></div><div style="margin-top:6px"><button type="button" class="btn-g" data-t="add">+ เพิ่มคน</button></div>'+
+    '<div class="mg-sb" style="margin-top:12px"><b>ชื่อประชุมที่ข้ามเสมอ</b> (ขึ้นบรรทัดใหม่ · พิมพ์ขึ้นต้นชื่อก็พอ เช่น <code>Ukai</code>) — ใช้ทั้งตอนนำเข้า .ics และซิงก์ Outlook</div><textarea id="mgSk" rows="3" style="width:100%">'+E(cfg.skip.join('\n'))+'</textarea>'+
+    '<div class="mg-act"><button type="button" class="btn-p" data-t="save" style="animation:none">💾 บันทึก</button><button type="button" class="btn-g" data-x="cancel">ยกเลิก</button></div>',m=>{
+    draw();
+    m.addEventListener('input',e=>{ const r=e.target.closest('.mg-tr[data-i]'); if(!r||!e.target.dataset.f) return; T[+r.dataset.i][e.target.dataset.f]=e.target.value; });
+    m.addEventListener('click',e=>{ const b=e.target.closest('[data-t]'); if(!b) return; const a=b.dataset.t;
+      if(a==='add'){ T.push({id:'p'+uid().slice(1,6),name:'คนใหม่',out:'',mail:'',color:PAL[T.length%PAL.length],alias:''}); draw(); }
+      else if(a==='del'){ if(T.length<2){ say('ต้องมีอย่างน้อย 1 คน',true); return; } if(window.confirm('ลบ “'+T[+b.dataset.i].name+'”? (ชื่อที่ลงในประชุมเก่าจะไม่แสดง)')){ T.splice(+b.dataset.i,1); draw(); } }
+      else if(a==='save'){ cfg.people=normPeople(T.map(p=>({id:p.id,name:p.name,out:p.out||p.name,mail:p.mail,color:p.color,alias:String(p.alias).split(/[,\n]/)}))); cfg.skip=m.querySelector('#mgSk').value.split('\n').map(s=>s.trim()).filter(Boolean); saveCfg(); closeMd(); render(); refreshTodayCard(); say('✅ บันทึกการตั้งค่าทีมแล้ว'); } });
+  },true);
+}
+/* ---------- สำรอง ---------- */
+function exportJson(){
+  const days={}; allDays().forEach(ds=>{ days[ds]=getDay(ds); });
+  const blob=new Blob([JSON.stringify({app:'qe_meetings',v:1,at:new Date().toISOString(),cfg:{people:cfg.people,skip:cfg.skip},days:days},null,1)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='QE_meetings_'+today.replace(/-/g,'')+'.json'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),3000); say('💾 บันทึกไฟล์ประชุมแล้ว ('+Object.keys(days).length+' วัน)');
+}
+function importJson(file){
+  const fr=new FileReader(); fr.onload=()=>{ try{ const o=JSON.parse(fr.result); if(!o||o.app!=='qe_meetings'||!o.days) throw 0;
+    if(!window.confirm('นำเข้าข้อมูลประชุม '+Object.keys(o.days).length+' วัน?\n(วันที่ซ้ำกับที่มีอยู่จะถูกแทนที่)')) return;
+    Object.keys(o.days).forEach(ds=>{ if(isoOK(ds)) setDay(ds,(o.days[ds]||[]).map(normM).filter(Boolean)); });
+    if(o.cfg&&Array.isArray(o.cfg.people)&&o.cfg.people.length){ cfg={people:normPeople(o.cfg.people),skip:Array.isArray(o.cfg.skip)?o.cfg.skip.map(String):cfg.skip}; saveCfg(); }
+    render(); refreshTodayCard(); say('📂 นำเข้าข้อมูลประชุมแล้ว'); }catch(e){ say('ไฟล์ไม่ถูกต้อง — ต้องเป็นไฟล์จากปุ่ม 💾 JSON ในแท็บนี้',true); } }; fr.readAsText(file);
+}
+
+/* ================= เชื่อม Outlook อัตโนมัติ (Microsoft Graph · OAuth PKCE · ไม่ต้องมี server) ================= */
+const GK='ux_graph_cfg', GT='ux_graph_tok', GP='ux_graph_pkce', GS='ux_graph_state';     // ไม่ขึ้นต้นด้วย qe_/issue_tracker_ → ไม่ถูกซิงก์ขึ้น Cloud DB
+const GRAPH='https://graph.microsoft.com/v1.0';
+const SCOPE='https://graph.microsoft.com/Calendars.Read https://graph.microsoft.com/Calendars.Read.Shared offline_access';
+let gcfg=(()=>{ let o={}; try{ o=JSON.parse(localStorage.getItem(GK)||'{}')||{}; }catch(e){}
+  return {clientId:String(o.clientId||'').trim(),tenant:String(o.tenant||'organizations').trim()||'organizations',days:[7,14,30].indexOf(+o.days)>=0?+o.days:14,team:o.team!==false,auto:o.auto!==false,fill:o.fill?1:0,seeded:o.seeded?1:0}; })();
+const saveG=()=>{ try{ localStorage.setItem(GK,JSON.stringify(gcfg)); }catch(e){} };
+const gtok=()=>{ try{ return JSON.parse(localStorage.getItem(GT)||'null'); }catch(e){ return null; } };
+const connected=()=>!!(gcfg.clientId&&gtok()&&gtok().rt);
+const redirectUri=()=>location.origin+location.pathname;
+let gst={busy:false,last:'',at:0,res:[],err:''};
+try{ const o=JSON.parse(localStorage.getItem(GS)||'{}'); gst.last=o.last||''; gst.at=+o.at||0; gst.res=Array.isArray(o.res)?o.res:[]; }catch(e){}
+const saveGS=()=>{ try{ localStorage.setItem(GS,JSON.stringify({last:gst.last,at:gst.at,res:gst.res})); }catch(e){} };
+const b64u=buf=>btoa(String.fromCharCode.apply(null,new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+const rand=n=>{ const a=new Uint8Array(n); crypto.getRandomValues(a); return b64u(a); };
+const authBase=()=>'https://login.microsoftonline.com/'+encodeURIComponent(gcfg.tenant)+'/oauth2/v2.0/';
+async function gSignIn(){
+  if(!gcfg.clientId){ say('กรุณาใส่ Application (client) ID ก่อน',true); return; }
+  if(location.protocol==='file:'){ say('เปิดจากไฟล์ในเครื่องล็อกอินไม่ได้ — ต้องเปิดผ่านลิงก์ https:// (เช่น GitHub Pages)',true); return; }
+  if(!window.crypto||!crypto.subtle){ say('เบราว์เซอร์นี้ไม่รองรับการเข้ารหัสที่ต้องใช้ (ต้องเป็น https)',true); return; }
+  const v=rand(48), ch=b64u(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(v))), s=rand(16);
+  try{ sessionStorage.setItem(GP,JSON.stringify({v:v,s:s})); }catch(e){}
+  if(!cfg.skip.length&&!gcfg.seeded){ cfg.skip=['Lunch','ไร่กะหล่ำปลี','Ukai']; saveCfg(); }
+  gcfg.seeded=1; saveG();
+  location.assign(authBase()+'authorize?'+new URLSearchParams({client_id:gcfg.clientId,response_type:'code',redirect_uri:redirectUri(),response_mode:'query',scope:SCOPE,state:s,code_challenge:ch,code_challenge_method:'S256'}).toString());
+}
+async function tokenReq(extra){
+  const r=await fetch(authBase()+'token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams(Object.assign({client_id:gcfg.clientId,scope:SCOPE},extra)).toString()});
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok||!j.access_token){ const e=new Error(j.error_description||j.error||('HTTP '+r.status)); e.code=j.error||''; throw e; }
+  const old=gtok()||{}; const o={at:j.access_token,rt:j.refresh_token||old.rt||'',exp:Date.now()+(+j.expires_in||3600)*1000};
+  try{ localStorage.setItem(GT,JSON.stringify(o)); }catch(e){} return o;
+}
+async function gToken(){
+  const t=gtok(); if(!t||!t.rt) throw new Error('LOGIN');
+  if(t.exp-60000>Date.now()) return t.at;
+  try{ return (await tokenReq({grant_type:'refresh_token',refresh_token:t.rt})).at; }
+  catch(e){ if(/invalid_grant|interaction_required|expired|AADSTS/i.test((e.code||'')+' '+e.message)){ try{ localStorage.removeItem(GT); }catch(x){} throw new Error('LOGIN'); } throw e; }
+}
+async function gGet(url){
+  const tok=await gToken();
+  const r=await fetch(/^https?:/i.test(url)?url:GRAPH+url,{headers:{Authorization:'Bearer '+tok,Prefer:'outlook.timezone="SE Asia Standard Time"'}});
+  if(!r.ok){ const e=new Error('HTTP '+r.status); e.status=r.status; throw e; }
+  return r.json();
+}
+async function gAll(path){ let url=path, out=[], n=0; while(url&&n<30){ const j=await gGet(url); (j.value||[]).forEach(x=>out.push(x)); url=j['@odata.nextLink']||''; n++; } return out; }
+const gLocal=dt=>{ if(!dt||!dt.dateTime) return ''; const s=String(dt.dateTime).slice(0,19); return /^utc$/i.test(dt.timeZone||'')?new Date(Date.parse(s+'Z')+7*36e5).toISOString().slice(0,19):s; };
+function gRoom(ev){
+  const names=[]; (ev.locations||[]).forEach(l=>{ if(l&&l.displayName) names.push(l.displayName); }); if(!names.length&&ev.location&&ev.location.displayName) names.push(ev.location.displayName);
+  let r=normRoom(names.join(';')); if(ev.isOnlineMeeting&&!/MS\. Team/i.test(r)) r=r?r+' & MS. Team':'MS. Team'; return r;
+}
+async function gSync(manual){
+  if(gst.busy) return;
+  if(!connected()){ if(manual) olModal(); return; }
+  gst.busy=true; gst.err=''; paintOl();
+  try{
+    const from=today, to=addD(today,gcfg.days-1);
+    const win='startDateTime='+encodeURIComponent(from+'T00:00:00+07:00')+'&endDateTime='+encodeURIComponent(addD(to,1)+'T00:00:00+07:00');
+    const sel='$select=id,iCalUId,subject,start,end,isAllDay,isCancelled,isOnlineMeeting,location,locations,attendees,responseStatus&$top=100';
+    const me=await gGet('/me?$select=mail,userPrincipalName'), meMail=String(me.mail||me.userPrincipalName||'').toLowerCase();
+    const mine=cfg.people.find(p=>p.mail&&p.mail===meMail)||null;
+    const cals=[{p:mine,path:'/me/calendarView',name:mine?mine.name:'ปฏิทินของฉัน'}];
+    if(gcfg.team) cfg.people.forEach(p=>{ if(p.mail&&p!==mine) cals.push({p:p,path:'/users/'+encodeURIComponent(p.mail)+'/calendarView',name:p.name}); });
+    const results=await Promise.all(cals.map(async c=>{ try{ return {c:c,ev:await gAll(c.path+'?'+win+'&'+sel)}; }catch(e){ if(e.message==='LOGIN') throw e; return {c:c,err:e}; } }));
+    const map=new Map(), res=[]; let allOk=true;
+    results.forEach(r=>{
+      if(r.err){ allOk=false; res.push({n:r.c.name,ok:false,c:r.err.status||0}); return; }
+      let cnt=0;
+      r.ev.forEach(ev=>{
+        if(ev.isCancelled||ev.isAllDay) return;
+        const st=gLocal(ev.start), en=gLocal(ev.end); if(!st) return; const ds=st.slice(0,10); if(ds<from||ds>to) return;
+        if(((ev.responseStatus&&ev.responseStatus.response)||'')==='declined') return;
+        cnt++;
+        const key=(ev.iCalUId||ev.id)+'|'+ds; let o=map.get(key);
+        if(!o){ o={ds:ds,key:key,s:st.slice(11,16),e:(en&&en.slice(0,10)===ds)?en.slice(11,16):'23:59',t:String(ev.subject||'(ไม่มีชื่อ)').trim(),room:gRoom(ev),inv:[],who:new Set()}; map.set(key,o); }
+        if(r.c.p) o.who.add(r.c.p.id);
+        (ev.attendees||[]).forEach(a=>{ const em=a.emailAddress||{}, ad=String(em.address||'').toLowerCase();
+          cfg.people.forEach(p=>{ if(p.mail&&ad===p.mail&&o.inv.indexOf(p.id)<0) o.inv.push(p.id); });
+          matchPeople((em.name||'')+' '+ad).forEach(id=>{ if(o.inv.indexOf(id)<0) o.inv.push(id); }); });
+      });
+      res.push({n:r.c.name,ok:true,c:cnt});
+    });
+    const cand=Array.from(map.values()).filter(o=>!skipHit(o.t));
+    const days={}, before={}; for(let i=0;i<gcfg.days;i++){ const ds=addD(from,i); days[ds]=getDay(ds); before[ds]=JSON.stringify(days[ds]); }
+    const keep=new Set(); let add=0, upd=0, del=0;
+    cand.forEach(o=>{
+      const L=days[o.ds], u='gr:'+o.key; keep.add(u);
+      let who=Array.from(o.who); if(!gcfg.team&&gcfg.fill) who=o.inv.slice();
+      let m=L.find(x=>x.uid===u)||L.find(x=>!x.uid&&x.s===o.s&&x.e===o.e&&nkey(x.t)===nkey(o.t));
+      if(!m){ L.push(normM({id:uid(),s:o.s,e:o.e,t:o.t,room:o.room,who:who,inv:o.inv,src:'graph',uid:u,gr:o.room})); add++; return; }
+      let ch=false;
+      if(m.uid!==u){ m.uid=u; ch=true; }
+      if(m.s!==o.s||m.e!==o.e){ m.s=o.s; m.e=o.e; ch=true; }
+      if(m.src==='graph'&&m.t!==o.t){ m.t=o.t; ch=true; }
+      if((!m.room||m.room===m.gr)&&m.room!==o.room){ m.room=o.room; ch=true; }
+      if(m.gr!==o.room){ m.gr=o.room; ch=true; }
+      if(JSON.stringify(m.inv)!==JSON.stringify(o.inv)){ m.inv=o.inv; ch=true; }
+      if(m.src==='graph'&&m.wa!=='manual'&&JSON.stringify(m.who)!==JSON.stringify(who)){ m.who=who; ch=true; }
+      if(ch) upd++;
+    });
+    const meOk=!results[0].err;                                       // ปฏิทินของเราดึงได้ → ลบประชุมที่หายไปจาก Outlook ได้อย่างปลอดภัย
+    if(meOk) Object.keys(days).forEach(ds=>{ const L=days[ds], n0=L.length; days[ds]=L.filter(m=>!(m.src==='graph'&&!keep.has(m.uid))); del+=n0-days[ds].length; });
+    Object.keys(days).forEach(ds=>{ if(JSON.stringify(days[ds])!==before[ds]) setDay(ds,days[ds]); });
+    gst.res=res; gst.at=Date.now(); gst.last=new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+    if(!allOk) gst.err='ดึงปฏิทินของบางคนไม่ได้ (อาจไม่มีสิทธิ์ดู) — ดูรายละเอียดที่ ⚙ ตั้งค่า';
+    saveGS();
+    if(manual||add||upd||del) say('🔄 ซิงก์ Outlook แล้ว: เพิ่ม '+add+' · อัปเดต '+upd+(del?' · ลบที่ยกเลิก '+del:'')+' (ช่วง '+gcfg.days+' วัน)');
+  }catch(e){
+    gst.err=(e.message==='LOGIN')?'เซสชันหมดอายุ — กด “🔗 เชื่อม Outlook” อีกครั้ง (ต้องทำวันละครั้ง)':String(e.message||e).slice(0,140);
+    if(manual) say('⚠ ซิงก์ Outlook ไม่สำเร็จ: '+gst.err,true);
+  }finally{ gst.busy=false; paintOl(); refreshTodayCard(); }
+}
+function paintOl(){ if(shown()&&!md) render(); }
+function olLine(){
+  if(!connected()) return '<div class="mg-ol"><span class="no">● ยังไม่ได้เชื่อม Outlook</span> — กด <b>🔗 เชื่อม Outlook อัตโนมัติ</b> เพื่อให้ระบบดึงประชุมของคุณและทีมเองทุกวัน'+(gst.err?' <span class="no">⚠ '+E(gst.err)+'</span>':'')+'</div>';
+  return '<div class="mg-ol"><span class="ok">● เชื่อม Outlook แล้ว</span>'+(gst.busy?'<span>⟳ กำลังซิงก์…</span>':(gst.last?'<span>ซิงก์ล่าสุด '+E(gst.last)+' · ช่วง '+gcfg.days+' วัน</span>':''))+
+    (gst.res.length?'<span class="mg-pr" style="margin:0">'+gst.res.map(r=>'<span class="'+(r.ok?'g':'b')+'" title="'+(r.ok?'ปฏิทินของ '+E(r.n)+' ดึงได้ '+r.c+' ประชุม':'ดึงปฏิทินของ '+E(r.n)+' ไม่ได้ (HTTP '+r.c+')')+'">'+E(r.n)+(r.ok?' '+r.c:' ✕')+'</span>').join('')+'</span>':'')+
+    (gst.err?'<span class="no">⚠ '+E(gst.err)+'</span>':'')+'<button type="button" class="btn-g" data-mg="olset" style="padding:3px 10px;font-size:12px">⚙ ตั้งค่า</button></div>';
+}
+function olModal(){
+  imp=null; const ru=redirectUri(), file=location.protocol==='file:', con=connected();
+  openMd('<h3>🔗 เชื่อม Outlook อัตโนมัติ</h3>'+
+    '<div class="mg-sb">ล็อกอินด้วยบัญชีบริษัท <b>ครั้งเดียว</b> แล้วระบบดึงประชุมจากปฏิทินของคุณ <b>และของทีม</b> (Earn / Natcha / Mana / Benz) มาเองทุกวัน — คนที่มีประชุมนั้นอยู่ในปฏิทินจะถูกลงชื่อให้ (ยังแก้เองได้ และที่แก้จะไม่ถูกทับ) · ไม่เก็บรหัสผ่าน ใช้ Microsoft login มาตรฐาน อ่านปฏิทินอย่างเดียว</div>'+
+    (file?'<div class="mg-stp" style="border-color:var(--warn)">⚠ ตอนนี้เปิดไฟล์จากเครื่อง (file://) — Microsoft ไม่ให้ล็อกอินจากไฟล์ ต้องเปิดผ่านลิงก์ https:// (เช่น GitHub Pages ที่คุณใช้อยู่)</div>':'')+
+    '<details '+(gcfg.clientId?'':'open')+'><summary style="cursor:pointer;font-weight:800;margin:6px 0">📋 ตั้งค่าครั้งแรก (ทำครั้งเดียว ~5 นาที)</summary><div class="mg-stp">'+
+    '1) เข้า <b>entra.microsoft.com</b> → Identity → Applications → <b>App registrations</b> → <b>New registration</b><br>'+
+    '2) Name: <code>QE Tracker</code> · Supported account types: <b>Accounts in this organizational directory only</b><br>'+
+    '3) Redirect URI: เลือกชนิด <b>Single-page application (SPA)</b> แล้วใส่<br><code>'+E(ru)+'</code><br>'+
+    '4) กด Register → คัดลอก <b>Application (client) ID</b> และ <b>Directory (tenant) ID</b> มาใส่ช่องด้านล่าง<br>'+
+    '5) เมนู <b>API permissions</b> → Add a permission → Microsoft Graph → <b>Delegated permissions</b> → ติ๊ก <code>Calendars.Read</code> และ <code>Calendars.Read.Shared</code> → Add<br>'+
+    '6) ถ้าตอนล็อกอินขึ้นว่า “ต้องได้รับอนุมัติจากผู้ดูแล” ให้ส่งขั้นตอนนี้ให้ IT กด Grant admin consent (ขอเฉพาะสิทธิ์อ่านปฏิทิน)</div></details>'+
+    '<div class="mg-fg"><div class="full"><label>Application (client) ID</label><input id="olCid" value="'+E(gcfg.clientId)+'" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" autocomplete="off"></div>'+
+    '<div><label>Directory (tenant) ID — เว้นว่างได้</label><input id="olTen" value="'+E(gcfg.tenant==='organizations'?'':gcfg.tenant)+'" placeholder="organizations" autocomplete="off"></div>'+
+    '<div><label>ดึงล่วงหน้า</label><select id="olDays"><option value="7"'+(gcfg.days===7?' selected':'')+'>7 วัน</option><option value="14"'+(gcfg.days===14?' selected':'')+'>14 วัน</option><option value="30"'+(gcfg.days===30?' selected':'')+'>30 วัน</option></select></div>'+
+    '<div class="full"><label style="display:flex;gap:8px;align-items:center;cursor:pointer;font-weight:600"><input type="checkbox" id="olTeam" '+(gcfg.team?'checked':'')+' style="width:auto"> ดึงปฏิทินของ Earn / Natcha / Mana ด้วย และลงชื่อตามปฏิทินของแต่ละคน (ต้องเป็นปฏิทินที่คุณเปิดดูได้ · อีเมลตั้งที่ 👥 ตั้งค่าทีม)</label></div>'+
+    '<div class="full"><label style="display:flex;gap:8px;align-items:center;cursor:pointer;font-weight:600"><input type="checkbox" id="olAuto" '+(gcfg.auto?'checked':'')+' style="width:auto"> ซิงก์เองเมื่อเปิดหน้านี้ และทุก 20 นาที</label></div>'+
+    '<div class="full"><label style="display:flex;gap:8px;align-items:center;cursor:pointer;font-weight:600"><input type="checkbox" id="olFill" '+(gcfg.fill?'checked':'')+' style="width:auto"> (เมื่อไม่ดึงปฏิทินทีม) ลงชื่อตามผู้ถูกเชิญใน Outlook ให้อัตโนมัติ</label></div></div>'+
+    (con&&gst.res.length?'<div class="mg-pr">'+gst.res.map(r=>'<span class="'+(r.ok?'g':'b')+'">'+E(r.n)+(r.ok?' ✓ '+r.c+' ประชุม':' ✕ ดึงไม่ได้ (HTTP '+r.c+')')+'</span>').join('')+'</div>':'')+
+    '<div class="mg-act">'+(con?'<button type="button" class="btn-p" data-o="sync" style="animation:none">🔄 บันทึกแล้วซิงก์ตอนนี้</button><button type="button" class="btn-g" data-o="go">🔁 ล็อกอินใหม่</button><button type="button" class="btn-g" data-o="out" style="color:var(--t-dang)">ตัดการเชื่อมต่อ</button>':'<button type="button" class="btn-p" data-o="go" style="animation:none">🔐 เชื่อมต่อด้วยบัญชี Microsoft</button><button type="button" class="btn-g" data-o="save">บันทึกการตั้งค่า</button>')+'<button type="button" class="btn-g" data-x="cancel">ปิด</button></div>',m=>{
+    const readOl=()=>{ gcfg.clientId=m.querySelector('#olCid').value.trim(); gcfg.tenant=m.querySelector('#olTen').value.trim()||'organizations'; gcfg.days=+m.querySelector('#olDays').value||14; gcfg.team=m.querySelector('#olTeam').checked; gcfg.auto=m.querySelector('#olAuto').checked; gcfg.fill=m.querySelector('#olFill').checked?1:0; saveG(); };
+    m.addEventListener('click',e=>{ const b=e.target.closest('[data-o]'); if(!b) return; const a=b.dataset.o; readOl();
+      if(a==='go') gSignIn();
+      else if(a==='save'){ closeMd(); render(); say('✅ บันทึกการตั้งค่าแล้ว'); }
+      else if(a==='sync'){ closeMd(); gSync(true); }
+      else if(a==='out'){ try{ localStorage.removeItem(GT); }catch(x){} gst={busy:false,last:'',at:0,res:[],err:''}; saveGS(); closeMd(); render(); say('ตัดการเชื่อมต่อ Outlook แล้ว'); } });
+  });
+}
+/* กลับจากหน้าล็อกอิน Microsoft (?code=...) */
+async function gReturn(){
+  const q=new URLSearchParams(location.search); if(!(q.has('code')||q.has('error'))) return;
+  let p=null; try{ p=JSON.parse(sessionStorage.getItem(GP)||'null'); }catch(e){}
+  if(!p||q.get('state')!==p.s) return;
+  try{ sessionStorage.removeItem(GP); }catch(e){}
+  const code=q.get('code'), err=q.get('error_description')||q.get('error')||'';
+  try{ history.replaceState(null,'',location.pathname+location.hash); }catch(e){}
+  openMeet();
+  if(!code){ gst.err='เชื่อม Outlook ไม่สำเร็จ: '+err.slice(0,200); paintOl(); say(gst.err,true); return; }
+  try{ await tokenReq({grant_type:'authorization_code',code:code,redirect_uri:redirectUri(),code_verifier:p.v}); say('✅ เชื่อม Outlook แล้ว — กำลังดึงประชุม…'); await gSync(true); }
+  catch(e){ gst.err='แลกโทเคนไม่สำเร็จ: '+String(e.message||e).slice(0,160); paintOl(); say(gst.err,true); }
+}
+const _start=()=>{ setTimeout(()=>{ gReturn().then(()=>{ if(connected()&&gcfg.auto&&Date.now()-(gst.at||0)>5*60000&&!gst.busy) gSync(false); }); },500); };
+if(document.readyState==='complete') _start(); else window.addEventListener('load',_start);
+setInterval(()=>{ if(document.hidden||!connected()||!gcfg.auto||gst.busy) return; if(Date.now()-(gst.at||0)>20*60000) gSync(false); },60000);
+
+/* ---------- เหตุการณ์ในหน้า ---------- */
+view.addEventListener('click',async e=>{
+  const b=e.target.closest('[data-mg]'); if(!b) return; const a=b.dataset.mg, id=b.dataset.m;
+  if(a==='prev'||a==='next'){ const step=ui.view==='week'?7:1; ui.date=addD(ui.date,a==='prev'?-step:step); render(); }
+  else if(a==='today'){ ui.date=today; render(); }
+  else if(a==='vday'||a==='vweek'){ ui.view=a==='vday'?'day':'week'; saveUI(); render(); }
+  else if(a==='goday'){ ui.date=b.dataset.d; ui.view='day'; saveUI(); render(); window.scrollTo(0,0); }
+  else if(a==='add') editModal(null);
+  else if(a==='edit') editModal(id);
+  else if(a==='dup'){ mutate(ui.date,L=>{ const m=L.find(x=>x.id===id); if(m) L.push(normM(Object.assign({},m,{id:uid(),uid:'',src:'',who:[],wa:''}))); }); say('⧉ ทำซ้ำแล้ว — ปรับเวลา/หัวข้อได้ที่ ✎'); }
+  else if(a==='del'){ const m=getDay(ui.date).find(x=>x.id===id); if(m&&window.confirm('ลบประชุม “'+m.t+'”?'+(m.src==='graph'?'\n(ประชุมจาก Outlook จะกลับมาอีกตอนซิงก์ ถ้ายังอยู่ในปฏิทิน — ใช้ “ข้ามเสมอ” ที่ 👥 ตั้งค่าทีม ถ้าไม่ต้องการ)':''))) mutate(ui.date,L=>{ const i=L.findIndex(x=>x.id===id); if(i>=0) L.splice(i,1); }); }
+  else if(a==='who') toggleWho(id,b.dataset.p);
+  else if(a==='imp') importModal('ics');
+  else if(a==='ol'){ if(connected()) gSync(true); else olModal(); }
+  else if(a==='olset') olModal();
+  else if(a==='copy'){ const t=scheduleText(ui.date,ui.at); if(await copyText(t)){ const un=getDay(ui.date).filter(m=>!m.who.length).length; say('📋 คัดลอกข้อความ Schedule '+fmtD(ui.date)+' แล้ว — วางใน Teams ได้เลย'+(un?'\n⚠ ยังมี '+un+' ประชุมที่ไม่ได้ระบุคน':'')); } }
+  else if(a==='team') teamModal();
+  else if(a==='exp') exportJson();
+  else if(a==='impjson') g('mgJson').click();
+});
+view.addEventListener('change',e=>{
+  const t=e.target;
+  if(t.id==='mgDate'){ if(isoOK(t.value)){ ui.date=t.value; render(); } }
+  else if(t.id==='mgAt'){ ui.at=t.checked; saveUI(); }
+  else if(t.id==='mgJson'){ if(t.files&&t.files[0]) importJson(t.files[0]); t.value=''; }
+  else if(t.dataset&&t.dataset.mg==='room'){ const v=t.value.trim(), id=t.dataset.m; mutate(ui.date,L=>{ const m=L.find(x=>x.id===id); if(m) m.room=v; }); }
+});
+document.addEventListener('input',e=>{ if(md&&imp) onImpInput(e); });
+document.addEventListener('change',e=>{ if(md&&imp&&md.contains(e.target)) onImpChange(e); });
+document.addEventListener('click',e=>{ if(md&&imp&&md.contains(e.target)) onImpClick(e); });
+setInterval(()=>{
+  if(!shown()||md||document.hidden) return;
+  const a=document.activeElement; if(a&&view.contains(a)&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return;
+  try{ cfg=readCfg(); if(sigNow()!==lastSig) render(); }catch(err){}
+},3000);
+
+/* ================= การ์ดบนหน้า “☀️ วันนี้” ================= */
+const tv=g('viewToday');
+function todayCard(){
+  const ds=today, list=getDay(ds).sort(bySt), A=analyze(list,ds), un=list.filter(m=>!m.who.length).length;
+  const nm=m=>m.who.indexOf('all')>=0?'All':(m.who.length?m.who.map(id=>(P(id)||{name:id}).name).join(', '):'ยังไม่ระบุคน');
+  let rows='';
+  list.slice(0,8).forEach(m=>{ const cf=A.conf[m.id];
+    rows+='<div class="td-it" data-mgt="open" title="เปิดหน้าประชุม"><div class="td-dt '+(!m.who.length?'today':'info')+'">'+E(m.s)+'<br>'+E(m.e)+'</div><div class="td-tx"><b>'+E(m.t)+'</b><small>'+(m.who.length?'👤 ':'⚠ ')+E(nm(m))+(m.room?' · 📍 '+E(m.room):'')+(cf?' · ⚠ ซ้อนเวลา':'')+'</small></div><div class="td-ac"></div></div>'; });
+  if(list.length>8) rows+='<div class="td-empty">…และอีก '+(list.length-8)+' ประชุม — กด “เปิดหน้าประชุม”</div>';
+  if(!list.length) rows='<div class="td-empty">ยังไม่มีประชุมที่บันทึกของวันนี้ — '+(connected()?'กด “เปิดหน้าประชุม” แล้วซิงก์ Outlook':'กด “เปิดหน้าประชุม” แล้วเชื่อม Outlook')+'</div>';
+  const busy=cfg.people.filter(p=>A.per[p.id].n).map(p=>E(p.name)+' '+A.per[p.id].n).join(' · ');
+  return '<section class="td-card" id="mgToday" style="--tc:#0ea5e9"><h3>🗓️ ประชุมวันนี้<span class="td-n'+(un?' late':'')+'">'+list.length+'</span></h3><div class="td-ds">'+(list.length?(un?'⚠ ยังไม่ระบุคน '+un+' ประชุม · ':'✓ ลงคนครบแล้ว · ')+(busy||''):'ลงคนเข้าร่วมได้ที่แท็บ “🗓️ ประชุม”')+'</div>'+rows+
+    '<div class="td-more"><button type="button" class="btn-p" data-mgt="open" style="animation:none">🗓️ เปิดหน้าประชุม</button><button type="button" class="btn-g" data-mgt="copy">📋 คัดลอก Schedule</button></div></section>';
+}
+function refreshTodayCard(){
+  const grid=tv.querySelector('.td-grid'); if(!grid) return;
+  const old=g('mgToday'); if(old) old.remove();
+  const tmp=document.createElement('div'); tmp.innerHTML=todayCard(); grid.insertBefore(tmp.firstChild,grid.firstChild);
+}
+new MutationObserver(()=>{ if(!g('mgToday')) refreshTodayCard(); }).observe(tv,{childList:true});
+refreshTodayCard();
+document.addEventListener('click',async e=>{
+  const b=e.target.closest('[data-mgt]'); if(!b||!tv.contains(b)) return;
+  if(b.dataset.mgt==='open') openMeet(today);
+  else if(b.dataset.mgt==='copy'){ if(await copyText(scheduleText(today,ui.at))) say('📋 คัดลอกข้อความ Schedule วันนี้แล้ว'); }
+});
+window.__MTG={open:openMeet,parseText:parseText,icsEvents:icsEvents,scheduleText:scheduleText,getDay:getDay,setDay:setDay,cfg:()=>cfg,analyze:analyze,sync:gSync,gcfg:()=>gcfg,connected:connected};
+})();
+
+</script>
 </body></html>
