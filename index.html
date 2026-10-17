@@ -1712,10 +1712,16 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none!importa
   const PREFIX='countermeasure-cloud:';
   const MANAGED=new Set(['TrackerItem','TrashItem','ChecklistDay','AppConfig','MissionData','OTData','LVData','HoshinData','LocalStorageData']);
   /* Sync all business-data keys used by every page/module. Keep device preferences and secrets local. */
-  const LOCAL_KEY_PREFIXES=['issue_tracker_','qe_','daily_checklist_'];
-  const LOCAL_KEY_EXCLUDE=new Set([CFG,'issue_tracker_v2','issue_tracker_trash','issue_tracker_title','issue_tracker_line','issue_tracker_imgauto','issue_tracker_lastbackup','issue_tracker_theme','ui_theme','daily_checklist_fs']);
+  const LOCAL_KEY_PREFIXES=['issue_tracker_','qe_'];
+  const LOCAL_KEY_EXCLUDE=new Set([CFG,'issue_tracker_autocfg','issue_tracker_cal','issue_tracker_own','issue_tracker_sort','issue_tracker_sort2','qe_mainjobs_ui_v1','qe_mainjobs_log_v2','qe_missions_ui_v1','qe_hoshin_ui_v1','qe_hoshin_sort_v1','qe_missions_v1','qe_hoshin_v1','issue_tracker_v2','issue_tracker_trash','issue_tracker_title','issue_tracker_line','issue_tracker_imgauto','issue_tracker_lastbackup','issue_tracker_theme','ui_theme','daily_checklist_fs']);
   let applyingRemote=false;
-  function isSharedLocalKey(k){return LOCAL_KEY_PREFIXES.some(p=>String(k).startsWith(p))&&!LOCAL_KEY_EXCLUDE.has(String(k));}
+  const MJKEY='qe_mainjobs_data_v2', BASEK='countermeasure_sync_base_v1', BAKK='countermeasure_local_backup_v1';
+  function isSharedLocalKey(k){ k=String(k); return k!==MJKEY&&LOCAL_KEY_PREFIXES.some(p=>k.startsWith(p))&&!LOCAL_KEY_EXCLUDE.has(k); }
+  function isSyncKey(k){ return String(k)===MJKEY||isSharedLocalKey(k); }
+  const fnv=x=>{ let h=2166136261; for(let i=0;i<x.length;i++){ h^=x.charCodeAt(i); h=Math.imul(h,16777619); } return (h>>>0).toString(36)+'.'+x.length; };
+  const hrec=r=>r?fnv(r.type+'|'+r.json):null;
+  function readMJ(){ try{ const o=JSON.parse(localStorage.getItem(MJKEY)||'null'); return (o&&typeof o==='object'&&o.v===2)?o:null; }catch(e){ return null; } }
+  const mjCanon=o=>{ if(!o) return ''; const c=Object.assign({},o); delete c.updated; return cj(c); };
   function sharedLocalSnapshot(){
     const o={};
     try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(isSharedLocalKey(k))o[k]=localStorage.getItem(k);}}catch(e){}
@@ -1773,7 +1779,7 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none!importa
   function appModel(){
     let ck={days:{},conf:{},notes:{}}; try{if(window.__checklist)ck=window.__checklist.get();}catch(e){}
     let title={}; try{title=getTitle();}catch(e){}
-    return {tracker:(typeof data!=='undefined'&&Array.isArray(data))?data:[],trash:(typeof trash!=='undefined'&&Array.isArray(trash))?trash:[],checklist:ck||{days:{},conf:{},notes:{}},title:title,missions:(window.MS?window.MS.get():null),hoshin:(window.HS?window.HS.get():null),sharedLocal:sharedLocalSnapshot()};
+    return {tracker:(typeof data!=='undefined'&&Array.isArray(data))?data:[],trash:(typeof trash!=='undefined'&&Array.isArray(trash))?trash:[],checklist:ck||{days:{},conf:{},notes:{}},title:title,missions:(window.MS?window.MS.get():null),hoshin:(window.HS?window.HS.get():null),sharedLocal:sharedLocalSnapshot(),mj:readMJ()};
   }
   function toRecords(m){
     const a=[];
@@ -1788,7 +1794,40 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none!importa
     if(window.MS&&m.missions)window.MS.records(m.missions,PREFIX).forEach(r=>a.push(r));
     if(window.HS&&m.hoshin)window.HS.records(m.hoshin,PREFIX).forEach(r=>a.push(r));
     Object.entries(m.sharedLocal||{}).forEach(([k,v])=>a.push({key:PREFIX+'local:'+encodeURIComponent(k),type:'LocalStorageData',payload:{storageKey:k,value:v},date:null}));
+    if(m.mj) mjRecords(m.mj,PREFIX).forEach(r=>a.push(r));
     return a;
+  }
+  /* ----- Main QE Jobs → หลาย record (ใช้ entity_type เดิม LocalStorageData เพื่อไม่ต้องแก้ schema) ----- */
+  function mjRecords(S,P){
+    const a=[], N=S.newproj||{}, FU=N.followup||{}, CP=S.claimPlan||{}, mk=(key,pl)=>a.push({key:P+'mj:'+key,type:'LocalStorageData',payload:pl,date:null});
+    const core=Object.assign({},S); delete core.updated;
+    core.newproj=Object.assign({},N); delete core.newproj.followup; core.newproj.pv=Object.assign({},N.pv||{}); delete core.newproj.pv.models;
+    core.claimPlan=Object.assign({},CP); delete core.claimPlan.items;
+    mk('core',{mjk:'core',v:core});
+    ((N.pv&&N.pv.models)||[]).forEach((x,i)=>mk('pv:'+encodeURIComponent(x.id),{mjk:'pv',o:i,v:x}));
+    (CP.items||[]).forEach((x,i)=>mk('cp:'+encodeURIComponent(x.id),{mjk:'cp',o:i,v:x}));
+    Object.keys(FU).forEach(pk=>{ const p=FU[pk]; if(!p||typeof p!=='object') return;
+      const meta=Object.assign({},p); delete meta.cats; meta.catKeys=Object.keys(p.cats||{});
+      mk('fm:'+encodeURIComponent(pk),{mjk:'fm',pk:pk,v:meta});
+      Object.keys(p.cats||{}).forEach(cat=>(p.cats[cat]||[]).forEach((it,i)=>mk('fi:'+encodeURIComponent(pk)+':'+encodeURIComponent(cat)+':'+encodeURIComponent(it.id),{mjk:'fi',pk:pk,cat:cat,o:i,v:it})));
+    });
+    return a;
+  }
+  function mjAssemble(rows,legacy){
+    if(rows&&rows.length){
+      let core=null; const pv=[],cp=[],fm={},fi=[];
+      rows.forEach(p=>{ if(p.mjk==='core') core=p.v; else if(p.mjk==='pv') pv.push(p); else if(p.mjk==='cp') cp.push(p); else if(p.mjk==='fm') fm[p.pk]=p.v; else if(p.mjk==='fi') fi.push(p); });
+      if(core){
+        const S=JSON.parse(JSON.stringify(core)), by=(a,b)=>(a.o||0)-(b.o||0);
+        S.v=2; S.newproj=S.newproj||{}; S.newproj.pv=S.newproj.pv||{}; S.claimPlan=S.claimPlan||{};
+        S.newproj.pv.models=pv.sort(by).map(x=>x.v); S.claimPlan.items=cp.sort(by).map(x=>x.v);
+        const F={}; Object.keys(fm).forEach(pk=>{ const meta=fm[pk]||{}, cats={}; (meta.catKeys||[]).forEach(c=>{ cats[c]=[]; }); F[pk]=Object.assign({},meta,{cats:cats}); delete F[pk].catKeys; });
+        fi.sort(by).forEach(p=>{ const Pj=F[p.pk]||(F[p.pk]={cats:{}}); (Pj.cats[p.cat]=Pj.cats[p.cat]||[]).push(p.v); });
+        S.newproj.followup=F; return S;
+      }
+    }
+    if(legacy){ try{ const o=JSON.parse(legacy); if(o&&o.v===2) return o; }catch(e){} }
+    return null;
   }
   function recMap(m){
     return new Map(toRecords(m).map(r=>[r.key,Object.assign({},r,{json:cj(r.payload)})]));
@@ -1827,20 +1866,25 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none!importa
       else if(x.type==='AppConfig')m.title=p.title||null;
       else if(x.type==='MissionData'||x.type==='OTData'||x.type==='LVData')(m.missionRows=m.missionRows||[]).push(p);
       else if(x.type==='HoshinData')(m.hoshinRows=m.hoshinRows||[]).push(p);
+      else if(x.type==='LocalStorageData'&&p.mjk)(m.mjRows=m.mjRows||[]).push(p);
+      else if(x.type==='LocalStorageData'&&p.storageKey===MJKEY)m.mjLegacy=p.value;
       else if(x.type==='LocalStorageData'&&p.storageKey&&isSharedLocalKey(p.storageKey))m.sharedLocal[p.storageKey]=p.value;
     });
+    m.mj=mjAssemble(m.mjRows,m.mjLegacy);
     m.tracker.sort((a,b)=>(b.id||0)-(a.id||0));
     m.trash.sort((a,b)=>String(b.deletedAt||'').localeCompare(String(a.deletedAt||'')));
     return m;
   }
-  function applyRemote(m){
+  function applyRemote(m){ const __p=applyingRemote; applyingRemote=true; try{ applyRemote_(m); } finally{ applyingRemote=__p; } }
+  function applyRemote_(m){
     applyingRemote=true;
     try{
       const remoteLocal=m.sharedLocal||{};
       const current=sharedLocalSnapshot();
       Object.keys(current).forEach(k=>{if(!(k in remoteLocal))localStorage.removeItem(k);});
       Object.entries(remoteLocal).forEach(([k,v])=>{if(v===null||v===undefined)localStorage.removeItem(k);else localStorage.setItem(k,String(v));});
-    }finally{applyingRemote=false;}
+    }finally{}
+    if(m.mj){ try{ const cur=readMJ(); if(!cur||mjCanon(cur)!==mjCanon(m.mj)){ m.mj.updated=(cur&&cur.updated)||new Date().toISOString(); localStorage.setItem(MJKEY,JSON.stringify(m.mj)); } }catch(e){} }
     if(typeof data!=='undefined'){data=m.tracker;localStorage.setItem('issue_tracker_v2',JSON.stringify(data));}
     if(typeof trash!=='undefined'){trash=m.trash;localStorage.setItem('issue_tracker_trash',JSON.stringify(trash));}
     if(m.title&&m.title.title)localStorage.setItem('issue_tracker_title',JSON.stringify(m.title));
@@ -1871,7 +1915,7 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none!importa
       if(changed.length)await upsertMany(changed);
       if(removed.length)await deleteMany(removed);
       const finalMap=await fetchRows();
-      lastSync=new Date().toLocaleString('th-TH');
+      lastSync=new Date().toLocaleString('th-TH'); saveBase(finalMap);
       if(localMoved(local)){ cache=local; again=true; }
       else if(safeToApply()){cache=finalMap;applyRemote(remoteModel(finalMap));}else cache=local;
       ready=true;setStatus('ok','เชื่อมต่อ <b>'+esc(table())+'</b> · บันทึกแล้ว '+esc(lastSync));
@@ -1882,12 +1926,49 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none!importa
     if(!cfg.enabled||!valid())return;
     clearTimeout(timer);timer=setTimeout(()=>syncNow(false).catch(()=>{}),850);
   }
+  /* ----- baseline ถาวร: hash ของข้อมูลกลางครั้งล่าสุดที่ซิงก์สำเร็จ (ไว้เทียบว่าเครื่องนี้แก้อะไรค้างอยู่) ----- */
+  const syncSig=()=>base()+'|'+table();
+  function loadBase(){ try{ const o=JSON.parse(localStorage.getItem(BASEK)||'null'); return (o&&o.v===1&&o.s===syncSig()&&o.m&&typeof o.m==='object')?o.m:null; }catch(e){ return null; } }
+  function saveBase(map){ const m={}; map.forEach((r,k)=>{ m[k]=hrec(r); }); try{ localStorage.setItem(BASEK,JSON.stringify({v:1,s:syncSig(),m:m})); }catch(e){} }
+  function mergeRecords(L,R,B){
+    const M=new Map(); let kept=0; const keys=new Set([...L.keys(),...R.keys()]);
+    keys.forEach(k=>{
+      const l=L.get(k), r=R.get(k), hl=hrec(l), hr=hrec(r);
+      if(hl===hr){ if(l) M.set(k,l); return; }
+      if(!B){ if(r) M.set(k,r); else if(l){ M.set(k,l); kept++; } return; }          // ไม่เคยซิงก์บนเครื่องนี้: ข้อมูลกลางชนะ แต่ของที่มีเฉพาะในเครื่องเก็บไว้
+      const hb=B[k]||null;
+      if(hl===hb){ if(r) M.set(k,r); return; }                                       // เครื่องนี้ไม่ได้แก้ → ตามข้อมูลกลาง (รวมถึงถูกลบ)
+      kept++; if(l) M.set(k,l);                                                      // เครื่องนี้แก้ค้างอยู่ (ข้อมูลกลางไม่เปลี่ยน หรือชนกัน) → ของเครื่องนี้ชนะ
+    });
+    return {M:M,kept:kept};
+  }
+  function migrateLegacy(remote){
+    if(Array.from(remote.values()).some(r=>r.payload&&r.payload.mjk)) return;
+    const leg=remote.get(PREFIX+'local:'+encodeURIComponent(MJKEY)); if(!leg||!leg.payload) return;
+    let ld=null; try{ ld=JSON.parse(leg.payload.value); }catch(e){} if(!ld||ld.v!==2) return;
+    const lm=readMJ();
+    if(!lm||String(ld.updated||'')>String(lm.updated||'')){
+      if(lm){ try{ localStorage.setItem(BAKK,JSON.stringify({at:new Date().toISOString(),[MJKEY]:localStorage.getItem(MJKEY)})); }catch(e){} }
+      const p=applyingRemote; applyingRemote=true; try{ localStorage.setItem(MJKEY,JSON.stringify(ld)); } finally{ applyingRemote=p; }
+    }
+  }
+  function backupLocal(local,remote){
+    let diff=false; local.forEach((l,k)=>{ const r=remote.get(k); if(r&&hrec(r)!==hrec(l)) diff=true; }); if(!diff) return;
+    const o={at:new Date().toISOString()}; ['issue_tracker_v2','issue_tracker_trash',MJKEY,'daily_checklist_v1','daily_checklist_notes','daily_checklist_conf'].forEach(k=>{ const v=localStorage.getItem(k); if(v!=null) o[k]=v; });
+    try{ localStorage.setItem(BAKK,JSON.stringify(o)); }catch(e){}
+  }
   async function connect(loadRemote){
     if(!cfg.enabled){setStatus('off','ปิดการใช้ฐานข้อมูลกลาง — ข้อมูลยังอยู่เฉพาะเครื่องนี้');return;}
     if(!valid()){setStatus('off','ยังไม่ได้ตั้งค่า Supabase — ใส่ค่าที่ต้นไฟล์ก่อนเผยแพร่');return;}
     setStatus('busy','กำลังเชื่อมต่อ Supabase…');
     const remote=await fetchRows();cache=remote;ready=true;
-    if(loadRemote&&remote.size){applyRemote(remoteModel(remote));}
+    if(loadRemote&&remote.size){
+      migrateLegacy(remote);
+      const local=recMap(appModel()), B=loadBase(), mg=mergeRecords(local,remote,B);
+      if(!B) backupLocal(local,remote);
+      applyRemote(remoteModel(mg.M)); saveBase(remote);
+      if(mg.kept) queue();                                                           // มีของที่แก้ค้างในเครื่อง → ส่งขึ้นฐานข้อมูลต่อ
+    }
     else if(!remote.size){await syncNow(true);}
     lastSync=new Date().toLocaleString('th-TH');
     setStatus('ok','เชื่อมต่อ <b>'+esc(table())+'</b> · '+(remote.size?'ดึงข้อมูลกลางล่าสุดแล้ว':'ย้ายข้อมูลในเครื่องขึ้นฐานข้อมูลแล้ว'));
@@ -1897,7 +1978,7 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none!importa
     if(!valid()||syncing||!safeToApply())return;
     const remote=await fetchRows();
     if(localMoved(cache)){ queue(); return; }
-    cache=remote;ready=true;applyRemote(remoteModel(remote));
+    cache=remote;ready=true;applyRemote(remoteModel(remote));saveBase(remote);
     lastSync=new Date().toLocaleString('th-TH');setStatus('ok','เชื่อมต่อ <b>'+esc(table())+'</b> · อัปเดตล่าสุด '+esc(lastSync));
     if(showToast&&typeof toast==='function')toast('↻ ดึงข้อมูลล่าสุดแล้ว');
   }
@@ -1937,8 +2018,8 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none!importa
   /* Any edit made by any page is queued automatically, even if that module did not call SPDB.queue(). */
   try{
     const nativeSet=Storage.prototype.setItem,nativeRemove=Storage.prototype.removeItem,nativeClear=Storage.prototype.clear;
-    Storage.prototype.setItem=function(k,v){const r=nativeSet.call(this,k,v);if(this===localStorage&&!applyingRemote&&isSharedLocalKey(k))queue();return r;};
-    Storage.prototype.removeItem=function(k){const shared=this===localStorage&&isSharedLocalKey(k);const r=nativeRemove.call(this,k);if(shared&&!applyingRemote)queue();return r;};
+    Storage.prototype.setItem=function(k,v){const r=nativeSet.call(this,k,v);if(this===localStorage&&!applyingRemote&&isSyncKey(k))queue();return r;};
+    Storage.prototype.removeItem=function(k){const shared=this===localStorage&&isSyncKey(k);const r=nativeRemove.call(this,k);if(shared&&!applyingRemote)queue();return r;};
     Storage.prototype.clear=function(){const r=nativeClear.call(this);if(this===localStorage&&!applyingRemote)queue();return r;};
   }catch(e){}
 })();
@@ -1967,7 +2048,7 @@ const MONTHS_SHORT=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.'
 const Y_MIN=2023, Y_MAX=2032;
 const ymdNow=()=>{const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;};
 let today=ymdNow();   // อัปเดตอัตโนมัติเมื่อข้ามวัน (ดูสคริปต์ท้ายไฟล์)
-const esc=s=>(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 /* ไฮไลต์คำที่พิมพ์ในช่อง 🔍 ค้นหา (หน้า Tracker) */
 function hlq(s){
   s=String(s==null?'':s);
@@ -7037,7 +7118,7 @@ if(document.readyState==='complete') boot(); else window.addEventListener('load'
 
 </script>
 <script id="nfAddon">
-/* ===== QE Follow-up add-on v9 : New project → Supplier / In-house / Customer (หลาย Supplier / หลายไลน์ · หลาย Part No.) =====
+/* ===== QE Follow-up add-on v10 : New project → Supplier / In-house / Customer (หลาย Supplier / หลายไลน์ · หลาย Part No.) =====
    - ตาราง Stage ด้านบนทุกแถบ (ลิงก์กับตาราง PV หน้าแรก)
    - พิมพ์ / เลือก Owner ในตาราง แล้วกด 💾 บันทึก ปุ่มเดียวด้านบน (มี Rev. เมื่อเลื่อน Plan)
    - ปุ่ม 📤 ส่งเข้า Tracker หน้าแรก
@@ -7116,7 +7197,7 @@ function writeS(S){
   finally{ selfWrite=false; }
 }
 function mkItems(cat,codes,ins){
-  return TPL[cat].map((x,i)=>({id:uid()+i,ins:ins||'main',no:x[0],task:x[1],format:x[2],owner:'',target:'',actual:'',status:'notstarted',note:'',rev:0,hist:[],pr:[],order:i,stage:autoStage(x[1],codes)}));
+  return TPL[cat].map((x,i)=>({id:'t.'+cat+'.'+(ins||'main')+'.'+x[0]+'.'+i,ins:ins||'main',no:x[0],task:x[1],format:x[2],owner:'',target:'',actual:'',status:'notstarted',note:'',rev:0,hist:[],pr:[],order:i,stage:autoStage(x[1],codes)}));
 }
 function ensureProj(S,name){
   const k=pkey(name), F=S.newproj.followup; let p=F[k];
@@ -7132,7 +7213,7 @@ function ensureProj(S,name){
     });
     let L=p.ins[c]; if(!Array.isArray(L)||!L.length) L=p.ins[c]=[{id:'main',name:'',ref:''}];
     const seen=new Set(); L.forEach(x=>{ x.id=String(x.id||('n'+uid())); while(seen.has(x.id)) x.id+='x'; seen.add(x.id); x.name=String(x.name||''); x.ref=String(x.ref||''); });
-    p.cats[c].forEach(it=>{ if(!it.ins||!seen.has(it.ins)) it.ins=L[0].id; });
+    p.cats[c].forEach(it=>{ if(!it.ins) it.ins=L[0].id; else if(!seen.has(it.ins)){ L.push({id:it.ins,name:'',ref:''}); seen.add(it.ins); } });   // ชุดที่ถูกเพิ่มพร้อมกันโดยสองคน: คงไว้ ไม่ยุบรวม
   });
   p._seeded=1; p.rev=p.rev||0; p.name=p.name||name;
   return p;
@@ -7398,7 +7479,7 @@ function renderTools(){
   el.innerHTML=`<input id="nfSearch" placeholder="🔎 ค้นหาหัวข้อ / Owner / Note" value="${E(state.search)}" autocomplete="off">`+
     `<select id="nfFSt"><option value="all">ทุกสถานะ</option>${Object.keys(ST).map(s=>`<option value="${s}"${state.status===s?' selected':''}>${ST[s]}</option>`).join('')}</select>`+
     `<select id="nfFStage"><option value="all">ทุก Stage</option><option value="none"${state.stage==='none'?' selected':''}>ไม่ระบุ Stage</option>${C.codes.map(c=>`<option value="${E(c)}"${state.stage===c?' selected':''}>${E(c)}</option>`).join('')}</select>`+
-    `<span class="nf-grow"></span><button class="nf-b nf-p" data-a="add" style="animation:none">＋ เพิ่มแผน</button>`;
+    `<span class="nf-grow"></span><button class="nf-b" data-a="bulkown" title="ตั้ง Owner ให้ทุกแถวที่แสดงอยู่ในครั้งเดียว">👤 ตั้ง Owner ทั้งชุด</button><button class="nf-b nf-p" data-a="add" style="animation:none">＋ เพิ่มแผน</button>`;
 }
 /* Timeline: ◆ Plan · ● Actual · ◇ Plan เดิม (ก่อนเลื่อน) · แท็ก Stage จากตารางด้านบน */
 function renderTL(){ const sn=snapScroll(); renderTL0(); if(sn){ const e=ov&&ov.querySelector('.nf-tlw'); if(e&&sn.els['.nf-tlw'][0]){ e.scrollTop=sn.els['.nf-tlw'][0][0]; e.scrollLeft=sn.els['.nf-tlw'][0][1]; } if(ov) ov.scrollTop=sn.top; } }
@@ -7600,6 +7681,14 @@ function insDel(){
       renderAll(true); toast('🗑 ลบ'+M.one+' “'+insName(cat,cur,L)+'” แล้ว'); });
   });
 }
+function bulkOwner(){
+  const rows=visible(); if(!rows.length){ toast('ไม่มีรายการที่แสดงอยู่',true); return; }
+  openMo(`<h3>👤 ตั้ง Owner ทั้งชุด</h3><div class="nf-sub">ใช้กับ <b>${rows.length}</b> แถวที่แสดงอยู่ตอนนี้ (${E(state.tab)}${insSuffix()}${state.stage!=='all'?' · Stage '+E(state.stage==='none'?'ไม่ระบุ':state.stage):''}) — เป็นร่าง จนกว่าจะกด 💾 บันทึก</div><form id="nfF"><div class="nf-fg"><div class="full"><label>Owner</label><input name="o" list="nfOwners" autocomplete="off" placeholder="พิมพ์ / เลือกชื่อ"></div><div class="full"><label style="display:flex;gap:8px;align-items:center;cursor:pointer"><input type="checkbox" name="e" checked style="width:auto"> เฉพาะแถวที่ยังไม่มี Owner (ไม่ทับชื่อเดิม)</label></div></div><div class="nf-mact"><button type="submit" class="nf-b nf-p" style="animation:none">ตั้งค่า</button><button type="button" class="nf-b" data-mo="cancel">ยกเลิก</button></div></form>`,m=>{
+    m.querySelector('#nfF').addEventListener('submit',ev=>{ ev.preventDefault(); const f=ev.target.elements, o=f.o.value.trim(); if(!o){ toast('กรุณาใส่ชื่อ Owner',true); return; }
+      let n=0; rows.forEach(it=>{ if(f.e.checked&&(it.owner||'').trim()) return; if(it.owner!==o){ it.owner=o; n++; } });
+      closeMo(); renderAll(); toast('👤 ตั้ง Owner “'+o+'” ให้ '+n+' แถว (ยังไม่บันทึก — กด 💾)'); });
+  });
+}
 function stagePlan(){
   let n=0, miss=0;
   CATS.forEach(c=>W.cats[c].forEach(it=>{
@@ -7615,14 +7704,16 @@ function addPvRow(){
 }
 
 /* ---------- ส่งเข้า Tracker หน้าแรก ---------- */
-function planSend(S,scope,skipDone){
-  const P=ensureProj(S,state.name), cats=scope==='all'?CATS:[state.tab]; const r={cats:cats,P:P,upd:0,add:0,noOwn:0,noPlan:0,done:0,list:[]};
+function planSend(S,scope,skipDone,within){
+  const maxD=within?isoOf(new Date(Date.now()+within*864e5)):'';
+  const P=ensureProj(S,state.name), cats=scope==='all'?CATS:[state.tab]; const r={cats:cats,P:P,upd:0,add:0,noOwn:0,noPlan:0,done:0,far:0,list:[]};
   cats.forEach(c=>P.cats[c].forEach(it=>{
     if(scope==='ins'&&it.ins!==state.ins[c]) return;
     const linked=trackerLinked(it);
     if(it.status==='na'&&!linked) return;
     if(!linked&&skipDone&&it.status==='done'){ r.done++; return; }
     if(!it.target){ r.noPlan++; return; }
+    if(maxD&&!linked&&it.target>maxD){ r.far++; return; }
     if(!(it.owner||'').trim()){ r.noOwn++; return; }
     r.list.push({c:c,it:it,linked:linked}); if(linked) r.upd++; else r.add++;
   }));
@@ -7633,32 +7724,33 @@ function sendModal(){
   if(dirtyN()){ toast('มีการแก้ไขที่ยังไม่บันทึก — กด 💾 บันทึก ก่อนส่งเข้า Tracker',true); return; }
   openMo(`<h3>📤 ส่งเข้า Tracker หน้าแรก</h3><div class="nf-sub">สร้างรายการใน Tracker: ปัญหา = ชื่อ Project · แถบ · หัวข้อ, ผู้แจ้ง = Owner, Due Date = Plan. ส่งซ้ำ = อัปเดตรายการเดิม (ถ้า Plan เปลี่ยนจะเข้า Rev. ของ Tracker, Done จะปิดรายการให้)</div>`+
     `<div class="nf-fg"><div class="full"><label>ขอบเขต</label><select id="nfSc">${MULTI[state.tab]?`<option value="ins">เฉพาะ ${E(state.tab)}${insSuffix()}</option><option value="tab">ทั้งแถบ ${E(state.tab)} (ทุก${MULTI[state.tab].one} · ${W.ins[state.tab].length} ชุด)</option>`:`<option value="tab">เฉพาะแถบ ${E(state.tab)}</option>`}<option value="all">ทั้ง 3 แถบ (Supplier + In-house + Customer · ทุกชุด)</option></select></div>`+
-    `<div class="full"><label style="display:flex;gap:8px;align-items:center;cursor:pointer"><input type="checkbox" id="nfSk" checked style="width:auto"> ข้ามรายการใหม่ที่ Done / N/A แล้ว</label></div></div><div id="nfSm" class="nf-hist" style="margin-top:10px"></div>`+
+    `<div class="full"><label style="display:flex;gap:8px;align-items:center;cursor:pointer"><input type="checkbox" id="nfSk" checked style="width:auto"> ข้ามรายการใหม่ที่ Done / N/A แล้ว</label></div><div class="full"><label>ส่งเฉพาะรายการใหม่ที่ Plan อยู่ภายใน</label><select id="nfWi"><option value="0">ทุกรายการ</option><option value="14">14 วันข้างหน้า</option><option value="30">30 วันข้างหน้า</option><option value="60">60 วันข้างหน้า</option></select></div></div><div id="nfSm" class="nf-hist" style="margin-top:10px"></div>`+
     `<div class="nf-mact"><button class="nf-b nf-p" id="nfGo" style="animation:none">📤 ส่งเข้า Tracker</button><button class="nf-b" data-mo="cancel">ยกเลิก</button></div>`,m=>{
-    const sum=()=>{ const r=planSend(readS(),m.querySelector('#nfSc').value,m.querySelector('#nfSk').checked);
-      m.querySelector('#nfSm').innerHTML=`<div>✅ สร้างใหม่ <b>${r.add}</b> · อัปเดตรายการเดิม <b>${r.upd}</b></div><div>⏭ ข้าม: ยังไม่มี Owner <b>${r.noOwn}</b> · ยังไม่มี Plan <b>${r.noPlan}</b>${r.done?` · Done แล้ว <b>${r.done}</b>`:''}</div>`;
+    const sum=()=>{ const r=planSend(readS(),m.querySelector('#nfSc').value,m.querySelector('#nfSk').checked,+m.querySelector('#nfWi').value||0);
+      m.querySelector('#nfSm').innerHTML=`<div>✅ สร้างใหม่ <b>${r.add}</b> · อัปเดตรายการเดิม <b>${r.upd}</b></div><div>⏭ ข้าม: ยังไม่มี Owner <b>${r.noOwn}</b> · ยังไม่มี Plan <b>${r.noPlan}</b>${r.done?` · Done แล้ว <b>${r.done}</b>`:''}${r.far?` · Plan ไกลเกินช่วง <b>${r.far}</b>`:''}</div>`;
       m.querySelector('#nfGo').disabled=!(r.add+r.upd); };
-    m.querySelector('#nfSc').addEventListener('change',sum); m.querySelector('#nfSk').addEventListener('change',sum); sum();
-    m.querySelector('#nfGo').addEventListener('click',()=>{ const sc=m.querySelector('#nfSc').value, sk=m.querySelector('#nfSk').checked; closeMo(); doSend(sc,sk); });
+    m.querySelector('#nfSc').addEventListener('change',sum); m.querySelector('#nfSk').addEventListener('change',sum); m.querySelector('#nfWi').addEventListener('change',sum); sum();
+    m.querySelector('#nfGo').addEventListener('click',()=>{ const sc=m.querySelector('#nfSc').value, sk=m.querySelector('#nfSk').checked, wi=+m.querySelector('#nfWi').value||0; closeMo(); doSend(sc,sk,wi); });
   });
 }
-function doSend(scope,skip){
-  const S=readS(), r=planSend(S,scope,skip), t0=(typeof today!=='undefined'&&isoOK(today))?today:todayISO(); let base=Date.now(), a=0,u=0;
+function doSend(scope,skip,within){
+  const S=readS(), r=planSend(S,scope,skip,within), t0=(typeof today!=='undefined'&&isoOK(today))?today:todayISO(); let base=Date.now(), a=0,u=0;
   r.list.forEach(x=>{
     const it=x.it, tag=insTagOf(r.P,x.c,it), issue=r.P.name+' · '+x.c+tag+' · '+it.no+' '+it.task;
     const cm='QE Follow-up ('+x.c+tag+')'+(it.stage?' · Stage '+it.stage:'')+(it.note?'\n'+it.note:'');
     const last=(it.pr&&it.pr.length)?it.pr[it.pr.length-1].why:'';
     if(x.linked){
       const d=data.find(z=>z.id===it.tk); let ch=false;
-      if(d.issue!==issue||d.owner!==it.owner||d.cm!==cm){ d.issue=issue; d.owner=it.owner; d.cm=cm; ch=true; }
+      if(d.issue!==issue||d.owner!==it.owner){ d.issue=issue; d.owner=it.owner; ch=true; }
+      if(d.cm===(it.tkCm||d.cm)&&d.cm!==cm){ d.cm=cm; ch=true; } it.tkCm=d.cm;                  // ไม่ทับ Countermeasure ที่ QE เขียนเองใน Tracker
       const cur=curDueOf(d);
       if(it.target!==cur){ if(!d.due) d.due=it.target; else { d.revs=d.revs||[]; d.revs.push({date:it.target,reason:'จาก New project Follow-up'+(last?': '+last:''),at:t0}); } ch=true; }
       if(it.status==='done'){ if(d.status!=='Done'){ d.status='Done'; d.doneDate=it.actual||t0; ch=true; } }
-      else if(d.status==='Done'){ d.status='In Progress'; delete d.doneDate; ch=true; }
+      else if(d.status==='Done'){ it.status='done'; if(!it.actual) it.actual=d.doneDate||t0; it.hist=it.hist||[]; it.hist.push({at:new Date().toISOString(),summary:'ปิดงานใน Tracker → Status: Done'}); }   // ดึงสถานะ Done กลับมา ไม่เปิดงานซ้ำ
       if(ch) u++;
     }else{
       const id=base++; data.unshift({id:id,date:t0,due:it.target,owner:it.owner,issue:issue,cm:cm,status:it.status==='done'?'Done':'In Progress',revs:[]});
-      if(it.status==='done') data[0].doneDate=it.actual||t0; it.tk=id; a++;
+      if(it.status==='done') data[0].doneDate=it.actual||t0; it.tk=id; it.tkCm=cm; a++;
     }
   });
   if(a||u){ try{ save(); render(); }catch(e){ console.error(e); } }
@@ -7702,6 +7794,7 @@ function onClick(e){
   else if(a==='insedit') insModal('edit');
   else if(a==='insdel') insDel();
   else if(a==='add') addItem();
+  else if(a==='bulkown') bulkOwner();
   else if(a==='edit') editItem(b.dataset.id);
   else if(a==='del') delItem(b.dataset.id);
 }
@@ -7755,7 +7848,165 @@ window.addEventListener('click',function(e){
   e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
   openProj(name);
 },true);
+window.addEventListener('beforeunload',e=>{ if(ov&&dirtyN()>0){ e.preventDefault(); e.returnValue=''; } });
 window.__NF={open:openProj,close:()=>closeOv(true),parseStageDate:parseStageDate};
+})();
+
+</script>
+<script id="uxAddon">
+/* ===== UX add-on v10 (หน้า Tracker): ลดงานซ้ำ · หางานด่วนเจอทันที · ป้องกันกรอกพลาด =====
+   - แถบสรุปบนตาราง: เลยกำหนด / ครบวันนี้ / ภายใน 3 วัน (คลิกเพื่อกรอง) + ตัวกรองประเภทงาน
+   - ประเภท/ความเร่งด่วน: Urgent · Trial · Transfer · Production · อื่นๆ (ฟิลด์ใหม่ในฟอร์ม + ป้ายในตาราง)
+   - ซ่อน Done ที่เก่ากว่า 7 วันอัตโนมัติ (ปิดได้) · จำตัวกรองไว้ทุกครั้งที่เปิดหน้า
+   - ปุ่มวันที่ด่วน: วันนี้ / +3 วัน / ศุกร์นี้ / สิ้นเดือน · จำชื่อผู้แจ้งล่าสุด · ปุ่มทำซ้ำ ⧉
+   - บังคับ Due Date + เตือนเมื่อ Due ก่อนวันที่แจ้ง · บันทึกวันที่เสร็จเมื่อตั้ง Done ผ่านฟอร์ม */
+(function(){
+'use strict';
+if(window.__UX_ADDON) return; window.__UX_ADDON=true;
+try{ if(typeof data==='undefined'||typeof render!=='function'||!document.getElementById('tb')||!document.getElementById('f')) return; }catch(e){ return; }
+const g=id=>document.getElementById(id);
+const say=(m,c)=>{ try{ toast(m,c); }catch(e){} };
+const PRI={urgent:{n:'Urgent',c:'#dc2626'},trial:{n:'Trial',c:'#7c3aed'},transfer:{n:'Transfer',c:'#0ea5e9'},prod:{n:'Production',c:'#16a34a'},other:{n:'อื่นๆ',c:'#64748b'}};
+const LS='ux_prefs_v1', LO='ux_lastowner';
+let P={q:'',fStatus:'',fDate:'',fOwner:'',fFlag:'',pri:'',view:'',hideDone:true};
+try{ Object.assign(P,JSON.parse(localStorage.getItem(LS)||'{}')||{}); }catch(e){}
+if(!PRI[P.pri]) P.pri=''; if(['','late','today','soon'].indexOf(P.view)<0) P.view='';
+const savePrefs=()=>{ try{ localStorage.setItem(LS,JSON.stringify(P)); }catch(e){} };
+let showId='';                                       // รายการที่ต้องแสดงแม้ถูกซ่อน (เมื่อคลิกจากปฏิทิน)
+const E=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ---------- CSS ---------- */
+const st=document.createElement('style'); st.id='uxStyle'; st.textContent=`
+.ux-bar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin:0 0 12px;padding:9px 12px;border:1px solid var(--line);border-radius:12px;background:var(--card);box-shadow:0 1px 4px var(--sh)}
+.ux-bar .ux-t{font-size:12.5px;color:var(--mut);margin-right:4px;font-weight:700}
+.ux-chip{padding:6px 12px;border-radius:999px;font-size:12.5px;font-weight:700;background:transparent;color:var(--txt);border:1px solid var(--line);cursor:pointer;line-height:1.2}
+.ux-chip:hover{border-color:var(--pri)}
+.ux-chip.on{background:var(--pri);color:var(--on-pri);border-color:var(--pri);box-shadow:0 3px 10px var(--ring)}
+.ux-chip.z{opacity:.55}
+.ux-sep{width:1px;height:20px;background:var(--line);margin:0 4px}
+.ux-bar label{display:inline-flex;align-items:center;gap:6px;margin:0;font-size:12.5px;color:var(--txt);cursor:pointer}
+.ux-bar label input{width:auto}
+.ux-cnt{margin-left:auto;font-size:12px;color:var(--mut)}
+.ux-pri{display:inline-block;margin:0 6px 2px 0;padding:1px 8px;border-radius:99px;font-size:10.5px;font-weight:800;color:#fff;background:var(--pc,#64748b);vertical-align:1px;white-space:nowrap}
+.ux-qd{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.ux-qd button{padding:4px 9px;font-size:11.5px;border-radius:99px;background:transparent;color:var(--mut);border:1px solid var(--line)}
+.ux-qd button:hover{color:var(--txt);border-color:var(--pri);background:var(--soft2)}
+.ux-dup{color:var(--mut)}
+`; document.head.appendChild(st);
+
+/* ---------- ฟอร์ม: ประเภทงาน + ปุ่มวันที่ด่วน ---------- */
+const form=g('f');
+(function addPriField(){
+  if(g('uxPri')) return;
+  const grids=form.querySelectorAll('.grid'), last=grids[grids.length-1]; if(!last) return;
+  const box=document.createElement('div'); box.className='grid'; box.style.marginTop='12px';
+  box.innerHTML='<div><label>ประเภท / ความเร่งด่วน</label><select id="uxPri"><option value="">— ไม่ระบุ —</option>'+Object.keys(PRI).map(k=>'<option value="'+k+'">'+PRI[k].n+'</option>').join('')+'</select></div>';
+  last.parentNode.insertBefore(box,last.nextSibling);
+})();
+(function addQuickDue(){
+  if(g('uxQd')) return;
+  const dd2=g('dd2'); if(!dd2) return; const holder=dd2.closest('.dsel'); if(!holder) return;
+  const bar=document.createElement('div'); bar.className='ux-qd'; bar.id='uxQd';
+  bar.innerHTML='<button type="button" data-d="0">วันนี้</button><button type="button" data-d="3">+3 วัน</button><button type="button" data-d="fri">ศุกร์นี้</button><button type="button" data-d="7">+7 วัน</button><button type="button" data-d="eom">สิ้นเดือน</button>';
+  holder.parentNode.insertBefore(bar,holder.nextSibling);
+  bar.addEventListener('click',e=>{
+    const b=e.target.closest('button[data-d]'); if(!b) return; const v=b.dataset.d, d=new Date();
+    if(v==='fri'){ const k=(5-d.getDay()+7)%7; d.setDate(d.getDate()+k); }
+    else if(v==='eom'){ d.setMonth(d.getMonth()+1,0); }
+    else d.setDate(d.getDate()+(+v));
+    const iso=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    try{ setD('dd2','mm2','yy2',iso,true); }catch(err){}
+  });
+})();
+if(!g('owner').value){ try{ const o=localStorage.getItem(LO); if(o) g('owner').value=o; }catch(e){} }
+
+/* ---------- ตรวจก่อนบันทึก + งานหลังบันทึก ---------- */
+let pending=null;
+form.addEventListener('submit',function(e){
+  pending=null;
+  const due=getD('dd2','mm2','yy2'), date=getD('dd','mm','yy'), cur=editId?data.find(x=>x.id===editId):null;
+  if(!due&&!(cur&&!cur.due)){                                  // บังคับ Due (ยกเว้นแก้รายการเก่าที่ไม่เคยมี Due)
+    e.preventDefault(); e.stopImmediatePropagation(); say('⚠️ กรุณาระบุ Due Date (กำหนดเสร็จ) — กดปุ่ม “วันนี้ / +3 วัน / ศุกร์นี้” ได้เลย','var(--t-dang)'); try{ g('dd2').focus(); }catch(err){} return;
+  }
+  if(due&&date&&due<date&&!window.confirm('Due Date อยู่ก่อนวันที่แจ้ง — ต้องการบันทึกต่อหรือไม่?')){ e.preventDefault(); e.stopImmediatePropagation(); return; }
+  pending={edit:editId,pri:g('uxPri')?g('uxPri').value:'',owner:g('owner').value.trim()};
+},true);
+form.addEventListener('submit',function(){
+  const p=pending; pending=null; if(!p) return;
+  const it=p.edit?data.find(x=>x.id===p.edit):data[0];
+  if(it){ let ch=false;
+    if(p.pri){ if(it.pri!==p.pri){ it.pri=p.pri; ch=true; } } else if(it.pri){ delete it.pri; ch=true; }
+    if(it.status==='Done'&&!it.doneDate){ it.doneDate=today; ch=true; }
+    if(ch){ save(); render(); } }
+  if(!p.edit&&p.owner){ g('owner').value=p.owner; }          // จำผู้แจ้งล่าสุด ไม่ต้องพิมพ์ซ้ำ
+  try{ if(p.owner) localStorage.setItem(LO,p.owner); }catch(e){}
+});
+
+/* ---------- ห่อฟังก์ชันเดิม (edit / goToItem / render) ---------- */
+const _edit=edit; edit=function(id){ _edit(id); const d=data.find(x=>x.id===id); if(g('uxPri')) g('uxPri').value=(d&&d.pri)||''; };
+const _go=goToItem; goToItem=function(id){ showId=String(id); setTimeout(()=>{ showId=''; },4000); uxAfter(); _go(id); };
+const _render=render; render=function(){ _render.apply(this,arguments); try{ uxAfter(); }catch(e){ console.error('[ux]',e); } };
+
+/* ---------- แถบสรุป ---------- */
+const tools=document.querySelector('.tools');
+const bar=document.createElement('div'); bar.className='ux-bar'; bar.id='uxBar';
+if(tools&&tools.parentNode) tools.parentNode.insertBefore(bar,tools);
+bar.addEventListener('click',e=>{
+  const v=e.target.closest('[data-uxv]'); if(v){ P.view=(P.view===v.dataset.uxv&&v.dataset.uxv!=='')?'':v.dataset.uxv; savePrefs(); uxAfter(); return; }
+  const p=e.target.closest('[data-uxp]'); if(p){ P.pri=(P.pri===p.dataset.uxp)?'':p.dataset.uxp; savePrefs(); uxAfter(); return; }
+});
+bar.addEventListener('change',e=>{ if(e.target.id==='uxHide'){ P.hideDone=e.target.checked; savePrefs(); uxAfter(); } });
+
+const anyFilter=()=>!!(g('q').value.trim()||g('fStatus').value||g('fDate').value||g('fOwner').value||g('fFlag').value);
+const doneAge=d=>{ const ref=d.doneDate||curDue(d); return ref?dayNum(today)-dayNum(ref):0; };
+const open=d=>d.status!=='Done';
+const inDays=(d,n)=>{ const c=curDue(d); if(!c||!open(d)) return false; const k=dayNum(c)-dayNum(today); return k>=0&&k<=n; };
+function uxAfter(){
+  const byId=new Map(data.map(d=>[String(d.id),d])), rows=Array.from(document.querySelectorAll('#tb tr[data-id]')), filtering=anyFilter();
+  let shown=0;
+  rows.forEach(tr=>{
+    const d=byId.get(tr.dataset.id); if(!d) return;
+    const cell=tr.children[2];
+    if(cell){ cell.querySelectorAll('.ux-pri').forEach(x=>x.remove());
+      if(d.pri&&PRI[d.pri]){ const s=document.createElement('span'); s.className='ux-pri'; s.style.setProperty('--pc',PRI[d.pri].c); s.textContent=PRI[d.pri].n; cell.insertBefore(s,cell.firstChild); } }
+    const row=tr.querySelector('.act-row');
+    if(row&&!row.querySelector('[data-ux="dup"]')){ const b=document.createElement('button'); b.type='button'; b.className='btn-g ux-dup'; b.dataset.ux='dup'; b.dataset.id=d.id; b.title='ทำซ้ำ — สร้างรายการใหม่จากรายการนี้'; b.textContent='⧉'; row.insertBefore(b,row.firstChild.nextSibling); }
+    let vis=true;
+    if(showId!==String(d.id)){
+      if(P.pri&&(d.pri||'')!==P.pri) vis=false;
+      if(P.view==='late'&&!isLate(d)) vis=false;
+      if(P.view==='today'&&!(open(d)&&curDue(d)===today)) vis=false;
+      if(P.view==='soon'&&!inDays(d,3)) vis=false;
+      if(vis&&P.hideDone&&!P.view&&!P.pri&&!filtering&&d.status==='Done'&&doneAge(d)>7) vis=false;
+    }
+    tr.style.display=vis?'':'none'; if(vis) shown++;
+  });
+  const late=data.filter(isLate).length, td=data.filter(d=>open(d)&&curDue(d)===today).length, soon=data.filter(d=>inDays(d,3)).length;
+  const old=data.filter(d=>d.status==='Done'&&doneAge(d)>7).length;
+  const chip=(k,t,n,cls)=>'<button type="button" class="ux-chip'+(P.view===k?' on':'')+(n===0&&k?' z':'')+'" data-uxv="'+k+'">'+t+(k?' '+n:'')+'</button>';
+  const pc=k=>data.filter(d=>open(d)&&d.pri===k).length;
+  bar.innerHTML='<span class="ux-t">📌 วันนี้ '+E(fmt(today))+'</span>'+
+    chip('late','🔴 เลยกำหนด',late)+chip('today','🟠 ครบวันนี้',td)+chip('soon','🟡 ภายใน 3 วัน',soon)+chip('','ทั้งหมด',0)+
+    '<span class="ux-sep"></span>'+Object.keys(PRI).map(k=>'<button type="button" class="ux-chip'+(P.pri===k?' on':'')+(pc(k)===0?' z':'')+'" data-uxp="'+k+'" title="กรองเฉพาะงานค้างประเภทนี้">'+PRI[k].n+' '+pc(k)+'</button>').join('')+
+    '<span class="ux-sep"></span><label title="ซ่อน Done ที่เสร็จเกิน 7 วัน — ไม่ซ่อนเมื่อกำลังค้นหา/กรอง"><input type="checkbox" id="uxHide"'+(P.hideDone?' checked':'')+'> ซ่อน Done เก่า >7 วัน ('+old+')</label>'+
+    '<span class="ux-cnt">แสดง '+shown+' / '+rows.length+' รายการ</span>';
+}
+
+/* ---------- ปุ่มทำซ้ำ ---------- */
+g('tb').addEventListener('click',e=>{
+  const b=e.target.closest('[data-ux="dup"]'); if(!b) return; e.stopPropagation();
+  const d=data.find(x=>String(x.id)===b.dataset.id); if(!d) return;
+  resetForm(); setD('dd','mm','yy',today,false); setD('dd2','mm2','yy2','',true);
+  g('owner').value=d.owner||''; g('issue').value=d.issue||''; g('cm').value=d.cm||''; g('status').value='In Progress'; if(g('uxPri')) g('uxPri').value=d.pri||'';
+  g('f').scrollIntoView({behavior:'smooth',block:'center'}); setTimeout(()=>{ try{ g('dd2').focus({preventScroll:true}); }catch(err){} },350);
+  say('⧉ ทำซ้ำจาก “'+String(d.issue||'').slice(0,40)+'” — ใส่ Due Date แล้วกดเพิ่มรายการ');
+});
+
+/* ---------- จำตัวกรอง ---------- */
+['q','fStatus','fDate','fOwner','fFlag'].forEach(id=>{ const el=g(id); if(!el) return; el.addEventListener(id==='q'?'input':'change',()=>{ P[id]=el.value; savePrefs(); }); });
+const clr=g('clearBtn'); if(clr) clr.addEventListener('click',()=>{ ['q','fStatus','fDate','fOwner','fFlag'].forEach(id=>{ P[id]=''; }); P.view=''; P.pri=''; savePrefs(); uxAfter(); });
+['q','fStatus','fDate','fOwner','fFlag'].forEach(id=>{ const el=g(id); if(!el||!P[id]) return; if(el.tagName==='SELECT'){ if(Array.from(el.options).some(o=>o.value===P[id])) el.value=P[id]; } else el.value=P[id]; });
+render();
 })();
 
 </script>
