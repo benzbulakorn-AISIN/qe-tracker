@@ -8977,12 +8977,12 @@ function parseText(text,defDate){
         let ws=tail; if(sl>=0){ ws=tail.slice(0,sl); room=tail.slice(sl).replace(/^\s*\/\s*/,'').trim(); }
         const w=parseWho(ws); who=w.who; if(w.left){ if(/room|ห้อง|zone|hall|team|abs|rest/i.test(w.left)&&!room) room=w.left; else note=w.left; }
       }
-      pend={date:cur,s:s,e:e,t:title,room:room,who:who,inv:[],note:note,src:'text',uid:''};
+      pend={date:cur,s:s,e:e,t:title,room:normRoom(room),who:who,inv:[],note:note,src:'text',uid:''};
       if(title.trim()) flush();
       return;
     }
     if(pend&&!pend.t){ pend.t=line; const m2=ARROW.exec(line); if(m2){ pend.t=line.slice(0,m2.index); } flush(); return; }
-    const pl=/^(?:place|สถานที่|ห้อง)\s*[:：]\s*(.+)$/i.exec(line); if(pl&&out.length){ out[out.length-1].room=out[out.length-1].room||pl[1].trim(); return; }
+    const pl=/^(?:place|สถานที่|ห้อง)\s*[:：]\s*(.+)$/i.exec(line); if(pl&&out.length){ out[out.length-1].room=out[out.length-1].room||normRoom(pl[1].trim()); return; }
     const pw=/^(?:ผู้เข้าร่วม|participants?|attendees?)\s*[:：]\s*(.+)$/i.exec(line); if(pw&&out.length){ const w=parseWho(pw[1]); if(w.who.length) out[out.length-1].who=w.who; return; }
     const d=findDate(line); if(d){ cur=d; dated++; return; }
   });
@@ -9230,7 +9230,7 @@ function rowHtml(m,A,ds){
     '<div><div class="mg-ti" data-mg="edit" data-m="'+E(m.id)+'" title="คลิกเพื่อแก้ไข">'+E(m.t||'(ไม่มีชื่อ)')+'</div>'+
       '<div class="mg-sub"><span>📍</span><input class="mg-room" data-mg="room" data-m="'+E(m.id)+'" value="'+E(m.room)+'" placeholder="ห้องประชุม (ว่างไว้ได้)" autocomplete="off">'+
       (un?'<span class="mg-un">ยังไม่ระบุคน</span>':'')+bad.join('')+
-      (m.src==='graph'?'<span class="mg-src" title="ดึงจาก Outlook อัตโนมัติ">Outlook ⟳</span>':m.src==='ics'?'<span class="mg-src" title="นำเข้าจากไฟล์ .ics">.ics</span>':'')+
+      (m.src==='graph'?'<span class="mg-src" title="ดึงจาก Outlook อัตโนมัติ">Outlook ⟳</span>':m.src==='mail'?'<span class="mg-src" title="นำเข้าจากอีเมล Schedule">อีเมล ✉</span>':m.src==='ics'?'<span class="mg-src" title="นำเข้าจากไฟล์ .ics">.ics</span>':'')+
       (invOnly.length&&un?'<span class="mg-src" title="ถูกเชิญใน Outlook แต่ยังไม่ได้ลงชื่อ">เชิญ: '+E(invOnly.join(', '))+'</span>':'')+'</div></div>'+
     chips(m,A,ds)+
     '<div class="mg-ac"><button type="button" data-mg="edit" data-m="'+E(m.id)+'" title="แก้ไข">✎</button><button type="button" data-mg="dup" data-m="'+E(m.id)+'" title="ทำซ้ำ">⧉</button><button type="button" data-mg="del" data-m="'+E(m.id)+'" title="ลบ">🗑</button></div></div>';
@@ -9275,6 +9275,7 @@ function render(){
     '<button type="button" class="btn-p" data-mg="add" style="animation:none">➕ เพิ่มประชุม</button>'+
     '<button type="button" class="'+(connected()?'btn-p':'btn-g')+'" data-mg="ol" '+(connected()?'style="animation:none"':'')+' title="ดึงประชุมจาก Outlook อัตโนมัติ">'+(connected()?'🔄 ซิงก์ Outlook':'🔗 เชื่อม Outlook อัตโนมัติ')+'</button>'+
     '<button type="button" class="btn-g" data-mg="imp">📥 นำเข้า (ไฟล์ / ข้อความ)</button>'+
+    '<button type="button" class="btn-p" data-mg="clip" style="animation:none" title="คัดลอกเนื้อหาอีเมล Schedule แล้วกดปุ่มนี้ — นำเข้าทันที ไม่ต้องเปิดหน้าต่าง">📋 วางจากอีเมล</button>'+
     '<button type="button" class="btn-g" data-mg="copy" title="คัดลอกข้อความ “📢 Schedule QE Electronics …” ของวันที่เลือก">📋 คัดลอกข้อความ Schedule</button><label style="margin:0;display:inline-flex;gap:5px;align-items:center;font-size:12px;color:var(--txt);cursor:pointer"><input type="checkbox" id="mgAt" '+(ui.at?'checked':'')+' style="width:auto"> ใส่ @</label>'+
     '<span class="mg-grow"></span><button type="button" class="btn-g" data-mg="team" title="ชื่อทีม / อีเมล / ชื่อประชุมที่ข้ามเสมอ">👥 ตั้งค่าทีม</button><button type="button" class="btn-g" data-mg="exp" title="สำรองข้อมูลประชุมทั้งหมด">💾 JSON</button><button type="button" class="btn-g" data-mg="impjson" title="นำเข้าไฟล์สำรอง">📂</button><input type="file" id="mgJson" accept=".json,application/json" style="display:none"></div>';
   h+=olLine();
@@ -9586,6 +9587,69 @@ const _start=()=>{ setTimeout(()=>{ gReturn().then(()=>{ if(connected()&&gcfg.au
 if(document.readyState==='complete') _start(); else window.addEventListener('load',_start);
 setInterval(()=>{ if(document.hidden||!connected()||!gcfg.auto||gst.busy) return; if(Date.now()-(gst.at||0)>20*60000) gSync(false); },60000);
 
+
+/* ================= นำเข้าจากอีเมล Schedule (ลิงก์ในอีเมล #mtg=… หรือวางจากคลิปบอร์ด) ================= */
+function applyCands(c,o){
+  o=o||{}; const by={}, keepByDay={}; let add=0, upd=0, same=0, del=0, skip=0, first=null;
+  c.forEach(x=>{
+    if(skipHit(x.t)){ skip++; return; }
+    const L=by[x.date]||(by[x.date]=getDay(x.date)), keep=keepByDay[x.date]||(keepByDay[x.date]=new Set());
+    const key='ml:'+x.date+'|'+x.s+'|'+x.e+'|'+nkey(x.t);
+    const ex=L.find(m=>m.uid===key)||L.find(m=>m.s===x.s&&m.e===x.e&&nkey(m.t)===nkey(x.t));
+    if(ex){
+      let ch=false;
+      if(x.room&&(!ex.room||ex.room===ex.gr)&&ex.room!==x.room){ ex.room=x.room; ch=true; }
+      if(x.room&&ex.gr!==x.room){ ex.gr=x.room; ch=true; }
+      if(ex.wa!=='manual'&&x.who.length&&JSON.stringify(ex.who)!==JSON.stringify(x.who)){ ex.who=x.who.slice(); ch=true; }
+      if(!ex.uid){ ex.uid=key; ch=true; }
+      keep.add(ex.uid); if(ch) upd++; else same++;
+    }else{
+      L.push(normM({id:uid(),s:x.s,e:x.e,t:x.t,room:x.room,gr:x.room,who:x.who,inv:[],note:x.note||'',src:'mail',uid:key})); keep.add(key); add++;
+    }
+    if(!first||x.date<first) first=x.date;
+  });
+  if(o.prune) Object.keys(by).forEach(ds=>{ const keep=keepByDay[ds], n0=by[ds].length; by[ds]=by[ds].filter(m=>!(m.src==='mail'&&m.wa!=='manual'&&!keep.has(m.uid))); del+=n0-by[ds].length; });
+  Object.keys(by).forEach(ds=>setDay(ds,by[ds]));
+  return {add:add,upd:upd,same:same,del:del,skip:skip,first:first,days:Object.keys(by).sort()};
+}
+function seedSkip(){ if(!cfg.skip.length&&!gcfg.seeded){ cfg.skip=['Lunch','ไร่กะหล่ำปลี','Ukai']; saveCfg(); } if(!gcfg.seeded){ gcfg.seeded=1; saveG(); } }
+function importMailText(txt,o){
+  o=o||{}; seedSkip();
+  const r=parseText(txt,o.defDate||ui.date);
+  if(!r.items.length){ say('ไม่พบบรรทัดประชุม (เวลา เริ่ม - สิ้นสุด) ในข้อความ — ต้องเป็นข้อความจากอีเมล Schedule',true); return null; }
+  const res=applyCands(r.items,{prune:!!o.prune});
+  const target=res.days.indexOf(today)>=0?today:(res.days.indexOf(ui.date)>=0?ui.date:res.days[0]);
+  if(!res.days.length){ say('ประชุมทั้งหมดอยู่ในรายการข้ามเสมอ — ไม่มีอะไรให้นำเข้า',true); return res; }
+  if(isoOK(target)){ ui.date=target; ui.view='day'; saveUI(); }
+  openMeet(ui.date);
+  say('📥 นำเข้าจาก'+(o.label||'อีเมล')+' '+fmtD(ui.date)+(res.days.length>1?' (+'+(res.days.length-1)+' วัน)':'')+': เพิ่ม '+res.add+(res.upd?' · อัปเดต '+res.upd:'')+(res.del?' · เอาออก '+res.del:'')+(res.same?' · ไม่เปลี่ยน '+res.same:'')+(res.skip?' · ข้าม '+res.skip+' (รายการข้ามเสมอ)':''));
+  refreshTodayCard();
+  return res;
+}
+function decodeMtg(s){
+  s=String(s||'').replace(/-/g,'+').replace(/_/g,'/'); while(s.length%4) s+='=';
+  const bin=atob(s), bytes=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
+  return new TextDecoder('utf-8').decode(bytes);
+}
+function hashImport(){
+  const m=/[#&]mtg=([^&]+)/.exec(location.hash||''); if(!m) return false;
+  let txt=''; try{ txt=decodeMtg(decodeURIComponent(m[1])); }catch(e){ txt=''; }
+  try{ history.replaceState(null,'',location.pathname+location.search); }catch(e){}
+  if(!txt){ openMeet(); say('ลิงก์จากอีเมลอ่านไม่ได้ — ลองกด 📋 วางจากอีเมล แทน',true); return true; }
+  importMailText(txt,{prune:true,label:'ลิงก์ในอีเมล',defDate:today});
+  return true;
+}
+async function clipImport(){
+  let t='';
+  try{ t=await navigator.clipboard.readText(); }catch(e){ t=''; }
+  if(!String(t).trim()){
+    say('อ่านคลิปบอร์ดไม่ได้ — ใช้หน้าต่างนำเข้าแทน (วางข้อความแล้วกดวิเคราะห์)',true); importModal('text'); return;
+  }
+  importMailText(t,{prune:false,label:'อีเมล (คลิปบอร์ด)'});
+}
+if(document.readyState==='complete') setTimeout(hashImport,900); else window.addEventListener('load',()=>setTimeout(hashImport,900));
+window.addEventListener('hashchange',()=>{ if(/[#&]mtg=/.test(location.hash)) hashImport(); });
+
 /* ---------- เหตุการณ์ในหน้า ---------- */
 view.addEventListener('click',async e=>{
   const b=e.target.closest('[data-mg]'); if(!b) return; const a=b.dataset.mg, id=b.dataset.m;
@@ -9601,6 +9665,7 @@ view.addEventListener('click',async e=>{
   else if(a==='imp') importModal('ics');
   else if(a==='ol'){ if(connected()) gSync(true); else olModal(); }
   else if(a==='olset') olModal();
+  else if(a==='clip') clipImport();
   else if(a==='copy'){ const t=scheduleText(ui.date,ui.at); if(await copyText(t)){ const un=getDay(ui.date).filter(m=>!m.who.length).length; say('📋 คัดลอกข้อความ Schedule '+fmtD(ui.date)+' แล้ว — วางใน Teams ได้เลย'+(un?'\n⚠ ยังมี '+un+' ประชุมที่ไม่ได้ระบุคน':'')); } }
   else if(a==='team') teamModal();
   else if(a==='exp') exportJson();
@@ -9648,7 +9713,7 @@ document.addEventListener('click',async e=>{
   if(b.dataset.mgt==='open') openMeet(today);
   else if(b.dataset.mgt==='copy'){ if(await copyText(scheduleText(today,ui.at))) say('📋 คัดลอกข้อความ Schedule วันนี้แล้ว'); }
 });
-window.__MTG={open:openMeet,parseText:parseText,icsEvents:icsEvents,scheduleText:scheduleText,getDay:getDay,setDay:setDay,cfg:()=>cfg,analyze:analyze,sync:gSync,gcfg:()=>gcfg,connected:connected};
+window.__MTG={open:openMeet,parseText:parseText,icsEvents:icsEvents,scheduleText:scheduleText,getDay:getDay,setDay:setDay,cfg:()=>cfg,analyze:analyze,sync:gSync,gcfg:()=>gcfg,connected:connected,importMail:importMailText,decodeMtg:decodeMtg,applyCands:applyCands};
 })();
 
 </script>
