@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="th" style="--bg: #fce7f3; --card: #ffffff; --line: #f9a8d4; --txt: #3b0f2a; --mut: #8b4a6e; --pri: #db2777; --inp: #ffffff; --th: #fef4fa; --soft: #fef4fa; --soft2: #fce7f3; --we: #fef9fc; --pop: #ffffff; --ok: #16a34a; --warn: #d97706; --dang: #dc2626; --vio: #7c3aed; --t-ok: #15803d; --t-warn: #b45309; --t-dang: #b91c1c; --t-vio: #7c3aed; --on-pri: #ffffff; --ring: rgba(219,39,119,.4); --sh: rgba(219,39,119,.12); --shp: rgba(219,39,119,.3); color-scheme: light;"><head><script id="qwBoot">/* v28: ผู้ใช้ใหม่ — พับปฏิทิน Tracker เป็นค่าเริ่มต้น (ค่าเฉพาะเครื่อง ไม่ซิงก์) */try{if(localStorage.getItem('issue_tracker_cal')===null)localStorage.setItem('issue_tracker_cal','closed');}catch(e){}</script><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<html lang="th" style="--bg: #fce7f3; --card: #ffffff; --line: #f9a8d4; --txt: #3b0f2a; --mut: #8b4a6e; --pri: #db2777; --inp: #ffffff; --th: #fef4fa; --soft: #fef4fa; --soft2: #fce7f3; --we: #fef9fc; --pop: #ffffff; --ok: #16a34a; --warn: #d97706; --dang: #dc2626; --vio: #7c3aed; --t-ok: #15803d; --t-warn: #b45309; --t-dang: #b91c1c; --t-vio: #7c3aed; --on-pri: #ffffff; --ring: rgba(219,39,119,.4); --sh: rgba(219,39,119,.12); --shp: rgba(219,39,119,.3); color-scheme: light;"><head><script id="qwBoot">try{if(localStorage.getItem('issue_tracker_cal')===null)localStorage.setItem('issue_tracker_cal','closed');}catch(e){}</script><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>QE Elec. Daily Job Tracker</title>
@@ -2256,7 +2256,7 @@ window.__SEED_V12={"version":12,"source":"snapshot v9 (16 ต.ค. 2569)","track
      • เครื่องใหม่: ไม่ส่งข้อมูลตั้งต้น/ของเก่าในเครื่องขึ้นไปทับ Cloud เงียบ ๆ
      • PIN เก็บเป็นแฮช ตรวจที่หน้าเว็บ — ไม่ใช่ความปลอดภัยระดับเซิร์ฟเวอร์ */
   const WHOK='ux_me', MODEK='ux_savemode', DEVK='ux_dev_id', RPL='ux_rp_list', PRUNEK='ux_prune_day', SNAPK='ux_snap_day', ACFGC='ux_cfg_cache';
-  const PRES='countermeasure-presence:', AUD='countermeasure-audit:', AUTHP='countermeasure-auth:', SNAP='countermeasure-snap:', ACFGK=AUTHP+'~cfg', APPVER='28';
+  const PRES='countermeasure-presence:', AUD='countermeasure-audit:', AUTHP='countermeasure-auth:', SNAP='countermeasure-snap:', ACFGK=AUTHP+'~cfg', APPVER='29';
   var clockOff=0, lastOK=0, newDev=null;
   const lsGet=k=>{ try{ return localStorage.getItem(k); }catch(e){ return null; } };
   const lsSet=(k,v)=>{ try{ localStorage.setItem(k,v); return true; }catch(e){ return false; } };
@@ -7192,7 +7192,50 @@ function cpLegend(){
   return `<div class="cp-legend">`+Object.keys(CPT).map(k=>`<span><i style="background:${CPT[k].c}"></i>${CPT[k].n}</span>`).join('')+
     `<span><i style="background:rgba(34,197,94,.3);border-color:#16a34a"></i>✓ Done (Actual)</span><span><i style="background:rgba(59,130,246,.25);border-color:#3b82f6"></i>เลื่อน (Postponed)</span><span><i style="background:transparent;border:1px dashed var(--mut)"></i>วันที่เดิม / ผ่านมาแล้ว</span><span><i style="background:transparent;border:2px solid var(--dang)"></i>เลยกำหนด</span></div>`;
 }
+const CPSH={meeting:'Meeting',pre:'Pre Q-Patrol',patrol:'Q-Patrol',other:'อื่น ๆ'};
+function cpMini(it,e,kind,d){
+  const T=CPT[e.type], c=['cp-m'], nm=(e.label||CPSH[e.type]||T.s);
+  let sty=`--cc:${T.c};--ct:${T.t}`, b='', sm='';
+  if(kind==='plan'){
+    if(e.st==='done') c.push('done'); else if(e.st==='cancel') c.push('cancel'); else if(e.st==='postponed') c.push('pp'); else if(e.st==='past'){ c.push('ghost'); sty=''; } else if(cpLate(e)) c.push('late');
+    b=(e.st==='done'?'✓ ':e.st==='postponed'?'⏸ ':'')+E(nm); sm=cpDM(d)+(e.hist.length?` <i class="rv">R${e.hist.length}</i>`:'')+(e.tk?' 📅':'');
+  }else if(kind==='old'){ c.push('old'); sty=''; b='↷ '+cpDM(d); }
+  else { c.push('ad'); sty=''; b='✓ '+cpDM(d); }
+  return `<button type="button" class="${c.join(' ')}" ${sty?`style="${sty}"`:''} data-mje="cp-ev" data-it="${it.id}" data-ev="${e.id}" title="${E(cpTip(it,e))}"><b>${b}</b>${sm?`<small>${sm}</small>`:''}</button>`;
+}
+function cpGanttC(P){
+  const months=cpMonths(P), today=cpToday(), tk=cpWk(today), cols=[], mh=[];
+  months.forEach((ym,i)=>{
+    if(i>0){ const gap=cpMonN(ym)-cpMonN(months[i-1])-1; if(gap>0){ const a=months[i-1], b=ym; cols.push({gap:1}); mh.push({gap:1,lab:`${MON[(cpMonN(a))%12]}–${MON[(cpMonN(b)-2)%12]}`}); } }
+    const w=cpWeeks(ym); w.forEach(x=>cols.push({ym:ym,w:x,key:ym+'|'+x.i})); mh.push({ym:ym,span:w.length});
+  });
+  let h=`<div class="cp-wrap"><table class="cp-tbl c"><thead><tr class="m"><th class="L1" rowspan="2" style="text-align:left;padding:0 9px">รายการ (${P.items.length})</th>`;
+  mh.forEach(m=>{ if(m.gap) h+=`<th class="gap" rowspan="2" title="ไม่มีกิจกรรมในช่วงนี้">…<br><small>${E(m.lab)}</small></th>`; else h+=`<th colspan="${m.span}">${MON[+m.ym.slice(5,7)-1]}-${m.ym.slice(2,4)}</th>`; });
+  h+=`</tr><tr class="w">`;
+  cols.forEach(c=>{ if(c.gap) return; h+=`<th class="${c.key===tk?'now':''}" title="${cpDM(c.ym+'-'+String(c.w.s).padStart(2,'0'))} – ${cpDM(c.ym+'-'+String(c.w.e).padStart(2,'0'))}">W${c.w.i}<br>${c.w.s===c.w.e?c.w.s:c.w.s+'–'+c.w.e}</th>`; });
+  h+=`</tr></thead><tbody>`;
+  P.items.forEach(it=>{
+    const m={}, late=it.evs.filter(cpLate).length, push=(k,v)=>{ (m[k]=m[k]||[]).push(v); };
+    it.evs.forEach(e=>{
+      push(cpWk(e.pd),cpMini(it,e,'plan',e.pd));
+      e.hist.forEach(x=>push(cpWk(x.f),cpMini(it,e,'old',x.f)));
+      if(e.st==='done'&&e.ad&&cpWk(e.ad)!==cpWk(e.pd)) push(cpWk(e.ad),cpMini(it,e,'ad',e.ad));
+    });
+    const k=cpTkCnt(it);
+    h+=`<tr class="${late?'lt':''}"><td class="L1"><div class="cp-ic">`+
+      `<div class="r1"><span class="ln">${E(it.line)}</span><span class="gp">${E(it.grp)}${it.cat?' · '+E(it.cat):''}</span>${late?`<span class="cp-pill late">เลย ${late}</span>`:''}</div>`+
+      `<div class="tp" title="${E(it.topic+(it.found?'\nพบ '+it.found:'')+(it.proc?'\n'+it.proc:'')+(it.part?'\n'+it.part:''))}">${E(it.topic)}</div>`+
+      `<div class="r3"><span class="who" data-mje="cp-it" data-it="${it.id}" title="ผู้รับผิดชอบ · Meeting: ${E(it.stM)}">👤 ${E(it.inc||'–')}</span><span class="cp-pill ${cpQCls(it.stQ)}" data-mje="cp-it" data-it="${it.id}" title="Status Q-patrol · Meeting: ${E(it.stM)}">${E(it.stQ)}</span><span class="grow"></span>`+
+      `<button type="button" data-mje="cp-evadd" data-it="${it.id}" title="เพิ่มกิจกรรม" aria-label="เพิ่มกิจกรรม">＋</button><button type="button" data-mje="cp-it" data-it="${it.id}" title="แก้ไขรายการ" aria-label="แก้ไขรายการ">✎</button><button type="button" class="tk${k.n?' on':''}" data-mje="cp-tk" data-it="${it.id}" title="ส่งเข้าปฏิทิน Tracker (${k.n}/${k.m})" aria-label="ส่งเข้า Tracker">📤${k.n}/${k.m}</button></div>`+
+      `</div></td>`;
+    cols.forEach(c=>{ if(c.gap){ h+=`<td class="gap"></td>`; return; } h+=`<td class="wk${c.key===tk?' now':''}">${(m[c.key]||[]).join('')}</td>`; });
+    h+=`</tr>`;
+  });
+  if(!P.items.length) h+=`<tr><td colspan="${cols.length+1}" style="padding:22px;color:var(--mut)">ยังไม่มีรายการ — กด “＋ เพิ่มรายการ”</td></tr>`;
+  return h+`</tbody></table></div>`;
+}
 function cpGantt(P){
+  if(ui.cpDense!==false) return cpGanttC(P);
   const months=cpMonths(P), today=cpToday(), tk=cpWk(today), cols=[], mh=[];
   months.forEach((ym,i)=>{
     if(i>0){ const gap=cpMonN(ym)-cpMonN(months[i-1])-1; if(gap>0){ const a=months[i-1], b=ym; const lab=`${MON[(cpMonN(a))%12]}–${MON[(cpMonN(b)-2)%12]}`; cols.push({gap:1}); mh.push({gap:1,lab:lab}); } }
@@ -7250,19 +7293,20 @@ function cpList(P){
 function cpView(){
   const P=S.claimPlan, v=ui.cpView==='list'?'list':'gantt';
   let h=`<div class="cp-head"><div><h3>📅 ${E(P.title||'Action plan')}</h3><small>Product: ${E(P.product||'–')} · วันนี้ ${cpDMY(cpToday())}</small></div><button type="button" class="mje-ic" data-mje="cp-head" title="แก้ไขชื่อแผน / Product">✎</button><span class="grow"></span>`+
-    `<div class="cp-views"><button type="button" class="${v==='gantt'?'on':''}" data-mje="cp-v" data-v="gantt">🗓 ไทม์ไลน์</button><button type="button" class="${v==='list'?'on':''}" data-mje="cp-v" data-v="list">📋 รายการ</button></div>`+
+    `<div class="cp-views"><button type="button" class="${v==='gantt'?'on':''}" data-mje="cp-v" data-v="gantt">🗓 ไทม์ไลน์</button><button type="button" class="${v==='list'?'on':''}" data-mje="cp-v" data-v="list">📋 รายการ</button></div>`+(v==='gantt'?`<div class="cp-views"><button type="button" class="${ui.cpDense!==false?'on':''}" data-mje="cp-dn" data-v="1" title="ย่อ 1 แถว/รายการ เห็นหลายปัญหาพร้อมกัน">🔎 ภาพรวม</button><button type="button" class="${ui.cpDense===false?'on':''}" data-mje="cp-dn" data-v="0" title="แถว Plan / Actual แบบเดิม พร้อมรายละเอียด">📄 ละเอียด</button></div>`:'')+
     `<button type="button" class="btn-p" style="padding:7px 13px;font-size:12.5px" data-mje="cp-itadd">＋ เพิ่มรายการ</button><button type="button" class="btn-g" style="padding:7px 12px;font-size:12px" data-mje="cp-csv">⬇ CSV</button>`+
     `<span class="cp-sepv"></span><button type="button" class="btn-p" style="padding:7px 13px;font-size:12.5px;animation:none" data-mje="cp-tkall" title="ส่งทุกกิจกรรมที่ยังเป็นแผนเข้าปฏิทินหน้า Tracker">📤 ส่งทั้งหมดเข้า Tracker</button><button type="button" class="btn-g" style="padding:7px 12px;font-size:12px" data-mje="cp-tkcal" title="ไปที่ปฏิทินหน้า Tracker (เดือนของกิจกรรมถัดไป)">📅 ดูในปฏิทิน Tracker</button><button type="button" class="cp-auto${P.autoTk?' on':''}" data-mje="cp-tkauto" title="เปิด = กิจกรรมที่ลงแผนใหม่จะขึ้นปฏิทิน Tracker เองทันที (ไม่ต้องกดปุ่ม)">🔄 อัตโนมัติ: ${P.autoTk?'เปิด':'ปิด'}</button></div>`;
   h+=cpSummary(P)+cpLegend();
   h+=`<div class="mje-hint2" style="margin-bottom:8px">✏️ <b>คลิกที่กิจกรรม</b> เพื่อเลื่อนวัน (ระบบเก็บวันที่เดิมไว้เป็น Rev. และแสดงเป็นตัวขีดฆ่า) · เปลี่ยนสถานะเป็น Done / เลื่อน / ยกเลิก · ติ๊ก “เลื่อนกิจกรรมถัดไปตามด้วย” เพื่อขยับแผนที่เหลือทั้งชุด · แต่ละรายการมี 2 แถว Plan / Actual เหมือนไฟล์ Excel (สัปดาห์ W1–W5 นับจากวันจันทร์)</div>`;
   return h+(v==='gantt'?cpGantt(P):cpList(P));
 }
+
 function cpAfter(keep){
   const w=document.querySelector('#viewMainJobs .cp-wrap'); if(!w) return;
   if(keep){ w.scrollLeft=keep.l; w.scrollTop=keep.t; return; }
   const n=w.querySelector('thead th.now'); if(!n) return;
-  const wr=w.getBoundingClientRect(), nr=n.getBoundingClientRect(), vis=w.clientWidth-346;
-  w.scrollLeft+=(nr.left-wr.left)-(346+Math.max(0,(vis-nr.width)/2));
+  const LW=w.querySelector('.cp-tbl.c')?236:346, wr=w.getBoundingClientRect(), nr=n.getBoundingClientRect(), vis=w.clientWidth-LW;
+  w.scrollLeft+=(nr.left-wr.left)-(LW+Math.max(0,(vis-nr.width)/2));
 }
 /* ---------- แก้ไข: กิจกรรม ---------- */
 function cpPrevTxt(pd,old){
@@ -7364,6 +7408,7 @@ function cpAct(a,b){
   else if(a==='cp-tkcal') cpTkCal();
   else if(a==='cp-tkauto') cpTkAuto();
   else if(a==='cp-v'){ ui.cpView=d.v; saveUI(); show(); }
+  else if(a==='cp-dn'){ ui.cpDense=d.v==='1'; saveUI(); show(); }
   else if(a==='cp-f'){ ui.cpFilter=d.v; saveUI(); show(); }
   else return false;
   return true;
@@ -11339,11 +11384,46 @@ window.__CBUI={open:openPanel,close:closePanel,paint:paint,check:authCheck,sha25
 })();
 
 </script>
+<style id="cpDenseStyle">
+/* Q-patrol: มุมมองภาพรวม (1 แถว/รายการ) */
+.cp-tbl.c thead tr.m th{height:26px;font-size:12px}
+.cp-tbl.c thead tr.w th{top:26px;height:30px;font-size:11px}
+.cp-tbl.c .L1{min-width:236px;width:236px;max-width:236px}
+.cp-tbl.c td.wk{min-width:74px;width:74px;padding:3px;vertical-align:middle}
+.cp-tbl.c tbody tr td{border-bottom:1px solid var(--line)}
+.cp-tbl.c tbody tr:nth-child(even) td.wk:not(.now){background:color-mix(in srgb,var(--soft) 55%,var(--card))}
+.cp-tbl.c tbody tr:hover td{background:color-mix(in srgb,var(--pri) 7%,var(--card))}
+.cp-tbl.c tbody tr.lt td.L1{box-shadow:inset 3px 0 0 var(--dang),2px 0 4px var(--sh)}
+.cp-ic{padding:6px 9px;display:flex;flex-direction:column;gap:3px;font-size:12px;line-height:1.3}
+.cp-ic .r1{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;min-width:0}
+.cp-ic .ln{font-size:13.5px;font-weight:800;white-space:nowrap}
+.cp-ic .gp{font-size:11.5px;color:var(--mut);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.cp-ic .tp{font-weight:700;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:help}
+.cp-ic .r3{display:flex;align-items:center;gap:4px;min-width:0}
+.cp-ic .r3 .grow{flex:1}
+.cp-ic .who{font-size:12px;font-weight:700;color:var(--mut);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:82px}
+.cp-ic .r3 .cp-pill{font-size:11px;padding:1px 7px;cursor:pointer;white-space:nowrap}
+.cp-ic .r3 button{min-width:26px;height:26px;padding:0 6px;margin:0;border-radius:7px;border:1px solid var(--line);background:transparent;color:var(--txt);font-size:12px;font-weight:800;cursor:pointer;line-height:1}
+.cp-ic .r3 button.tk{border-color:#00B0F0}.cp-ic .r3 button.tk.on{background:color-mix(in srgb,#00B0F0 22%,transparent)}
+.cp-ic .r3 button:hover{border-color:var(--pri);background:var(--soft2)}
+.cp-m{--cc:#ddd;--ct:#222;display:block;width:100%;margin:2px 0;padding:2px 5px;border-radius:7px;border:1px solid rgba(0,0,0,.25);background:var(--cc);color:var(--ct);text-align:left;cursor:pointer;font-family:inherit;line-height:1.2;box-shadow:none}
+.cp-m b{display:block;font-size:11px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cp-m small{display:block;font-size:10.5px;font-weight:700;opacity:.92;white-space:nowrap}
+.cp-m .rv{font-style:normal;padding:0 4px;border-radius:99px;background:rgba(0,0,0,.25);color:#fff;font-size:9.5px}
+.cp-m:hover{filter:brightness(1.06);box-shadow:0 0 0 2px var(--ring)}
+.cp-m.done{box-shadow:inset 0 0 0 2px #16a34a}
+.cp-m.late{box-shadow:0 0 0 2px var(--dang)}
+.cp-m.pp{box-shadow:inset 0 0 0 2px #3b82f6}
+.cp-m.cancel{opacity:.5;text-decoration:line-through}
+.cp-m.ghost{--cc:transparent;--ct:var(--mut);border:1px dashed var(--line)}
+.cp-m.old{--cc:transparent;--ct:var(--mut);border:1px dashed var(--line);padding:1px 5px}
+.cp-m.old b{font-size:10.5px;font-weight:700;text-decoration:line-through}
+.cp-m.ad{--cc:rgba(34,197,94,.2);--ct:var(--t-ok);border-color:var(--ok)}
+.cp-views+.cp-views{margin-left:2px}
+</style>
 <style id="qwStyle">
-/* v28 quick wins */
 #nvSearch,#nvHelp,#nvMenuBtn{min-height:32px}
 :where(button,a,input,select,textarea,summary,[tabindex]):focus-visible{outline:2px solid var(--pri);outline-offset:2px}
 #viewMission .ms-card{min-width:0;max-width:100%;overflow-x:auto}
-@media(max-width:700px){#viewMission table{max-width:none}}
 </style>
 </body></html>
