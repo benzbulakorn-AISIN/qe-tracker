@@ -1783,12 +1783,13 @@ window.__SEED_V12={"version":12,"source":"snapshot v9 (16 ต.ค. 2569)","track
   }
   function esc(s){return String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
   function setStatus(state,msg){
+    if(state==='ok') lastOK=Date.now();
     if(state==='ok'||state==='error') scheduleDirty();
     const b=g('spStatus'),t=g('spStatusText'); if(b)b.dataset.state=state;
     if(t)t.innerHTML='<b>Cloud DB:</b> '+msg;
     if(g('spInfo')){ const u=usage(); g('spInfo').innerHTML='<div>'+msg+'</div>'+(lastSync?'<div>Sync ล่าสุด: '+esc(lastSync)+'</div>':'')+'<div>📡 ดึงข้อมูลจาก Cloud DB (เครื่องนี้): วันนี้ <b>'+fmtB(u.today.b)+'</b> ('+u.today.n+' คำขอ) · 7 วันล่าสุด <b>'+fmtB(u.week.b)+'</b>'+(u.paused?' · <b style="color:var(--t-warn)">พักซิงก์ชั่วคราว (โดนจำกัดโควตา)</b>':'')+'</div>'; }
   }
-  function errText(e){return esc((e&&e.message)||e||'Unknown error');}
+  function errText(e){ const raw=(e&&e.message)||e||'Unknown error', f=friendly(raw,e&&e.status); return esc(f)+(f!==String(raw)?' <small style="opacity:.7">('+esc(String(raw).slice(0,90))+')</small>':''); }
   function safeToApply(){
     const a=document.activeElement;
     return !(a&&(/^(INPUT|TEXTAREA|SELECT)$/i.test(a.tagName)||a.isContentEditable));
@@ -1825,6 +1826,7 @@ window.__SEED_V12={"version":12,"source":"snapshot v9 (16 ต.ค. 2569)","track
     const opt={method:method||'GET',headers:authHeaders(extraHeaders),cache:'no-store',mode:'cors'};
     if(body!==undefined&&body!==null) opt.body=JSON.stringify(body);
     const r=await fetch(url,opt),text=await r.text(); let j=null;
+    try{ const dh=r.headers&&r.headers.get&&r.headers.get('date'); if(dh){ const o=Date.parse(dh)-Date.now(); if(isFinite(o)) clockOff=o; } }catch(e){}
     statAdd(kind||'',byteLen(text));
     try{j=text?JSON.parse(text):null;}catch(e){j=text;}
     if(!r.ok){
@@ -2046,13 +2048,18 @@ window.__SEED_V12={"version":12,"source":"snapshot v9 (16 ต.ค. 2569)","track
         latest.forEach((r,k)=>{if(!local.has(k))removed.push(r);});
       }else{
         local.forEach((r,k)=>{const old=baseline.get(k);if(!old||old.type!==r.type||old.json!==r.json){ let up=r; const rem=latest.get(k);
-          if(old&&rem&&hrec(rem)!==hrec(old)&&hrec(rem)!==hrec(r)){ const cf=[]; if(mergeable(r)&&mergeable(rem)){ const mp=m3(old.payload,r.payload,rem.payload,'',cf); up=Object.assign({},r,{payload:mp,json:cj(mp)}); if(cf.length) conf.push({k:k,remote:rem,fields:cf}); else auto++; } else conf.push({k:k,remote:rem,fields:[]}); }
+          if(!old&&rem&&hrec(rem)!==hrec(r)){ conf.push({k:k,remote:rem,fields:[]}); }   // สองคนสร้างรายการ/วันเดียวกันใหม่พร้อมกัน → แจ้งว่าชนกัน (ไม่ทับเงียบ ๆ)
+          else if(old&&rem&&hrec(rem)!==hrec(old)&&hrec(rem)!==hrec(r)){ const cf=[]; if(mergeable(r)&&mergeable(rem)){ const mp=m3(old.payload,r.payload,rem.payload,'',cf); up=Object.assign({},r,{payload:mp,json:cj(mp)}); if(cf.length) conf.push({k:k,remote:rem,fields:cf}); else auto++; } else conf.push({k:k,remote:rem,fields:[]}); }
           changed.push(up); }});
         baseline.forEach((r,k)=>{if(!local.has(k))removed.push(r);});
       }
+      if(newDev&&changed.length>=10&&!force){
+        const okN=await uiConfirm('เครื่องนี้เพิ่งเริ่มใช้งาน และมี '+changed.length+' รายการที่ Cloud ไม่มี/ต่างจาก Cloud\n('+Object.keys(tally(changed)).map(k=>k+' '+tally(changed)[k]).join(' · ')+')\n\nอาจเป็นข้อมูลตั้งต้นของไฟล์ หรือข้อมูลเก่าในเครื่อง ไม่ใช่งานจริงของคุณ — ถ้าส่งขึ้นไปจะกลายเป็นข้อมูลกลางของทุกคน\n\nถ้าไม่แน่ใจ ให้กด “ยกเลิก” แล้วเปิดแผน 👥 เลือก “ใช้ของ Cloud”',{ok:'ส่งขึ้น Cloud จริง ๆ',cancel:'ยกเลิก',danger:true});
+        if(!okN){ declinedUntil=Date.now()+120000; auditPost('newdev-block',{n:changed.length,by:tally(changed)}); setStatus('error','ยกเลิกการบันทึก — เครื่องใหม่มีข้อมูล '+changed.length+' รายการที่ Cloud ไม่มี · ไม่มีอะไรถูกเปลี่ยนบน Cloud'); emit('guard'); return; }
+      }
       const G=guardOut(removed,force,baseline.size,local.size);
       if(G){
-        if(!window.confirm(G.msg)){
+        if(!(await uiConfirm(G.msg,{ok:'ลบและบันทึก',cancel:'ยกเลิก',danger:true}))){
           declinedUntil=Date.now()+120000; auditPost('guard-block',{n:G.n,pct:G.pct,by:G.by});
           setStatus('error','ยกเลิกการบันทึก — '+G.short+' · ไม่มีอะไรถูกเปลี่ยนบน Cloud (การแก้ไขในเครื่องนี้ยังอยู่)'); emit('guard'); return;
         }
@@ -2085,6 +2092,7 @@ window.__SEED_V12={"version":12,"source":"snapshot v9 (16 ต.ค. 2569)","track
     const cur=readConf(), at=new Date().toISOString();
     list.forEach(c=>{ const r=c.remote; cur.push({at:at,key:String(c.k).replace(PREFIX,''),type:r.type,payload:r.payload,fields:c.fields||[]}); });
     try{ localStorage.setItem(CFK,JSON.stringify(cur.slice(-60))); }catch(e){}
+    try{ auditPost('conflict',{n:list.length,by:tally(list.map(c=>c.remote))}); }catch(e){}
     try{ if(typeof toast==='function') toast('⚠️ มี '+list.length+' รายการที่ถูกแก้ซ้ำฟิลด์เดียวกันพร้อมกัน — ใช้ของเครื่องนี้ (ดูของอีกฝั่งได้ที่ปุ่ม ⚠ ในหน้า Tracker)','var(--t-warn)'); }catch(e){}
     try{ window.dispatchEvent(new Event('spdb-conflict')); }catch(e){}
   }
@@ -2139,7 +2147,15 @@ window.__SEED_V12={"version":12,"source":"snapshot v9 (16 ต.ค. 2569)","track
       const mg=mergeRecords(local,remote,B);
       if(!B) backupLocal(local,remote);
       noteConflicts(mg.conflicts);
-      const lostC=[]; local.forEach((r,k)=>{ if(!mg.M.has(k)) lostC.push(r); });
+      const droppedK=new Set();
+      if(!B){                                                                     // เครื่องเพิ่งเริ่มใช้ (ไม่เคยซิงก์): ข้อมูลเดิมในเครื่องที่ Cloud มีประเภทเดียวกันอยู่แล้ว = ข้อมูลตั้งต้น/ของเก่า → ไม่ส่งขึ้นไปทับ
+        const fam=new Set(); remote.forEach(r=>fam.add(recLabel(r))); const dropped=[];
+        local.forEach((r,k)=>{ if(!remote.has(k)&&mg.M.has(k)&&fam.has(recLabel(r))&&recLabel(r)!=='ตั้งค่า'){ dropped.push(r); droppedK.add(k); mg.M.delete(k); mg.kept--; } });
+        if(dropped.length){ saveRestoreSet('ข้อมูลเดิมในเครื่องนี้ที่ไม่ตรงกับ Cloud ('+dropped.length+' รายการ · เครื่องเพิ่งเริ่มใช้)',dropped); auditPost('newdev-drop',{n:dropped.length,by:tally(dropped)}); }
+        const left=[]; local.forEach((r,k)=>{ if(!remote.has(k)&&mg.M.has(k)) left.push(r); });
+        newDev=left.length?{n:left.length,by:tally(left),dropped:dropped.length,at:new Date().toISOString()}:(dropped.length?{n:0,by:{},dropped:dropped.length,at:new Date().toISOString()}:null);
+      }
+      const lostC=[]; local.forEach((r,k)=>{ if(!mg.M.has(k)&&!droppedK.has(k)) lostC.push(r); });
       const LCc=lossCheck(lostC,local.size);
       if(LCc){
         saveRestoreSet('Cloud ขาดข้อมูล '+LCc.n+' รายการ (ตอนเปิดหน้า)',lostC); setAnomaly('cloud-loss',LCc); auditPost('cloud-loss',{n:LCc.n,of:LCc.of,by:LCc.by,at:'connect'});
@@ -2234,20 +2250,38 @@ window.__SEED_V12={"version":12,"source":"snapshot v9 (16 ต.ค. 2569)","track
     if(valid())connect(true).catch(e=>setStatus('error','เชื่อมต่อไม่สำเร็จ — '+errText(e)));
     else setStatus('off','ยังไม่ได้ตั้งค่า Supabase — ข้อมูลยังอยู่เฉพาะเครื่องนี้');
   }
-  /* ================= v26 · ทำงานร่วมกันอย่างปลอดภัย + ล็อกอินด้วยชื่อ/PIN =================
-     • ต้องกด “บันทึก” ก่อนข้อมูลจึงขึ้น Cloud (ค่าตั้งต้น) — สลับเป็นอัตโนมัติได้ · นับรายการที่ยังไม่บันทึก
-     • ใครออนไลน์ (สัญญาณทุก 90 วินาที เฉพาะตอนเปิดหน้าอยู่) · ประวัติการบันทึก: ใคร เมื่อไร แก้อะไร
-     • กันข้อมูลหายทั้งก้อน: ถามยืนยันก่อนลบ/ทับจำนวนมาก + เก็บจุดกู้คืน · ถ้า Cloud ข้อมูลหายผิดปกติ จะไม่ล้างข้อมูลในเครื่องตาม
-     • PIN เก็บเป็นแฮชในตารางเดียวกัน (prefix countermeasure-auth:) — ตรวจที่หน้าเว็บ ไม่ใช่ความปลอดภัยระดับเซิร์ฟเวอร์ */
-  const WHOK='ux_me', MODEK='ux_savemode', DEVK='ux_dev_id', RPL='ux_rp_list', PRUNEK='ux_prune_day';
-  const PRES='countermeasure-presence:', AUD='countermeasure-audit:', AUTHP='countermeasure-auth:', APPVER='26';
+  /* ================= v27 · ทำงานร่วมกันอย่างปลอดภัย · ล็อกอินชื่อ+PIN · จุดสำรองบน Cloud =================
+     • ต้องกด “บันทึก” ก่อนข้อมูลจึงขึ้น Cloud (ค่าตั้งต้น) · ใครออนไลน์ · ประวัติ ใคร/เมื่อไร/แก้อะไร
+     • กันข้อมูลหายทั้งก้อน: ถามยืนยันก่อนลบ/ทับจำนวนมาก + จุดกู้คืนในเครื่อง + จุดสำรองรายวันบน Cloud (7 วัน)
+     • เครื่องใหม่: ไม่ส่งข้อมูลตั้งต้น/ของเก่าในเครื่องขึ้นไปทับ Cloud เงียบ ๆ
+     • PIN เก็บเป็นแฮช ตรวจที่หน้าเว็บ — ไม่ใช่ความปลอดภัยระดับเซิร์ฟเวอร์ */
+  const WHOK='ux_me', MODEK='ux_savemode', DEVK='ux_dev_id', RPL='ux_rp_list', PRUNEK='ux_prune_day', SNAPK='ux_snap_day', ACFGC='ux_cfg_cache';
+  const PRES='countermeasure-presence:', AUD='countermeasure-audit:', AUTHP='countermeasure-auth:', SNAP='countermeasure-snap:', ACFGK=AUTHP+'~cfg', APPVER='27';
+  var clockOff=0, lastOK=0, newDev=null;
   const lsGet=k=>{ try{ return localStorage.getItem(k); }catch(e){ return null; } };
   const lsSet=(k,v)=>{ try{ localStorage.setItem(k,v); return true; }catch(e){ return false; } };
   const who=()=>String(lsGet(WHOK)||'').trim();
   const saveMode=()=>lsGet(MODEK)==='auto'?'auto':'manual';
   function devId(){ let d=lsGet(DEVK); if(!d){ d=Math.random().toString(36).slice(2,8)+Date.now().toString(36).slice(-4); lsSet(DEVK,d); } return d; }
-  let dirtyInfo=null, dirtyT=0, anomaly=null, declinedUntil=0, presRows=[], presOK=true, audOK=true, audAcc=null, audT=0;
+  let dirtyInfo=null, dirtyT=0, anomaly=null, declinedUntil=0, presRows=[], presOK=true, audOK=true, audAcc=null, audT=0, snapBusy=false;
   const emit=t=>{ try{ window.dispatchEvent(new CustomEvent('spdb-collab',{detail:{type:t}})); }catch(e){} };
+  /* ----- กล่องยืนยันของเรา (แทน confirm ของเบราว์เซอร์) ----- */
+  function uiConfirm(msg,o){
+    o=o||{};
+    return new Promise(res=>{
+      const prev=document.activeElement, ov=document.createElement('div'); ov.id='cbCf'; ov.setAttribute('role','alertdialog'); ov.setAttribute('aria-modal','true');
+      ov.style.cssText='position:fixed;inset:0;z-index:700;background:rgba(0,0,0,.62);display:flex;align-items:center;justify-content:center;padding:16px';
+      const box=document.createElement('div'); box.style.cssText='width:100%;max-width:470px;max-height:88vh;overflow:auto;border:1px solid var(--line,#667);border-radius:16px;background:var(--pop,#fff);color:var(--txt,#111);padding:18px 20px;box-shadow:0 24px 70px rgba(0,0,0,.5);font-size:13.5px;line-height:1.65';
+      const t=document.createElement('div'); t.style.cssText='white-space:pre-wrap;margin-bottom:14px'; t.textContent=String(msg);
+      const row=document.createElement('div'); row.style.cssText='display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap';
+      const mk=(id,txt,pri,dng)=>{ const b=document.createElement('button'); b.type='button'; b.id=id; b.textContent=txt; b.style.cssText='padding:8px 16px;margin:0;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;border:1px solid '+(dng?'var(--dang,#d33)':pri?'var(--pri,#46f)':'var(--line,#667)')+';background:'+(dng?'var(--dang,#d33)':pri?'var(--pri,#46f)':'transparent')+';color:'+((dng||pri)?'var(--on-pri,#fff)':'inherit'); return b; };
+      const no=mk('cbCfNo',o.cancel||'ยกเลิก',false,false), ok=mk('cbCfOk',o.ok||'ตกลง',!o.danger,!!o.danger);
+      const done=v=>{ document.removeEventListener('keydown',kd,true); ov.remove(); try{ if(prev&&prev.focus) prev.focus(); }catch(e){} res(v); };
+      const kd=e=>{ if(e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); done(false); } else if(e.key==='Tab'){ const f=[no,ok]; const i=f.indexOf(document.activeElement); e.preventDefault(); f[(i+(e.shiftKey?-1:1)+2)%2].focus(); } };
+      no.onclick=()=>done(false); ok.onclick=()=>done(true); document.addEventListener('keydown',kd,true);
+      row.appendChild(no); row.appendChild(ok); box.appendChild(t); box.appendChild(row); ov.appendChild(box); document.body.appendChild(ov); (o.danger?no:ok).focus();
+    });
+  }
   function recLabel(r){
     const t=r.type;
     if(t==='TrackerItem') return 'Tracker'; if(t==='TrashItem') return 'ถังขยะ'; if(t==='ChecklistDay') return 'Checklist';
@@ -2266,6 +2300,15 @@ window.__SEED_V12={"version":12,"source":"snapshot v9 (16 ต.ค. 2569)","track
   const tally=a=>{ const o={}; a.forEach(r=>{ const l=recLabel(r); o[l]=(o[l]||0)+1; }); return o; };
   const sample=a=>{ const o=[]; for(const r of a){ const n=recName(r); if(n&&o.indexOf(n)<0) o.push(n); if(o.length>=6) break; } return o; };
   function curTab(){ try{ const b=document.querySelector('.nv-tab.on .nv-tx b .f')||document.querySelector('.tabbtn.on'); return String(b&&b.textContent||'').replace(/\s+/g,' ').trim().slice(0,24); }catch(e){ return ''; } }
+  function friendly(raw,st){
+    const m=String(raw||''), s=+st||0;
+    if(s===402||s===429||/จำกัดโควตา/.test(m)) return m;
+    if(/Failed to fetch|NetworkError|Load failed|network/i.test(m)) return 'ติดต่อ Cloud DB ไม่ได้ (อินเทอร์เน็ตหลุด หรือเครือข่ายบริษัทบล็อก supabase.co) — ข้อมูลยังอยู่ในเครื่องนี้ ลองกด ↻ Sync อีกครั้ง';
+    if(s===401||s===403||/JWT|Authentication|row-level|permission|not authorized/i.test(m)) return 'Cloud DB ไม่อนุญาตให้ทำรายการนี้ (key หรือสิทธิ์ RLS ผิด) — แจ้งผู้ดูแลระบบ · ข้อมูลยังอยู่ในเครื่องนี้';
+    if(s===404||/relation .* does not exist|Could not find the table/i.test(m)) return 'ไม่พบตารางบน Cloud DB — ตรวจชื่อตารางที่ ⚙ เครื่องมือ → ☁ ตั้งค่า Cloud DB';
+    if(s>=500||/timeout|timed out/i.test(m)) return 'Cloud DB ขัดข้องชั่วคราว'+(s?' (HTTP '+s+')':'')+' — ลองใหม่ในอีกสักครู่ ข้อมูลยังอยู่ในเครื่องนี้';
+    return m;
+  }
   function computeDirty(){
     if(!ready||!cache) return null;
     const local=recMap(appModel()), ch=[], rm=[];
@@ -2283,7 +2326,7 @@ window.__SEED_V12={"version":12,"source":"snapshot v9 (16 ต.ค. 2569)","track
   function rpList(){ try{ const a=JSON.parse(lsGet(RPL)||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
   function saveRestoreSet(reason,recs){
     try{
-      const list=rpList(), rec={id:Date.now().toString(36),at:new Date().toISOString(),reason:String(reason||''),who:who(),n:recs.length,by:tally(recs),records:recs.map(r=>({key:r.key,type:r.type,payload:r.payload,date:r.date||null}))};
+      const list=rpList(), rec={id:Date.now().toString(36)+Math.random().toString(36).slice(2,4),at:new Date().toISOString(),reason:String(reason||''),who:who(),n:recs.length,by:tally(recs),records:recs.map(r=>({key:r.key,type:r.type,payload:r.payload,date:r.date||null}))};
       list.unshift(rec); while(list.length>3) list.pop();
       let txt=JSON.stringify(list); while(txt.length>3000000&&list.length>1){ list.pop(); txt=JSON.stringify(list); }
       if(!lsSet(RPL,txt)){ list.length=1; if(!lsSet(RPL,JSON.stringify(list))) return null; }
@@ -2293,7 +2336,7 @@ window.__SEED_V12={"version":12,"source":"snapshot v9 (16 ต.ค. 2569)","track
   async function auditPost(kind,detail){
     if(!valid()||!audOK) return;
     try{
-      const iso=new Date().toISOString(), key=AUD+String(Date.now()).padStart(14,'0')+':'+devId();
+      const iso=new Date().toISOString(), key=AUD+String(Date.now()).padStart(14,'0')+':'+devId()+':'+Math.random().toString(36).slice(2,5);
       await api('POST','?on_conflict=record_key',[{record_key:key,entity_type:'AppConfig',payload:Object.assign({k:kind,at:iso,who:who()||'(ไม่ระบุ)',dev:devId(),mode:saveMode(),ver:APPVER},detail||{}),record_date:null,updated_at:iso}],{'Prefer':'resolution=merge-duplicates,return=minimal'},'aud');
     }catch(e){ if(e&&(e.status===400||e.status===403||e.status===404)) audOK=false; }
   }
@@ -2308,23 +2351,24 @@ window.__SEED_V12={"version":12,"source":"snapshot v9 (16 ต.ค. 2569)","track
     const rows=await api('GET','?select=record_key,payload,updated_at&record_key=like.'+encodeURIComponent(AUD+'*')+'&order=record_key.desc&limit='+(n||40),null,null,'aud');
     return (Array.isArray(rows)?rows:[]).map(x=>Object.assign({key:x.record_key,u:x.updated_at},x.payload||{}));
   }
+  const nowS=()=>Date.now()+(+clockOff||0);
   async function beat(){
     if(!who()||!valid()||!cfg.enabled||!presOK||document.hidden||Date.now()<pausedUntil) return;
     try{
-      const iso=new Date().toISOString();
+      const iso=new Date(nowS()).toISOString();
       await api('POST','?on_conflict=record_key',[{record_key:PRES+devId(),entity_type:'AppConfig',payload:{who:who(),dev:devId(),at:iso,tab:curTab(),dirty:dirtyInfo?dirtyInfo.n:0,mode:saveMode(),ver:APPVER},record_date:null,updated_at:iso}],{'Prefer':'resolution=merge-duplicates,return=minimal'},'pres');
       const rows=await api('GET','?select=record_key,payload,updated_at&record_key=like.'+encodeURIComponent(PRES+'*')+'&order=updated_at.desc&limit=40',null,null,'pres');
-      presRows=(Array.isArray(rows)?rows:[]).map(x=>Object.assign({key:x.record_key,u:x.updated_at},x.payload||{})); emit('presence'); dailyPrune();
+      presRows=(Array.isArray(rows)?rows:[]).map(x=>Object.assign({key:x.record_key,u:x.updated_at},x.payload||{})); emit('presence'); dailyPrune(); autoSnap().catch(()=>{});
     }catch(e){ if(e&&(e.status===400||e.status===403||e.status===404)) presOK=false; }
   }
   function online(){
-    const now=Date.now(), me=devId(), by={};
+    const now=nowS(), me=devId(), by={};
     presRows.forEach(p=>{ if(p.off||!p.who) return; const t=Date.parse(p.at||p.u); if(!isFinite(t)||now-t>240000) return;
-      const k=p.who, o=by[k]||(by[k]={who:k,devs:0,mine:false,tab:'',dirty:0,at:0}); o.devs++; if(p.dev===me) o.mine=true; o.dirty+=p.dirty||0; if(t>o.at){ o.at=t; o.tab=p.tab||''; } });
+      const k=p.who, o=by[k]||(by[k]={who:k,devs:0,mine:false,tab:'',dirty:0,at:0,ver:0}); o.devs++; if(p.dev===me) o.mine=true; o.dirty+=p.dirty||0; o.ver=Math.max(o.ver,+p.ver||0); if(t>o.at){ o.at=t; o.tab=p.tab||''; } });
     return Object.keys(by).map(k=>by[k]).sort((a,b)=>b.at-a.at);
   }
   function goOffline(){
-    try{ if(!valid()||!presOK) return; const iso=new Date().toISOString();
+    try{ if(!valid()||!presOK||!who()) return; const iso=new Date().toISOString();
       fetch(base()+'/rest/v1/'+encodeURIComponent(table())+'?on_conflict=record_key',{method:'POST',keepalive:true,mode:'cors',headers:authHeaders({'Prefer':'resolution=merge-duplicates,return=minimal'}),body:JSON.stringify([{record_key:PRES+devId(),entity_type:'AppConfig',payload:{who:who(),dev:devId(),at:iso,off:1},record_date:null,updated_at:iso}])}); }catch(e){}
   }
   async function dailyPrune(){
@@ -2340,20 +2384,69 @@ window.__SEED_V12={"version":12,"source":"snapshot v9 (16 ต.ค. 2569)","track
     document.addEventListener('visibilitychange',()=>{ if(!document.hidden) setTimeout(beat,800); });
     window.addEventListener('pagehide',goOffline);
   }
-  /* ----- ล็อกอิน: อ่าน/เขียนแฮช PIN ในตาราง (คนละ prefix กับข้อมูลงาน) ----- */
+  /* ----- ตั้งค่าส่วนกลาง (รายชื่อ · ผู้ดูแล · เวอร์ชันขั้นต่ำ · อายุการจำเครื่อง) อยู่ในแถว countermeasure-auth:~cfg ----- */
+  const CFG_DEF={names:['Earn','Natcha','Mana','Benz'],admins:['Benz'],minver:0,ttlh:12};
+  let acfgMem=null;
+  function acfgGet(){
+    if(acfgMem) return acfgMem; let c=null; try{ c=JSON.parse(lsGet(ACFGC)||'null'); }catch(e){}
+    const o=Object.assign({},CFG_DEF,c||{}); if(!Array.isArray(o.names)||!o.names.length) o.names=CFG_DEF.names.slice(); if(!Array.isArray(o.admins)||!o.admins.length) o.admins=CFG_DEF.admins.slice(); o.minver=+o.minver||0; o.ttlh=+o.ttlh>0?+o.ttlh:12; acfgMem=o; return o;
+  }
+  function acfgSetFrom(p){ if(!p||typeof p!=='object') return false; acfgMem=null; lsSet(ACFGC,JSON.stringify(Object.assign({},acfgGet(),p))); acfgMem=null; emit('cfg'); return true; }
+  async function acfgRefresh(){ const rows=await api('GET','?select=record_key,payload&record_key=eq.'+encodeURIComponent(ACFGK),null,null,'auth'); if(Array.isArray(rows)&&rows[0]) acfgSetFrom(rows[0].payload); return acfgGet(); }
+  async function acfgPut(patch){ const n=Object.assign({},acfgGet(),patch,{v:1,at:new Date().toISOString(),by:who()}); await authPut('~cfg',n); acfgSetFrom(n); return acfgGet(); }
   async function authList(){
-    const rows=await api('GET','?select=record_key,payload&record_key=like.'+encodeURIComponent(AUTHP+'*')+'&limit=20',null,null,'auth');
-    const o={}; (Array.isArray(rows)?rows:[]).forEach(x=>{ o[String(x.record_key).slice(AUTHP.length)]=x.payload||{}; }); return o;
+    const rows=await api('GET','?select=record_key,payload&record_key=like.'+encodeURIComponent(AUTHP+'*')+'&limit=40',null,null,'auth');
+    const o={}; (Array.isArray(rows)?rows:[]).forEach(x=>{ o[String(x.record_key).slice(AUTHP.length)]=x.payload||{}; });
+    if(o['~cfg']){ acfgSetFrom(o['~cfg']); delete o['~cfg']; } return o;
   }
   async function authPut(name,payload){ const iso=new Date().toISOString(); await api('POST','?on_conflict=record_key',[{record_key:AUTHP+name,entity_type:'AppConfig',payload:payload,record_date:null,updated_at:iso}],{'Prefer':'resolution=merge-duplicates,return=minimal'},'auth'); }
   async function authDel(name){ await api('DELETE','?record_key=eq.'+encodeURIComponent(AUTHP+name),null,{'Prefer':'return=minimal'},'auth'); }
+  /* ----- จุดสำรองรายวันบน Cloud (เก็บ 10 ชุดล่าสุด · ตัวเต็มอ่านเฉพาะตอนกู้) ----- */
+  async function snapList(){
+    const rows=await api('GET','?select=record_key,updated_at&record_key=like.'+encodeURIComponent(SNAP+'*')+'&order=record_key.desc&limit=30',null,null,'snap');
+    return (Array.isArray(rows)?rows:[]).map(x=>{ const m=/^countermeasure-snap:(\d{4}-\d{2}-\d{2}):n(\d+)/.exec(x.record_key)||[]; return {key:x.record_key,day:m[1]||'',n:+m[2]||0,u:x.updated_at}; });
+  }
+  async function snapMake(manual){
+    if(!cache||!cache.size) throw new Error('ยังไม่มีข้อมูลจาก Cloud ให้สำรอง');
+    if(anomaly) throw new Error('Cloud ขาดข้อมูลอยู่ — แก้ให้เรียบร้อยก่อนสร้างจุดสำรอง');
+    const recs=[]; cache.forEach(r=>recs.push({k:r.key,t:r.type,p:r.payload,d:r.date||null}));
+    const iso=new Date().toISOString(), key=SNAP+iso.slice(0,10)+':n'+recs.length;
+    await api('POST','?on_conflict=record_key',[{record_key:key,entity_type:'AppConfig',payload:{at:iso,by:who(),n:recs.length,manual:!!manual,recs:recs},record_date:null,updated_at:iso}],{'Prefer':'resolution=merge-duplicates,return=minimal'},'snap');
+    auditPost('snapshot',{n:recs.length,manual:!!manual});
+    try{ const l=await snapList(); for(const o of l.slice(10)) await api('DELETE','?record_key=eq.'+encodeURIComponent(o.key),null,{'Prefer':'return=minimal'},'snap'); }catch(e){}
+    return {key:key,n:recs.length};
+  }
+  async function autoSnap(){
+    const day=new Date().toISOString().slice(0,10); if(lsGet(SNAPK)===day||snapBusy) return;
+    if(!ready||anomaly||!cache||cache.size<20||!who()) return; snapBusy=true;
+    try{
+      const l=await snapList(); lsSet(SNAPK,day); if(l.some(x=>x.day===day)) return;
+      const prev=Math.max(0,...l.slice(0,7).map(x=>x.n));
+      if(prev&&cache.size<prev*0.8){ auditPost('snapshot-skip',{n:cache.size,prev:prev}); return; }
+      await snapMake(false);
+    }finally{ snapBusy=false; }
+  }
+  async function snapGet(key){ const rows=await api('GET','?select=record_key,payload&record_key=eq.'+encodeURIComponent(key),null,null,'snap'); const r=Array.isArray(rows)&&rows[0]; if(!r||!r.payload) throw new Error('ไม่พบจุดสำรองนี้'); return r.payload; }
+  async function snapInspect(key){
+    const p=await snapGet(key), cur=await fetchRows({verify:true}), miss=[]; let diff=0,same=0;
+    (p.recs||[]).forEach(x=>{ const c=cur.get(x.k); if(!c) miss.push({key:x.k,type:x.t,payload:x.p}); else if(c.json!==cj(x.p)) diff++; else same++; });
+    return {at:p.at,by:p.by,n:(p.recs||[]).length,missing:miss.length,diff:diff,same:same,by2:tally(miss)};
+  }
+  async function snapRestore(key,mode){
+    const p=await snapGet(key), cur=await fetchRows({verify:true}), todo=[], over=[];
+    (p.recs||[]).forEach(x=>{ const c=cur.get(x.k); if(!c) todo.push({key:x.k,type:x.t,payload:x.p,date:x.d,json:cj(x.p)}); else if(mode==='all'&&c.json!==cj(x.p)){ todo.push({key:x.k,type:x.t,payload:x.p,date:x.d,json:cj(x.p)}); over.push(c); } });
+    if(!todo.length) return 0;
+    if(over.length) saveRestoreSet('ก่อนกู้จากจุดสำรอง '+String(p.at).slice(0,10)+' (ทับ '+over.length+' รายการ)',over);
+    await upsertMany(todo); await pullCloud(); auditPost('snap-restore',{n:todo.length,mode:mode,day:String(p.at).slice(0,10)});
+    return todo.length;
+  }
   function guardOut(removed,force,baseN,localN){
     if(!removed.length) return null;
     const big=removed.length>=8&&(removed.length>=baseN*0.1||removed.length>=25);
     if(!big&&!force) return null;
     const by=tally(removed), parts=Object.keys(by).map(k=>k+' '+by[k]).join(' · '), pct=baseN?Math.round(removed.length/baseN*100):100;
     return {n:removed.length,pct:pct,by:by,short:'จะลบ '+removed.length+' รายการ ('+pct+'%)',
-      msg:'⚠ การบันทึกครั้งนี้จะ “ลบ” '+removed.length+' รายการออกจาก Cloud DB ('+pct+'% ของข้อมูลกลาง)\n'+parts+'\n\n'+(force?'(โหมดส่งทับ: ลบทุกอย่างบน Cloud ที่ไม่มีในเครื่องนี้)\n':'เครื่องนี้มีข้อมูล '+localN+' รายการ · Cloud เดิมมี '+baseN+' รายการ\n')+'\nถ้าไม่ได้ตั้งใจลบ (เช่น เพิ่งล้างข้อมูลเบราว์เซอร์ หรือเปิดไฟล์จากที่ใหม่) ให้กด Cancel\nถ้ากด OK ระบบจะเก็บรายการที่ถูกลบไว้เป็นจุดกู้คืนในเครื่องนี้ก่อน'};
+      msg:'⚠ การบันทึกครั้งนี้จะ “ลบ” '+removed.length+' รายการออกจาก Cloud DB ('+pct+'% ของข้อมูลกลาง)\n'+parts+'\n\n'+(force?'(โหมดส่งทับ: ลบทุกอย่างบน Cloud ที่ไม่มีในเครื่องนี้)\n':'เครื่องนี้มีข้อมูล '+localN+' รายการ · Cloud เดิมมี '+baseN+' รายการ\n')+'\nถ้าไม่ได้ตั้งใจลบ (เช่น เพิ่งล้างข้อมูลเบราว์เซอร์ หรือเปิดจากที่ใหม่) ให้กด “ยกเลิก”\nถ้ากด “ลบและบันทึก” ระบบจะเก็บรายการที่ถูกลบไว้เป็นจุดกู้คืนในเครื่องนี้ก่อน'};
   }
   function lossCheck(lostRecs,baseN){ const n=lostRecs.length; return (n>=8&&(n>=baseN*0.1||n>=25))?{n:n,of:baseN,pct:Math.round(n/Math.max(baseN,1)*100),by:tally(lostRecs)}:null; }
   function setAnomaly(kind,d){ anomaly={kind:kind,at:new Date().toISOString(),n:d.n,of:d.of,pct:d.pct,by:d.by||{}}; emit('anomaly'); try{ if(typeof toast==='function') toast('⚠ Cloud DB มีข้อมูลหายไป '+d.n+' รายการ — ไม่ได้ลบข้อมูลในเครื่องนี้ตาม (ดูที่แผง 👥 มุมซ้ายล่าง)'); }catch(e){} }
@@ -2364,7 +2457,7 @@ window.__SEED_V12={"version":12,"source":"snapshot v9 (16 ต.ค. 2569)","track
     clearTimeout(timer); timer=0; await syncNow(false,true); return dirtyInfo;
   }
   async function pullCloud(){
-    const remote=await fetchRows({force:true}); cache=remote; ready=true; applyRemote(remoteModel(remote)); appliedVer=rcVer; saveBase(remote); clearAnomaly();
+    const remote=await fetchRows({force:true}); cache=remote; ready=true; applyRemote(remoteModel(remote)); appliedVer=rcVer; saveBase(remote); clearAnomaly(); newDev=null;
     lastSync=new Date().toLocaleString('th-TH'); setStatus('ok','เชื่อมต่อ <b>'+esc(table())+'</b> · ดึงข้อมูลล่าสุดจาก Cloud แล้ว '+esc(lastSync));
   }
   async function discardLocal(){
@@ -2377,15 +2470,17 @@ window.__SEED_V12={"version":12,"source":"snapshot v9 (16 ต.ค. 2569)","track
     await pullCloud(); auditPost('restore',{n:rec.n,reason:rec.reason});
     return rec.n;
   }
-
-  function onSaved(changed,removed,force){ if(changed.length||removed.length) auditSave(changed,removed,force); clearAnomaly(); scheduleDirty(); emit('saved'); }
+  function onSaved(changed,removed,force){ if(changed.length||removed.length) auditSave(changed,removed,force); clearAnomaly(); newDev=null; scheduleDirty(); emit('saved'); }
   const COLLAB={
-    who:who, setWho:n=>{ lsSet(WHOK,String(n||'').trim()); emit('who'); setTimeout(beat,300); },
+    ver:APPVER, confirm:uiConfirm, who:who, setWho:n=>{ lsSet(WHOK,String(n||'').trim()); emit('who'); setTimeout(beat,300); },
     mode:saveMode, setMode:m=>{ lsSet(MODEK,m==='auto'?'auto':'manual'); emit('mode'); scheduleDirty(); if(m==='auto') setTimeout(()=>{ if(dirtyInfo&&dirtyInfo.n) queue(); },700); },
     dirty:()=>dirtyInfo, refresh:refreshDirty, save:saveNow, discard:discardLocal, pull:pullCloud, checkRemote:()=>refreshRemote(false,false),
-    online:online, beat:beat, goOffline:goOffline, history:history, anomaly:()=>anomaly, clearAnomaly:clearAnomaly,
-    restoreSets:rpList, restoreSet:restoreSet, dev:devId, authList:authList, authPut:authPut, authDel:authDel, audit:auditPost,
-    state:()=>({who:who(),mode:saveMode(),dirty:dirtyInfo,anomaly:anomaly,online:online(),ready:ready,paused:Date.now()<pausedUntil,presOK:presOK,dev:devId(),enabled:!!cfg.enabled,valid:valid()})
+    online:online, beat:beat, goOffline:goOffline, history:history, anomaly:()=>anomaly, clearAnomaly:clearAnomaly, newDev:()=>newDev,
+    restoreSets:rpList, restoreSet:restoreSet, dev:devId, audit:auditPost,
+    authList:authList, authPut:authPut, authDel:authDel, cfg:acfgGet, cfgRefresh:acfgRefresh, cfgPut:acfgPut,
+    snapList:snapList, snapMake:snapMake, snapInspect:snapInspect, snapRestore:snapRestore,
+    friendly:friendly, clockOff:()=>clockOff, clearNewDev:()=>{ newDev=null; emit('anomaly'); },
+    state:()=>({who:who(),mode:saveMode(),dirty:dirtyInfo,anomaly:anomaly,online:online(),ready:ready,paused:Date.now()<pausedUntil,presOK:presOK,dev:devId(),enabled:!!cfg.enabled,valid:valid(),lastOK:lastOK,cloudN:cache?cache.size:0,newDev:newDev,ver:APPVER,clockOff:clockOff,conflicts:readConf().length})
   };
   window.SPDB={collab:COLLAB,usage:usage,fmtBytes:fmtB,bind:bind,queue:queue,sync:syncNow,isConfigured:()=>valid(),config:()=>Object.assign({},cfg),diagnose:diag,conflicts:()=>readConf(),clearConflicts:()=>{ try{ localStorage.removeItem(CFK); }catch(e){} }};
   /* Any edit made by any page is queued automatically, even if that module did not call SPDB.queue(). */
@@ -10817,8 +10912,8 @@ window.__NAV={open:openGuide,palette:openPal,refresh:refreshBadges,activate:acti
 
 </script>
 <script id="collabAddon">
-/* ===== Collaboration + Login UI v26 : ล็อกอินชื่อ+PIN · ใครเปิดอยู่ · ต้องกดบันทึก · ประวัติ · จุดกู้คืน =====
-   PIN ตรวจที่หน้าเว็บ (ไม่ใช่ความปลอดภัยระดับเซิร์ฟเวอร์) — ใช้ยืนยันว่าแต่ละคนเข้าใช้ด้วยชื่อตัวเอง */
+/* ===== Collaboration + Login UI v27 =====
+   ล็อกอินชื่อ+PIN (ตรวจที่หน้าเว็บ — ไม่ใช่ความปลอดภัยระดับเซิร์ฟเวอร์) · ใครออนไลน์ · ต้องกดบันทึก · ประวัติ · จุดกู้คืน · จุดสำรอง Cloud · ผู้ดูแล */
 (function(){
 'use strict';
 if(window.__CBUI) return;
@@ -10827,17 +10922,20 @@ const C=()=>window.SPDB&&window.SPDB.collab;
 if(!C()) return;
 const E=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const say=(m,e)=>{ try{ toast(m,e); }catch(x){} };
-const NAMES=['Earn','Natcha','Mana','Benz'], ADMIN='Benz', PINLEN=6, TTL=12*3600*1000, MAXFAIL=5, LOCKMS=60000;
-const SK='ux_auth_sess', FK='ux_auth_fail', CK='ux_auth_cache';
+const PINLEN=6, MAXFAIL=5, LOCKMS=60000;
+const SK='ux_auth_sess', FK='ux_auth_fail', CK='ux_auth_cache', ZK='ux_zoom', GK='qe_glossary_v1', BK='issue_tracker_lastbackup';
 const lsGet=k=>{ try{ return localStorage.getItem(k); }catch(e){ return null; } };
 const lsSet=(k,v)=>{ try{ localStorage.setItem(k,v); }catch(e){} };
 const lsDel=k=>{ try{ localStorage.removeItem(k); }catch(e){} };
 const jget=(k,d)=>{ try{ const v=JSON.parse(lsGet(k)||'null'); return v==null?d:v; }catch(e){ return d; } };
+const names=()=>C().cfg().names, admins=()=>C().cfg().admins, ttl=()=>C().cfg().ttlh*3600000;
+const hhmm=t=>{ try{ return t?new Date(t).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'}):'–'; }catch(e){ return '–'; } };
 const fmt=iso=>{ try{ const d=new Date(iso); if(!isFinite(d)) return String(iso||''); const t=d.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'}); return (new Date().toDateString()===d.toDateString()?'วันนี้ ':d.toLocaleDateString('th-TH',{day:'numeric',month:'short'})+' ')+t; }catch(e){ return String(iso||''); } };
-const ago=ms=>{ const s=Math.max(0,Math.round((Date.now()-ms)/1000)); return s<50?'เมื่อสักครู่':s<3300?Math.max(1,Math.round(s/60))+' นาทีที่แล้ว':Math.round(s/3600)+' ชม.ที่แล้ว'; };
+const ago=ms=>{ const s=Math.max(0,Math.round((Date.now()+(+C().clockOff()||0)-ms)/1000)); return s<50?'เมื่อสักครู่':s<3300?Math.max(1,Math.round(s/60))+' นาทีที่แล้ว':Math.round(s/3600)+' ชม.ที่แล้ว'; };
 const sum=o=>Object.keys(o||{}).map(k=>k+' '+o[k]).join(' · ');
+const CF=(m,o)=>C().confirm(m,o);
 
-/* ---------- SHA-256 (JS ล้วน — ไม่พึ่ง crypto.subtle จึงใช้ได้ทุกบริบท) ---------- */
+/* ---------- SHA-256 (JS ล้วน) ---------- */
 const K256=[], H256=[];
 (function(){ let c=0; for(let i=2;c<64;i++){ let p=true; for(let j=2;j*j<=i;j++) if(i%j===0){ p=false; break; } if(p){ if(c<8) H256[c]=(Math.pow(i,.5)%1*4294967296)|0; K256[c]=(Math.pow(i,1/3)%1*4294967296)|0; c++; } } })();
 function sha256(msg){
@@ -10858,28 +10956,34 @@ function sha256(msg){
   return h.map(x=>(x>>>0).toString(16).padStart(8,'0')).join('');
 }
 function hashPin(name,pin,salt){ let x=sha256(salt+':'+name+':'+pin); for(let i=0;i<4000;i++) x=sha256(x+salt); return x; }
-const rndSalt=()=>{ try{ const a=new Uint8Array(12); crypto.getRandomValues(a); return Array.from(a).map(v=>v.toString(16).padStart(2,'0')).join(''); }catch(e){ return Math.random().toString(36).slice(2)+Date.now().toString(36); } };
+const rnd=n=>{ try{ const a=new Uint8Array(n); crypto.getRandomValues(a); return a; }catch(e){ return Array.from({length:n},()=>Math.floor(Math.random()*256)); } };
+const rndSalt=()=>Array.from(rnd(12)).map(v=>v.toString(16).padStart(2,'0')).join('');
+const ALPHA='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const genCode=()=>{ const a=rnd(8); let s=''; for(let i=0;i<8;i++) s+=ALPHA[a[i]%32]; return s.slice(0,4)+'-'+s.slice(4); };
+const normCode=c=>String(c||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
 
 /* ---------- สไตล์ ---------- */
 const css=document.createElement('style'); css.id='cbStyle'; css.textContent=`
-.cb-pill{position:fixed;left:12px;bottom:12px;z-index:90;display:flex;align-items:center;gap:4px;padding:5px;border:1px solid var(--line);border-radius:999px;background:color-mix(in srgb,var(--pop) 92%,transparent);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);box-shadow:0 6px 24px var(--sh);color:var(--txt);font-size:12.5px;max-width:calc(100vw - 24px)}
+.cb-pill{position:fixed;left:12px;bottom:12px;z-index:90;display:flex;align-items:center;gap:4px;padding:5px;border:1px solid var(--line);border-radius:999px;background:var(--pop);background:color-mix(in srgb,var(--pop) 92%,transparent);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);box-shadow:0 6px 24px var(--sh);color:var(--txt);font-size:12.5px;max-width:calc(100vw - 24px)}
 .cb-pill[hidden]{display:none}
 .cb-b{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;margin:0;border-radius:999px;border:1px solid transparent;background:transparent;color:var(--txt);font-size:12.5px;font-weight:700;cursor:pointer;line-height:1.2;white-space:nowrap}
-.cb-b:hover{background:var(--soft2)}
-.cb-b:focus-visible,.cb-save:focus-visible,.cb-x:focus-visible,.cb-btn:focus-visible,.cb-chip:focus-visible{outline:2px solid var(--pri);outline-offset:2px}
+.cb-b:hover{background:var(--soft2)}.cb-b[hidden]{display:none}
+.cb-b:focus-visible,.cb-save:focus-visible,.cb-x:focus-visible,.cb-btn:focus-visible,.cb-chip:focus-visible,.cb-pn summary:focus-visible{outline:2px solid var(--pri);outline-offset:2px}
 .cb-av{width:22px;height:22px;border-radius:50%;background:var(--pri);color:var(--on-pri);display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:800}
 .cb-dot{width:9px;height:9px;border-radius:50%;background:#22c55e;display:inline-block}
-.cb-pill[data-s="dirty"] .cb-st{color:#f59e0b}.cb-pill[data-s="bad"] .cb-st{color:var(--dang)}.cb-pill[data-s="off"] .cb-st,.cb-pill[data-s="wait"] .cb-st,.cb-pill[data-s="pause"] .cb-st{color:var(--mut)}
+.cb-pill[data-s="dirty"] .cb-st,.cb-pill[data-s="old"] .cb-st{color:#f59e0b}.cb-pill[data-s="bad"] .cb-st{color:var(--dang)}.cb-pill[data-s="off"] .cb-st,.cb-pill[data-s="wait"] .cb-st,.cb-pill[data-s="pause"] .cb-st{color:var(--mut)}
 .cb-st{font-weight:700;padding:0 6px;white-space:nowrap}
 .cb-save{padding:6px 14px;margin:0;border-radius:999px;border:1px solid var(--pri);background:var(--pri);color:var(--on-pri);font-size:12.5px;font-weight:800;cursor:pointer;line-height:1.2;white-space:nowrap}
 .cb-save[hidden]{display:none}.cb-save[disabled]{opacity:.6;cursor:progress}
-.cb-pill[data-s="dirty"] .cb-save{animation:cbp 1.8s ease-in-out infinite}
-@keyframes cbp{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--pri) 55%,transparent)}50%{box-shadow:0 0 0 7px transparent}}
-@media(prefers-reduced-motion:reduce){.cb-pill[data-s="dirty"] .cb-save{animation:none}}
-.cb-pn{position:fixed;left:12px;bottom:64px;z-index:91;width:400px;max-width:calc(100vw - 24px);max-height:min(78vh,640px);overflow:auto;border:1px solid var(--line);border-radius:16px;background:var(--pop);color:var(--txt);box-shadow:0 18px 50px var(--shp);padding:12px 14px;font-size:12.5px;line-height:1.55}
+.cb-pill[data-s="dirty"] .cb-save,.cb-pill[data-s="old"] .cb-save{animation:cbp 1.8s ease-in-out infinite}
+@keyframes cbp{0%,100%{box-shadow:0 0 0 0 rgba(120,120,255,.5)}50%{box-shadow:0 0 0 7px transparent}}
+@media(prefers-reduced-motion:reduce){.cb-pill .cb-save{animation:none!important}}
+.cb-pn{position:fixed;left:12px;bottom:64px;z-index:91;width:410px;max-width:calc(100vw - 24px);max-height:min(80vh,680px);overflow:auto;border:1px solid var(--line);border-radius:16px;background:var(--pop);color:var(--txt);box-shadow:0 18px 50px var(--shp);padding:12px 14px;font-size:12.5px;line-height:1.55}
 .cb-pn[hidden]{display:none}
 .cb-pn h4{margin:12px 0 6px;font-size:11px;letter-spacing:.3px;color:var(--mut);font-weight:800;display:flex;align-items:center;gap:8px}
 .cb-pn h4:first-child{margin-top:0}.cb-pn h4 .grow{flex:1}
+.cb-pn details{margin:10px 0 0;border-top:1px solid var(--line);padding-top:6px}.cb-pn summary{cursor:pointer;font-weight:800;font-size:12px;padding:4px 0;list-style:none}
+.cb-pn summary::-webkit-details-marker{display:none}.cb-pn summary::before{content:'▸ ';color:var(--mut)}.cb-pn details[open]>summary::before{content:'▾ '}
 .cb-r{display:flex;gap:8px;align-items:flex-start;padding:5px 0;border-bottom:1px dashed var(--line)}.cb-r:last-child{border-bottom:0}
 .cb-r b{font-weight:800}.cb-r small{display:block;color:var(--mut);font-size:11.5px;line-height:1.45}
 .cb-r .t{margin-left:auto;color:var(--mut);font-size:11px;white-space:nowrap}
@@ -10887,146 +10991,226 @@ const css=document.createElement('style'); css.id='cbStyle'; css.textContent=`
 .cb-chip:hover{border-color:var(--pri)}.cb-chip.on{background:var(--pri);color:var(--on-pri);border-color:var(--pri)}
 .cb-act{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
 .cb-btn{padding:6px 12px;margin:0;border-radius:9px;border:1px solid var(--line);background:transparent;color:var(--txt);font-size:12px;font-weight:700;cursor:pointer}
-.cb-btn:hover{border-color:var(--pri);background:var(--soft2)}.cb-btn.p{background:var(--pri);color:var(--on-pri);border-color:var(--pri)}.cb-btn.d{border-color:var(--dang);color:var(--dang)}
+.cb-btn:hover{border-color:var(--pri);background:var(--soft2)}.cb-btn.p{background:var(--pri);color:var(--on-pri);border-color:var(--pri)}.cb-btn.d{border-color:var(--dang);color:var(--dang)}.cb-btn[disabled]{opacity:.5;cursor:not-allowed}
 .cb-x{padding:2px 8px;margin:0;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--mut);cursor:pointer;font-size:12px}
-.cb-warn{margin:0 0 8px;padding:8px 10px;border:1px solid var(--dang);border-radius:10px;background:color-mix(in srgb,var(--dang) 12%,transparent)}
+.cb-warn{margin:0 0 8px;padding:8px 10px;border:1px solid var(--dang);border-radius:10px;background:rgba(220,60,60,.12)}
+.cb-warn.y{border-color:#f59e0b;background:rgba(245,158,11,.12)}
 .cb-note{color:var(--mut);font-size:11.5px;margin-top:4px}
 .cb-in{width:100%;padding:9px 11px;border-radius:10px;border:1px solid var(--line);background:var(--soft);color:var(--txt);font-size:15px;margin-top:8px;box-sizing:border-box}
+.cb-pn .cb-in{font-size:13px;padding:6px 9px;margin-top:4px}
 .cb-in.pin{letter-spacing:.5em;text-align:center;font-size:20px;font-weight:800}
-.cb-lock{position:fixed;inset:0;z-index:500;display:flex;align-items:center;justify-content:center;padding:16px;background:color-mix(in srgb,var(--bg,#0b1020) 94%,#000);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px)}
-.cb-md{width:100%;max-width:400px;border:1px solid var(--line);border-radius:18px;background:var(--pop);color:var(--txt);padding:22px 22px 18px;box-shadow:0 24px 70px rgba(0,0,0,.5)}
+.cb-code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:28px;font-weight:800;letter-spacing:.12em;text-align:center;padding:14px 8px;margin:10px 0;border:2px dashed var(--pri);border-radius:12px;background:var(--soft);user-select:all}
+.cb-lock{position:fixed;inset:0;z-index:500;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(8,10,22,.94);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px)}
+.cb-md{width:100%;max-width:400px;max-height:94vh;overflow:auto;border:1px solid var(--line);border-radius:18px;background:var(--pop);color:var(--txt);padding:22px 22px 18px;box-shadow:0 24px 70px rgba(0,0,0,.5)}
 .cb-md h3{margin:0 0 4px;font-size:20px}.cb-md p{margin:0 0 10px;color:var(--mut);font-size:12.5px;line-height:1.6}
 .cb-names{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 4px}
 .cb-names button{padding:14px 10px;margin:0;border-radius:12px;border:1px solid var(--line);background:var(--soft);color:var(--txt);font-size:16px;font-weight:800;cursor:pointer}
 .cb-names button:hover{border-color:var(--pri);background:var(--soft2)}
-.cb-err{margin-top:8px;padding:7px 10px;border-radius:9px;border:1px solid var(--dang);background:color-mix(in srgb,var(--dang) 12%,transparent);font-size:12.5px;line-height:1.5}
+.cb-err{margin-top:8px;padding:7px 10px;border-radius:9px;border:1px solid var(--dang);background:rgba(220,60,60,.12);font-size:12.5px;line-height:1.5}
 .cb-err[hidden]{display:none}
 .cb-ov{position:fixed;inset:0;z-index:420;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px}
-@media(max-width:700px){.cb-pill{left:8px;bottom:8px}.cb-b .cb-wn,.cb-b .cb-ol{display:none}.cb-pn{left:8px;bottom:58px}}
+.cb-gl{width:100%;max-width:640px}.cb-gl textarea{width:100%;min-height:44px;padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:var(--soft);color:var(--txt);font-size:12.5px;box-sizing:border-box;margin:0}
+.cb-gl .gr{display:grid;grid-template-columns:130px 1fr;gap:8px;align-items:start;padding:6px 0;border-bottom:1px dashed var(--line)}.cb-gl .gr b{font-size:13px;padding-top:6px;word-break:break-word}
+.cb-gl .gb{max-height:52vh;overflow:auto}
+@media(max-width:700px){.cb-pill{left:8px;bottom:8px}.cb-b .cb-wn,.cb-b .cb-ol{display:none}.cb-pn{left:8px;bottom:58px}.cb-gl .gr{grid-template-columns:1fr}}
 `; document.head.appendChild(css);
 const pill=document.createElement('div'); pill.className='cb-pill'; pill.id='cbPill'; pill.setAttribute('role','status'); pill.hidden=true;
 pill.innerHTML='<button type="button" class="cb-b" id="cbWho" title="ผู้ใช้ของเครื่องนี้ — กดเพื่อเปิดแผง"><span class="cb-av" id="cbAv">?</span><span class="cb-wn" id="cbWn"></span></button>'+
   '<button type="button" class="cb-b" id="cbOn" title="ใครเปิดหน้านี้อยู่ตอนนี้"><i class="cb-dot"></i><span id="cbOnT">0</span><span class="cb-ol"> ออนไลน์</span></button>'+
+  '<button type="button" class="cb-b" id="cbCfl" hidden title="มีรายการที่ถูกแก้ซ้ำพร้อมกัน — กดดูรายละเอียด"></button>'+
   '<span class="cb-st" id="cbSt">…</span><button type="button" class="cb-save" id="cbSave" hidden>💾 บันทึก</button>';
 const panel=document.createElement('div'); panel.className='cb-pn'; panel.id='cbPanel'; panel.hidden=true; panel.setAttribute('role','dialog'); panel.setAttribute('aria-label','ทำงานร่วมกัน');
 document.body.appendChild(pill); document.body.appendChild(panel);
-let HIST=null, histBusy=false, busy=false, locked=false;
+let HIST=null, histBusy=false, busy=false, locked=false, AUTH=null, SNAPS=null, SINFO={}, dirtySince=0, lastNag=0, nagVer=0;
+const OPEN={}, baseTitle=document.title.replace(/^● \(\d+\) /,'');
+function applyZoom(){ const z=parseFloat(lsGet(ZK)||'1'); try{ document.body.style.zoom=(z&&z!==1)?String(z):''; }catch(e){} }
+applyZoom();
 
 /* ---------- เซสชัน ---------- */
-const sess=()=>{ const s=jget(SK,null); return (s&&NAMES.indexOf(s.n)>=0&&s.exp>Date.now()&&lsGet('ux_me')===s.n)?s:null; };
+const sess=()=>{ const s=jget(SK,null); return (s&&names().indexOf(s.n)>=0&&s.exp>Date.now()&&lsGet('ux_me')===s.n)?s:null; };
 const me=()=>{ const s=sess(); return s?s.n:''; };
-const isAdmin=()=>me()===ADMIN;
-function startSession(name){ lsSet(SK,JSON.stringify({n:name,exp:Date.now()+TTL,at:Date.now()})); C().setWho(name); }
-function endSession(why){ try{ C().goOffline(); }catch(e){} lsDel(SK); C().setWho(''); if(why) say(why); }
+const isAdmin=()=>admins().indexOf(me())>=0;
+function startSession(name){ lsSet(SK,JSON.stringify({n:name,exp:Date.now()+ttl(),at:Date.now()})); C().setWho(name); }
+function endSession(){ try{ C().goOffline(); }catch(e){} lsDel(SK); C().setWho(''); }
 
-/* ---------- หน้าล็อกอิน (คลุมทั้งหน้าจอ · ไม่มีปุ่มข้าม · ปิดไม่ได้) ---------- */
+/* ---------- หน้าล็อก (ล็อกอิน / บังคับอัปเดตเวอร์ชัน) — คลุมทั้งหน้า ไม่มีปุ่มข้าม ---------- */
 const inerted=[];
 function setInert(on){
-  if(on){ [...document.body.children].forEach(el=>{ if(['SCRIPT','STYLE','LINK'].indexOf(el.tagName)>=0||el.id==='cbLock'||el.hasAttribute('inert')) return; el.setAttribute('inert',''); inerted.push(el); }); }
+  if(on){ [...document.body.children].forEach(el=>{ if(['SCRIPT','STYLE','LINK'].indexOf(el.tagName)>=0||el.id==='cbLock'||el.id==='cbVerLock'||el.id==='cbCf'||el.hasAttribute('inert')) return; el.setAttribute('inert',''); inerted.push(el); }); }
   else{ while(inerted.length){ const el=inerted.pop(); el.removeAttribute('inert'); } }
 }
-window.addEventListener('keydown',e=>{ if(locked&&!(e.target.closest&&e.target.closest('#cbLock'))){ e.stopImmediatePropagation(); e.preventDefault(); } },true);
-function failState(){ const f=jget(FK,{n:0,until:0}); return {n:f.n||0,until:f.until||0}; }
-function cacheGet(){ return jget(CK,{}); }
+window.addEventListener('keydown',e=>{ if(locked&&!(e.target.closest&&e.target.closest('#cbLock,#cbVerLock,#cbCf'))){ e.stopImmediatePropagation(); e.preventDefault(); } },true);
+const failState=()=>{ const f=jget(FK,{n:0,until:0}); return {n:f.n||0,until:f.until||0}; };
+const cacheGet=()=>jget(CK,{});
 function cachePut(name,rec){ const c=cacheGet(); c[name]={salt:rec.salt,h:rec.h}; lsSet(CK,JSON.stringify(c)); }
+function verOk(){ return !(C().cfg().minver>(+C().ver||0)); }
+function showVerLock(){
+  if(g('cbVerLock')) return;
+  locked=true; panel.hidden=true; setInert(true);
+  const ov=document.createElement('div'); ov.className='cb-lock'; ov.id='cbVerLock'; ov.setAttribute('role','alertdialog'); ov.setAttribute('aria-modal','true');
+  ov.innerHTML='<div class="cb-md"><h3>🔄 ต้องอัปเดตหน้านี้ก่อน</h3><p>ผู้ดูแลกำหนดให้ใช้เวอร์ชัน <b>v'+E(C().cfg().minver)+'</b> ขึ้นไป แต่หน้านี้เป็น <b>v'+E(C().ver)+'</b><br>กด Ctrl+F5 (หรือปุ่มด้านล่าง) เพื่อโหลดเวอร์ชันใหม่ — ข้อมูลที่ยังไม่บันทึกอยู่ในเครื่องนี้ ไม่หาย</p><div class="cb-act"><button class="cb-btn p" id="cbReload">↻ โหลดหน้าใหม่</button></div><div class="cb-note">ถ้ากดแล้วยังขึ้นข้อความนี้ แปลว่าไฟล์บน GitHub ยังเป็นเวอร์ชันเก่า — แจ้งผู้ดูแล</div></div>';
+  document.body.appendChild(ov); document.body.style.overflow='hidden'; g('cbReload').onclick=()=>location.reload(); g('cbReload').focus();
+}
+function hideVerLock(){ const ov=g('cbVerLock'); if(!ov) return; ov.remove(); document.body.style.overflow=''; if(!g('cbLock')){ locked=false; setInert(false); } }
 function showLock(reason){
   if(g('cbLock')) return;
   locked=true; panel.hidden=true; setInert(true); paint();
   const ov=document.createElement('div'); ov.className='cb-lock'; ov.id='cbLock'; ov.setAttribute('role','dialog'); ov.setAttribute('aria-modal','true'); ov.setAttribute('aria-label','เข้าสู่ระบบ');
   document.body.appendChild(ov); document.body.style.overflow='hidden';
-  let picked='', recs=null, tick=0;
+  let picked='', tick=0, REC=null;
   const body=h=>{ ov.innerHTML='<div class="cb-md">'+h+'</div>'; };
-  const err=(m)=>{ const e=g('cbErr'); if(e){ e.textContent=m; e.hidden=!m; } };
-  function done(name){ clearInterval(tick); lsDel(FK); startSession(name); locked=false; setInert(false); document.body.style.overflow=''; ov.remove(); say('เข้าสู่ระบบในชื่อ '+name+' แล้ว'); paint(); try{ C().audit('login',{}); }catch(e){} }
+  const err=m=>{ const e=g('cbErr'); if(e){ e.textContent=m; e.hidden=!m; } };
+  const digits=el=>el.addEventListener('input',()=>{ el.value=el.value.replace(/\D/g,'').slice(0,PINLEN); err(''); });
+  function done(name,kind){ clearInterval(tick); lsDel(FK); startSession(name); locked=!!g('cbVerLock'); if(!locked) setInert(false); document.body.style.overflow=g('cbVerLock')?'hidden':''; ov.remove(); say('เข้าสู่ระบบในชื่อ '+name+' แล้ว'); paint(); try{ C().audit(kind||'login',{target:name}); }catch(e){} }
   function stepName(msg){
     clearInterval(tick); picked='';
-    body('<h3>🔐 เข้าสู่ระบบ</h3><p>'+(msg?E(msg)+'<br>':'')+'เลือกชื่อของคุณ แล้วใส่ PIN '+PINLEN+' หลัก — ต้องเข้าสู่ระบบก่อนจึงใช้งานหน้านี้ได้</p><div class="cb-names">'+NAMES.map(n=>'<button type="button" data-n="'+E(n)+'">'+E(n)+'</button>').join('')+'</div><div class="cb-err" id="cbErr" hidden></div>');
-    ov.querySelector('.cb-names button').focus();
+    body('<h3>🔐 เข้าสู่ระบบ</h3><p>'+(msg?E(msg)+'<br>':'')+'เลือกชื่อของคุณ แล้วใส่ PIN '+PINLEN+' หลัก — ต้องเข้าสู่ระบบก่อนจึงใช้งานหน้านี้ได้</p><div class="cb-names">'+names().map(n=>'<button type="button" data-n="'+E(n)+'">'+E(n)+'</button>').join('')+'</div><div class="cb-err" id="cbErr" hidden></div>');
+    const f=ov.querySelector('.cb-names button'); if(f) f.focus();
   }
   async function stepPin(name){
     picked=name; body('<h3>👤 '+E(name)+'</h3><p>กำลังตรวจสอบ…</p><div class="cb-err" id="cbErr" hidden></div>');
     let cloud=null, offline=false;
-    try{ recs=await C().authList(); cloud=recs[name]||null; }catch(e){ offline=true; recs=null; }
+    try{ const recs=await C().authList(); cloud=recs[name]||null; }catch(e){ offline=true; }
+    if(!verOk()){ done0(); showVerLock(); return; }
+    if(names().indexOf(name)<0){ stepName('ชื่อนี้ถูกลบออกจากรายชื่อแล้ว'); return; }
     if(offline){
       const c=cacheGet()[name];
-      if(!c){ body('<h3>👤 '+E(name)+'</h3><p>เชื่อมต่อ Cloud DB ไม่ได้ จึงตรวจ/ตั้ง PIN ของเครื่องนี้ไม่ได้ (เครื่องนี้ยังไม่เคยเข้าสู่ระบบด้วยชื่อนี้)<br>ตรวจอินเทอร์เน็ต หรือลองใหม่ภายหลัง</p><div class="cb-act"><button class="cb-btn p" data-a="retry">↻ ลองใหม่</button><button class="cb-btn" data-a="back">← เปลี่ยนชื่อ</button></div>'); return; }
-      cloud=c; pinForm(name,cloud,true); return;
+      if(!c){ body('<h3>👤 '+E(name)+'</h3><p>เชื่อมต่อ Cloud DB ไม่ได้ จึงตรวจ/ตั้ง PIN ไม่ได้ (เครื่องนี้ยังไม่เคยเข้าสู่ระบบด้วยชื่อนี้)<br>ตรวจอินเทอร์เน็ต แล้วลองใหม่</p><div class="cb-act"><button class="cb-btn p" data-a="retry">↻ ลองใหม่</button><button class="cb-btn" data-a="back">← เปลี่ยนชื่อ</button></div>'); return; }
+      REC=c; pinForm(name,c,true); return;
     }
-    if(!cloud||!cloud.h) setForm(name); else pinForm(name,cloud,false);
+    REC=cloud; if(!cloud||!cloud.h) setForm(name); else pinForm(name,cloud,false);
   }
+  function done0(){ ov.remove(); }
   function pinForm(name,rec,off){
-    body('<h3>👤 '+E(name)+'</h3><p>ใส่ PIN '+PINLEN+' หลัก'+(off?'<br><b>ตรวจกับข้อมูลในเครื่อง (ตอนนี้เชื่อมต่อ Cloud ไม่ได้)</b>':'')+'</p><input class="cb-in pin" id="cbPin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="'+PINLEN+'" autocomplete="off" aria-label="PIN"><div class="cb-err" id="cbErr" hidden></div><div class="cb-act"><button class="cb-btn p" data-a="login">เข้าสู่ระบบ</button><button class="cb-btn" data-a="back">← เปลี่ยนชื่อ</button></div><div class="cb-note">ลืม PIN? ให้ '+E(ADMIN)+' รีเซ็ตให้ในแผน 👥 (ถ้าเป็น '+E(ADMIN)+' เอง: ลบแถว <code>countermeasure-auth:'+E(ADMIN)+'</code> ใน Supabase → Table Editor)</div>');
-    const inp=g('cbPin'); inp.focus(); inp.addEventListener('input',()=>{ inp.value=inp.value.replace(/\D/g,'').slice(0,PINLEN); err(''); });
-    inp.addEventListener('keydown',e=>{ if(e.key==='Enter') ov.querySelector('[data-a="login"]').click(); });
-    const upd=()=>{ const f=failState(), left=f.until-Date.now(); if(left>0){ err('ใส่ PIN ผิดหลายครั้ง — รอ '+Math.ceil(left/1000)+' วินาที แล้วลองใหม่'); } else if(f.until){ err(''); } };
+    body('<h3>👤 '+E(name)+'</h3><p>ใส่ PIN '+PINLEN+' หลัก'+(off?'<br><b>ตรวจกับข้อมูลในเครื่อง (ตอนนี้เชื่อมต่อ Cloud ไม่ได้)</b>':'')+'</p><input class="cb-in pin" id="cbPin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="'+PINLEN+'" autocomplete="off" aria-label="PIN"><div class="cb-err" id="cbErr" hidden></div><div class="cb-act"><button class="cb-btn p" data-a="login">เข้าสู่ระบบ</button><button class="cb-btn" data-a="back">← เปลี่ยนชื่อ</button>'+(off?'':'<button class="cb-btn" data-a="forgot">ลืม PIN?</button>')+'</div>');
+    const inp=g('cbPin'); inp.focus(); digits(inp); inp.addEventListener('keydown',e=>{ if(e.key==='Enter') ov.querySelector('[data-a="login"]').click(); });
+    const upd=()=>{ const f=failState(), left=f.until-Date.now(); if(left>0) err('ใส่ผิดหลายครั้ง — รอ '+Math.ceil(left/1000)+' วินาที แล้วลองใหม่'); else if(f.until) err(''); };
     clearInterval(tick); tick=setInterval(upd,1000); upd();
-    ov._rec=rec;
   }
   function setForm(name){
-    body('<h3>🆕 ตั้ง PIN ให้ '+E(name)+'</h3><p>ครั้งแรกของ '+E(name)+' — ตั้ง PIN ตัวเลข '+PINLEN+' หลัก แล้วจำไว้ (ใช้เหมือนกันทุกเครื่อง · ไม่ต้องบอกใคร)</p><input class="cb-in pin" id="cbPin" type="password" inputmode="numeric" maxlength="'+PINLEN+'" autocomplete="off" placeholder="••••••" aria-label="PIN ใหม่"><input class="cb-in pin" id="cbPin2" type="password" inputmode="numeric" maxlength="'+PINLEN+'" autocomplete="off" placeholder="ยืนยันอีกครั้ง" aria-label="ยืนยัน PIN"><div class="cb-err" id="cbErr" hidden></div><div class="cb-act"><button class="cb-btn p" data-a="set">ตั้ง PIN และเข้าสู่ระบบ</button><button class="cb-btn" data-a="back">← เปลี่ยนชื่อ</button></div>');
-    ['cbPin','cbPin2'].forEach(id=>{ const i=g(id); i.addEventListener('input',()=>{ i.value=i.value.replace(/\D/g,'').slice(0,PINLEN); err(''); }); i.addEventListener('keydown',e=>{ if(e.key==='Enter') ov.querySelector('[data-a="set"]').click(); }); });
-    g('cbPin').focus();
+    body('<h3>🆕 ตั้ง PIN ให้ '+E(name)+'</h3><p>ครั้งแรกของ <b>'+E(name)+'</b> — ตั้ง PIN ตัวเลข '+PINLEN+' หลักของ<b>คุณเอง</b> (แต่ละคนใช้ PIN ของตัวเอง ไม่ต้องตรงกับใคร) ใช้ได้ทุกเครื่องของคุณ · ตั้งได้ครั้งเดียว เจ้าของชื่อควรเป็นคนตั้งเอง</p><input class="cb-in pin" id="cbPin" type="password" inputmode="numeric" maxlength="'+PINLEN+'" autocomplete="off" placeholder="••••••" aria-label="PIN ใหม่"><input class="cb-in pin" id="cbPin2" type="password" inputmode="numeric" maxlength="'+PINLEN+'" autocomplete="off" placeholder="ยืนยันอีกครั้ง" aria-label="ยืนยัน PIN"><div class="cb-err" id="cbErr" hidden></div><div class="cb-act"><button class="cb-btn p" data-a="set">ตั้ง PIN</button><button class="cb-btn" data-a="back">← เปลี่ยนชื่อ</button></div>');
+    ['cbPin','cbPin2'].forEach(id=>{ const i=g(id); digits(i); i.addEventListener('keydown',e=>{ if(e.key==='Enter') ov.querySelector('[data-a="set"]').click(); }); }); g('cbPin').focus();
   }
+  function forgotForm(name){
+    body('<h3>🔑 ลืม PIN — '+E(name)+'</h3><p>ใส่ <b>รหัสกู้คืน</b> (8 ตัว ที่ระบบให้ไว้ตอนตั้ง PIN) แล้วตั้ง PIN ใหม่ ถ้าไม่มีรหัสกู้คืน ให้ผู้ดูแลรีเซ็ต PIN ให้ในแผน 👥</p><input class="cb-in" id="cbRc" autocomplete="off" maxlength="9" placeholder="XXXX-XXXX" aria-label="รหัสกู้คืน" style="text-align:center;letter-spacing:.2em;font-weight:800"><input class="cb-in pin" id="cbPin" type="password" inputmode="numeric" maxlength="'+PINLEN+'" autocomplete="off" placeholder="PIN ใหม่" aria-label="PIN ใหม่"><input class="cb-in pin" id="cbPin2" type="password" inputmode="numeric" maxlength="'+PINLEN+'" autocomplete="off" placeholder="ยืนยัน" aria-label="ยืนยัน PIN"><div class="cb-err" id="cbErr" hidden></div><div class="cb-act"><button class="cb-btn p" data-a="recover">ตั้ง PIN ใหม่</button><button class="cb-btn" data-a="back">← กลับ</button></div>');
+    ['cbPin','cbPin2'].forEach(id=>digits(g(id))); g('cbRc').focus();
+  }
+  function showCode(code,name,kind){
+    body('<h3>🛟 รหัสกู้คืนของ '+E(name)+'</h3><p>ใช้เมื่อ<b>ลืม PIN</b> (ไม่ต้องรอผู้ดูแล) — <b>แสดงครั้งเดียวเท่านั้น</b> จดไว้ในที่ปลอดภัย หรือถ่ายรูปเก็บ อย่าส่งในกลุ่ม</p><div class="cb-code" id="cbCodeV">'+E(code)+'</div><div class="cb-act"><button class="cb-btn" data-a="copycode">📋 คัดลอก</button></div><label style="display:flex;gap:8px;align-items:center;margin:12px 0;font-size:13px"><input type="checkbox" id="cbCodeOk" style="width:18px;height:18px"> ฉันจดรหัสนี้ไว้แล้ว</label><div class="cb-act"><button class="cb-btn p" data-a="codeok" disabled id="cbCodeGo">เข้าสู่ระบบ</button></div>');
+    g('cbCodeOk').addEventListener('change',e=>{ g('cbCodeGo').disabled=!e.target.checked; });
+    ov._code=code; ov._kind=kind;
+  }
+  async function writeRec(name,pin,kind){
+    const salt=rndSalt(), rs=rndSalt(), code=genCode(), rec={v:2,salt:salt,h:hashPin(name,pin,salt),rs:rs,rh:hashPin(name,normCode(code),rs),at:new Date().toISOString(),by:name,dev:C().dev()};
+    await C().authPut(name,rec); cachePut(name,rec); showCode(code,name,kind);
+  }
+  const weak=p=>/^(\d)\1+$/.test(p)||p==='123456'||p==='654321';
   ov.addEventListener('click',async e=>{
     const n=e.target.closest('[data-n]'); if(n){ stepPin(n.dataset.n); return; }
     const b=e.target.closest('[data-a]'); if(!b) return; const a=b.dataset.a;
     if(a==='back'){ stepName(); return; }
     if(a==='retry'){ stepPin(picked); return; }
+    if(a==='forgot'){ forgotForm(picked); return; }
+    if(a==='copycode'){ try{ await navigator.clipboard.writeText(ov._code); say('คัดลอกรหัสกู้คืนแล้ว'); }catch(x){ say('คัดลอกไม่ได้ — จดด้วยมือ',true); } return; }
+    if(a==='codeok'){ done(picked,ov._kind); return; }
+    const guardLock=()=>{ const f=failState(); if(f.until>Date.now()){ err('ใส่ผิดหลายครั้ง — รอ '+Math.ceil((f.until-Date.now())/1000)+' วินาที แล้วลองใหม่'); return true; } return false; };
+    const fail=(msg)=>{ const f=failState(), n2=(f.n||0)+1, until=n2>=MAXFAIL?Date.now()+LOCKMS:0; lsSet(FK,JSON.stringify({n:until?0:n2,until:until})); err(until?'ผิด '+MAXFAIL+' ครั้ง — ล็อก '+(LOCKMS/1000)+' วินาที':msg+' (เหลือโอกาสอีก '+(MAXFAIL-n2)+' ครั้ง)'); };
     if(a==='login'){
-      const f=failState(); if(f.until>Date.now()){ err('ใส่ PIN ผิดหลายครั้ง — รอ '+Math.ceil((f.until-Date.now())/1000)+' วินาที แล้วลองใหม่'); return; }
-      const pin=g('cbPin').value; if(pin.length!==PINLEN){ err('PIN ต้องเป็นตัวเลข '+PINLEN+' หลัก'); return; }
-      b.disabled=true; await new Promise(r=>setTimeout(r,20)); const rec=ov._rec, ok=hashPin(picked,pin,rec.salt)===rec.h; b.disabled=false;
-      if(ok){ cachePut(picked,rec); done(picked); return; }
-      const n2=(f.n||0)+1, until=n2>=MAXFAIL?Date.now()+LOCKMS:0; lsSet(FK,JSON.stringify({n:until?0:n2,until:until}));
-      err(until?'ผิด '+MAXFAIL+' ครั้ง — ล็อก '+(LOCKMS/1000)+' วินาที':'PIN ไม่ถูกต้อง (เหลือโอกาสอีก '+(MAXFAIL-n2)+' ครั้ง)'); g('cbPin').value=''; g('cbPin').focus(); return;
+      if(guardLock()) return; const pin=g('cbPin').value; if(pin.length!==PINLEN){ err('PIN ต้องเป็นตัวเลข '+PINLEN+' หลัก'); return; }
+      b.disabled=true; await new Promise(r=>setTimeout(r,20)); const ok=hashPin(picked,pin,REC.salt)===REC.h; b.disabled=false;
+      if(ok){ cachePut(picked,REC); done(picked,'login'); return; } fail('PIN ไม่ถูกต้อง'); g('cbPin').value=''; g('cbPin').focus(); return;
     }
     if(a==='set'){
       const p1=g('cbPin').value, p2=g('cbPin2').value;
-      if(p1.length!==PINLEN){ err('PIN ต้องเป็นตัวเลข '+PINLEN+' หลัก'); return; }
-      if(/^(\d)\1+$/.test(p1)||p1==='123456'||p1==='654321'){ err('PIN ง่ายเกินไป (เช่น 111111, 123456) — เลือกใหม่'); return; }
-      if(p1!==p2){ err('PIN สองช่องไม่ตรงกัน'); return; }
+      if(p1.length!==PINLEN){ err('PIN ต้องเป็นตัวเลข '+PINLEN+' หลัก'); return; } if(weak(p1)){ err('PIN ง่ายเกินไป (เช่น 111111, 123456) — เลือกใหม่'); return; } if(p1!==p2){ err('PIN สองช่องไม่ตรงกัน'); return; }
       b.disabled=true;
-      try{ const cur=await C().authList(); if(cur[picked]&&cur[picked].h){ err('มีคนตั้ง PIN ของ '+picked+' ไปแล้ว — กลับไปใส่ PIN'); b.disabled=false; stepPin(picked); return; }
-        await new Promise(r=>setTimeout(r,20)); const salt=rndSalt(), rec={v:1,salt:salt,h:hashPin(picked,p1,salt),at:new Date().toISOString(),by:picked};
-        await C().authPut(picked,rec); cachePut(picked,rec); done(picked);
-      }catch(ex){ b.disabled=false; err('ตั้ง PIN ไม่สำเร็จ — '+((ex&&ex.message)||ex)); }
+      try{ const cur=await C().authList(); if(cur[picked]&&cur[picked].h){ err('มีคนตั้ง PIN ของ '+picked+' ไปแล้ว — กลับไปใส่ PIN'); b.disabled=false; stepPin(picked); return; } await new Promise(r=>setTimeout(r,20)); await writeRec(picked,p1,'pin-set'); }
+      catch(ex){ b.disabled=false; err('ตั้ง PIN ไม่สำเร็จ — '+C().friendly((ex&&ex.message)||ex,ex&&ex.status)); }
+      return;
+    }
+    if(a==='recover'){
+      if(guardLock()) return; const code=normCode(g('cbRc').value), p1=g('cbPin').value, p2=g('cbPin2').value;
+      if(code.length!==8){ err('รหัสกู้คืนมี 8 ตัว (ตัวอักษร/ตัวเลข)'); return; } if(p1.length!==PINLEN){ err('PIN ต้องเป็นตัวเลข '+PINLEN+' หลัก'); return; } if(weak(p1)){ err('PIN ง่ายเกินไป'); return; } if(p1!==p2){ err('PIN สองช่องไม่ตรงกัน'); return; }
+      b.disabled=true;
+      try{ const cur=(await C().authList())[picked]; if(!cur||!cur.rh||!cur.rs){ b.disabled=false; err('บัญชีนี้ยังไม่มีรหัสกู้คืน — ให้ผู้ดูแลรีเซ็ต PIN ให้ในแผน 👥'); return; }
+        await new Promise(r=>setTimeout(r,20)); if(hashPin(picked,code,cur.rs)!==cur.rh){ b.disabled=false; fail('รหัสกู้คืนไม่ถูกต้อง'); return; }
+        await writeRec(picked,p1,'pin-recover'); }
+      catch(ex){ b.disabled=false; err('ไม่สำเร็จ — '+C().friendly((ex&&ex.message)||ex,ex&&ex.status)); }
     }
   });
   ov.addEventListener('keydown',e=>{ if(e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); } });
   stepName(reason);
 }
-function authCheck(){ if(!locked&&!sess()){ if(lsGet('ux_me')) { try{ C().setWho(''); }catch(e){} } showLock(lsGet(SK)?'หมดเวลาเข้าสู่ระบบ ('+(TTL/3600000)+' ชม.) — เข้าสู่ระบบอีกครั้ง':''); } }
+function authCheck(){
+  if(!verOk()){ showVerLock(); return; } if(g('cbVerLock')) hideVerLock();
+  if(!locked&&!sess()){ if(lsGet('ux_me')){ try{ C().setWho(''); }catch(e){} } showLock(lsGet(SK)?'หมดเวลาเข้าสู่ระบบ ('+C().cfg().ttlh+' ชม.) — เข้าสู่ระบบอีกครั้ง':''); }
+}
+
+/* ---------- พจนานุกรมคำศัพท์ (ทีมแก้ไขได้ · เก็บคีย์ qe_glossary_v1 ซิงก์พร้อมข้อมูลอื่น) ---------- */
+const DEFG=[['Revise / Rev.','เลื่อนกำหนด Due Date ของรายการ (แต่ละครั้งนับเป็น 1 Rev.)'],['Overdue / Delay','เลยกำหนดเสร็จ'],['Remaining','ยังไม่เสร็จ'],['Due Date','กำหนดเสร็จของมาตรการ'],['W / H / OT (แผนลา)','W = มาทำงานในวันหยุดแลกวันหยุด · H = หยุดชดเชย · OT = ทำ OT ในวันหยุด'],['2F / 3S (แผนลา)','ตัวเลข = จำนวนชั่วโมง · F = ช่วงเช้า · S = ช่วงบ่าย'],['OT1.5 / OT3.0','ชั่วโมง OT ที่คิดอัตรา 1.5 เท่า / 3.0 เท่า (ตามคอลัมน์ในไฟล์ OT Control)'],['Hoshin','นโยบายประจำปี (ดูแท็บ Hoshin) · ✓ OK · ▲ บางส่วน · ✗ NG'],['Kadai (課題)','หัวข้อ/ประเด็นที่ต้องแก้ไข'],['Yokoten (横展)','การขยายผลแนวนอนไปยังไลน์/โมเดลอื่น'],['FMEA','Failure Mode and Effects Analysis — วิเคราะห์ความเสี่ยงของกระบวนการ'],['PPAP / PSW','Production Part Approval Process / Part Submission Warrant'],['PCR',''],['PV4 / OTV / PV5 … PV9',''],['Q-patrol / Pre Q-Patrol',''],['SSA',''],['QE Follow-up','']];
+function glossGet(){ const s=jget(GK,{}); const m={}; DEFG.forEach(x=>{ m[x[0]]=x[1]; }); Object.keys(s).forEach(k=>{ m[k]=s[k]; }); return m; }
+function openGloss(){
+  if(g('cbGl')) return; const m=glossGet(), ov=document.createElement('div'); ov.className='cb-ov'; ov.id='cbGl'; ov.setAttribute('role','dialog'); ov.setAttribute('aria-modal','true');
+  const rows=Object.keys(m).map(k=>'<div class="gr"><b>'+E(k)+'</b><textarea data-k="'+E(k)+'" placeholder="ยังไม่มีคำอธิบาย — พิมพ์เพิ่มได้">'+E(m[k])+'</textarea></div>').join('');
+  ov.innerHTML='<div class="cb-md cb-gl" style="max-width:640px"><h3>📖 คำศัพท์ในระบบ</h3><p>ทุกคนแก้ได้ (ต้องกดบันทึกขึ้น Cloud ตามปกติ) — ช่องว่างคือคำที่ทีมยังไม่ได้อธิบาย</p><div class="gb">'+rows+'</div><div class="gr"><input class="cb-in" id="glNew" placeholder="เพิ่มคำใหม่ เช่น CT" style="margin:0"><textarea id="glNewD" placeholder="คำอธิบาย"></textarea></div><div class="cb-act"><button class="cb-btn p" id="glOk">บันทึกคำศัพท์</button><button class="cb-btn" id="glNo">ปิด</button></div></div>';
+  document.body.appendChild(ov); const close=()=>ov.remove(); g('glNo').onclick=close; ov.addEventListener('keydown',e=>{ if(e.key==='Escape') close(); });
+  g('glOk').onclick=()=>{ const o={}; ov.querySelectorAll('textarea[data-k]').forEach(t=>{ const d=t.value.trim(); if(d||jget(GK,{})[t.dataset.k]!=null) o[t.dataset.k]=d; }); const nk=g('glNew').value.trim(); if(nk) o[nk]=g('glNewD').value.trim(); lsSet(GK,JSON.stringify(o)); say('📖 บันทึกคำศัพท์แล้ว (กด 💾 เพื่อส่งขึ้น Cloud)'); close(); };
+  ov.querySelector('textarea').focus();
+}
 
 /* ---------- แถบ + แผน ---------- */
+const lblOf=r=>{ const t=r.type, p=r.payload||{}; if(t==='TrackerItem') return 'Tracker'; if(t==='TrashItem') return 'ถังขยะ'; if(t==='ChecklistDay') return 'Checklist'; if(t==='MissionData'||t==='OTData'||t==='LVData') return '7 Mission'; if(t==='HoshinData') return 'Hoshin'; if(p.mjk) return 'Main QE Jobs'; if(String(p.storageKey||'').indexOf('qe_mtg_')===0) return 'ประชุม'; return 'อื่น ๆ'; };
 function paint(){
-  const st=C().state(), d=st.dirty, n=d?d.n:0, a=st.anomaly, manual=st.mode==='manual', on=st.online;
-  pill.hidden=locked||!me()||!(st.valid&&st.enabled);
-  const who=me(); g('cbAv').textContent=(who||'?').charAt(0).toUpperCase(); g('cbWn').textContent=who;
-  g('cbOnT').textContent=String(on.length);
-  const s=a?'bad':st.paused?'pause':!st.ready?'wait':(manual&&n?'dirty':'ok'); pill.dataset.s=s;
-  g('cbSt').textContent=a?('⚠ Cloud ขาดข้อมูล '+a.n):st.paused?'⏸ พักซิงก์ (โควตา)':!st.ready?'กำลังเชื่อมต่อ…':!manual?'⚡ บันทึกอัตโนมัติ':(n?('✎ ยังไม่บันทึก '+n):'✓ บันทึกแล้ว');
+  const st=C().state(), d=st.dirty, n=d?d.n:0, a=st.anomaly, manual=st.mode==='manual', on=st.online, who=me();
+  pill.hidden=locked||!who||!(st.valid&&st.enabled);
+  g('cbAv').textContent=(who||'?').charAt(0).toUpperCase(); g('cbWn').textContent=who; g('cbOnT').textContent=String(on.length);
+  if(manual&&n>0&&!a){ if(!dirtySince) dirtySince=Date.now(); } else dirtySince=0;
+  const mins=dirtySince?(Date.now()-dirtySince)/60000:0, old=mins>=10;
+  if(old&&Date.now()-lastNag>15*60000&&!document.hidden){ lastNag=Date.now(); say('✎ มี '+n+' รายการที่ยังไม่ได้บันทึก (ค้างมา '+Math.round(mins)+' นาที) — กด 💾 บันทึก หรือ Ctrl+S'); }
+  try{ document.title=(manual&&n>0?'● ('+n+') ':'')+baseTitle; }catch(e){}
+  const stale=st.lastOK&&(Date.now()-st.lastOK)>15*60000;
+  const s=a?'bad':st.paused?'pause':!st.ready?'wait':(manual&&n?(old?'old':'dirty'):(stale?'old':'ok')); pill.dataset.s=s;
+  g('cbSt').textContent=a?('⚠ Cloud ขาดข้อมูล '+a.n):st.paused?'⏸ พักซิงก์ (โควตา)':!st.ready?'กำลังเชื่อมต่อ…':!manual?'⚡ บันทึกอัตโนมัติ':(n?('✎ ยังไม่บันทึก '+n+(old?' · ค้าง '+Math.round(mins)+' นาที':'')):(stale?('⚠ ตรวจล่าสุด '+hhmm(st.lastOK)):'✓ ตรงกับ Cloud'));
   const sv=g('cbSave'); sv.hidden=!(a||(manual&&n>0)); sv.textContent=a?'↑ ส่งกลับขึ้น Cloud':('💾 บันทึก ('+n+')'); sv.disabled=busy;
-  pill.title='ผู้ใช้: '+who+' · โหมด: '+(manual?'ต้องกดบันทึก':'อัตโนมัติ')+(on.length?' · ออนไลน์: '+on.map(x=>x.who).join(', '):'');
-  if(!panel.hidden) renderPanel();
+  const cb=g('cbCfl'); cb.hidden=!st.conflicts; cb.textContent='⚠ ชนกัน '+st.conflicts;
+  pill.title='ผู้ใช้: '+who+' · โหมด: '+(manual?'ต้องกดบันทึก':'อัตโนมัติ')+' · Cloud '+st.cloudN+' รายการ · ตรวจล่าสุด '+hhmm(st.lastOK)+' · v'+st.ver+(on.length?' · ออนไลน์: '+on.map(x=>x.who).join(', '):'');
+  if(!panel.hidden&&!(document.activeElement&&panel.contains(document.activeElement)&&/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName))) renderPanel();
 }
 function histLine(h){
   const k=h.k, w='<b>'+E(h.who||'?')+'</b>', by=sum(h.by), tag=h.mode==='auto'?' <small>(อัตโนมัติ)</small>':'';
   if(k==='save') return {t:w+' บันทึก '+(h.n||0)+' รายการ'+(h.del?' · <b style="color:var(--dang)">ลบ '+h.del+'</b>':'')+tag,s:[by,(h.items||[]).slice(0,4).join(' · '),h.del?('ลบ: '+sum(h.delBy)+((h.delItems&&h.delItems.length)?' ('+h.delItems.slice(0,3).join(' · ')+')':'')):''].filter(Boolean).join(' — ')};
   if(k==='guard-block') return {t:w+' <b style="color:#f59e0b">ยกเลิก</b> การบันทึกที่จะลบ '+h.n+' รายการ ('+(h.pct||'?')+'%)',s:sum(h.by)};
   if(k==='guard-ok') return {t:w+' <b style="color:var(--dang)">ยืนยัน</b> บันทึกที่ลบ '+h.n+' รายการ ('+(h.pct||'?')+'%)',s:sum(h.by)};
+  if(k==='newdev-block') return {t:w+' <b style="color:#f59e0b">ยกเลิก</b> การส่งข้อมูลจากเครื่องใหม่ '+h.n+' รายการ',s:sum(h.by)};
+  if(k==='newdev-drop') return {t:'เครื่องใหม่ของ '+w+' ไม่ส่งข้อมูลเดิมในเครื่อง '+h.n+' รายการขึ้น Cloud (เก็บเป็นจุดกู้คืน)',s:sum(h.by)};
   if(k==='cloud-loss') return {t:'เครื่องของ '+w+' พบ Cloud ขาดข้อมูล <b style="color:var(--dang)">'+h.n+'</b> รายการ (ไม่ได้ลบในเครื่อง)',s:sum(h.by)};
+  if(k==='conflict') return {t:w+' พบรายการถูกแก้ซ้ำพร้อมกัน '+h.n+' รายการ',s:sum(h.by)};
   if(k==='restore') return {t:w+' นำข้อมูลกลับ '+(h.n||0)+' รายการ',s:h.reason||''};
+  if(k==='snapshot') return {t:w+' สร้างจุดสำรองบน Cloud ('+(h.n||0)+' รายการ)'+(h.manual?' · ด้วยมือ':' · อัตโนมัติรายวัน'),s:''};
+  if(k==='snapshot-skip') return {t:'ข้ามการสร้างจุดสำรองวันนี้ — Cloud มี '+h.n+' รายการ น้อยกว่าที่เคยสำรอง ('+h.prev+') ผิดปกติ',s:''};
+  if(k==='snap-restore') return {t:w+' กู้จากจุดสำรอง '+E(h.day||'')+' '+(h.n||0)+' รายการ ('+(h.mode==='all'?'ทับทั้งหมด':'เฉพาะที่หาย')+')',s:''};
   if(k==='discard') return {t:w+' ทิ้งการแก้ไขที่ยังไม่บันทึกและดึงจาก Cloud',s:''};
   if(k==='login') return {t:w+' เข้าสู่ระบบ',s:''};
+  if(k==='pin-set') return {t:w+' ตั้ง PIN ครั้งแรก',s:'เครื่อง '+E(h.dev||'')};
+  if(k==='pin-recover') return {t:w+' ตั้ง PIN ใหม่ด้วยรหัสกู้คืน',s:''};
   if(k==='pin-reset') return {t:w+' รีเซ็ต PIN ของ <b>'+E(h.target||'?')+'</b>',s:''};
+  if(k==='user-add'||k==='user-del'||k==='admin-set'||k==='cfg') return {t:w+' '+({'user-add':'เพิ่มผู้ใช้','user-del':'ลบผู้ใช้','admin-set':'เปลี่ยนสิทธิ์ผู้ดูแลของ','cfg':'แก้การตั้งค่าระบบ'}[k])+' '+E(h.target||''),s:E(h.note||'')};
   return {t:w+' · '+E(k),s:''};
 }
+const detail=(id,title,inner)=>'<details data-id="'+id+'"'+(OPEN[id]?' open':'')+'><summary>'+title+'</summary>'+inner+'</details>';
 function renderPanel(){
-  const st=C().state(), d=st.dirty, a=st.anomaly, manual=st.mode==='manual', on=st.online, rps=C().restoreSets(), s=sess();
+  panel.querySelectorAll('details[data-id]').forEach(d=>{ OPEN[d.dataset.id]=d.open; });          // กันกล่องที่เพิ่งกางถูกพับกลับตอนวาดใหม่
+  const st=C().state(), d=st.dirty, a=st.anomaly, manual=st.mode==='manual', on=st.online, rps=C().restoreSets(), s=sess(), cf=C().cfg(), admin=isAdmin();
+  const confl=(window.SPDB.conflicts&&window.SPDB.conflicts())||[];
+  const newer=Math.max(0,...on.map(x=>x.ver||0)), skew=Math.abs(st.clockOff||0);
   let h='';
   if(a) h+='<div class="cb-warn"><b>⚠ Cloud DB ขาดข้อมูล '+a.n+' รายการ ('+(a.pct||'?')+'% ของที่เคยมี)</b><br>ระบบ<b>ไม่ได้ลบ</b>ข้อมูลในเครื่องนี้ตาม และเก็บสำเนาไว้แล้ว ('+E(sum(a.by))+')<div class="cb-act"><button class="cb-btn p" data-a="save">↑ ส่งกลับขึ้น Cloud (กู้ Cloud)</button><button class="cb-btn d" data-a="pull">ยอมรับตาม Cloud (ลบในเครื่องนี้)</button></div><div class="cb-note">เลือก “ส่งกลับ” ถ้าไม่ได้ตั้งใจลบ · เลือก “ยอมรับ” ถ้าเพื่อนลบจริง</div></div>';
-  h+='<h4>👤 บัญชี</h4><div class="cb-r"><div><b>'+E(me())+'</b>'+(isAdmin()?' <small style="display:inline">· ผู้ดูแล</small>':'')+'<small>เข้าสู่ระบบถึง '+(s?fmt(s.exp):'')+'</small></div></div><div class="cb-act"><button class="cb-btn" data-a="chpin">🔑 เปลี่ยน PIN</button><button class="cb-btn d" data-a="logout">ออกจากระบบ</button></div>';
-  if(isAdmin()) h+='<h4>🛠 ผู้ดูแล: รีเซ็ต PIN</h4><div>'+NAMES.filter(n=>n!==ADMIN).map(n=>'<button class="cb-chip" data-a="reset" data-v="'+E(n)+'">รีเซ็ต '+E(n)+'</button>').join('')+'</div><div class="cb-note">รีเซ็ตแล้วเจ้าตัวตั้ง PIN ใหม่ตอนเข้าครั้งต่อไป (ที่ยังเข้าสู่ระบบอยู่จะหมดอายุตามเวลา)</div>';
+  if(st.newDev) h+='<div class="cb-warn y"><b>🆕 เครื่องนี้เพิ่งเริ่มใช้งาน</b><br>'+(st.newDev.dropped?'ข้อมูลเดิมในเครื่อง '+st.newDev.dropped+' รายการที่ไม่ตรงกับ Cloud <b>ไม่ได้ถูกส่งขึ้นไป</b> (เก็บเป็นจุดกู้คืนแล้ว)<br>':'')+(st.newDev.n?'ยังมี <b>'+st.newDev.n+'</b> รายการที่ Cloud ไม่มี ('+E(sum(st.newDev.by))+') — อาจเป็นข้อมูลตั้งต้นของไฟล์ ไม่ใช่งานจริง<div class="cb-act"><button class="cb-btn p" data-a="discard">ใช้ของ Cloud (ทิ้งข้อมูลเหล่านี้)</button><button class="cb-btn" data-a="save">ส่งขึ้น Cloud</button></div>':'<div class="cb-act"><button class="cb-btn" data-a="clrnew">รับทราบ</button></div>')+'</div>';
+  if(newer>(+st.ver||0)) h+='<div class="cb-warn y"><b>🔄 มีเวอร์ชันใหม่กว่า</b> — เพื่อนที่ออนไลน์ใช้ v'+newer+' แต่เครื่องนี้ v'+E(st.ver)+' · กด <b>Ctrl+F5</b> (บันทึกงานที่ค้างก่อน)</div>';
+  if(skew>120000) h+='<div class="cb-warn y"><b>🕒 นาฬิกาเครื่องนี้คลาด</b> จากเวลาเซิร์ฟเวอร์ ~'+Math.round(skew/60000)+' นาที — รายชื่อออนไลน์ปรับให้อัตโนมัติ แต่ควรตั้งเวลาเครื่องให้ตรง</div>';
+  if(s&&C().cfg()&&me()&&AUTH&&AUTH[me()]&&!AUTH[me()].rh) h+='<div class="cb-warn y"><b>🔑 ยังไม่มีรหัสกู้คืน PIN</b> — สร้างไว้ ลืม PIN จะได้ไม่ต้องรอผู้ดูแล<div class="cb-act"><button class="cb-btn p" data-a="mkrec">สร้างรหัสกู้คืน</button></div></div>';
+  h+='<div class="cb-note" style="margin:0 0 6px">Cloud <b>'+st.cloudN+'</b> รายการ · ตรวจล่าสุด '+hhmm(st.lastOK)+' · เวอร์ชัน v'+E(st.ver)+'</div>';
+  h+='<h4>👤 บัญชี</h4><div class="cb-r"><div><b>'+E(me())+'</b>'+(admin?' <small style="display:inline">· ผู้ดูแล</small>':'')+'<small>เข้าสู่ระบบถึง '+(s?fmt(s.exp):'')+'</small></div></div><div class="cb-act"><button class="cb-btn" data-a="chpin">🔑 เปลี่ยน PIN</button><button class="cb-btn d" data-a="logout">ออกจากระบบ</button></div>';
   h+='<h4>💾 การบันทึก</h4><div><button class="cb-chip'+(manual?' on':'')+'" data-a="mode" data-v="manual">ต้องกดบันทึก</button><button class="cb-chip'+(!manual?' on':'')+'" data-a="mode" data-v="auto">อัตโนมัติ</button></div>';
   if(manual){
     if(d&&d.n){ h+='<div class="cb-r"><div><b>✎ ยังไม่บันทึก '+d.n+' รายการ</b><small>'+E(sum(d.by))+(d.del?' · ลบ '+d.del:'')+'</small>'+(d.items&&d.items.length?'<small>'+E(d.items.slice(0,4).join(' · '))+'</small>':'')+'</div></div><div class="cb-act"><button class="cb-btn p" data-a="save">💾 บันทึกขึ้น Cloud</button><button class="cb-btn d" data-a="discard">↩ ทิ้งที่ยังไม่บันทึก</button></div>'; }
@@ -11034,68 +11218,124 @@ function renderPanel(){
   } else h+='<div class="cb-note">⚡ ทุกการแก้ไขส่งขึ้น Cloud อัตโนมัติ — เพื่อนเห็นทันที แต่แก้พลาดก็ขึ้นทันที</div>';
   h+='<div class="cb-act"><button class="cb-btn" data-a="check">↻ ตรวจข้อมูลล่าสุดจาก Cloud</button></div>';
   h+='<h4>🟢 ออนไลน์ตอนนี้ ('+on.length+')</h4>';
-  h+=on.length?on.map(x=>'<div class="cb-r"><span class="cb-dot" style="margin-top:6px"></span><div><b>'+E(x.who)+'</b>'+(x.mine?' <small style="display:inline">(คุณ)</small>':'')+(x.devs>1?' <small style="display:inline">· '+x.devs+' เครื่อง</small>':'')+'<small>'+E(x.tab?('อยู่หน้า '+x.tab):'')+(x.dirty?' · กำลังแก้ ยังไม่บันทึก '+x.dirty:'')+'</small></div><span class="t">'+ago(x.at)+'</span></div>').join(''):'<div class="cb-note">ยังไม่เห็นใคร (สัญญาณอัปเดตทุก ~90 วินาที เฉพาะตอนเปิดหน้านี้อยู่)</div>';
+  h+=on.length?on.map(x=>'<div class="cb-r"><span class="cb-dot" style="margin-top:6px"></span><div><b>'+E(x.who)+'</b>'+(x.mine?' <small style="display:inline">(คุณ)</small>':'')+(x.devs>1?' <small style="display:inline">· '+x.devs+' เครื่อง</small>':'')+((x.ver||0)<(+st.ver||0)?' <small style="display:inline;color:#f59e0b">· เวอร์ชัน '+(x.ver?'v'+x.ver:'เก่า')+'</small>':'')+'<small>'+E(x.tab?('อยู่หน้า '+x.tab):'')+(x.dirty?' · กำลังแก้ ยังไม่บันทึก '+x.dirty:'')+'</small></div><span class="t">'+ago(x.at)+'</span></div>').join(''):'<div class="cb-note">ยังไม่เห็นใคร (สัญญาณอัปเดตทุก ~90 วินาที เฉพาะตอนเปิดหน้านี้อยู่)</div>';
+  if(confl.length){
+    h+='<h4>⚠ รายการที่ถูกแก้ซ้ำพร้อมกัน ('+confl.length+')</h4>'+confl.slice(-6).reverse().map(c=>'<div class="cb-r"><div><b>'+E(lblOf({type:c.type,payload:c.payload}))+'</b>'+(c.fields&&c.fields.length?'<small>ฟิลด์ที่ชนกัน: '+E(c.fields.join(', '))+'</small>':'<small>ทั้งรายการถูกแก้ต่างกัน — ใช้ของเครื่องที่บันทึกทีหลัง เก็บของอีกฝั่งไว้ให้ดู</small>')+'</div><span class="t">'+fmt(c.at)+'</span></div>').join('')+'<div class="cb-act"><button class="cb-btn" data-a="cfcopy">📋 คัดลอกเป็น JSON</button><button class="cb-btn d" data-a="cfclear">ล้างรายการ</button></div><div class="cb-note">ตรวจค่าของอีกฝั่งให้ครบก่อนล้าง (ปุ่มคัดลอกเก็บไว้ได้)</div>';
+  }
   h+='<h4>🕘 ประวัติการบันทึกล่าสุด <span class="grow"></span><button class="cb-x" data-a="hist">↻</button></h4>';
   if(HIST===null) h+='<div class="cb-note">กำลังโหลด…</div>';
   else if(HIST===false) h+='<div class="cb-note">โหลดประวัติไม่ได้ (Cloud ไม่ตอบ หรือเซิร์ฟเวอร์ไม่อนุญาต)</div>';
   else if(!HIST.length) h+='<div class="cb-note">ยังไม่มีประวัติ — จะเริ่มบันทึกตั้งแต่การบันทึกครั้งต่อไป</div>';
   else h+=HIST.slice(0,25).map(x=>{ const l=histLine(x); return '<div class="cb-r"><div>'+l.t+(l.s?'<small>'+E(l.s)+'</small>':'')+'</div><span class="t">'+fmt(x.at||x.u)+'</span></div>'; }).join('');
-  h+='<h4>🛟 จุดกู้คืน (เก็บอัตโนมัติก่อนลบ/ทับครั้งใหญ่)</h4>';
-  h+=rps.length?rps.map(r=>'<div class="cb-r"><div><b>'+E(r.reason)+'</b><small>'+r.n+' รายการ · '+E(sum(r.by))+' · '+E(r.who||'')+'</small><div class="cb-act" style="margin-top:3px"><button class="cb-btn" data-a="rp" data-id="'+E(r.id)+'">↺ นำกลับ</button><button class="cb-btn" data-a="rpdl" data-id="'+E(r.id)+'">⬇ ไฟล์</button></div></div><span class="t">'+fmt(r.at)+'</span></div>').join(''):'<div class="cb-note">ยังไม่มี — ระบบจะเก็บให้เองเมื่อมีการลบ/ทับจำนวนมาก</div>';
+  /* จุดสำรองบน Cloud */
+  let sh='<div class="cb-note">ระบบสร้างให้เองวันละครั้ง เก็บ 10 ชุดล่าสุด (กู้ได้แม้ Cloud ถูกลบ) — ชุดเต็มอ่านเฉพาะตอนกู้ จึงไม่กิน Egress</div><div class="cb-act"><button class="cb-btn p" data-a="snapmake">📸 สร้างจุดสำรองตอนนี้</button><button class="cb-btn" data-a="snaplist">↻ รายการ</button></div>';
+  if(SNAPS===null) sh+='<div class="cb-note">กด ↻ รายการ เพื่อโหลด</div>'; else if(SNAPS===false) sh+='<div class="cb-note">โหลดรายการไม่ได้</div>'; else if(!SNAPS.length) sh+='<div class="cb-note">ยังไม่มีจุดสำรอง</div>';
+  else sh+=SNAPS.map(x=>{ const i=SINFO[x.key]; return '<div class="cb-r"><div><b>'+E(x.day)+'</b> <small style="display:inline">'+x.n+' รายการ · '+hhmm(x.u)+'</small>'+(i&&i.err?'<small style="color:var(--dang)">'+E(i.err)+'</small>':'')+(i&&!i.err?'<small>เทียบกับ Cloud ตอนนี้: หายไป <b>'+i.missing+'</b> · ต่างกัน '+i.diff+' · เหมือนกัน '+i.same+(i.missing?' ('+E(sum(i.by2))+')':'')+'</small><div class="cb-act" style="margin-top:3px"><button class="cb-btn p" data-a="snaprs" data-v="missing" data-id="'+E(x.key)+'"'+(i.missing?'':' disabled')+'>กู้เฉพาะที่หาย ('+i.missing+')</button><button class="cb-btn d" data-a="snaprs" data-v="all" data-id="'+E(x.key)+'"'+((i.missing+i.diff)?'':' disabled')+'>กู้ทั้งหมดทับ ('+(i.missing+i.diff)+')</button></div>':'<div class="cb-act" style="margin-top:3px"><button class="cb-btn" data-a="snapins" data-id="'+E(x.key)+'">ตรวจเทียบ</button></div>')+'</div></div>'; }).join('');
+  h+=detail('snap','🗂 จุดสำรองบน Cloud'+(SNAPS&&SNAPS.length?' ('+SNAPS.length+')':''),sh);
+  h+=detail('rp','🛟 จุดกู้คืนในเครื่องนี้ ('+rps.length+')',(rps.length?rps.map(r=>'<div class="cb-r"><div><b>'+E(r.reason)+'</b><small>'+r.n+' รายการ · '+E(sum(r.by))+' · '+E(r.who||'')+'</small><div class="cb-act" style="margin-top:3px"><button class="cb-btn" data-a="rp" data-id="'+E(r.id)+'">↺ นำกลับ</button><button class="cb-btn" data-a="rpdl" data-id="'+E(r.id)+'">⬇ ไฟล์</button></div></div><span class="t">'+fmt(r.at)+'</span></div>').join(''):'<div class="cb-note">ยังไม่มี — ระบบเก็บให้เองเมื่อมีการลบ/ทับจำนวนมาก</div>'));
+  const bk=lsGet(BK), bkd=bk?Math.floor((Date.now()-new Date(bk))/864e5):null, u=window.SPDB.usage?window.SPDB.usage():null, z=parseFloat(lsGet(ZK)||'1');
+  h+=detail('tools','⚙ เครื่องมือ',
+    '<div class="cb-r"><div><b>💾 สำรองไฟล์ล่าสุด</b><small>'+(bkd==null?'ยังไม่เคย':(bkd===0?'วันนี้':bkd+' วันที่แล้ว'))+(bkd==null||bkd>=3?' — ควรสำรองไฟล์เก็บไว้นอกเว็บด้วย':'')+'</small></div><button class="cb-btn" data-a="backup">Backup ทั้งหมด</button></div>'+
+    (u?'<div class="cb-r"><div><b>📡 ข้อมูลที่เครื่องนี้ดึง</b><small>วันนี้ '+E(window.SPDB.fmtBytes(u.today.b))+' ('+u.today.n+' คำขอ) · 7 วัน '+E(window.SPDB.fmtBytes(u.week.b))+(u.paused?' · พักซิงก์เพราะโควตา':'')+'</small></div></div>':'')+
+    '<div class="cb-r"><div><b>🔠 ขนาดตัวอักษรทั้งหน้า</b></div><span class="t"><select id="cbZoom" aria-label="ขนาดตัวอักษร" style="padding:4px 6px;border-radius:8px;border:1px solid var(--line);background:var(--soft);color:var(--txt)"><option value="1"'+(z===1?' selected':'')+'>ปกติ</option><option value="1.12"'+(z===1.12?' selected':'')+'>ใหญ่</option><option value="1.25"'+(z===1.25?' selected':'')+'>ใหญ่มาก</option></select></span></div>'+
+    '<div class="cb-act"><button class="cb-btn" data-a="gloss">📖 คำศัพท์ในระบบ</button></div><div class="cb-note">ปุ่มลัด: Ctrl+S บันทึก · Ctrl+K ค้นหา · Alt+1–7 สลับแท็บ · Ctrl+Z ย้อนการแก้ (เฉพาะหน้า Tracker)</div>');
+  if(admin){
+    const au=AUTH||{}, rows=cf.names.map(n=>{ const r=au[n], isA=cf.admins.indexOf(n)>=0; return '<div class="cb-r"><div><b>'+E(n)+'</b>'+(isA?' <small style="display:inline">· ผู้ดูแล</small>':'')+'<small>'+(AUTH===null?'…':(r&&r.h?'ตั้ง PIN '+fmt(r.at)+(r.dev?' · เครื่อง '+E(r.dev):'')+(r.rh?' · มีรหัสกู้คืน':''):'<span style="color:#f59e0b">ยังไม่ตั้ง PIN</span>'))+'</small></div><div class="cb-act" style="margin:0;justify-content:flex-end"><button class="cb-btn" data-a="reset" data-v="'+E(n)+'"'+(n===me()?' disabled':'')+'>รีเซ็ต PIN</button><button class="cb-btn" data-a="adm" data-v="'+E(n)+'"'+((isA&&cf.admins.length<2)?' disabled':'')+'>'+(isA?'ถอดผู้ดูแล':'ตั้งผู้ดูแล')+'</button><button class="cb-btn d" data-a="deluser" data-v="'+E(n)+'"'+((isA||n===me())?' disabled':'')+'>ลบชื่อ</button></div></div>'; }).join('');
+    h+=detail('adm','🛠 ผู้ดูแล: จัดการผู้ใช้',rows+'<div class="cb-act"><input class="cb-in" id="cbNewName" placeholder="เพิ่มชื่อผู้ใช้ใหม่ (2–12 ตัวอักษร)" maxlength="12" autocomplete="off" style="flex:1;min-width:140px"><button class="cb-btn p" data-a="adduser">＋ เพิ่ม</button></div>'+
+      '<div class="cb-r"><div><b>⏱ เข้าสู่ระบบค้างได้นาน</b></div><span class="t"><select id="cbTtl" aria-label="ระยะเวลาจำเครื่อง" style="padding:4px 6px;border-radius:8px;border:1px solid var(--line);background:var(--soft);color:var(--txt)">'+[4,8,12,24].map(v=>'<option value="'+v+'"'+(cf.ttlh===v?' selected':'')+'>'+v+' ชม.</option>').join('')+'</select></span></div>'+
+      '<div class="cb-r"><div><b>🔄 บังคับเวอร์ชันขั้นต่ำ</b><small>ตอนนี้: '+(cf.minver?'v'+cf.minver+' ขึ้นไป':'ไม่บังคับ')+' · เครื่องที่เก่ากว่า (v27 ขึ้นไปเท่านั้นที่เข้าใจ) จะถูกล็อกจนกว่าจะโหลดใหม่</small></div><div class="cb-act" style="margin:0"><button class="cb-btn" data-a="minver">บังคับ v'+E(st.ver)+'</button><button class="cb-btn" data-a="minver0">ยกเลิก</button></div></div>'+
+      '<div class="cb-note">ชื่อ/PIN ใช้บันทึกว่าใครทำอะไร — ไม่ใช่ความปลอดภัยระดับเซิร์ฟเวอร์ · รายการ “ตั้ง PIN เมื่อ…เครื่อง…” ช่วยตรวจว่าเจ้าของชื่อตั้งเองหรือไม่</div>');
+  }
   panel.innerHTML='<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><b style="font-size:14px">👥 ทำงานร่วมกัน</b><span style="flex:1"></span><button class="cb-x" data-a="close" aria-label="ปิด">✕</button></div>'+h;
 }
+panel.addEventListener('toggle',e=>{ const d=e.target; if(d&&d.dataset&&d.dataset.id){ OPEN[d.dataset.id]=d.open; if(d.open&&d.dataset.id==='snap'&&SNAPS===null) loadSnaps(); } },true);
 async function loadHist(){ if(histBusy) return; histBusy=true; try{ HIST=await C().history(40); }catch(e){ HIST=false; } histBusy=false; if(!panel.hidden) renderPanel(); }
-function openPanel(){ if(locked) return; panel.hidden=false; renderPanel(); loadHist(); try{ C().beat(); }catch(e){} }
+async function loadAuth(){ try{ AUTH=await C().authList(); }catch(e){} if(!panel.hidden) renderPanel(); }
+async function loadSnaps(){ try{ SNAPS=await C().snapList(); }catch(e){ SNAPS=false; } if(!panel.hidden) renderPanel(); }
+function openPanel(){ if(locked) return; panel.hidden=false; renderPanel(); loadHist(); loadAuth(); if(OPEN.snap) loadSnaps(); try{ C().beat(); }catch(e){} }
 function closePanel(){ panel.hidden=true; }
 async function doSave(){
   if(busy) return; busy=true; paint();
   try{ const n=(C().dirty()||{}).n||0; await C().save(); say('💾 บันทึกขึ้น Cloud แล้ว'+(n?' · '+n+' รายการ':'')); HIST=null; if(!panel.hidden) loadHist(); }
-  catch(e){ say('บันทึกไม่สำเร็จ — '+((e&&e.message)||e),true); }
+  catch(e){ say('บันทึกไม่สำเร็จ — '+C().friendly((e&&e.message)||e,e&&e.status),true); }
   busy=false; paint();
 }
-function changePin(){
+function pinModal(title,sub,fields,okTxt,onOk){
   if(g('cbPinMd')) return;
   const ov=document.createElement('div'); ov.className='cb-ov'; ov.id='cbPinMd'; ov.setAttribute('role','dialog'); ov.setAttribute('aria-modal','true');
-  const pin=(id,ph)=>'<input class="cb-in pin" id="'+id+'" type="password" inputmode="numeric" maxlength="'+PINLEN+'" autocomplete="off" placeholder="'+ph+'" aria-label="'+ph+'">';
-  ov.innerHTML='<div class="cb-md"><h3>🔑 เปลี่ยน PIN</h3><p>ของ '+E(me())+'</p>'+pin('cpOld','PIN เดิม')+pin('cpNew','PIN ใหม่')+pin('cpNew2','ยืนยัน PIN ใหม่')+'<div class="cb-err" id="cpErr" hidden></div><div class="cb-act"><button class="cb-btn p" id="cpOk">เปลี่ยน PIN</button><button class="cb-btn" id="cpNo">ยกเลิก</button></div></div>';
-  document.body.appendChild(ov); const err=m=>{ const e=g('cpErr'); e.textContent=m; e.hidden=!m; };
-  ['cpOld','cpNew','cpNew2'].forEach(id=>g(id).addEventListener('input',e=>{ e.target.value=e.target.value.replace(/\D/g,'').slice(0,PINLEN); err(''); }));
-  g('cpNo').onclick=()=>ov.remove(); g('cpOld').focus();
-  g('cpOk').onclick=async()=>{
-    const o=g('cpOld').value, n1=g('cpNew').value, n2=g('cpNew2').value, name=me();
-    if(o.length!==PINLEN||n1.length!==PINLEN){ err('PIN ต้องเป็นตัวเลข '+PINLEN+' หลัก'); return; }
-    if(/^(\d)\1+$/.test(n1)||n1==='123456'||n1==='654321'){ err('PIN ใหม่ง่ายเกินไป'); return; } if(n1!==n2){ err('PIN ใหม่สองช่องไม่ตรงกัน'); return; }
-    try{ const cur=(await C().authList())[name]; if(!cur||hashPin(name,o,cur.salt)!==cur.h){ err('PIN เดิมไม่ถูกต้อง'); return; }
-      const salt=rndSalt(), rec={v:1,salt:salt,h:hashPin(name,n1,salt),at:new Date().toISOString(),by:name}; await C().authPut(name,rec); cachePut(name,rec); ov.remove(); say('🔑 เปลี่ยน PIN แล้ว');
-    }catch(ex){ err('ไม่สำเร็จ — '+((ex&&ex.message)||ex)); }
-  };
+  ov.innerHTML='<div class="cb-md"><h3>'+title+'</h3><p>'+sub+'</p>'+fields.map(f=>'<input class="cb-in pin" id="'+f[0]+'" type="password" inputmode="numeric" maxlength="'+PINLEN+'" autocomplete="off" placeholder="'+f[1]+'" aria-label="'+f[1]+'">').join('')+'<div class="cb-err" id="pmErr" hidden></div><div class="cb-act"><button class="cb-btn p" id="pmOk">'+okTxt+'</button><button class="cb-btn" id="pmNo">ยกเลิก</button></div></div>';
+  document.body.appendChild(ov); const err=m=>{ const e=g('pmErr'); e.textContent=m; e.hidden=!m; };
+  fields.forEach(f=>g(f[0]).addEventListener('input',e=>{ e.target.value=e.target.value.replace(/\D/g,'').slice(0,PINLEN); err(''); }));
+  g('pmNo').onclick=()=>ov.remove(); ov.addEventListener('keydown',e=>{ if(e.key==='Escape') ov.remove(); }); g(fields[0][0]).focus();
+  g('pmOk').onclick=async()=>{ try{ const r=await onOk(err); if(r) ov.remove(); }catch(ex){ err('ไม่สำเร็จ — '+C().friendly((ex&&ex.message)||ex,ex&&ex.status)); } };
+  return ov;
 }
+function changePin(){
+  pinModal('🔑 เปลี่ยน PIN','ของ '+E(me()),[['cpOld','PIN เดิม'],['cpNew','PIN ใหม่'],['cpNew2','ยืนยัน PIN ใหม่']],'เปลี่ยน PIN',async err=>{
+    const o=g('cpOld').value, n1=g('cpNew').value, n2=g('cpNew2').value, name=me();
+    if(o.length!==PINLEN||n1.length!==PINLEN){ err('PIN ต้องเป็นตัวเลข '+PINLEN+' หลัก'); return false; } if(/^(\d)\1+$/.test(n1)||n1==='123456'||n1==='654321'){ err('PIN ใหม่ง่ายเกินไป'); return false; } if(n1!==n2){ err('PIN ใหม่สองช่องไม่ตรงกัน'); return false; }
+    const cur=(await C().authList())[name]; if(!cur||hashPin(name,o,cur.salt)!==cur.h){ err('PIN เดิมไม่ถูกต้อง'); return false; }
+    const salt=rndSalt(), rec=Object.assign({},cur,{v:2,salt:salt,h:hashPin(name,n1,salt),at:new Date().toISOString(),by:name,dev:C().dev()}); await C().authPut(name,rec); cachePut(name,rec); AUTH=null; say('🔑 เปลี่ยน PIN แล้ว'); loadAuth(); return true; });
+}
+function makeRecovery(){
+  pinModal('🛟 สร้างรหัสกู้คืน','ใส่ PIN ปัจจุบันของ '+E(me())+' เพื่อยืนยัน',[['mrPin','PIN']],'สร้างรหัส',async err=>{
+    const pin=g('mrPin').value, name=me(); if(pin.length!==PINLEN){ err('PIN ต้องเป็นตัวเลข '+PINLEN+' หลัก'); return false; }
+    const cur=(await C().authList())[name]; if(!cur||hashPin(name,pin,cur.salt)!==cur.h){ err('PIN ไม่ถูกต้อง'); return false; }
+    const rs=rndSalt(), code=genCode(), rec=Object.assign({},cur,{v:2,rs:rs,rh:hashPin(name,normCode(code),rs)}); await C().authPut(name,rec); AUTH=null; loadAuth();
+    const ov=document.createElement('div'); ov.className='cb-ov'; ov.setAttribute('role','dialog'); ov.setAttribute('aria-modal','true');
+    ov.innerHTML='<div class="cb-md"><h3>🛟 รหัสกู้คืนของ '+E(name)+'</h3><p>ใช้เมื่อลืม PIN — <b>แสดงครั้งเดียว</b> จดไว้ในที่ปลอดภัย</p><div class="cb-code">'+E(code)+'</div><div class="cb-act"><button class="cb-btn" id="rcCp">📋 คัดลอก</button><button class="cb-btn p" id="rcOk">จดแล้ว</button></div></div>';
+    document.body.appendChild(ov); g('rcCp').onclick=async()=>{ try{ await navigator.clipboard.writeText(code); say('คัดลอกแล้ว'); }catch(e){} }; g('rcOk').onclick=()=>ov.remove(); return true; });
+}
+const busyWrap=async(fn)=>{ try{ await fn(); }catch(err){ say('ไม่สำเร็จ — '+C().friendly((err&&err.message)||err,err&&err.status),true); } paint(); };
 pill.addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; if(b.id==='cbSave'){ doSave(); return; } if(panel.hidden) openPanel(); else closePanel(); });
+panel.addEventListener('change',async e=>{
+  if(e.target.id==='cbZoom'){ lsSet(ZK,e.target.value); applyZoom(); say('ปรับขนาดตัวอักษรแล้ว'); }
+  else if(e.target.id==='cbTtl'){ await busyWrap(async()=>{ await C().cfgPut({ttlh:+e.target.value}); C().audit('cfg',{note:'อายุการเข้าสู่ระบบ '+e.target.value+' ชม.'}); say('ตั้งเวลาเข้าสู่ระบบ '+e.target.value+' ชม. แล้ว (มีผลกับการเข้าสู่ระบบครั้งต่อไป)'); }); }
+});
 panel.addEventListener('click',async e=>{
-  const b=e.target.closest('[data-a]'); if(!b) return; const a=b.dataset.a;
-  try{
+  const b=e.target.closest('[data-a]'); if(!b||b.disabled) return; const a=b.dataset.a;
+  await busyWrap(async()=>{
+    const dirtyN=(C().dirty()||{}).n||0;
     if(a==='close') closePanel();
-    else if(a==='logout'){ const d=(C().dirty()||{}).n||0; if(!window.confirm('ออกจากระบบ?'+(d?'\nมีการแก้ไขที่ยังไม่บันทึก '+d+' รายการ (ยังอยู่ในเครื่อง ไม่หาย)':''))) return; closePanel(); endSession(); showLock('ออกจากระบบแล้ว'); return; }
+    else if(a==='logout'){ if(!(await CF('ออกจากระบบ?'+(dirtyN?'\nมีการแก้ไขที่ยังไม่บันทึก '+dirtyN+' รายการ (ยังอยู่ในเครื่อง ไม่หาย)':''),{ok:'ออกจากระบบ',cancel:'ยกเลิก'}))) return; closePanel(); endSession(); showLock('ออกจากระบบแล้ว'); }
     else if(a==='chpin') changePin();
-    else if(a==='reset'){ const t=b.dataset.v; if(!isAdmin()||!window.confirm('รีเซ็ต PIN ของ '+t+'?\nเขาจะต้องตั้ง PIN ใหม่ตอนเข้าสู่ระบบครั้งต่อไป')) return; await C().authDel(t); try{ C().audit('pin-reset',{target:t}); }catch(x){} say('รีเซ็ต PIN ของ '+t+' แล้ว'); }
-    else if(a==='mode'){ const m=b.dataset.v; if(m==='auto'&&!window.confirm('เปลี่ยนเป็นโหมดบันทึกอัตโนมัติ?\nทุกการแก้ไข (รวมที่ยังค้างอยู่) จะถูกส่งขึ้น Cloud ทันที')) return; C().setMode(m); say(m==='auto'?'⚡ เปลี่ยนเป็นบันทึกอัตโนมัติ':'✎ เปลี่ยนเป็นโหมดต้องกดบันทึก'); paint(); }
+    else if(a==='mkrec') makeRecovery();
+    else if(a==='gloss') openGloss();
+    else if(a==='backup'){ const bb=g('bkBtn'); if(bb) bb.click(); else say('ไม่พบปุ่ม Backup',true); }
+    else if(a==='mode'){ const m=b.dataset.v; if(m==='auto'&&!(await CF('เปลี่ยนเป็นโหมดบันทึกอัตโนมัติ?\nทุกการแก้ไข (รวมที่ยังค้างอยู่) จะถูกส่งขึ้น Cloud ทันที',{ok:'เปลี่ยน',cancel:'ยกเลิก'}))) return; C().setMode(m); say(m==='auto'?'⚡ เปลี่ยนเป็นบันทึกอัตโนมัติ':'✎ เปลี่ยนเป็นโหมดต้องกดบันทึก'); }
     else if(a==='save') await doSave();
-    else if(a==='discard'){ const n=(C().dirty()||{}).n||0; if(!window.confirm('ทิ้งการแก้ไขที่ยังไม่บันทึก '+n+' รายการ แล้วใช้ข้อมูลล่าสุดจาก Cloud?\n(ระบบเก็บสำเนาไว้ในจุดกู้คืนก่อน)')) return; await C().discard(); say('↩ ดึงข้อมูลจาก Cloud ทับแล้ว (เก็บสำเนาไว้ในจุดกู้คืน)'); HIST=null; loadHist(); }
-    else if(a==='pull'){ if(!window.confirm('ยอมรับตาม Cloud?\nข้อมูลที่ Cloud ไม่มี จะถูกลบออกจากเครื่องนี้ (เก็บสำเนาไว้ในจุดกู้คืน)')) return; await C().pull(); say('ดึงข้อมูลจาก Cloud แล้ว'); }
+    else if(a==='discard'){ if(!(await CF('ทิ้งการแก้ไข/ข้อมูลที่ยังไม่ได้บันทึก '+dirtyN+' รายการ แล้วใช้ข้อมูลล่าสุดจาก Cloud?\n(ระบบเก็บสำเนาไว้ในจุดกู้คืนก่อน)',{ok:'ทิ้งและใช้ของ Cloud',cancel:'ยกเลิก',danger:true}))) return; await C().discard(); say('↩ ดึงข้อมูลจาก Cloud ทับแล้ว (เก็บสำเนาไว้ในจุดกู้คืน)'); HIST=null; loadHist(); }
+    else if(a==='clrnew') C().clearNewDev();
+    else if(a==='pull'){ if(!(await CF('ยอมรับตาม Cloud?\nข้อมูลที่ Cloud ไม่มี จะถูกลบออกจากเครื่องนี้ (เก็บสำเนาไว้ในจุดกู้คืน)',{ok:'ยอมรับตาม Cloud',cancel:'ยกเลิก',danger:true}))) return; await C().pull(); say('ดึงข้อมูลจาก Cloud แล้ว'); }
     else if(a==='check'){ await C().checkRemote(); say('↻ ตรวจข้อมูลล่าสุดแล้ว'); }
     else if(a==='hist') await loadHist();
-    else if(a==='rp'){ const id=b.dataset.id, r=C().restoreSets().find(x=>x.id===id); if(!r||!window.confirm('นำ '+r.n+' รายการนี้กลับขึ้น Cloud และเข้าเครื่องนี้?\n'+r.reason)) return; const n=await C().restoreSet(id); say('↺ นำกลับ '+n+' รายการแล้ว'); HIST=null; loadHist(); }
+    else if(a==='cfcopy'){ try{ await navigator.clipboard.writeText(JSON.stringify(window.SPDB.conflicts(),null,1)); say('คัดลอกรายการชนกันแล้ว'); }catch(x){ say('คัดลอกไม่ได้',true); } }
+    else if(a==='cfclear'){ if(!(await CF('ล้างรายการชนกันทั้งหมด?\n(ค่าของอีกฝั่งที่เก็บไว้จะหายไป — คัดลอกเก็บก่อนได้)',{ok:'ล้าง',cancel:'ยกเลิก',danger:true}))) return; window.SPDB.clearConflicts(); say('ล้างรายการชนกันแล้ว'); }
+    else if(a==='rp'){ const id=b.dataset.id, r=C().restoreSets().find(x=>x.id===id); if(!r) return; if(dirtyN){ say('บันทึกหรือทิ้งการแก้ไขที่ค้างอยู่ก่อน แล้วค่อยนำกลับ',true); return; } if(!(await CF('นำ '+r.n+' รายการนี้กลับขึ้น Cloud และเข้าเครื่องนี้?\n'+r.reason,{ok:'นำกลับ',cancel:'ยกเลิก'}))) return; const n=await C().restoreSet(id); say('↺ นำกลับ '+n+' รายการแล้ว'); HIST=null; loadHist(); }
     else if(a==='rpdl'){ const r=C().restoreSets().find(x=>x.id===b.dataset.id); if(!r) return; const blob=new Blob([JSON.stringify({app:'qe_restore_set',version:1,at:r.at,reason:r.reason,who:r.who,records:r.records},null,1)],{type:'application/json'}); const u=document.createElement('a'); u.href=URL.createObjectURL(blob); u.download='restore_set_'+r.at.slice(0,19).replace(/[:T]/g,'')+'.json'; document.body.appendChild(u); u.click(); u.remove(); setTimeout(()=>URL.revokeObjectURL(u.href),3000); }
-  }catch(err){ say('ไม่สำเร็จ — '+((err&&err.message)||err),true); }
-  paint();
+    else if(a==='snaplist') await loadSnaps();
+    else if(a==='snapmake'){ if(!(await CF('สร้างจุดสำรองของข้อมูลบน Cloud ตอนนี้?\n(เก็บ 10 ชุดล่าสุด ชุดเก่าสุดถูกลบอัตโนมัติ)',{ok:'สร้าง',cancel:'ยกเลิก'}))) return; const r=await C().snapMake(true); say('📸 สร้างจุดสำรองแล้ว ('+r.n+' รายการ)'); await loadSnaps(); HIST=null; loadHist(); }
+    else if(a==='snapins'){ const id=b.dataset.id; try{ SINFO[id]=await C().snapInspect(id); }catch(x){ SINFO[id]={err:C().friendly((x&&x.message)||x,x&&x.status)}; } }
+    else if(a==='snaprs'){ const id=b.dataset.id, mode=b.dataset.v, i=SINFO[id]; if(dirtyN){ say('บันทึกหรือทิ้งการแก้ไขที่ค้างอยู่ก่อน แล้วค่อยกู้',true); return; }
+      const cnt=mode==='all'?i.missing+i.diff:i.missing; if(!(await CF(mode==='all'?'กู้ทั้งหมดจากจุดสำรองนี้?\nจะ “ทับ” '+i.diff+' รายการที่ต่างกัน และเพิ่ม '+i.missing+' รายการที่หายไป (ของที่ถูกทับเก็บเป็นจุดกู้คืนในเครื่องก่อน)':'กู้เฉพาะ '+i.missing+' รายการที่หายไปจาก Cloud?\n(รายการที่มีอยู่แล้วไม่ถูกแตะ)',{ok:'กู้ '+cnt+' รายการ',cancel:'ยกเลิก',danger:mode==='all'}))) return;
+      const n=await C().snapRestore(id,mode); delete SINFO[id]; say('↺ กู้ '+n+' รายการแล้ว'); HIST=null; loadHist(); }
+    else if(a==='reset'){ const t=b.dataset.v; if(!isAdmin()||!(await CF('รีเซ็ต PIN ของ '+t+'?\nเขาจะต้องตั้ง PIN ใหม่ตอนเข้าสู่ระบบครั้งต่อไป (ที่ยังเข้าสู่ระบบอยู่จะหมดอายุตามเวลา)',{ok:'รีเซ็ต',cancel:'ยกเลิก',danger:true}))) return; await C().authDel(t); C().audit('pin-reset',{target:t}); say('รีเซ็ต PIN ของ '+t+' แล้ว'); AUTH=null; loadAuth(); }
+    else if(a==='adm'){ const t=b.dataset.v, cf=C().cfg(), isA=cf.admins.indexOf(t)>=0; if(!isAdmin()) return; const next=isA?cf.admins.filter(x=>x!==t):cf.admins.concat([t]); if(!next.length) return; await C().cfgPut({admins:next}); C().audit('admin-set',{target:t,note:isA?'ถอดสิทธิ์':'ตั้งเป็นผู้ดูแล'}); say(isA?'ถอดสิทธิ์ผู้ดูแลของ '+t+' แล้ว':'ตั้ง '+t+' เป็นผู้ดูแลแล้ว'); }
+    else if(a==='adduser'){ const v=(g('cbNewName').value||'').trim(), cf=C().cfg(); if(v.length<2||v.length>12){ say('ชื่อต้องยาว 2–12 ตัวอักษร',true); return; } if(cf.names.some(x=>x.toLowerCase()===v.toLowerCase())){ say('มีชื่อนี้อยู่แล้ว',true); return; } await C().cfgPut({names:cf.names.concat([v])}); C().audit('user-add',{target:v}); say('เพิ่มผู้ใช้ '+v+' แล้ว — ให้เจ้าตัวเปิดเว็บและตั้ง PIN เอง'); }
+    else if(a==='deluser'){ const t=b.dataset.v, cf=C().cfg(); if(!(await CF('ลบชื่อ '+t+' ออกจากรายชื่อ?\n(ลบ PIN ของเขาด้วย · ประวัติเดิมยังอยู่)',{ok:'ลบชื่อ',cancel:'ยกเลิก',danger:true}))) return; await C().cfgPut({names:cf.names.filter(x=>x!==t),admins:cf.admins.filter(x=>x!==t)}); await C().authDel(t); C().audit('user-del',{target:t}); say('ลบชื่อ '+t+' แล้ว'); AUTH=null; loadAuth(); }
+    else if(a==='minver'){ if(!(await CF('บังคับให้ทุกเครื่องใช้เวอร์ชัน v'+C().ver+' ขึ้นไป?\nเครื่องที่เปิดเวอร์ชัน v27+ แต่เก่ากว่านี้จะถูกล็อกจนกว่าจะโหลดหน้าใหม่ (เวอร์ชันก่อน v27 ไม่รู้จักคำสั่งนี้)',{ok:'บังคับ',cancel:'ยกเลิก'}))) return; await C().cfgPut({minver:+C().ver}); C().audit('cfg',{note:'บังคับเวอร์ชัน ≥ v'+C().ver}); say('บังคับเวอร์ชัน v'+C().ver+' แล้ว'); }
+    else if(a==='minver0'){ await C().cfgPut({minver:0}); C().audit('cfg',{note:'ยกเลิกการบังคับเวอร์ชัน'}); say('ยกเลิกการบังคับเวอร์ชันแล้ว'); }
+  });
 });
 window.addEventListener('beforeunload',e=>{ try{ const d=C().dirty(); if(C().mode()==='manual'&&d&&d.n>0){ e.preventDefault(); e.returnValue='มีการแก้ไข '+d.n+' รายการที่ยังไม่ได้กดบันทึก'; return e.returnValue; } }catch(x){} });
 document.addEventListener('keydown',e=>{ if(locked) return; if((e.ctrlKey||e.metaKey)&&!e.altKey&&e.key.toLowerCase()==='s'){ const d=C().dirty(); if(C().mode()==='manual'&&((d&&d.n>0)||C().anomaly())){ e.preventDefault(); doSave(); } } },true);
-document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&!panel.hidden&&!g('cbPinMd')){ closePanel(); } });
-document.addEventListener('mousedown',e=>{ if(panel.hidden) return; if(!e.target.closest('#cbPanel,#cbPill,.cb-ov')) closePanel(); });
-window.addEventListener('spdb-collab',paint); setInterval(()=>{ paint(); authCheck(); },5000);
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&!panel.hidden&&!g('cbPinMd')&&!g('cbCf')&&!g('cbGl')){ closePanel(); } });
+document.addEventListener('mousedown',e=>{ if(panel.hidden) return; if(!e.target.closest('#cbPanel,#cbPill,.cb-ov,#cbCf')) closePanel(); });
+window.addEventListener('spdb-collab',()=>{ paint(); if(!verOk()) authCheck(); }); window.addEventListener('spdb-conflict',paint);
+setInterval(()=>{ if(document.hidden) return; paint(); authCheck(); },5000);
+setInterval(()=>{ if(document.hidden||!me()) return; C().cfgRefresh().then(()=>authCheck()).catch(()=>{}); },600000);
 authCheck(); setTimeout(()=>{ paint(); },1500);
-window.__CBUI={open:openPanel,close:closePanel,paint:paint,check:authCheck,sha256:sha256,hashPin:hashPin,isLocked:()=>locked,session:sess};
+window.__CBUI={open:openPanel,close:closePanel,paint:paint,check:authCheck,sha256:sha256,hashPin:hashPin,isLocked:()=>locked,session:sess,glossary:glossGet};
 })();
 
 </script>
