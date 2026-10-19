@@ -1783,6 +1783,7 @@ window.__SEED_V12={"version":12,"source":"snapshot v9 (16 ต.ค. 2569)","track
   }
   function esc(s){return String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
   function setStatus(state,msg){
+    if(state==='ok'||state==='error') scheduleDirty();
     const b=g('spStatus'),t=g('spStatusText'); if(b)b.dataset.state=state;
     if(t)t.innerHTML='<b>Cloud DB:</b> '+msg;
     if(g('spInfo')){ const u=usage(); g('spInfo').innerHTML='<div>'+msg+'</div>'+(lastSync?'<div>Sync ล่าสุด: '+esc(lastSync)+'</div>':'')+'<div>📡 ดึงข้อมูลจาก Cloud DB (เครื่องนี้): วันนี้ <b>'+fmtB(u.today.b)+'</b> ('+u.today.n+' คำขอ) · 7 วันล่าสุด <b>'+fmtB(u.week.b)+'</b>'+(u.paused?' · <b style="color:var(--t-warn)">พักซิงก์ชั่วคราว (โดนจำกัดโควตา)</b>':'')+'</div>'; }
@@ -2030,11 +2031,11 @@ window.__SEED_V12={"version":12,"source":"snapshot v9 (16 ต.ค. 2569)","track
   function localMoved(base){
     try{ const l=recMap(appModel()); if(l.size!==base.size) return true; let mv=false; l.forEach((r,k)=>{ const o=base.get(k); if(!o||o.json!==r.json) mv=true; }); return mv; }catch(e){ return false; }
   }
-  async function syncNow(force){
+  async function syncNow(force,manual){
     if(!cfg.enabled){setStatus('off','ปิดการใช้ฐานข้อมูลกลาง — ข้อมูลยังอยู่เฉพาะเครื่องนี้');return;}
     if(!valid()){setStatus('off','ยังไม่ได้ตั้งค่า Supabase — กด “Cloud DB” เพื่อตรวจสอบ');return;}
     if(syncing){again=true;return;}
-    if(!force&&Date.now()<pausedUntil){ setStatus('error',quotaMsg()); return; }
+    if(!force&&!manual&&Date.now()<pausedUntil){ setStatus('error',quotaMsg()); return; }
     syncing=true; clearTimeout(timer);timer=0;setStatus('busy','กำลังบันทึกข้อมูลกลาง…');
     const local=recMap(appModel()),baseline=new Map(cache);
     try{
@@ -2049,20 +2050,30 @@ window.__SEED_V12={"version":12,"source":"snapshot v9 (16 ต.ค. 2569)","track
           changed.push(up); }});
         baseline.forEach((r,k)=>{if(!local.has(k))removed.push(r);});
       }
+      const G=guardOut(removed,force,baseline.size,local.size);
+      if(G){
+        if(!window.confirm(G.msg)){
+          declinedUntil=Date.now()+120000; auditPost('guard-block',{n:G.n,pct:G.pct,by:G.by});
+          setStatus('error','ยกเลิกการบันทึก — '+G.short+' · ไม่มีอะไรถูกเปลี่ยนบน Cloud (การแก้ไขในเครื่องนี้ยังอยู่)'); emit('guard'); return;
+        }
+        saveRestoreSet('ก่อนบันทึกที่ลบ '+G.n+' รายการ',removed); auditPost('guard-ok',{n:G.n,pct:G.pct,by:G.by});
+      }
       if(changed.length)await upsertMany(changed);
       noteConflicts(conf);
       if(auto){ try{ if(typeof toast==='function') toast('🔀 รวมการแก้ไขของสองคนในรายการเดียวกันให้อัตโนมัติ '+auto+' รายการ (คนละฟิลด์)'); }catch(e){} }
       if(removed.length)await deleteMany(removed);
+      try{ onSaved(changed,removed,force); }catch(e){}
       const finalMap=await fetchRows();
       lastSync=new Date().toLocaleString('th-TH'); saveBase(finalMap);
       if(localMoved(local)){ cache=local; again=true; }
       else if(safeToApply()){cache=finalMap;applyRemote(remoteModel(finalMap));appliedVer=rcVer;}else cache=local;
       ready=true;setStatus('ok','เชื่อมต่อ <b>'+esc(table())+'</b> · บันทึกแล้ว '+esc(lastSync));
     }catch(e){setStatus('error','Sync ไม่สำเร็จ — '+errText(e));throw e;}
-    finally{syncing=false;if(again){again=false;setTimeout(()=>syncNow(false).catch(()=>{}),100);}}
+    finally{syncing=false;if(again){again=false;if(saveMode()==='auto'&&!anomaly)setTimeout(()=>syncNow(false).catch(()=>{}),100);else scheduleDirty();}}
   }
   function queue(){
     if(!cfg.enabled||!valid())return;
+    if(saveMode()==='manual'||Date.now()<declinedUntil||(anomaly&&anomaly.kind==='cloud-loss')){ scheduleDirty(); return; }   // โหมดบันทึกเอง / ผู้ใช้เพิ่งปฏิเสธ / Cloud ผิดปกติ → ไม่ส่งอัตโนมัติ
     clearTimeout(timer);timer=setTimeout(()=>syncNow(false).catch(()=>{}),1500);
   }
   const syncSig=()=>base()+'|'+table();
@@ -2128,6 +2139,12 @@ window.__SEED_V12={"version":12,"source":"snapshot v9 (16 ต.ค. 2569)","track
       const mg=mergeRecords(local,remote,B);
       if(!B) backupLocal(local,remote);
       noteConflicts(mg.conflicts);
+      const lostC=[]; local.forEach((r,k)=>{ if(!mg.M.has(k)) lostC.push(r); });
+      const LCc=lossCheck(lostC,local.size);
+      if(LCc){                                                                  // Cloud ขาดข้อมูลผิดปกติ → ไม่ล้างข้อมูลในเครื่องตาม · เก็บจุดกู้คืน · รอให้ส่งกลับหรือยอมรับ
+        saveRestoreSet('Cloud ขาดข้อมูล '+LCc.n+' รายการ (ตอนเปิดหน้า)',lostC); setAnomaly('cloud-loss',LCc); auditPost('cloud-loss',{n:LCc.n,of:LCc.of,by:LCc.by,at:'connect'});
+        lostC.forEach(r=>mg.M.set(r.key,r));
+      }
       applyRemote(remoteModel(mg.M)); appliedVer=rcVer; saveBase(remote); seedFinish();
       const legacyLayout=Array.from(remote.values()).some(r=>r.payload&&r.payload.mjk==='core'&&!(r.payload.v&&r.payload.v.layout===2));
       if(mg.kept||legacyLayout) queue();
@@ -2145,6 +2162,13 @@ window.__SEED_V12={"version":12,"source":"snapshot v9 (16 ต.ค. 2569)","track
       lastSync=new Date().toLocaleString('th-TH');setStatus('ok','เชื่อมต่อ <b>'+esc(table())+'</b> · ตรวจสอบล่าสุด '+esc(lastSync));
       if(showToast&&typeof toast==='function')toast('↻ ข้อมูลเป็นปัจจุบันแล้ว');
       return;
+    }
+    const lostR=[]; cache.forEach((r,k)=>{ if(!remote.has(k)) lostR.push(r); });
+    const LCr=lossCheck(lostR,cache.size);
+    if(LCr){                                                                    // มีคน/เหตุการณ์ทำให้ข้อมูลบน Cloud หายไปเป็นก้อน → ไม่ลบในเครื่องนี้ตาม
+      saveRestoreSet('Cloud ขาดข้อมูล '+LCr.n+' รายการ',lostR); setAnomaly('cloud-loss',LCr); auditPost('cloud-loss',{n:LCr.n,of:LCr.of,by:LCr.by});
+      const mm=new Map(remote); lostR.forEach(r=>mm.set(r.key,r)); cache=remote;ready=true;applyRemote(remoteModel(mm));appliedVer=rcVer;saveBase(remote);
+      lastSync=new Date().toLocaleString('th-TH');setStatus('error','Cloud DB ขาดข้อมูล '+LCr.n+' รายการ — เก็บไว้ในเครื่องนี้ รอตัดสินใจที่แผง 👥 (ส่งกลับขึ้น Cloud / ยอมรับตาม Cloud)'); return;
     }
     cache=remote;ready=true;applyRemote(remoteModel(remote));appliedVer=rcVer;saveBase(remote);
     lastSync=new Date().toLocaleString('th-TH');setStatus('ok','เชื่อมต่อ <b>'+esc(table())+'</b> · อัปเดตล่าสุด '+esc(lastSync));
@@ -2204,13 +2228,165 @@ window.__SEED_V12={"version":12,"source":"snapshot v9 (16 ต.ค. 2569)","track
     g('spReset').onclick=async()=>{try{localStorage.removeItem(CFG);}catch(e){}cfg=defaults();ready=false;cache.clear();RC=null;useFlt=true;useSmart=true;fillForm();toast('↺ กลับไปใช้ค่าที่ฝังในไฟล์แล้ว');if(valid()){try{await connect(true);}catch(e){setStatus('error','เชื่อมต่อไม่สำเร็จ — '+errText(e));}}else setStatus('off','ค่าที่ฝังในไฟล์ยังไม่ครบ — กรุณาแก้ COUNTERMEASURE_CLOUD_DEFAULTS');};
     g('spSyncBtn').onclick=()=>{if(!valid()){g('ovSP').classList.add('on');toast('กรุณาตั้งค่า Supabase ก่อน');return;}syncNow(false).then(()=>toast('✅ Sync Cloud DB แล้ว')).catch(e=>alert(e.message));};
     ['pointerdown','keydown','wheel','touchstart'].forEach(ev=>window.addEventListener(ev,()=>{lastAct=Date.now();},{passive:true,capture:true}));
-    schedulePoll();
+    schedulePoll(); presenceStart();
     document.addEventListener('visibilitychange',()=>{ if(document.hidden){ hiddenAt=Date.now(); return; } if(hiddenAt&&Date.now()-hiddenAt>180000) rcKeysAt=0; hiddenAt=0; setTimeout(refreshSilent,500); });
     window.addEventListener('online',()=>setTimeout(refreshSilent,500));
     if(valid())connect(true).catch(e=>setStatus('error','เชื่อมต่อไม่สำเร็จ — '+errText(e)));
     else setStatus('off','ยังไม่ได้ตั้งค่า Supabase — ข้อมูลยังอยู่เฉพาะเครื่องนี้');
   }
-  window.SPDB={usage:usage,fmtBytes:fmtB,bind:bind,queue:queue,sync:syncNow,isConfigured:()=>valid(),config:()=>Object.assign({},cfg),diagnose:diag,conflicts:()=>readConf(),clearConflicts:()=>{ try{ localStorage.removeItem(CFK); }catch(e){} }};
+  /* ================= v25 · ทำงานร่วมกันอย่างปลอดภัย =================
+     • ต้องกด “บันทึก” ก่อนข้อมูลจึงขึ้น Cloud (ค่าตั้งต้น) — สลับเป็นอัตโนมัติได้ · แก้ไขแล้วเก็บในเครื่องก่อน นับรายการที่ยังไม่บันทึก
+     • ใครออนไลน์ (สัญญาณทุก 90 วินาที เฉพาะตอนเปิดหน้าอยู่) · ประวัติการบันทึก: ใคร เมื่อไร แก้อะไร
+     • กันข้อมูลหายทั้งก้อน: (1) ก่อนบันทึกที่จะ “ลบ/ทับ” จำนวนมาก ถามยืนยัน + เก็บจุดกู้คืน (2) ถ้า Cloud มีข้อมูลหายผิดปกติ จะไม่ล้างข้อมูลในเครื่องตาม — เก็บไว้และรอให้ส่งกลับ */
+  const WHOK='ux_me', MODEK='ux_savemode', DEVK='ux_dev_id', RPL='ux_rp_list', PRUNEK='ux_prune_day';
+  const PRES='countermeasure-presence:', AUD='countermeasure-audit:', APPVER='25';
+  const lsGet=k=>{ try{ return localStorage.getItem(k); }catch(e){ return null; } };
+  const lsSet=(k,v)=>{ try{ localStorage.setItem(k,v); return true; }catch(e){ return false; } };
+  const who=()=>String(lsGet(WHOK)||'').trim();
+  const saveMode=()=>lsGet(MODEK)==='auto'?'auto':'manual';
+  function devId(){ let d=lsGet(DEVK); if(!d){ d=Math.random().toString(36).slice(2,8)+Date.now().toString(36).slice(-4); lsSet(DEVK,d); } return d; }
+  let dirtyInfo=null, dirtyT=0, anomaly=null, declinedUntil=0, presRows=[], presOK=true, audOK=true, audAcc=null, audT=0, audLast=0;
+  const emit=t=>{ try{ window.dispatchEvent(new CustomEvent('spdb-collab',{detail:{type:t}})); }catch(e){} };
+  function recLabel(r){
+    const t=r.type;
+    if(t==='TrackerItem') return 'Tracker'; if(t==='TrashItem') return 'ถังขยะ'; if(t==='ChecklistDay') return 'Checklist';
+    if(t==='MissionData'||t==='OTData'||t==='LVData') return '7 Mission'; if(t==='HoshinData') return 'Hoshin'; if(t==='AppConfig') return 'ตั้งค่า';
+    const p=r.payload||{}; if(p.mjk) return 'Main QE Jobs';
+    const k=String(p.storageKey||''); if(k.indexOf('qe_mtg_')===0) return 'ประชุม'; if(k.indexOf('qe_mainjobs')===0) return 'Main QE Jobs';
+    return 'อื่น ๆ';
+  }
+  function recName(r){
+    const p=r.payload||{};
+    if(r.type==='TrackerItem'||r.type==='TrashItem') return String(p.issue||p.cm||p.id||'').replace(/\s+/g,' ').slice(0,36);
+    if(r.type==='ChecklistDay') return String(p.date||'');
+    const k=String(p.storageKey||''); if(k.indexOf('qe_mtg_d_')===0) return 'ประชุม '+k.slice(9);
+    if(p.mjk) return 'Main QE Jobs · '+p.mjk; return '';
+  }
+  const tally=a=>{ const o={}; a.forEach(r=>{ const l=recLabel(r); o[l]=(o[l]||0)+1; }); return o; };
+  const sample=a=>{ const o=[]; for(const r of a){ const n=recName(r); if(n&&o.indexOf(n)<0) o.push(n); if(o.length>=6) break; } return o; };
+  function curTab(){ try{ const b=document.querySelector('.nv-tab.on .nv-tx b .f')||document.querySelector('.tabbtn.on'); return String(b&&b.textContent||'').replace(/\s+/g,' ').trim().slice(0,24); }catch(e){ return ''; } }
+
+  /* ----- นับสิ่งที่ยังไม่บันทึก (เทียบกับสถานะล่าสุดที่รู้จาก Cloud) ----- */
+  function computeDirty(){
+    if(!ready||!cache) return null;
+    const local=recMap(appModel()), ch=[], rm=[];
+    local.forEach((r,k)=>{ const o=cache.get(k); if(!o||o.type!==r.type||o.json!==r.json) ch.push(r); });
+    cache.forEach((r,k)=>{ if(!local.has(k)) rm.push(r); });
+    return {local:local,ch:ch,rm:rm};
+  }
+  function refreshDirty(){
+    dirtyT=0;
+    try{ const d=computeDirty(); dirtyInfo=d?{n:d.ch.length+d.rm.length,ch:d.ch.length,del:d.rm.length,by:tally(d.ch),delBy:tally(d.rm),items:sample(d.ch),at:Date.now()}:null; }
+    catch(e){ dirtyInfo=null; }
+    emit('dirty');
+  }
+  function scheduleDirty(){ clearTimeout(dirtyT); dirtyT=setTimeout(refreshDirty,600); }
+
+  /* ----- จุดกู้คืน: เก็บ “รายการที่กำลังจะถูกลบ/ทับ” ไว้ในเครื่องก่อนทำ (ล่าสุด 3 ชุด) ----- */
+  function rpList(){ try{ const a=JSON.parse(lsGet(RPL)||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+  function saveRestoreSet(reason,recs){
+    try{
+      const list=rpList(), rec={id:Date.now().toString(36),at:new Date().toISOString(),reason:String(reason||''),who:who(),n:recs.length,by:tally(recs),records:recs.map(r=>({key:r.key,type:r.type,payload:r.payload,date:r.date||null}))};
+      list.unshift(rec); while(list.length>3) list.pop();
+      let txt=JSON.stringify(list); while(txt.length>3000000&&list.length>1){ list.pop(); txt=JSON.stringify(list); }
+      if(!lsSet(RPL,txt)){ list.length=1; if(!lsSet(RPL,JSON.stringify(list))) return null; }
+      emit('rp'); return rec.id;
+    }catch(e){ return null; }
+  }
+  /* ----- ประวัติการบันทึก + สถานะออนไลน์ (เก็บในตารางเดียวกัน คนละ prefix — ไม่ปนกับข้อมูลงาน) ----- */
+  async function auditPost(kind,detail){
+    if(!valid()||!audOK) return;
+    try{
+      const iso=new Date().toISOString(), key=AUD+String(Date.now()).padStart(14,'0')+':'+devId();
+      await api('POST','?on_conflict=record_key',[{record_key:key,entity_type:'AppConfig',payload:Object.assign({k:kind,at:iso,who:who()||'(ไม่ระบุ)',dev:devId(),mode:saveMode(),ver:APPVER},detail||{}),record_date:null,updated_at:iso}],{'Prefer':'resolution=merge-duplicates,return=minimal'},'aud');
+    }catch(e){ if(e&&(e.status===400||e.status===403||e.status===404)) audOK=false; }
+  }
+  function auditSave(changed,removed,force){
+    const info={n:changed.length,del:removed.length,by:tally(changed),items:sample(changed)}; if(removed.length){ info.delBy=tally(removed); info.delItems=sample(removed); } if(force) info.force=1;
+    if(saveMode()==='manual'||force||removed.length){ auditPost('save',info); return; }
+    if(!audAcc) audAcc={n:0,del:0,by:{},items:[]};                       // โหมดอัตโนมัติ: รวมหลายครั้งเป็นแถวเดียวทุก 3 นาที (ไม่ให้ตารางโตเร็ว)
+    audAcc.n+=info.n; Object.keys(info.by).forEach(k=>{ audAcc.by[k]=(audAcc.by[k]||0)+info.by[k]; }); info.items.forEach(x=>{ if(audAcc.items.indexOf(x)<0&&audAcc.items.length<6) audAcc.items.push(x); });
+    if(!audT){ audT=setTimeout(()=>{ audT=0; const a=audAcc; audAcc=null; if(a) auditPost('save',a); },180000); }
+  }
+  async function history(n){
+    const rows=await api('GET','?select=record_key,payload,updated_at&record_key=like.'+encodeURIComponent(AUD+'*')+'&order=record_key.desc&limit='+(n||40),null,null,'aud');
+    return (Array.isArray(rows)?rows:[]).map(x=>Object.assign({key:x.record_key,u:x.updated_at},x.payload||{}));
+  }
+  async function beat(){
+    if(!valid()||!cfg.enabled||!presOK||document.hidden||Date.now()<pausedUntil) return;
+    try{
+      const iso=new Date().toISOString();
+      await api('POST','?on_conflict=record_key',[{record_key:PRES+devId(),entity_type:'AppConfig',payload:{who:who()||'(ไม่ระบุ)',dev:devId(),at:iso,tab:curTab(),dirty:dirtyInfo?dirtyInfo.n:0,mode:saveMode(),ver:APPVER},record_date:null,updated_at:iso}],{'Prefer':'resolution=merge-duplicates,return=minimal'},'pres');
+      const rows=await api('GET','?select=record_key,payload,updated_at&record_key=like.'+encodeURIComponent(PRES+'*')+'&order=updated_at.desc&limit=40',null,null,'pres');
+      presRows=(Array.isArray(rows)?rows:[]).map(x=>Object.assign({key:x.record_key,u:x.updated_at},x.payload||{})); emit('presence'); dailyPrune();
+    }catch(e){ if(e&&(e.status===400||e.status===403||e.status===404)) presOK=false; }
+  }
+  function online(){
+    const now=Date.now(), me=devId(), by={};
+    presRows.forEach(p=>{ if(p.off) return; const t=Date.parse(p.at||p.u); if(!isFinite(t)||now-t>240000) return;
+      const k=p.who||'(ไม่ระบุ)', o=by[k]||(by[k]={who:k,devs:0,mine:false,tab:'',dirty:0,at:0}); o.devs++; if(p.dev===me) o.mine=true; o.dirty+=p.dirty||0; if(t>o.at){ o.at=t; o.tab=p.tab||''; } });
+    return Object.keys(by).map(k=>by[k]).sort((a,b)=>b.at-a.at);
+  }
+  function goOffline(){
+    try{ if(!valid()||!presOK) return; const iso=new Date().toISOString();
+      fetch(base()+'/rest/v1/'+encodeURIComponent(table())+'?on_conflict=record_key',{method:'POST',keepalive:true,mode:'cors',headers:authHeaders({'Prefer':'resolution=merge-duplicates,return=minimal'}),body:JSON.stringify([{record_key:PRES+devId(),entity_type:'AppConfig',payload:{who:who(),dev:devId(),at:iso,off:1},record_date:null,updated_at:iso}])}); }catch(e){}
+  }
+  async function dailyPrune(){
+    const day=localDay(); if(lsGet(PRUNEK)===day) return; lsSet(PRUNEK,day);
+    try{
+      const d1=new Date(Date.now()-3*864e5).toISOString(), d2=new Date(Date.now()-90*864e5).toISOString();
+      await api('DELETE','?entity_type=eq.AppConfig&record_key=like.'+encodeURIComponent(PRES+'*')+'&updated_at=lt.'+encodeURIComponent(d1),null,{'Prefer':'return=minimal'},'pres');
+      await api('DELETE','?entity_type=eq.AppConfig&record_key=like.'+encodeURIComponent(AUD+'*')+'&updated_at=lt.'+encodeURIComponent(d2),null,{'Prefer':'return=minimal'},'aud');
+    }catch(e){}
+  }
+  function presenceStart(){
+    setTimeout(beat,2500); setInterval(beat,90000);
+    document.addEventListener('visibilitychange',()=>{ if(!document.hidden) setTimeout(beat,800); });
+    window.addEventListener('pagehide',goOffline);
+  }
+  /* ----- ตัวกัน: ลบทั้งก้อนออกจาก Cloud / Cloud ข้อมูลหาย ----- */
+  function guardOut(removed,force,baseN,localN){
+    if(!removed.length) return null;
+    const big=removed.length>=8&&(removed.length>=baseN*0.1||removed.length>=25);                 // ลบ ≥25 รายการ หรือ ≥10% ของข้อมูลกลาง
+    if(!big&&!force) return null;
+    const by=tally(removed), parts=Object.keys(by).map(k=>k+' '+by[k]).join(' · '), pct=baseN?Math.round(removed.length/baseN*100):100;
+    return {n:removed.length,pct:pct,by:by,short:'จะลบ '+removed.length+' รายการ ('+pct+'%)',
+      msg:'⚠ การบันทึกครั้งนี้จะ “ลบ” '+removed.length+' รายการออกจาก Cloud DB ('+pct+'% ของข้อมูลกลาง)\n'+parts+'\n\n'+(force?'(โหมดส่งทับ: ลบทุกอย่างบน Cloud ที่ไม่มีในเครื่องนี้)\n':'เครื่องนี้มีข้อมูล '+localN+' รายการ · Cloud เดิมมี '+baseN+' รายการ\n')+'\nถ้าไม่ได้ตั้งใจลบ (เช่น เพิ่งล้างข้อมูลเบราว์เซอร์ หรือเปิดไฟล์จากที่ใหม่) ให้กด Cancel\nถ้ากด OK ระบบจะเก็บรายการที่ถูกลบไว้เป็นจุดกู้คืนในเครื่องนี้ก่อน'};
+  }
+  function lossCheck(lostRecs,baseN){ const n=lostRecs.length; return (n>=8&&(n>=baseN*0.1||n>=25))?{n:n,of:baseN,pct:Math.round(n/Math.max(baseN,1)*100),by:tally(lostRecs)}:null; }
+  function setAnomaly(kind,d){ anomaly={kind:kind,at:new Date().toISOString(),n:d.n,of:d.of,pct:d.pct,by:d.by||{}}; emit('anomaly'); try{ if(typeof toast==='function') toast('⚠ Cloud DB มีข้อมูลหายไป '+d.n+' รายการ — ไม่ได้ลบข้อมูลในเครื่องนี้ตาม (ดูที่แผง 👥 มุมซ้ายล่าง)'); }catch(e){} }
+  function clearAnomaly(){ if(anomaly){ anomaly=null; emit('anomaly'); } }
+  /* ----- การกระทำของผู้ใช้ ----- */
+  async function saveNow(){
+    if(!cfg.enabled||!valid()) throw new Error('Cloud DB ยังไม่เชื่อมต่อ — เปิดสวิตช์/ตั้งค่า Supabase ก่อน');
+    declinedUntil=0; if(syncing){ again=true; return 'queued'; }
+    clearTimeout(timer); timer=0; await syncNow(false,true); return dirtyInfo;
+  }
+  async function pullCloud(){
+    const remote=await fetchRows({force:true}); cache=remote; ready=true; applyRemote(remoteModel(remote)); appliedVer=rcVer; saveBase(remote); clearAnomaly();
+    lastSync=new Date().toLocaleString('th-TH'); setStatus('ok','เชื่อมต่อ <b>'+esc(table())+'</b> · ดึงข้อมูลล่าสุดจาก Cloud แล้ว '+esc(lastSync));
+  }
+  async function discardLocal(){
+    const d=computeDirty(); if(d&&d.ch.length) saveRestoreSet('ทิ้งการแก้ไขที่ยังไม่บันทึก',d.ch);
+    await pullCloud(); auditPost('discard',{n:d?d.ch.length+d.rm.length:0});
+  }
+  async function restoreSet(id){
+    const rec=rpList().find(x=>x.id===id); if(!rec) throw new Error('ไม่พบจุดกู้คืนนี้');
+    await upsertMany(rec.records.map(r=>Object.assign({},r,{json:cj(r.payload)})));
+    await pullCloud(); auditPost('restore',{n:rec.n,reason:rec.reason});
+    return rec.n;
+  }
+
+  function onSaved(changed,removed,force){ if(changed.length||removed.length) auditSave(changed,removed,force); clearAnomaly(); scheduleDirty(); emit('saved'); }
+  const COLLAB={
+    who:who, setWho:n=>{ lsSet(WHOK,String(n||'').trim()); emit('who'); setTimeout(beat,300); },
+    mode:saveMode, setMode:m=>{ lsSet(MODEK,m==='auto'?'auto':'manual'); emit('mode'); scheduleDirty(); if(m==='auto') setTimeout(()=>{ if(dirtyInfo&&dirtyInfo.n) queue(); },700); },
+    dirty:()=>dirtyInfo, refresh:refreshDirty, save:saveNow, discard:discardLocal, pull:pullCloud, checkRemote:()=>refreshRemote(false,false),
+    online:online, beat:beat, history:history, anomaly:()=>anomaly, clearAnomaly:clearAnomaly,
+    restoreSets:rpList, restoreSet:restoreSet, dev:devId,
+    state:()=>({who:who(),mode:saveMode(),dirty:dirtyInfo,anomaly:anomaly,online:online(),ready:ready,paused:Date.now()<pausedUntil,presOK:presOK,dev:devId(),enabled:!!cfg.enabled,valid:valid()})
+  };
+  window.SPDB={collab:COLLAB,usage:usage,fmtBytes:fmtB,bind:bind,queue:queue,sync:syncNow,isConfigured:()=>valid(),config:()=>Object.assign({},cfg),diagnose:diag,conflicts:()=>readConf(),clearConflicts:()=>{ try{ localStorage.removeItem(CFK); }catch(e){} }};
   /* Any edit made by any page is queued automatically, even if that module did not call SPDB.queue(). */
   try{
     const nativeSet=Storage.prototype.setItem,nativeRemove=Storage.prototype.removeItem,nativeClear=Storage.prototype.clear;
@@ -10636,6 +10812,157 @@ document.addEventListener('keydown',e=>{
 syncActive(); refreshBadges(); paintHealth();
 setTimeout(()=>{ syncActive(); refreshBadges(); },1500);
 window.__NAV={open:openGuide,palette:openPal,refresh:refreshBadges,activate:activate,items:items};
+})();
+
+</script>
+<script id="collabAddon">
+/* ===== Collaboration UI add-on v25 : ใครเปิดอยู่ · ต้องกดบันทึก · ประวัติการบันทึก · จุดกู้คืน =====
+   ใช้ API จาก window.SPDB.collab (ในสคริปต์ Cloud DB) — ไม่แตะตรรกะของแท็บใด ๆ · วางไว้ท้ายไฟล์ ก่อน </body> */
+(function(){
+'use strict';
+if(window.__CBUI) return;
+const g=id=>document.getElementById(id);
+const C=()=>window.SPDB&&window.SPDB.collab;
+if(!C()) return;
+const E=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const say=(m,e)=>{ try{ toast(m,e); }catch(x){} };
+const NAMES=['Earn','Natcha','Mana','Benz'];
+const fmt=iso=>{ try{ const d=new Date(iso); if(!isFinite(d)) return String(iso||''); const t=d.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'}); return (new Date().toDateString()===d.toDateString()?'วันนี้ ':d.toLocaleDateString('th-TH',{day:'numeric',month:'short'})+' ')+t; }catch(e){ return String(iso||''); } };
+const ago=ms=>{ const s=Math.max(0,Math.round((Date.now()-ms)/1000)); return s<50?'เมื่อสักครู่':s<3300?Math.max(1,Math.round(s/60))+' นาทีที่แล้ว':Math.round(s/3600)+' ชม.ที่แล้ว'; };
+const sum=o=>Object.keys(o||{}).map(k=>k+' '+o[k]).join(' · ');
+const css=document.createElement('style'); css.id='cbStyle'; css.textContent=`
+.cb-pill{position:fixed;left:12px;bottom:12px;z-index:90;display:flex;align-items:center;gap:4px;padding:5px;border:1px solid var(--line);border-radius:999px;background:color-mix(in srgb,var(--pop) 92%,transparent);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);box-shadow:0 6px 24px var(--sh);color:var(--txt);font-size:12.5px;max-width:calc(100vw - 24px)}
+.cb-pill[hidden]{display:none}
+.cb-b{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;margin:0;border-radius:999px;border:1px solid transparent;background:transparent;color:var(--txt);font-size:12.5px;font-weight:700;cursor:pointer;line-height:1.2;white-space:nowrap}
+.cb-b:hover{background:var(--soft2)}
+.cb-b:focus-visible,.cb-save:focus-visible,.cb-x:focus-visible{outline:2px solid var(--pri);outline-offset:2px}
+.cb-av{width:22px;height:22px;border-radius:50%;background:var(--pri);color:var(--on-pri);display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:800}
+.cb-dot{width:9px;height:9px;border-radius:50%;background:#22c55e;display:inline-block}
+.cb-pill[data-s="dirty"] .cb-st{color:#f59e0b}.cb-pill[data-s="bad"] .cb-st{color:var(--dang)}.cb-pill[data-s="off"] .cb-st,.cb-pill[data-s="wait"] .cb-st,.cb-pill[data-s="pause"] .cb-st{color:var(--mut)}
+.cb-st{font-weight:700;padding:0 6px;white-space:nowrap}
+.cb-save{padding:6px 14px;margin:0;border-radius:999px;border:1px solid var(--pri);background:var(--pri);color:var(--on-pri);font-size:12.5px;font-weight:800;cursor:pointer;line-height:1.2;white-space:nowrap}
+.cb-save[hidden]{display:none}.cb-save[disabled]{opacity:.6;cursor:progress}
+.cb-pill[data-s="dirty"] .cb-save{animation:cbp 1.8s ease-in-out infinite}
+@keyframes cbp{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--pri) 55%,transparent)}50%{box-shadow:0 0 0 7px transparent}}
+@media(prefers-reduced-motion:reduce){.cb-pill[data-s="dirty"] .cb-save{animation:none}}
+.cb-pn{position:fixed;left:12px;bottom:64px;z-index:91;width:400px;max-width:calc(100vw - 24px);max-height:min(78vh,640px);overflow:auto;border:1px solid var(--line);border-radius:16px;background:var(--pop);color:var(--txt);box-shadow:0 18px 50px var(--shp);padding:12px 14px;font-size:12.5px;line-height:1.55}
+.cb-pn[hidden]{display:none}
+.cb-pn h4{margin:12px 0 6px;font-size:11px;letter-spacing:.3px;color:var(--mut);font-weight:800;display:flex;align-items:center;gap:8px}
+.cb-pn h4:first-child{margin-top:0}.cb-pn h4 .grow{flex:1}
+.cb-r{display:flex;gap:8px;align-items:flex-start;padding:5px 0;border-bottom:1px dashed var(--line)}.cb-r:last-child{border-bottom:0}
+.cb-r b{font-weight:800}.cb-r small{display:block;color:var(--mut);font-size:11.5px;line-height:1.45}
+.cb-r .t{margin-left:auto;color:var(--mut);font-size:11px;white-space:nowrap}
+.cb-chip{padding:4px 10px;margin:0 4px 4px 0;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--txt);font-size:12px;font-weight:700;cursor:pointer}
+.cb-chip:hover{border-color:var(--pri)}.cb-chip.on{background:var(--pri);color:var(--on-pri);border-color:var(--pri)}
+.cb-act{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.cb-btn{padding:6px 12px;margin:0;border-radius:9px;border:1px solid var(--line);background:transparent;color:var(--txt);font-size:12px;font-weight:700;cursor:pointer}
+.cb-btn:hover{border-color:var(--pri);background:var(--soft2)}.cb-btn.p{background:var(--pri);color:var(--on-pri);border-color:var(--pri)}.cb-btn.d{border-color:var(--dang);color:var(--dang)}
+.cb-x{padding:2px 8px;margin:0;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--mut);cursor:pointer;font-size:12px}
+.cb-warn{margin:0 0 8px;padding:8px 10px;border:1px solid var(--dang);border-radius:10px;background:color-mix(in srgb,var(--dang) 12%,transparent)}
+.cb-note{color:var(--mut);font-size:11.5px;margin-top:4px}
+.cb-in{width:100%;padding:6px 9px;border-radius:9px;border:1px solid var(--line);background:var(--soft);color:var(--txt);font-size:13px;margin-top:6px}
+.cb-ov{position:fixed;inset:0;z-index:420;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px}
+.cb-md{width:100%;max-width:420px;border:1px solid var(--line);border-radius:16px;background:var(--pop);color:var(--txt);padding:18px 20px;box-shadow:0 24px 70px rgba(0,0,0,.5)}
+.cb-md h3{margin:0 0 4px;font-size:18px}.cb-md p{margin:0 0 10px;color:var(--mut);font-size:12.5px;line-height:1.6}
+@media(max-width:700px){.cb-pill{left:8px;bottom:8px}.cb-b .cb-wn,.cb-b .cb-ol{display:none}.cb-pn{left:8px;bottom:58px}}
+`; document.head.appendChild(css);
+const pill=document.createElement('div'); pill.className='cb-pill'; pill.id='cbPill'; pill.setAttribute('role','status'); pill.hidden=true;
+pill.innerHTML='<button type="button" class="cb-b" id="cbWho" title="ชื่อผู้ใช้ของเครื่องนี้ — กดเพื่อเปิดแผง"><span class="cb-av" id="cbAv">?</span><span class="cb-wn" id="cbWn">ตั้งชื่อ</span></button>'+
+  '<button type="button" class="cb-b" id="cbOn" title="ใครเปิดหน้านี้อยู่ตอนนี้"><i class="cb-dot"></i><span id="cbOnT">0</span><span class="cb-ol"> ออนไลน์</span></button>'+
+  '<span class="cb-st" id="cbSt">…</span><button type="button" class="cb-save" id="cbSave" hidden>💾 บันทึก</button>';
+const panel=document.createElement('div'); panel.className='cb-pn'; panel.id='cbPanel'; panel.hidden=true; panel.setAttribute('role','dialog'); panel.setAttribute('aria-label','ทำงานร่วมกัน');
+document.body.appendChild(pill); document.body.appendChild(panel);
+let HIST=null, histBusy=false, busy=false;
+
+function paint(){
+  const st=C().state(), d=st.dirty, n=d?d.n:0, a=st.anomaly, manual=st.mode==='manual', on=st.online;
+  pill.hidden=!(st.valid&&st.enabled);
+  g('cbAv').textContent=(st.who||'?').charAt(0).toUpperCase(); g('cbWn').textContent=st.who||'ตั้งชื่อ';
+  g('cbOnT').textContent=String(on.length);
+  const s=a?'bad':st.paused?'pause':!st.ready?'wait':(manual&&n?'dirty':'ok'); pill.dataset.s=s;
+  g('cbSt').textContent=a?('⚠ Cloud ขาดข้อมูล '+a.n):st.paused?'⏸ พักซิงก์ (โควตา)':!st.ready?'กำลังเชื่อมต่อ…':!manual?'⚡ บันทึกอัตโนมัติ':(n?('✎ ยังไม่บันทึก '+n):'✓ บันทึกแล้ว');
+  const sv=g('cbSave'); sv.hidden=!(a||(manual&&n>0)); sv.textContent=a?'↑ ส่งกลับขึ้น Cloud':('💾 บันทึก ('+n+')'); sv.disabled=busy;
+  pill.title='ผู้ใช้: '+(st.who||'ยังไม่ได้ตั้งชื่อ')+' · โหมด: '+(manual?'ต้องกดบันทึก':'อัตโนมัติ')+(on.length?' · ออนไลน์: '+on.map(x=>x.who).join(', '):'');
+  if(!panel.hidden) renderPanel();
+}
+function histLine(h){
+  const k=h.k, w='<b>'+E(h.who||'?')+'</b>', by=sum(h.by), tag=h.mode==='auto'?' <small>(อัตโนมัติ)</small>':'';
+  if(k==='save') return {t:w+' บันทึก '+(h.n||0)+' รายการ'+(h.del?' · <b style="color:var(--dang)">ลบ '+h.del+'</b>':'')+tag,s:[by,(h.items||[]).slice(0,4).join(' · '),h.del?('ลบ: '+sum(h.delBy)+((h.delItems&&h.delItems.length)?' ('+h.delItems.slice(0,3).join(' · ')+')':'')):''].filter(Boolean).join(' — ')};
+  if(k==='guard-block') return {t:w+' <b style="color:#f59e0b">ยกเลิก</b> การบันทึกที่จะลบ '+h.n+' รายการ ('+(h.pct||'?')+'%)',s:sum(h.by)};
+  if(k==='guard-ok') return {t:w+' <b style="color:var(--dang)">ยืนยัน</b> บันทึกที่ลบ '+h.n+' รายการ ('+(h.pct||'?')+'%)',s:sum(h.by)};
+  if(k==='cloud-loss') return {t:'เครื่องของ '+w+' พบ Cloud ขาดข้อมูล <b style="color:var(--dang)">'+h.n+'</b> รายการ (ไม่ได้ลบในเครื่อง)',s:sum(h.by)};
+  if(k==='restore') return {t:w+' นำข้อมูลกลับ '+(h.n||0)+' รายการ',s:E(h.reason||'')};
+  if(k==='discard') return {t:w+' ทิ้งการแก้ไขที่ยังไม่บันทึกและดึงจาก Cloud',s:''};
+  return {t:w+' · '+E(k),s:''};
+}
+function renderPanel(){
+  const st=C().state(), d=st.dirty, a=st.anomaly, manual=st.mode==='manual', on=st.online, rps=C().restoreSets();
+  let h='';
+  if(a) h+='<div class="cb-warn"><b>⚠ Cloud DB ขาดข้อมูล '+a.n+' รายการ ('+(a.pct||'?')+'% ของที่เคยมี)</b><br>ระบบ<b>ไม่ได้ลบ</b>ข้อมูลในเครื่องนี้ตาม และเก็บสำเนาไว้แล้ว ('+E(sum(a.by))+')<div class="cb-act"><button class="cb-btn p" data-a="save">↑ ส่งกลับขึ้น Cloud (กู้ Cloud)</button><button class="cb-btn d" data-a="pull">ยอมรับตาม Cloud (ลบในเครื่องนี้)</button></div><div class="cb-note">เลือก “ส่งกลับ” ถ้าไม่ได้ตั้งใจลบ · เลือก “ยอมรับ” ถ้าเพื่อนลบจริง</div></div>';
+  h+='<h4>👤 ฉันคือ</h4><div>'+NAMES.map(n=>'<button class="cb-chip'+(st.who===n?' on':'')+'" data-a="who" data-v="'+E(n)+'">'+E(n)+'</button>').join('')+'</div>'+
+     '<input class="cb-in" id="cbCustom" placeholder="หรือพิมพ์ชื่ออื่น แล้วกด Enter" value="'+(NAMES.indexOf(st.who)<0?E(st.who):'')+'" autocomplete="off">'+
+     '<div class="cb-note">ชื่อนี้ใช้บันทึกว่าใครแก้/บันทึก และขึ้นในรายชื่อออนไลน์ (ไม่ใช่การล็อกอิน)</div>';
+  h+='<h4>💾 การบันทึก</h4><div><button class="cb-chip'+(manual?' on':'')+'" data-a="mode" data-v="manual">ต้องกดบันทึก</button><button class="cb-chip'+(!manual?' on':'')+'" data-a="mode" data-v="auto">อัตโนมัติ</button></div>';
+  if(manual){
+    if(d&&d.n){ h+='<div class="cb-r"><div><b>✎ ยังไม่บันทึก '+d.n+' รายการ</b><small>'+E(sum(d.by))+(d.del?' · ลบ '+d.del:'')+'</small>'+(d.items&&d.items.length?'<small>'+E(d.items.slice(0,4).join(' · '))+'</small>':'')+'</div></div><div class="cb-act"><button class="cb-btn p" data-a="save">💾 บันทึกขึ้น Cloud</button><button class="cb-btn d" data-a="discard">↩ ทิ้งที่ยังไม่บันทึก</button></div>'; }
+    else h+='<div class="cb-note">✓ ไม่มีการแก้ไขค้าง · แก้ไขแล้วข้อมูลอยู่ในเครื่องก่อน จนกว่าจะกดบันทึก (Ctrl+S)</div>';
+  } else h+='<div class="cb-note">⚡ ทุกการแก้ไขส่งขึ้น Cloud อัตโนมัติ — เพื่อนเห็นทันที แต่แก้พลาดก็ขึ้นทันที</div>';
+  h+='<div class="cb-act"><button class="cb-btn" data-a="check">↻ ตรวจข้อมูลล่าสุดจาก Cloud</button></div>';
+  h+='<h4>🟢 ออนไลน์ตอนนี้ ('+on.length+')</h4>';
+  h+=on.length?on.map(x=>'<div class="cb-r"><span class="cb-dot" style="margin-top:6px"></span><div><b>'+E(x.who)+'</b>'+(x.mine?' <small style="display:inline">(คุณ)</small>':'')+(x.devs>1?' <small style="display:inline">· '+x.devs+' เครื่อง</small>':'')+'<small>'+E(x.tab?('อยู่หน้า '+x.tab):'')+(x.dirty?' · กำลังแก้ ยังไม่บันทึก '+x.dirty:'')+'</small></div><span class="t">'+ago(x.at)+'</span></div>').join(''):'<div class="cb-note">ยังไม่เห็นใคร (สัญญาณอัปเดตทุก ~90 วินาที เฉพาะตอนเปิดหน้านี้อยู่)</div>';
+  h+='<h4>🕘 ประวัติการบันทึกล่าสุด <span class="grow"></span><button class="cb-x" data-a="hist">↻</button></h4>';
+  if(HIST===null) h+='<div class="cb-note">กำลังโหลด…</div>';
+  else if(HIST===false) h+='<div class="cb-note">โหลดประวัติไม่ได้ (Cloud ไม่ตอบ หรือเซิร์ฟเวอร์ไม่อนุญาต)</div>';
+  else if(!HIST.length) h+='<div class="cb-note">ยังไม่มีประวัติ — จะเริ่มบันทึกตั้งแต่การบันทึกครั้งต่อไป</div>';
+  else h+=HIST.slice(0,25).map(x=>{ const l=histLine(x); return '<div class="cb-r"><div>'+l.t+(l.s?'<small>'+(typeof l.s==='string'&&x.k==='restore'?l.s:E(l.s))+'</small>':'')+'</div><span class="t">'+fmt(x.at||x.u)+'</span></div>'; }).join('');
+  h+='<h4>🛟 จุดกู้คืน (เก็บอัตโนมัติก่อนลบ/ทับครั้งใหญ่)</h4>';
+  h+=rps.length?rps.map(r=>'<div class="cb-r"><div><b>'+E(r.reason)+'</b><small>'+r.n+' รายการ · '+E(sum(r.by))+' · '+E(r.who||'')+'</small><div class="cb-act" style="margin-top:3px"><button class="cb-btn" data-a="rp" data-id="'+E(r.id)+'">↺ นำกลับ</button><button class="cb-btn" data-a="rpdl" data-id="'+E(r.id)+'">⬇ ไฟล์</button></div></div><span class="t">'+fmt(r.at)+'</span></div>').join(''):'<div class="cb-note">ยังไม่มี — ระบบจะเก็บให้เองเมื่อมีการลบ/ทับจำนวนมาก</div>';
+  panel.innerHTML='<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><b style="font-size:14px">👥 ทำงานร่วมกัน</b><span style="flex:1"></span><button class="cb-x" data-a="close" aria-label="ปิด">✕</button></div>'+h;
+}
+async function loadHist(){ if(histBusy) return; histBusy=true; try{ HIST=await C().history(40); }catch(e){ HIST=false; } histBusy=false; if(!panel.hidden) renderPanel(); }
+function openPanel(){ panel.hidden=false; renderPanel(); loadHist(); try{ C().beat(); }catch(e){} }
+function closePanel(){ panel.hidden=true; }
+async function doSave(){
+  if(busy) return; busy=true; paint();
+  try{ const n=(C().dirty()||{}).n||0; await C().save(); say('💾 บันทึกขึ้น Cloud แล้ว'+(n?' · '+n+' รายการ':'')); HIST=null; if(!panel.hidden) loadHist(); }
+  catch(e){ say('บันทึกไม่สำเร็จ — '+((e&&e.message)||e),true); }
+  busy=false; paint();
+}
+pill.addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; if(b.id==='cbSave'){ doSave(); return; } if(panel.hidden) openPanel(); else closePanel(); });
+panel.addEventListener('click',async e=>{
+  const b=e.target.closest('[data-a]'); if(!b) return; const a=b.dataset.a;
+  try{
+    if(a==='close') closePanel();
+    else if(a==='who'){ C().setWho(b.dataset.v); say('ตั้งชื่อเป็น '+b.dataset.v+' แล้ว'); paint(); }
+    else if(a==='mode'){ const m=b.dataset.v; if(m==='auto'&&!window.confirm('เปลี่ยนเป็นโหมดบันทึกอัตโนมัติ?\nทุกการแก้ไข (รวมที่ยังค้างอยู่) จะถูกส่งขึ้น Cloud ทันที')) return; C().setMode(m); say(m==='auto'?'⚡ เปลี่ยนเป็นบันทึกอัตโนมัติ':'✎ เปลี่ยนเป็นโหมดต้องกดบันทึก'); paint(); }
+    else if(a==='save') await doSave();
+    else if(a==='discard'){ const n=(C().dirty()||{}).n||0; if(!window.confirm('ทิ้งการแก้ไขที่ยังไม่บันทึก '+n+' รายการ แล้วใช้ข้อมูลล่าสุดจาก Cloud?\n(ระบบเก็บสำเนาไว้ในจุดกู้คืนก่อน)')) return; await C().discard(); say('↩ ดึงข้อมูลจาก Cloud ทับแล้ว (เก็บสำเนาไว้ในจุดกู้คืน)'); HIST=null; loadHist(); }
+    else if(a==='pull'){ if(!window.confirm('ยอมรับตาม Cloud?\nข้อมูลที่ Cloud ไม่มี จะถูกลบออกจากเครื่องนี้ (เก็บสำเนาไว้ในจุดกู้คืน)')) return; await C().pull(); say('ดึงข้อมูลจาก Cloud แล้ว'); }
+    else if(a==='check'){ await C().checkRemote(); say('↻ ตรวจข้อมูลล่าสุดแล้ว'); }
+    else if(a==='hist') await loadHist();
+    else if(a==='rp'){ const id=b.dataset.id, r=C().restoreSets().find(x=>x.id===id); if(!r||!window.confirm('นำ '+r.n+' รายการนี้กลับขึ้น Cloud และเข้าเครื่องนี้?\n'+r.reason)) return; const n=await C().restoreSet(id); say('↺ นำกลับ '+n+' รายการแล้ว'); HIST=null; loadHist(); }
+    else if(a==='rpdl'){ const r=C().restoreSets().find(x=>x.id===b.dataset.id); if(!r) return; const blob=new Blob([JSON.stringify({app:'qe_restore_set',version:1,at:r.at,reason:r.reason,who:r.who,records:r.records},null,1)],{type:'application/json'}); const u=document.createElement('a'); u.href=URL.createObjectURL(blob); u.download='restore_set_'+r.at.slice(0,19).replace(/[:T]/g,'')+'.json'; document.body.appendChild(u); u.click(); u.remove(); setTimeout(()=>URL.revokeObjectURL(u.href),3000); }
+  }catch(err){ say('ไม่สำเร็จ — '+((err&&err.message)||err),true); }
+  paint();
+});
+panel.addEventListener('keydown',e=>{ if(e.key==='Enter'&&e.target.id==='cbCustom'){ const v=e.target.value.trim(); if(v){ C().setWho(v); say('ตั้งชื่อเป็น '+v+' แล้ว'); paint(); } } });
+function showWho(){
+  if(g('cbWhoMd')) return;
+  const ov=document.createElement('div'); ov.className='cb-ov'; ov.id='cbWhoMd'; ov.setAttribute('role','dialog'); ov.setAttribute('aria-modal','true');
+  ov.innerHTML='<div class="cb-md"><h3>👤 คุณคือใคร?</h3><p>เลือกชื่อของคุณ เพื่อให้ระบบบันทึกว่า <b>ใครแก้ / ใครบันทึก เมื่อไร</b> และให้เพื่อนเห็นว่าคุณออนไลน์อยู่ (ตั้งครั้งเดียวต่อเครื่อง)</p><div>'+NAMES.map(n=>'<button class="cb-chip" data-n="'+E(n)+'" style="padding:8px 16px;font-size:14px">'+E(n)+'</button>').join('')+'</div><input class="cb-in" id="cbWhoIn" placeholder="หรือพิมพ์ชื่ออื่น" autocomplete="off"><div class="cb-act"><button class="cb-btn p" id="cbWhoOk">ตกลง</button><button class="cb-btn" id="cbWhoSkip">ข้ามไปก่อน</button></div></div>';
+  document.body.appendChild(ov); const close=()=>ov.remove(); let pick='';
+  ov.addEventListener('click',e=>{ const c=e.target.closest('[data-n]'); if(c){ pick=c.dataset.n; ov.querySelectorAll('[data-n]').forEach(x=>x.classList.toggle('on',x===c)); g('cbWhoIn').value=''; } });
+  g('cbWhoOk').onclick=()=>{ const v=(g('cbWhoIn').value.trim()||pick); if(!v){ g('cbWhoIn').focus(); return; } C().setWho(v); close(); say('ตั้งชื่อเป็น '+v+' แล้ว'); paint(); };
+  g('cbWhoSkip').onclick=()=>{ try{ sessionStorage.setItem('cb_skip','1'); }catch(e){} close(); };
+  g('cbWhoIn').addEventListener('keydown',e=>{ if(e.key==='Enter') g('cbWhoOk').click(); });
+}
+window.addEventListener('beforeunload',e=>{ try{ const d=C().dirty(); if(C().mode()==='manual'&&d&&d.n>0){ e.preventDefault(); e.returnValue='มีการแก้ไข '+d.n+' รายการที่ยังไม่ได้กดบันทึก'; return e.returnValue; } }catch(x){} });
+document.addEventListener('keydown',e=>{ if((e.ctrlKey||e.metaKey)&&!e.altKey&&e.key.toLowerCase()==='s'){ const d=C().dirty(); if(C().mode()==='manual'&&((d&&d.n>0)||C().anomaly())){ e.preventDefault(); doSave(); } } },true);
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&!panel.hidden&&!g('cbWhoMd')){ closePanel(); } });
+document.addEventListener('mousedown',e=>{ if(panel.hidden) return; if(!e.target.closest('#cbPanel,#cbPill,.cb-ov')) closePanel(); });
+window.addEventListener('spdb-collab',paint); setInterval(paint,5000);
+setTimeout(()=>{ paint(); try{ if(!C().who()&&C().state().valid&&!sessionStorage.getItem('cb_skip')) showWho(); }catch(e){} },1800);
+window.__CBUI={open:openPanel,close:closePanel,showWho:showWho,paint:paint};
 })();
 
 </script>
