@@ -6279,6 +6279,56 @@ const CSS=`
 .cp-flt{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
 .cp-flt button{padding:5px 11px;font-size:12px;border-radius:999px;background:transparent;border:1px solid var(--line);color:var(--mut);font-weight:700}
 .cp-flt button.on{background:var(--pri);color:var(--on-pri);border-color:var(--pri)}
+/* ---- Organization ---- */
+.og-tree{display:flex;flex-direction:column;align-items:center;margin-top:4px}
+.og-vl{display:block;width:2px;height:16px;background:var(--line);flex:0 0 auto}
+.og-gm{display:flex;flex-wrap:wrap;gap:4px 18px;justify-content:center;align-items:center;padding:7px 14px;border:1px solid var(--line);border-radius:12px;background:var(--soft);font-size:12.5px;line-height:1.6}
+.og-node{width:min(580px,100%);border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--card);box-shadow:0 1px 4px var(--sh)}
+.og-nh{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:8px 12px;background:#002060;color:#fff;font-weight:800;font-size:14px;line-height:1.3}
+.og-nb{display:flex;gap:12px;align-items:center;padding:10px 12px;font-size:12.5px;line-height:1.75}
+.og-ct{font-size:11.5px;color:var(--mut)}.og-ct a,.og-mb a{color:var(--pri);word-break:break-all}
+.og-ph{width:46px;height:50px;object-fit:cover;border-radius:10px;border:2px solid var(--line);flex:0 0 auto}
+.og-av{width:44px;height:44px;border-radius:50%;background:var(--c);color:#06101c;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:17px;flex:0 0 auto}
+.og-vac{color:var(--t-dang);font-weight:800}
+.og-members{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;width:100%;padding-top:14px;border-top:2px solid var(--line);position:relative;margin-top:-1px}
+.og-mem{position:relative;border:1px solid var(--line);border-top:4px solid var(--c);border-radius:14px;background:var(--card);overflow:visible;box-shadow:0 1px 4px var(--sh)}
+.og-mem::before{content:'';position:absolute;left:50%;top:-18px;width:2px;height:14px;background:var(--line)}
+.og-mh{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:6px 10px;background:#FFF2CC;color:#3a3300;font-weight:800;font-size:12.5px;line-height:1.35;border-radius:10px 10px 0 0}
+.og-mb{display:flex;gap:10px;align-items:flex-start;padding:10px 10px 6px;font-size:12px;line-height:1.7}
+.og-ms{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:0 10px 10px}
+.og-lk{padding:3px 11px;margin:0;border-radius:99px;border:1px solid var(--c);background:color-mix(in srgb,var(--c) 16%,transparent);color:var(--txt);font-size:12px;cursor:pointer}
+.og-lk:hover{background:var(--c);color:#06101c}
+.og-g{display:inline-block;padding:1px 9px;border-radius:99px;font-size:11.5px;font-weight:800;border:1px solid var(--c);background:color-mix(in srgb,var(--c) 16%,transparent);color:var(--txt);white-space:nowrap}
+.og-sum{display:grid;grid-template-columns:repeat(3,minmax(150px,1fr)) minmax(280px,2fr);gap:10px;margin:0 0 16px}
+.og-k{position:relative;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--card);box-shadow:0 1px 4px var(--sh);font-size:12px;color:var(--mut)}
+.og-k b{display:block;font-size:30px;line-height:1.1;color:var(--txt)}
+.og-k .i{position:absolute;right:12px;top:10px;font-size:18px;opacity:.85}
+.og-k small{display:block;margin-top:2px;font-size:11px}
+.og-k.wide{display:flex;flex-direction:column;justify-content:center}
+.og-bar{display:flex;height:12px;border-radius:99px;overflow:hidden;background:var(--line);gap:2px}
+.og-bar i{display:block;height:100%}
+.og-leg{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:8px;font-size:12px;align-items:center;color:var(--txt)}
+.og-leg>span:not(.og-g){display:inline-flex;gap:5px;align-items:center}
+.og-leg i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.og-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px}
+.cp-flt button small{opacity:.8;margin-left:3px}
+.og-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 10px}
+.og-tools input{width:auto;min-width:300px;padding:7px 10px}
+.og-tools .grow{flex:1}
+.og-cnt{font-size:12px;color:var(--mut)}
+.og-tbl{min-width:760px}
+.og-tbl td.l,.og-tbl th.l{text-align:left}
+.og-tbl td.ln{font-weight:800;white-space:nowrap}
+.og-row{cursor:pointer}
+.og-row:hover td{background:var(--soft2)}
+.og-row:focus-visible{outline:2px solid var(--pri);outline-offset:-2px}
+.og-svc td{background:rgba(34,197,94,.16)}
+.og-svc:hover td{background:rgba(34,197,94,.28)}
+.og-qe{display:inline-flex;gap:6px;align-items:center;padding:2px 10px;border-radius:99px;border:1px solid var(--c);font-size:12px;font-weight:700;white-space:nowrap}
+.og-qe i{width:9px;height:9px;border-radius:50%;background:var(--c);display:inline-block}
+.og-none{padding:20px!important;color:var(--mut)}
+@media(max-width:900px){.og-sum{grid-template-columns:repeat(3,minmax(0,1fr))}.og-k.wide{grid-column:1/-1}}
+@media(max-width:560px){.og-sum{grid-template-columns:1fr 1fr}.og-nb{flex-wrap:wrap}}
 `;
 
 /* ===================== DEFAULT DATA (ตามไฟล์ QE Main jobs.xlsx) ===================== */
@@ -6332,12 +6382,12 @@ function defaults(){
         {id:'v5',name:'SEMI 583D',cells:[cell('','done'),cell('','done'),cell('','done'),cell('','done'),cell('21-Oct-25','done'),cell('12-Nov-25','done'),cell('PV9-1 : 24-Dec-25, PV9-2 : 29-Oct-26','warn')]}]},
     doc:{label:"PV Activity Control Start Y'24-Y'26.xlsx",unc:P_`\\sa-fs02\public\QS Promotion\01_QS\PV activity\PV Activity Control Start Y'24-Y'26.xlsx`}},
   audit:{title:'PCR / PV audit matching',note:'',links:[{t:'Drive share',u:U.audit}]},
-  ssa:{title:'SSA Update',note:'',links:[{t:'Drive share',u:U.ssa}]}};
+  ssa:{title:'SSA Update',note:'',links:[{t:'Drive share',u:U.ssa}]},org:orgDefaults()};
 }
 
 /* ===================== STATE / SAVE / UNDO / LOG ===================== */
 let S=null, LOG=[], UNDO=[], PATHS=[], URLS=[];
-let ui={tab:'pcr',claimView:'plan',cpView:'gantt',cpFilter:'all'};
+let ui={tab:'pcr',claimView:'plan',cpView:'gantt',cpFilter:'all',orgQ:'',orgG:''};
 try{ Object.assign(ui,JSON.parse(localStorage.getItem(UIK)||'{}')||{}); }catch(e){}
 const saveUI=()=>{ try{ localStorage.setItem(UIK,JSON.stringify(ui)); }catch(e){} };
 
@@ -6357,6 +6407,7 @@ function normalize(d){
   N.pv.models.forEach(m=>{ m.id=m.id||uid(); m.cells=Array.isArray(m.cells)?m.cells:[]; while(m.cells.length<N.pv.codes.length) m.cells.push({v:'',k:'plan',hist:[],note:''}); m.cells.length=N.pv.codes.length; m.cells.forEach(c=>{ c.hist=Array.isArray(c.hist)?c.hist:[]; c.note=c.note||''; if(!KIND[c.k]) c.k='plan'; }); });
   d.audit=d.audit||D.audit; d.audit.links=Array.isArray(d.audit.links)?d.audit.links:[]; d.audit.note=d.audit.note||'';
   d.ssa=d.ssa||D.ssa; d.ssa.links=Array.isArray(d.ssa.links)?d.ssa.links:[]; d.ssa.note=d.ssa.note||'';
+  d.org=normOrg(d.org);
   return d;
 }
 function load(){
@@ -6612,7 +6663,7 @@ const tabAudit=()=>linkCard('audit','🔎','#f59e0b','ไฟล์สถาน�
 const tabSsa=()=>linkCard('ssa','🗂️','#8b5cf6','ไฟล์สำหรับอัปเดตข้อมูล SSA (Drive share) · ต้องล็อกอินด้วยบัญชีบริษัท');
 
 /* ---------- เฟรมหลัก ---------- */
-const TABS=[['pcr','1 · PCR Status',tabPcr],['claim','2 · Claim & Complaint',tabClaim],['new','3 · New project',tabNew],['audit','4 · PCR / PV audit matching',tabAudit],['ssa','5 · SSA Update',tabSsa]];
+const TABS=[['pcr','1 · PCR Status',tabPcr],['claim','2 · Claim & Complaint',tabClaim],['new','3 · New project',tabNew],['audit','4 · PCR / PV audit matching',tabAudit],['ssa','5 · SSA Update',tabSsa],['org','6 · Organization',tabOrg]];
 function dotOf(k){
   if(k==='pcr') return pcrCalc().T.l?'x':'o';
   if(k==='claim') return cpCount().late?'x':'';
@@ -6626,11 +6677,11 @@ function show(){
   if(!TABS.some(t=>t[0]===ui.tab)) ui.tab='pcr';
   PATHS=[]; URLS=[];
   const y=window.scrollY, cur=TABS.find(t=>t[0]===ui.tab), cw=root.querySelector('.cp-wrap'), keep=cw?{l:cw.scrollLeft,t:cw.scrollTop}:null;
-  root.innerHTML=`<div class="ms-head"><h1>🧰 Main QE Jobs</h1><div class="ms-sub">งานหลักของ QE Electronics · 5 แถบย่อยตามไฟล์ QE Main jobs.xlsx · <b>แก้ไขได้ทุกแถบ</b></div></div>`+
+  root.innerHTML=`<div class="ms-head"><h1>🧰 Main QE Jobs</h1><div class="ms-sub">งานหลักของ QE Electronics · 6 แถบย่อยตามไฟล์ QE Main jobs.xlsx · <b>แก้ไขได้ทุกแถบ</b></div></div>`+
     `<div class="mje-tb"><button type="button" class="btn-g" id="mjeUndo" data-mje="undo" ${UNDO.length?'':'disabled'} title="ย้อนการแก้ไขล่าสุด">↩ ย้อนกลับ</button><button type="button" class="btn-g" data-mje="log">📜 ประวัติการแก้ไข</button><button type="button" class="btn-g" data-mje="export" title="ดาวน์โหลดข้อมูลทั้งหมดเป็นไฟล์ JSON">💾 Backup</button><button type="button" class="btn-g" data-mje="import" title="นำเข้าไฟล์ JSON ที่เคย Backup">📂 นำเข้า</button><button type="button" class="btn-g" data-mje="reset" style="color:var(--t-dang)" title="คืนค่าตามไฟล์ Excel เดิม">♻ คืนค่าเดิม</button><span class="grow"></span><span class="mje-saved" id="mjeSaved">${S.updated?'✓ บันทึกล่าสุด · '+E(fmtT(S.updated)):'ยังไม่มีการแก้ไข (ข้อมูลตามไฟล์ Excel)'}</span><input type="file" id="mjeFile" accept="application/json,.json" style="display:none"></div>`+
     `<div class="mje-hint2">✏️ <b>แก้ไขได้ทุกแถบ:</b> พิมพ์ตัวเลขทับในตาราง PCR · คลิกกิจกรรมในแผน Q-patrol เพื่อเลื่อนวัน/อัปเดตสถานะ · คลิกช่องวันที่/สถานะใน PV table · ◀ ▶ ขยับรุ่นใน Schedule · ปุ่ม ✎ แก้ชื่อ/ลิงก์/Path · บันทึกอัตโนมัติในเบราว์เซอร์นี้ (ใช้ 💾 Backup ถ้าจะย้ายเครื่อง)</div>`+
     `<div class="ot-nav"><div class="ot-chips">`+TABS.map(t=>{ const d=dotOf(t[0]); return `<button type="button" class="ot-chip${t[0]===ui.tab?' on':''}" data-mj-tab="${t[0]}">${E(t[1])}${d?`<i class="ot-dot ${d}"></i>`:''}</button>`; }).join('')+`</div></div>`+
-    `<div id="mjBody">${cur[2]()}</div><div class="mj-foot">ข้อมูลตั้งต้น: QE Main jobs.xlsx · Action plan Q-patrol audit.xlsx · ข้อมูลที่แก้ไขบันทึกในเบราว์เซอร์นี้</div>`;
+    `<div id="mjBody">${cur[2]()}</div><div class="mj-foot">ข้อมูลตั้งต้น: QE Main jobs.xlsx · Action plan Q-patrol audit.xlsx · Quality Engineering Organization (Rev.5.1).xlsx · ข้อมูลที่แก้ไขบันทึกในเบราว์เซอร์นี้</div>`;
   cpAfter(keep);
   window.scrollTo(0,y);
   cpTkTick();
@@ -7217,7 +7268,8 @@ let numPre=null, numOld=0;
 const NUM_LBL=['Done','On-plan','Delay'];
 function onFocusIn(e){ const el=e.target; if(el.classList&&el.classList.contains('mje-num')){ if(numPre===null){ numPre=JSON.stringify(S); } numOld=S.pcr.people[+el.dataset.pi].v[+el.dataset.gi][+el.dataset.k]; if(el.select) el.select(); } }
 function onInput(e){
-  const el=e.target; if(!el.classList||!el.classList.contains('mje-num')) return;
+  const el=e.target; if(el.id==='orgSearch'){ orgS=el.value; orgRows(); return; }
+  if(!el.classList||!el.classList.contains('mje-num')) return;
   const pi=+el.dataset.pi, gi=+el.dataset.gi, k=+el.dataset.k;
   if(numPre===null){ numPre=JSON.stringify(S); numOld=S.pcr.people[pi].v[gi][k]; }
   const v=Math.max(0,Math.floor(+el.value)||0); S.pcr.people[pi].v[gi][k]=v; el.className='mje-num '+numCls(k,v); pcrLive();
@@ -7232,7 +7284,7 @@ function onChange(e){
   numPre=null;
 }
 function onKey(e){
-  if((e.key==='Enter'||e.key===' ')&&e.target.matches&&e.target.matches('.mje-cell,.mj-mchip')){ e.preventDefault(); e.target.click(); }
+  if((e.key==='Enter'||e.key===' ')&&e.target.matches&&e.target.matches('.mje-cell,.mj-mchip,.og-row')){ e.preventDefault(); e.target.click(); }
 }
 function onClick(e){
   const t=e.target.closest('[data-mj-tab]'); if(t){ ui.tab=t.dataset.mjTab; saveUI(); show(); window.scrollTo(0,0); return; }
@@ -7270,9 +7322,155 @@ function onClick(e){
     case 'pv-addcol': pvAddColModal(); break;
     case 'pvc': pvCellModal(num('mi'),num('ci')); break;
     case 'lk-edit': lkModal(b.dataset.k); break;
+    case 'org-head': orgHeadModal(); break;
+    case 'org-node': orgNodeModal(b.dataset.n); break;
+    case 'org-mem': orgMemberModal(id); break;
+    case 'org-mem-add': orgMemberModal(null); break;
+    case 'org-line': orgLineModal(id); break;
+    case 'org-line-add': orgLineModal(null); break;
+    case 'org-f': orgFilter(b.dataset.k,b.dataset.v); break;
+    case 'org-csv': orgCsv(); break;
+    case 'org-copy': orgCopy(b); break;
   }
 }
 
+
+/* ===================== ORGANIZATION · ผังองค์กร QE Electronics + ตารางไลน์ (ตามไฟล์ Quality Engineering Organization_Section QE Electronics part.xlsx) ===================== */
+const T_ORG='Organization';
+const ORG_PHOTO={"q1": "data:image/jpeg;base64,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", "q2": "data:image/jpeg;base64,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", "q3": "data:image/jpeg;base64,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"};
+const ORG_DEF={"title": "Quality Engineering Organization: Section QE Electronics part.", "timing": "Feb-26", "updBy": "Bulakorn_Ko", "impl": "01-Feb-26", "chart": {"gm": "Ms.Charinya Udomsri (Pik)", "pgm": "Mr.Eiichi Toda", "dept": {"unit": "Quality Assurance Electronic & Powertrain & Chassis", "role": "Dept. Mgr.", "name": "(Vacancy)", "rep": "Mr. Jumnean Chiwirach (Jay)"}, "sect": {"unit": "Quality Engineering Electronics", "role": "Sect. Mgr.", "name": "(Vacancy)", "rep": "Mr. Bulakorn Kongnarong (Benz)", "mail": "bulakorn_ko@siamaisin.co.th", "eid": "6350", "tel": "093-554-2988"}}, "members": [{"id": "q1", "unit": "QE Electronics#1 (Main Hub type)", "name": "Mana Kumkrai", "nick": "Mana", "short": "Mana K.", "mail": "mana_ku@siamaisin.co.th", "eid": "2388", "tel": "062-582-9742", "color": "#22d3ee"}, {"id": "q2", "unit": "QE Electronics#2 (Main Direct type)", "name": "Chonlakarn Harikunsawad", "nick": "Earn", "short": "Chonlakarn H.(Earn)", "mail": "Chonlakarn_ha@siamaisin.co.th", "eid": "6861", "tel": "084-383-4680", "color": "#f59e0b"}, {"id": "q3", "unit": "QE Electronics#3 (Main Wire type)", "name": "Natcha Choomas", "nick": "Natcha", "short": "Natcha C.(Cha)", "mail": "natcha_ch@siamaisin.co.th", "eid": "7325", "tel": "096-264-3914", "color": "#34d399"}], "lines": [{"id": "ol1", "qe": "q1", "part": "Wire type/ All model", "line": "AS-186", "name": "Harness Sub-Assy", "grp": "SEMI 1"}, {"id": "ol2", "qe": "q1", "part": "Wire type/ All model", "line": "AS-270", "name": "Clamp (F/G)", "grp": "SEMI 1"}, {"id": "ol3", "qe": "q1", "part": "Wire type/ All model", "line": "AS-272", "name": "Clamp (F/G)", "grp": "SEMI 1"}, {"id": "ol4", "qe": "q1", "part": "Hub type/ All model", "line": "AS-144", "name": "Detector Sub-Assy", "grp": "SEMI 2"}, {"id": "ol5", "qe": "q1", "part": "Hub type/ All model", "line": "AS-232", "name": "Detector Sub-Assy", "grp": "SEMI 2"}, {"id": "ol6", "qe": "q1", "part": "Hub type/ All model", "line": "AS-142", "name": "Hub (F/G)", "grp": "SEMI 2"}, {"id": "ol7", "qe": "q1", "part": "Hub type/ All model", "line": "AS-248", "name": "Hub (F/G)", "grp": "SEMI 2"}, {"id": "ol8", "qe": "q2", "part": "Wire type/ All model", "line": "AS-187", "name": "Harness Sub-Assy", "grp": "SEMI 1"}, {"id": "ol9", "qe": "q2", "part": "Wire type/ All model", "line": "AS-252", "name": "Clamp (F/G)", "grp": "SEMI 1"}, {"id": "ol10", "qe": "q2", "part": "Wire type/ All model", "line": "AS-254", "name": "Clamp (F/G)", "grp": "SEMI 1"}, {"id": "ol11", "qe": "q2", "part": "Wire type/ All model", "line": "AS-271", "name": "Clamp (F/G)", "grp": "SEMI 1"}, {"id": "ol12", "qe": "q2", "part": "Wire type/ All model", "line": "AS-273", "name": "Clamp (F/G)", "grp": "SEMI 1"}, {"id": "ol13", "qe": "q2", "part": "Direct type/ All model", "line": "AS-286", "name": "Holder Sub-Assy", "grp": "SEMI 2"}, {"id": "ol14", "qe": "q2", "part": "Direct type/ All model", "line": "AS-285", "name": "Direct (F/G)", "grp": "SEMI 1"}, {"id": "ol15", "qe": "q3", "part": "Wire type, Direct type/ All model", "line": "AS-181", "name": "Injection", "grp": "SEMI 1"}, {"id": "ol16", "qe": "q3", "part": "Wire type/ All model", "line": "AS-219", "name": "Harness Sub-Assy", "grp": "SEMI 1"}, {"id": "ol17", "qe": "q3", "part": "Wire type/ All model", "line": "AS-131", "name": "Clamp (F/G)", "grp": "SEMI 1"}, {"id": "ol18", "qe": "q3", "part": "Wire type/ All model", "line": "AS-251", "name": "Clamp (F/G)", "grp": "SEMI 1"}, {"id": "ol19", "qe": "q3", "part": "Wire type/ All model", "line": "AS-253", "name": "Clamp (F/G)", "grp": "SEMI 1"}, {"id": "ol20", "qe": "q3", "part": "Wire type/ All model", "line": "AS-185", "name": "IC forming", "grp": "SEMI 2"}, {"id": "ol21", "qe": "q3", "part": "Wire type/ All model", "line": "AS-151", "name": "Clamp (F/G)", "grp": "SEMI 2"}, {"id": "ol22", "qe": "q3", "part": "Direct (MPU) Service part", "line": "AS-99", "name": "Sub-Assy", "grp": "SEMI 1"}, {"id": "ol23", "qe": "q1", "part": "Direct (MPU) Service part", "line": "AS-108", "name": "Direct (F/G)", "grp": "SEMI 1"}, {"id": "ol24", "qe": "q2", "part": "Direct (MPU) Service part", "line": "AS-110", "name": "Direct (F/G)", "grp": "SEMI 1"}]};
+const orgDefaults=()=>JSON.parse(JSON.stringify(ORG_DEF));
+function normOrg(o){
+  const D=orgDefaults(); if(!o||typeof o!=='object') return D;
+  const s=x=>String(x==null?'':x), obj=(a,b)=>{ a=(a&&typeof a==='object')?a:{}; Object.keys(b).forEach(k=>{ if(a[k]==null) a[k]=b[k]; a[k]=s(a[k]); }); return a; };
+  o.title=s(o.title||D.title); o.timing=s(o.timing==null?D.timing:o.timing); o.updBy=s(o.updBy==null?D.updBy:o.updBy); o.impl=s(o.impl==null?D.impl:o.impl);
+  const C=(o.chart&&typeof o.chart==='object')?o.chart:{};
+  o.chart={gm:s(C.gm==null?D.chart.gm:C.gm),pgm:s(C.pgm==null?D.chart.pgm:C.pgm),dept:obj(C.dept,D.chart.dept),sect:obj(C.sect,D.chart.sect)};
+  o.members=(Array.isArray(o.members)?o.members:D.members).filter(m=>m&&typeof m==='object').map((m,i)=>({id:s(m.id)||uid(),unit:s(m.unit),name:s(m.name),nick:s(m.nick),short:s(m.short),mail:s(m.mail),eid:s(m.eid),tel:s(m.tel),color:/^#[0-9a-f]{6}$/i.test(m.color||'')?m.color:GROUP_COL[i%GROUP_COL.length]}));
+  const ids=new Set(o.members.map(m=>m.id));
+  o.lines=(Array.isArray(o.lines)?o.lines:D.lines).filter(l=>l&&typeof l==='object').map(l=>({id:s(l.id)||uid(),qe:ids.has(l.qe)?l.qe:'',part:s(l.part),line:s(l.line),name:s(l.name),grp:s(l.grp)}));
+  return o;
+}
+let orgS='';
+const orgNorm=x=>String(x||'').toLowerCase().replace(/\s+/g,' ').trim();
+const orgIsSvc=l=>/service/i.test(l.part||'');
+const orgMem=id=>S.org.members.find(m=>m.id===id)||null;
+const orgQeLabel=l=>{ const m=orgMem(l.qe); return m?(m.short||m.nick||m.name):'—'; };
+function orgGroups(){ const a=[]; S.org.lines.forEach(l=>{ if(l.grp&&a.indexOf(l.grp)<0) a.push(l.grp); }); return a; }
+const orgGcol=g=>GROUP_COL[Math.max(0,orgGroups().indexOf(g))%GROUP_COL.length];
+function orgFiltered(){
+  const q=orgNorm(orgS), O=S.org;
+  return O.lines.filter(l=>{
+    if(ui.orgQ&&l.qe!==ui.orgQ) return false;
+    if(ui.orgG==='__svc'){ if(!orgIsSvc(l)) return false; } else if(ui.orgG&&l.grp!==ui.orgG) return false;
+    if(q&&orgNorm([orgQeLabel(l),l.part,l.line,l.name,l.grp].join(' ')).indexOf(q)<0) return false;
+    return true;
+  });
+}
+const orgInit=n=>{ const t=String(n||'').replace(/^(mr|ms|mrs|miss)\.?\s*/i,'').trim(); return (t.charAt(0)||'?').toUpperCase(); };
+const orgAv=(name,color,photo)=>photo?`<img class="og-ph" src="${E(photo)}" alt="${E(name)}">`:`<span class="og-av" style="--c:${E(color||'#64748b')}">${E(orgInit(name))}</span>`;
+const orgVac=t=>/vacan/i.test(t||'')?`<b class="og-vac">${E(t)}</b>`:`<b>${E(t||'—')}</b>`;
+function orgStats(){
+  const O=S.org, per={}; O.members.forEach(m=>{ per[m.id]={n:0,g:{}}; });
+  O.lines.forEach(l=>{ const p=per[l.qe]; if(!p) return; p.n++; p.g[l.grp]=(p.g[l.grp]||0)+1; });
+  return {per:per,total:O.lines.length,svc:O.lines.filter(orgIsSvc).length,groups:orgGroups().map(g=>({g:g,n:O.lines.filter(l=>l.grp===g).length})),none:O.lines.filter(l=>!orgMem(l.qe)).length};
+}
+function orgTree(){
+  const O=S.org, C=O.chart, st=orgStats(), D=C.dept, X=C.sect;
+  const node=(n,unit,body)=>`<div class="og-node"><div class="og-nh"><span>${unit}</span><button type="button" class="mje-ic" data-mje="org-node" data-n="${n}" title="แก้ไข" style="color:#fff;border-color:rgba(255,255,255,.45)">✎</button></div><div class="og-nb">${body}</div></div>`;
+  return `<div class="og-tree">`+
+    `<div class="og-gm"><span>👤 GM : <b>${E(C.gm)}</b></span><span>Project GM. : <b>${E(C.pgm)}</b></span><button type="button" class="mje-ic" data-mje="org-node" data-n="gm" title="แก้ไข">✎</button></div><i class="og-vl"></i>`+
+    node('dept',E(D.unit),`${orgAv(D.rep||D.name,'#2563eb')}<div>${E(D.role)} : ${orgVac(D.name)}<br>Represent by : ${orgVac(D.rep)}</div>`)+`<i class="og-vl"></i>`+
+    node('sect',E(X.unit),`${orgAv(X.rep||X.name,'#0ea5e9')}<div>${E(X.role)} : ${orgVac(X.name)}<br>Represent by : ${orgVac(X.rep)}`+(X.mail||X.eid||X.tel?`<br><span class="og-ct">${X.mail?`✉ <a href="mailto:${E(X.mail)}">${E(X.mail)}</a>`:''}${X.eid?` · ID: ${E(X.eid)}`:''}${X.tel?` · Tel: ${E(X.tel)}`:''}</span>`:'')+`</div>`)+`<i class="og-vl"></i>`+
+    `<div class="og-members">`+O.members.map(m=>{ const p=st.per[m.id]||{n:0,g:{}};
+      return `<section class="og-mem" style="--c:${E(m.color)}"><div class="og-mh"><span>${E(m.unit)}</span><button type="button" class="mje-ic" data-mje="org-mem" data-id="${E(m.id)}" title="แก้ไข / ลบ">✎</button></div>`+
+        `<div class="og-mb">${orgAv(m.name,m.color,ORG_PHOTO[m.id])}<div><b>QE : ${E(m.name)}${m.nick?` (${E(m.nick)})`:''}</b><br>${m.mail?`✉ <a href="mailto:${E(m.mail)}">${E(m.mail)}</a><br>`:''}${m.eid?`ID: ${E(m.eid)}`:''}${m.tel?` · Tel: <a href="tel:${E(String(m.tel).replace(/[^\d+]/g,''))}">${E(m.tel)}</a>`:''}</div></div>`+
+        `<div class="og-ms"><button type="button" class="og-lk" data-mje="org-f" data-k="q" data-v="${E(m.id)}" title="กรองตารางไลน์เฉพาะคนนี้"><b>${p.n}</b> ไลน์</button>${Object.keys(p.g).map(g=>`<span class="og-g" style="--c:${orgGcol(g)}">${E(g||'—')} · ${p.g[g]}</span>`).join('')}</div></section>`; }).join('')+`</div>`+
+    `<div class="mje-addrow" style="justify-content:center"><button type="button" class="btn-g" data-mje="org-mem-add">＋ เพิ่ม QE</button></div></div>`;
+}
+function orgSummary(){
+  const O=S.org, st=orgStats(), k=(ic,n,l,s)=>`<div class="og-k"><span class="i">${ic}</span><b>${n}</b><div>${l}</div>${s?`<small>${s}</small>`:''}</div>`;
+  const bar=O.members.filter(m=>(st.per[m.id]||{}).n).map(m=>`<i style="flex:${st.per[m.id].n};background:${E(m.color)}" title="${E(m.nick||m.name)} · ${st.per[m.id].n} ไลน์"></i>`).join('');
+  return `<div class="og-sum">${k('🧩',O.members.length,'Type of product / QE group','ตามจำนวนกลุ่ม QE Electronics')}${k('👥',O.members.length,'QE Members','Person')}${k('🏭',st.total,'Total line','Lines'+(st.svc?` · Service part ${st.svc}`:''))}`+
+    `<div class="og-k wide"><div class="mj-sub2" style="margin:0 0 6px">สัดส่วนไลน์ต่อคน / ต่อกลุ่ม</div><div class="og-bar">${bar||'<i style="flex:1;background:var(--line)"></i>'}</div><div class="og-leg">${O.members.map(m=>`<span><i style="background:${E(m.color)}"></i>${E(m.nick||m.name)} ${(st.per[m.id]||{}).n||0}</span>`).join('')}${st.groups.map(g=>`<span class="og-g" style="--c:${orgGcol(g.g)}">${E(g.g||'—')} · ${g.n}</span>`).join('')}${st.none?`<span class="og-g" style="--c:#ef4444">ยังไม่ระบุ QE · ${st.none}</span>`:''}</div></div></div>`;
+}
+function orgRowsHtml(list){
+  const all=S.org.lines;
+  if(!list.length) return `<tr><td colspan="7" class="og-none">ไม่พบไลน์ที่ตรงกับตัวกรอง — กด “ทั้งหมด” เพื่อล้างตัวกรอง</td></tr>`;
+  return list.map(l=>{ const m=orgMem(l.qe), no=all.indexOf(l)+1;
+    return `<tr class="og-row${orgIsSvc(l)?' og-svc':''}" data-mje="org-line" data-id="${E(l.id)}" tabindex="0" title="คลิกเพื่อแก้ไข"><td>${no}</td><td><span class="og-qe" style="--c:${E(m?m.color:'#64748b')}"><i></i>${E(orgQeLabel(l))}</span></td><td class="l">${E(l.part)}</td><td class="ln">${E(l.line)}</td><td class="l">${E(l.name)}</td><td>${l.grp?`<span class="og-g" style="--c:${orgGcol(l.grp)}">${E(l.grp)}</span>`:'—'}</td><td><span class="mje-ic">✎</span></td></tr>`; }).join('');
+}
+function orgRows(){
+  const list=orgFiltered(), b=g('orgBody'), c=g('orgCount'); if(b) b.innerHTML=orgRowsHtml(list);
+  if(c) c.textContent='แสดง '+list.length+' / '+S.org.lines.length+' ไลน์';
+}
+function tabOrg(){
+  const O=S.org, st=orgStats(), list=orgFiltered();
+  const chip=(k,v,label,n,on)=>`<button type="button" class="${on?'on':''}" data-mje="org-f" data-k="${k}" data-v="${E(v)}">${label} <small>${n}</small></button>`;
+  const noFlt=!ui.orgQ&&!ui.orgG&&!orgS;
+  let h=`<div class="mj-card full" style="--jc:#002060"><div class="mj-title"><span class="mj-ico">🏢</span><div class="mj-grow"><h3><span class="mj-no">6</span>${E(O.title)}</h3><p>Timing : <b>${E(O.timing||'—')}</b> · Updated by : <b>${E(O.updBy||'—')}</b> · Implement date : <b>${E(O.impl||'—')}</b></p></div><button type="button" class="mje-ic" data-mje="org-head" title="แก้ไขหัวข้อ / วันที่อัปเดต">✎</button></div>${orgTree()}</div>`;
+  h+=orgSummary();
+  h+=`<div class="mj-card full" style="--jc:#0ea5e9"><div class="mj-title"><span class="mj-ico">🏭</span><div class="mj-grow"><h3>ไลน์ที่รับผิดชอบ — QE In-charge รายไลน์</h3><p>✏️ คลิกแถวเพื่อแก้ไข · เพิ่ม/ลบไลน์ได้ · แถวสีเขียว = Service part (ตามไฟล์ Excel) · ตัวกรองจำค่าที่เลือกไว้</p></div></div>`+
+    `<div class="cp-flt">${chip('all','','ทั้งหมด',O.lines.length,noFlt)}${O.members.map(m=>chip('q',m.id,`<i class="og-dot" style="background:${E(m.color)}"></i>${E(m.nick||m.name)}`,(st.per[m.id]||{}).n||0,ui.orgQ===m.id)).join('')}${st.groups.map(x=>chip('g',x.g,E(x.g||'—'),x.n,ui.orgG===x.g)).join('')}${st.svc?chip('g','__svc','Service part',st.svc,ui.orgG==='__svc'):''}</div>`+
+    `<div class="og-tools"><input id="orgSearch" type="search" placeholder="🔎 ค้นหา Line No. / Part / ชื่อไลน์ / QE" value="${E(orgS)}" autocomplete="off"><span class="og-cnt" id="orgCount">แสดง ${list.length} / ${O.lines.length} ไลน์</span><span class="grow"></span><button type="button" class="btn-p" data-mje="org-line-add" style="padding:6px 12px;font-size:12.5px;animation:none">＋ เพิ่มไลน์</button><button type="button" class="btn-g" data-mje="org-csv" style="padding:6px 12px;font-size:12px" title="ดาวน์โหลดตารางที่กรองอยู่เป็น CSV">⬇ CSV</button><button type="button" class="btn-g" data-mje="org-copy" style="padding:6px 12px;font-size:12px" title="คัดลอกตารางที่กรองอยู่ไปวางใน Excel / Teams">📋 คัดลอก</button></div>`+
+    `<div class="mj-tw"><table class="mj-tbl og-tbl"><thead><tr><th>No.</th><th>QE In-charge</th><th class="l">Part / Model</th><th>Line No.</th><th class="l">Line Name / Type</th><th>Electronics part group</th><th></th></tr></thead><tbody id="orgBody">${orgRowsHtml(list)}</tbody></table></div></div>`;
+  return h;
+}
+function orgFilter(k,v){
+  if(k==='all'){ ui.orgQ=''; ui.orgG=''; orgS=''; }
+  else if(k==='q') ui.orgQ=(ui.orgQ===v)?'':v;
+  else if(k==='g') ui.orgG=(ui.orgG===v)?'':v;
+  saveUI(); show();
+}
+/* ----- แก้ไข ----- */
+function orgHeadModal(){
+  const O=S.org;
+  modal({title:'แก้ไขหัวข้อผังองค์กร',fields:[{n:'title',l:'ชื่อเอกสาร',v:O.title},{n:'timing',l:'Timing',v:O.timing,ph:'เช่น Feb-26'},{n:'updBy',l:'Updated by',v:O.updBy},{n:'impl',l:'Implement date',v:O.impl,ph:'เช่น 01-Feb-26'}],
+    onSave(v){ if(!v.title.trim()) return 'กรุณาใส่ชื่อเอกสาร'; change(T_ORG,'แก้ไขหัวข้อผังองค์กร',()=>{ const o=S.org; o.title=v.title.trim(); o.timing=v.timing.trim(); o.updBy=v.updBy.trim(); o.impl=v.impl.trim(); }); }});
+}
+function orgNodeModal(n){
+  const C=S.org.chart;
+  const person=(d)=>[{n:'role',l:'ตำแหน่ง',v:d.role,ph:'เช่น Dept. Mgr.'},{n:'name',l:'ชื่อ',v:d.name,ph:'ใส่ (Vacancy) ถ้าตำแหน่งว่าง'},{n:'rep',l:'Represent by (ผู้รักษาการ)',v:d.rep}];
+  const cfg=n==='gm'?{title:'แก้ไข GM / Project GM',fields:[{n:'gm',l:'GM',v:C.gm},{n:'pgm',l:'Project GM.',v:C.pgm}]}
+    :n==='dept'?{title:'แก้ไข: Department',fields:[{n:'unit',l:'ชื่อหน่วยงาน',v:C.dept.unit}].concat(person(C.dept))}
+    :{title:'แก้ไข: Section',fields:[{n:'unit',l:'ชื่อหน่วยงาน',v:C.sect.unit}].concat(person(C.sect),[{n:'mail',l:'E-mail',v:C.sect.mail},{n:'eid',l:'ID',v:C.sect.eid},{n:'tel',l:'Tel',v:C.sect.tel}])};
+  modal(Object.assign({},cfg,{onSave(v){
+    change(T_ORG,'แก้ไขผังองค์กร · '+(n==='gm'?'GM':n==='dept'?'Department':'Section'),()=>{ const c=S.org.chart; if(n==='gm'){ c.gm=v.gm.trim(); c.pgm=v.pgm.trim(); } else { const t=c[n]; Object.keys(v).forEach(k=>{ t[k]=String(v[k]).trim(); }); } }); }}));
+}
+function orgMemberModal(id){
+  const O=S.org, isNew=!id, m=isNew?null:O.members.find(x=>x.id===id); if(!isNew&&!m) return;
+  const cnt=m?O.lines.filter(l=>l.qe===m.id).length:0;
+  modal({title:isNew?'เพิ่ม QE':'แก้ไข: '+(m.nick||m.name),
+    fields:[{n:'unit',l:'หน่วย / กลุ่ม',v:m?m.unit:'',ph:'เช่น QE Electronics#4 (Main … type)'},{n:'name',l:'ชื่อ-นามสกุล',v:m?m.name:''},{n:'nick',l:'ชื่อเล่น',v:m?m.nick:''},{n:'short',l:'ชื่อที่แสดงในตารางไลน์',v:m?m.short:'',ph:'เช่น Mana K.'},{n:'mail',l:'E-mail',v:m?m.mail:''},{n:'eid',l:'ID พนักงาน',v:m?m.eid:''},{n:'tel',l:'Tel',v:m?m.tel:''},{n:'color',l:'สีประจำตัว',t:'color',v:m?m.color:GROUP_COL[O.members.length%GROUP_COL.length]}],
+    html:(!isNew&&cnt)?`<div class="mje-hint">ลบคนนี้ไม่ได้ เพราะยังรับผิดชอบ ${cnt} ไลน์ — ย้ายไลน์ไปให้คนอื่นก่อน</div>`:'',
+    del:(isNew||cnt)?null:{label:'🗑 ลบคนนี้',confirm:`ลบ “${m.nick||m.name}” ออกจากผังองค์กร?`,run:()=>change(T_ORG,`ลบ QE ${m.nick||m.name}`,()=>{ S.org.members=S.org.members.filter(x=>x.id!==id); })},
+    onSave(v){ if(!v.name.trim()&&!v.nick.trim()) return 'กรุณาใส่ชื่อ';
+      const o={unit:v.unit.trim(),name:v.name.trim(),nick:v.nick.trim(),short:v.short.trim()||v.nick.trim()||v.name.trim(),mail:v.mail.trim(),eid:v.eid.trim(),tel:v.tel.trim(),color:/^#[0-9a-f]{6}$/i.test(v.color)?v.color:'#64748b'};
+      change(T_ORG,isNew?`เพิ่ม QE ${o.nick||o.name}`:`แก้ไข QE ${m.nick||m.name}`,()=>{ if(isNew) S.org.members.push(Object.assign({id:uid()},o)); else Object.assign(S.org.members.find(x=>x.id===id),o); }); }});
+}
+function orgLineModal(id){
+  const O=S.org, isNew=!id, l=isNew?null:O.lines.find(x=>x.id===id); if(!isNew&&!l) return;
+  if(!O.members.length){ toast('ต้องเพิ่ม QE อย่างน้อย 1 คนก่อน',true); return; }
+  const groups=orgGroups();
+  modal({title:isNew?'เพิ่มไลน์':'แก้ไขไลน์ '+l.line,
+    fields:[{n:'line',l:'Line No.',v:l?l.line:'',ph:'เช่น AS-300'},{n:'qe',l:'QE In-charge',t:'select',v:l?l.qe:(ui.orgQ||O.members[0].id),opts:O.members.map(m=>[m.id,m.short||m.nick||m.name])},{n:'part',l:'Part / Model',v:l?l.part:'',ph:'เช่น Wire type/ All model',hint:'ถ้าเป็นชิ้นส่วนอะไหล่ ให้มีคำว่า <b>Service part</b> — แถวจะเป็นสีเขียวตามไฟล์ Excel'},{n:'name',l:'Line Name / Type',v:l?l.name:'',ph:'เช่น Clamp (F/G)'},{n:'grp',l:'Electronics part group',v:l?l.grp:'',ph:'เช่น SEMI 1',hint:groups.length?'ที่มีอยู่: '+groups.map(E).join(' · '):''}],
+    del:isNew?null:{label:'🗑 ลบไลน์นี้',confirm:`ลบไลน์ ${l.line} ออกจากตาราง?`,run:()=>change(T_ORG,`ลบไลน์ ${l.line}`,()=>{ S.org.lines=S.org.lines.filter(x=>x.id!==id); })},
+    onSave(v){ const ln=v.line.trim(); if(!ln) return 'กรุณาใส่ Line No.';
+      const dup=O.lines.find(x=>x.id!==id&&orgNorm(x.line)===orgNorm(ln)); if(dup) return `มีไลน์ ${dup.line} อยู่แล้ว (No. ${O.lines.indexOf(dup)+1}) — แก้แถวเดิมแทน`;
+      const o={line:ln,qe:v.qe,part:v.part.trim(),name:v.name.trim(),grp:v.grp.trim()};
+      change(T_ORG,isNew?`เพิ่มไลน์ ${ln}`:`แก้ไขไลน์ ${l.line}`+(l.qe!==o.qe?` · ย้ายไป ${orgQeLabel(o)}`:''),()=>{ if(isNew) S.org.lines.push(Object.assign({id:uid()},o)); else Object.assign(S.org.lines.find(x=>x.id===id),o); }); }});
+}
+/* ----- ส่งออก ----- */
+function orgTable(){ return [['No.','QE In-charge','Part / Model','Line No.','Line Name/ Type','Electronics part group']].concat(orgFiltered().map(l=>[S.org.lines.indexOf(l)+1,orgQeLabel(l),l.part,l.line,l.name,l.grp])); }
+function orgCsv(){
+  const rows=orgTable(), q=v=>{ v=v==null?'':String(v); if(/^[=+\-@]/.test(v)&&isNaN(+v)) v=' '+v; return '"'+v.replace(/"/g,'""')+'"'; };
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob(['\ufeff'+rows.map(r=>r.map(q).join(',')).join('\n')],{type:'text/csv;charset=utf-8'}));
+  a.download='QE_Organization_Lines_'+new Date().toISOString().slice(0,10)+'.csv'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  toast('⬇ ดาวน์โหลด CSV แล้ว ('+(rows.length-1)+' ไลน์)');
+}
+function orgCopy(b){
+  const rows=orgTable(); copyText(rows.map(r=>r.join('\t')).join('\n')).then(ok=>{ if(ok) toast('📋 คัดลอก '+(rows.length-1)+' ไลน์แล้ว — วางใน Excel / Teams ได้เลย'); });
+}
 
 /* ===================== BOOT ===================== */
 function boot(){
@@ -9823,15 +10021,16 @@ const T={
     has:['การ์ดสรุป Done / Remaining / Overdue + กราฟสถานะ','ปฏิทินตาม Due Date (คลิกวันเพื่อเพิ่มรายการ)','ฟอร์มเพิ่มรายการ + ตารางค้นหา/กรอง · ✓ ปิดงาน · 📅 เลื่อน Due','สรุปตามผู้แจ้ง · Export CSV · 🔔 LINE · 🗑 ถังขยะ'],
     links:[{t:'➕ เพิ่มรายการ (ปัญหาใหม่)',scroll:'#f',focus:'#owner',kw:'เพิ่ม ปัญหา issue add form'},{t:'📅 ปฏิทิน Due Date',scroll:'#calBox',kw:'ปฏิทิน calendar due'},{t:'📋 ตารางรายการ',scroll:'.tw',kw:'ตาราง table รายการ'},{t:'👥 สรุปตามผู้แจ้ง',scroll:'#ownBox',kw:'ผู้แจ้ง owner สรุป'}]},
   tabJ:{ic:'🧰',n:'Main QE Jobs',sn:'Main QE',d:'PCR · Claim · New',view:'viewMainJobs',
-    what:'งานหลักของ QE แบ่งเป็น 5 แถบย่อย',
+    what:'งานหลักของ QE แบ่งเป็น 6 แถบย่อย',
     when:'เมื่อต้องอัปเดตสถานะ PCR / Claim / โครงการใหม่',
-    has:['1 · PCR Status — นับ Done / On-plan / Delay แยกตามผู้รับผิดชอบ','2 · Claim & Complaint — แผน Q-patrol audit + โฟลเดอร์ / ลิงก์','3 · New project — Schedule, PV result และ QE Follow-up (Supplier / In-house / Customer)','4 · PCR / PV audit matching · 5 · SSA Update — ลิงก์ไปไฟล์กลาง'],
+    has:['1 · PCR Status — นับ Done / On-plan / Delay แยกตามผู้รับผิดชอบ','2 · Claim & Complaint — แผน Q-patrol audit + โฟลเดอร์ / ลิงก์','3 · New project — Schedule, PV result และ QE Follow-up (Supplier / In-house / Customer)','4 · PCR / PV audit matching · 5 · SSA Update — ลิงก์ไปไฟล์กลาง','6 · Organization — ผังองค์กร QE Electronics และตารางไลน์ที่แต่ละคนรับผิดชอบ'],
     links:[Object.assign({t:'1 · PCR Status',kw:'pcr status customer in-house supplier'},mjTab('pcr')),
       {t:'2 · Q-patrol audit (แผน)',kw:'q-patrol audit แผน claim complaint ตรวจ',run:()=>{ const q=s=>document.querySelector('#viewMainJobs '+s); const c=q('[data-mj-tab="claim"]'); if(c) c.click(); setTimeout(()=>{ const v=q('[data-mje="claimv"][data-v="plan"]'); if(v&&!v.classList.contains('on')) v.click(); },60); }},
       Object.assign({t:'2 · Claim & Complaint',kw:'claim complaint โฟลเดอร์ yokoten'},mjTab('claim')),
       Object.assign({t:'3 · New project (Schedule · PV · Follow-up)',kw:'new project pv schedule follow-up follow up supplier in-house customer'},mjTab('new')),
       Object.assign({t:'4 · PCR / PV audit matching',kw:'audit matching pv'},mjTab('audit')),
-      Object.assign({t:'5 · SSA Update',kw:'ssa'},mjTab('ssa'))]},
+      Object.assign({t:'5 · SSA Update',kw:'ssa'},mjTab('ssa')),
+      Object.assign({t:'6 · Organization (ผังองค์กร · ไลน์ต่อคน)',kw:'organization org chart ผังองค์กร โครงสร้าง องค์กร ไลน์ ผู้รับผิดชอบ qe in-charge line ใคร ดูแล'},mjTab('org'))]},
   tabM:{ic:'🎯',n:'7 Mission',sn:'Mission',d:'เป้าหมาย · OT · ลา',view:'viewMission',
     what:'เป้าหมายและผลการดำเนินงานรายเดือนของ 7 Mission แยกตามปีงบประมาณ (เม.ย. – มี.ค.)',
     when:'อัปเดตเดือนละครั้ง หรือเมื่อต้องดูแผนลา / OT',
