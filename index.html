@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="th" style="--bg: #fce7f3; --card: #ffffff; --line: #f9a8d4; --txt: #3b0f2a; --mut: #8b4a6e; --pri: #db2777; --inp: #ffffff; --th: #fef4fa; --soft: #fef4fa; --soft2: #fce7f3; --we: #fef9fc; --pop: #ffffff; --ok: #16a34a; --warn: #d97706; --dang: #dc2626; --vio: #7c3aed; --t-ok: #15803d; --t-warn: #b45309; --t-dang: #b91c1c; --t-vio: #7c3aed; --on-pri: #ffffff; --ring: rgba(219,39,119,.4); --sh: rgba(219,39,119,.12); --shp: rgba(219,39,119,.3); color-scheme: light;"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<html lang="th" style="--bg: #fce7f3; --card: #ffffff; --line: #f9a8d4; --txt: #3b0f2a; --mut: #8b4a6e; --pri: #db2777; --inp: #ffffff; --th: #fef4fa; --soft: #fef4fa; --soft2: #fce7f3; --we: #fef9fc; --pop: #ffffff; --ok: #16a34a; --warn: #d97706; --dang: #dc2626; --vio: #7c3aed; --t-ok: #15803d; --t-warn: #b45309; --t-dang: #b91c1c; --t-vio: #7c3aed; --on-pri: #ffffff; --ring: rgba(219,39,119,.4); --sh: rgba(219,39,119,.12); --shp: rgba(219,39,119,.3); color-scheme: light;"><head><script id="qwBoot">/* v28: ผู้ใช้ใหม่ — พับปฏิทิน Tracker เป็นค่าเริ่มต้น (ค่าเฉพาะเครื่อง ไม่ซิงก์) */try{if(localStorage.getItem('issue_tracker_cal')===null)localStorage.setItem('issue_tracker_cal','closed');}catch(e){}</script><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>QE Elec. Daily Job Tracker</title>
@@ -2256,7 +2256,7 @@ window.__SEED_V12={"version":12,"source":"snapshot v9 (16 ต.ค. 2569)","track
      • เครื่องใหม่: ไม่ส่งข้อมูลตั้งต้น/ของเก่าในเครื่องขึ้นไปทับ Cloud เงียบ ๆ
      • PIN เก็บเป็นแฮช ตรวจที่หน้าเว็บ — ไม่ใช่ความปลอดภัยระดับเซิร์ฟเวอร์ */
   const WHOK='ux_me', MODEK='ux_savemode', DEVK='ux_dev_id', RPL='ux_rp_list', PRUNEK='ux_prune_day', SNAPK='ux_snap_day', ACFGC='ux_cfg_cache';
-  const PRES='countermeasure-presence:', AUD='countermeasure-audit:', AUTHP='countermeasure-auth:', SNAP='countermeasure-snap:', ACFGK=AUTHP+'~cfg', APPVER='27';
+  const PRES='countermeasure-presence:', AUD='countermeasure-audit:', AUTHP='countermeasure-auth:', SNAP='countermeasure-snap:', ACFGK=AUTHP+'~cfg', APPVER='28';
   var clockOff=0, lastOK=0, newDev=null;
   const lsGet=k=>{ try{ return localStorage.getItem(k); }catch(e){ return null; } };
   const lsSet=(k,v)=>{ try{ localStorage.setItem(k,v); return true; }catch(e){ return false; } };
@@ -11339,4 +11339,11 @@ window.__CBUI={open:openPanel,close:closePanel,paint:paint,check:authCheck,sha25
 })();
 
 </script>
+<style id="qwStyle">
+/* v28 quick wins */
+#nvSearch,#nvHelp,#nvMenuBtn{min-height:32px}
+:where(button,a,input,select,textarea,summary,[tabindex]):focus-visible{outline:2px solid var(--pri);outline-offset:2px}
+#viewMission .ms-card{min-width:0;max-width:100%;overflow-x:auto}
+@media(max-width:700px){#viewMission table{max-width:none}}
+</style>
 </body></html>
