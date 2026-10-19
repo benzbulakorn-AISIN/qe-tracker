@@ -1785,7 +1785,7 @@ window.__SEED_V12={"version":12,"source":"snapshot v9 (16 ต.ค. 2569)","track
   function setStatus(state,msg){
     const b=g('spStatus'),t=g('spStatusText'); if(b)b.dataset.state=state;
     if(t)t.innerHTML='<b>Cloud DB:</b> '+msg;
-    if(g('spInfo'))g('spInfo').innerHTML='<div>'+msg+'</div>'+(lastSync?'<div>Sync ล่าสุด: '+esc(lastSync)+'</div>':'');
+    if(g('spInfo')){ const u=usage(); g('spInfo').innerHTML='<div>'+msg+'</div>'+(lastSync?'<div>Sync ล่าสุด: '+esc(lastSync)+'</div>':'')+'<div>📡 ดึงข้อมูลจาก Cloud DB (เครื่องนี้): วันนี้ <b>'+fmtB(u.today.b)+'</b> ('+u.today.n+' คำขอ) · 7 วันล่าสุด <b>'+fmtB(u.week.b)+'</b>'+(u.paused?' · <b style="color:var(--t-warn)">พักซิงก์ชั่วคราว (โดนจำกัดโควตา)</b>':'')+'</div>'; }
   }
   function errText(e){return esc((e&&e.message)||e||'Unknown error');}
   function safeToApply(){
@@ -1797,19 +1797,43 @@ window.__SEED_V12={"version":12,"source":"snapshot v9 (16 ต.ค. 2569)","track
     if(/^eyJ[A-Za-z0-9_-]+\./.test(key())) h.Authorization='Bearer '+key();
     return h;
   }
-  async function api(method,query,body,extraHeaders){
+  /* ================= v24 · ลดการดึงข้อมูลจาก Supabase (egress) =================
+     • ถามก่อนด้วยคำขอเล็ก ๆ (probe ~100 ไบต์) ว่ามีอะไรเปลี่ยนไหม — ดึงเฉพาะแถวที่เปลี่ยนจริง (ไม่ดึงทั้งตารางซ้ำ ๆ)
+     • หยุดถามเมื่อแท็บถูกซ่อน / ไม่มีคนใช้นาน (ถี่น้อยลง) / โดนจำกัดโควตา (HTTP 402, 429) → พักซิงก์ 30 นาที
+     • นับปริมาณข้อมูลที่ดึง (เฉพาะเครื่องนี้) แสดงในหน้าต่าง Cloud DB */
+  const STK='ux_sync_stats_v1';
+  let statMem=null, statT=0, pausedUntil=0;
+  const localDay=()=>new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,10);
+  const byteLen=t=>{ try{ return new TextEncoder().encode(String(t||'')).length; }catch(e){ return String(t||'').length; } };
+  function statLoad(){ if(statMem) return statMem; try{ statMem=JSON.parse(localStorage.getItem(STK)||'{}')||{}; }catch(e){ statMem={}; } return statMem; }
+  function statAdd(kind,bytes){
+    const o=statLoad(), d=localDay(), x=o[d]||(o[d]={n:0,b:0,full:0,probe:0,keys:0,rows:0,up:0});
+    x.n++; x.b+=bytes; if(kind&&(kind in x)) x[kind]++;
+    clearTimeout(statT); statT=setTimeout(()=>{ try{ const ks=Object.keys(o).sort(); while(ks.length>14) delete o[ks.shift()]; localStorage.setItem(STK,JSON.stringify(o)); }catch(e){} },8000);
+  }
+  const fmtB=b=>b<1024?(b+' B'):b<1048576?((b/1024).toFixed(0)+' KB'):((b/1048576).toFixed(b<10485760?2:1)+' MB');
+  function usage(){
+    const o=statLoad(), d=localDay(), t=o[d]||{n:0,b:0,full:0,probe:0,keys:0,rows:0,up:0}; let wb=0,wn=0;
+    Object.keys(o).sort().slice(-7).forEach(k=>{ wb+=o[k].b||0; wn+=o[k].n||0; });
+    return {today:t,week:{b:wb,n:wn},paused:Date.now()<pausedUntil,pausedUntil:pausedUntil};
+  }
+  function quotaMsg(){ return 'Supabase จำกัดโควตา (HTTP 402/429) — พักการซิงก์ถึง '+new Date(pausedUntil).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})+' · ข้อมูลยังอยู่ในเครื่องนี้ ควรกด 💾 Backup ทั้งหมดไว้'; }
+  async function apiRaw(method,query,body,extraHeaders,kind){
     if(!valid()) throw new Error('กรุณาตั้งค่า Supabase Project URL, Publishable/anon key และชื่อตารางให้ครบ');
     const url=base()+'/rest/v1/'+encodeURIComponent(table())+(query||'');
     const opt={method:method||'GET',headers:authHeaders(extraHeaders),cache:'no-store',mode:'cors'};
     if(body!==undefined&&body!==null) opt.body=JSON.stringify(body);
     const r=await fetch(url,opt),text=await r.text(); let j=null;
+    statAdd(kind||'',byteLen(text));
     try{j=text?JSON.parse(text):null;}catch(e){j=text;}
     if(!r.ok){
-      const msg=(j&&((j.message)||(j.error_description)||(j.hint)))||text||('HTTP '+r.status);
-      throw new Error(String(msg).slice(0,700));
+      let msg=(j&&((j.message)||(j.error_description)||(j.hint)))||text||('HTTP '+r.status);
+      if(r.status===402||r.status===429){ pausedUntil=Date.now()+30*60000; msg='Supabase จำกัดโควตา (HTTP '+r.status+') — '+msg; }
+      const e=new Error(String(msg).slice(0,700)); e.status=r.status; throw e;
     }
-    return j;
+    return {data:j,headers:r.headers,status:r.status};
   }
+  async function api(method,query,body,extraHeaders,kind){ return (await apiRaw(method,query,body,extraHeaders,kind)).data; }
   function appModel(){
     let ck={days:{},conf:{},notes:{}}; try{if(window.__checklist)ck=window.__checklist.get();}catch(e){}
     let title={}; try{title=getTitle();}catch(e){}
@@ -1880,25 +1904,90 @@ window.__SEED_V12={"version":12,"source":"snapshot v9 (16 ต.ค. 2569)","track
     const p=(typeof x.payload==='string')?JSON.parse(x.payload||'null'):x.payload;
     return {key:x.record_key,type:x.entity_type,payload:p,date:x.record_date||null,json:cj(p),updatedAt:x.updated_at||''};
   }
-  async function fetchRows(){
+  /* ----- แคชฝั่งเซิร์ฟเวอร์ในหน่วยความจำ + ตรวจการเปลี่ยนแปลงแบบประหยัด ----- */
+  const COLS='record_key,entity_type,payload,record_date,updated_at', VERIFY_MS=10*60*1000, MT=Array.from(MANAGED).join(',');
+  let RC=null, rcMax='', rcKeysAt=0, rcVer=0, appliedVer=-1, lastChanged=true, useFlt=true, useSmart=true, IGN=new Map();
+  const FLT=()=>useFlt?('&record_key=like.'+encodeURIComponent(PREFIX+'*')+'&entity_type=in.('+MT+')'):'';
+  const okRow=x=>!!(x&&x.record_key&&String(x.record_key).startsWith(PREFIX)&&MANAGED.has(x.entity_type));
+  const tsNow=()=>{ let t=Date.now(); const m=Date.parse(rcMax); if(isFinite(m)&&t<=m) t=m+1; return new Date(t).toISOString(); };   // เวลาเขียนต้องมากกว่าที่เคยเห็น (กันนาฬิกาเครื่องช้า)
+  function cloneRC(){ const m=new Map(); RC.forEach((r,k)=>m.set(k,Object.assign({},r,{payload:JSON.parse(r.json)}))); return m; }
+  async function probe(){
+    for(let t=0;t<2;t++){
+      try{
+        const r=await apiRaw('GET','?select=updated_at'+FLT()+'&order=updated_at.desc&limit=1',null,{'Prefer':'count=exact'},'probe');
+        const cr=(r.headers&&r.headers.get&&r.headers.get('content-range'))||'', m=/\/(\d+)$/.exec(cr), a=Array.isArray(r.data)?r.data:[];
+        return {max:a[0]?String(a[0].updated_at):'',count:m?+m[1]:-1};
+      }catch(e){ if(t===0&&useFlt&&e.status===400){ useFlt=false; continue; } throw e; }
+    }
+  }
+  async function fetchFull(){
     const out=new Map(); let from=0;
     while(true){
-      const rows=await api('GET','?select=record_key,entity_type,payload,record_date,updated_at&order=record_key.asc',null,{'Range':from+'-'+(from+PAGE-1)});
+      let rows;
+      try{ rows=await api('GET','?select='+COLS+'&order=record_key.asc'+FLT(),null,{'Range':from+'-'+(from+PAGE-1)},'full'); }
+      catch(e){ if(useFlt&&e.status===400){ useFlt=false; out.clear(); from=0; continue; } throw e; }
       const arr=Array.isArray(rows)?rows:[];
-      arr.forEach(x=>{if(x.record_key&&x.record_key.startsWith(PREFIX)&&MANAGED.has(x.entity_type)){try{const r=fromRow(x);out.set(r.key,r);}catch(e){}}});
+      arr.forEach(x=>{ if(okRow(x)){ try{ const r=fromRow(x); out.set(r.key,r); }catch(e){} } });
       if(arr.length<PAGE)break; from+=PAGE;
     }
     return out;
   }
+  async function rebuildFull(){
+    let pr=null; try{ pr=await probe(); }catch(e){ if(e&&(e.status===402||e.status===429)) throw e; pr=null; }   // probe ก่อน แล้วค่อยดึงเต็ม: ถ้ามีคนเขียนคั่นกลาง รอบหน้าจะซิงก์ตามเอง
+    const m=await fetchFull(); RC=m; IGN=new Map(); rcMax=pr?pr.max:''; rcKeysAt=Date.now(); rcVer++; lastChanged=true; return cloneRC();
+  }
+  async function listKeys(){
+    const out=new Map(); let from=0;
+    while(true){
+      const rows=await api('GET','?select=record_key,updated_at'+FLT()+'&order=record_key.asc',null,{'Range':from+'-'+(from+999)},'keys');
+      const arr=Array.isArray(rows)?rows:[]; arr.forEach(x=>{ if(x&&x.record_key&&String(x.record_key).startsWith(PREFIX)) out.set(x.record_key,String(x.updated_at||'')); });
+      if(arr.length<1000)break; from+=1000;
+    }
+    return out;
+  }
+  async function getRows(keys){
+    const out=[];
+    for(let i=0;i<keys.length;i+=20){
+      const part=keys.slice(i,i+20), list=part.map(k=>'"'+String(k).replace(/\\/g,'\\\\').replace(/"/g,'\\"')+'"').join(',');
+      const rows=await api('GET','?select='+COLS+'&record_key='+encodeURIComponent('in.('+list+')'),null,null,'rows');
+      (Array.isArray(rows)?rows:[]).forEach(x=>out.push(x));
+    }
+    return out;
+  }
+  async function fetchRows(opt){
+    const force=!!(opt&&opt.force);
+    if(!RC||force||!useSmart) return await rebuildFull();
+    try{
+      const pr=await probe();
+      const due=(Date.now()-rcKeysAt)>(pr.count<0?VERIFY_MS/2:VERIFY_MS)||!!(opt&&opt.verify);     // อ่านจำนวนแถวไม่ได้ (header ถูกซ่อน) → เทียบแค่เวลาล่าสุด และตรวจรายการคีย์ถี่ขึ้น
+      if(!due&&pr.max===rcMax&&(pr.count<0||pr.count===RC.size)){ lastChanged=false; return cloneRC(); }   // ไม่มีอะไรเปลี่ยน → ไม่ดึงข้อมูลเลย
+      const keys=await listKeys(), need=[], gone=[];
+      keys.forEach((u,k)=>{ const r=RC.get(k); if((!r||r.updatedAt!==u)&&IGN.get(k)!==u) need.push(k); });
+      RC.forEach((r,k)=>{ if(!keys.has(k)) gone.push(k); });
+      if(need.length>150) return await rebuildFull();                                                       // เปลี่ยนเยอะ (เช่น นำเข้าทีเดียว) → ดึงเต็มครั้งเดียวคุ้มกว่า
+      let ch=false;
+      if(need.length){ (await getRows(need)).forEach(x=>{ if(okRow(x)){ try{ const r=fromRow(x); RC.set(r.key,r); ch=true; }catch(e){} } else if(x&&x.record_key) IGN.set(x.record_key,String(x.updated_at||'')); }); }
+      gone.forEach(k=>{ RC.delete(k); ch=true; });
+      rcMax=pr.max; rcKeysAt=Date.now(); if(ch) rcVer++; lastChanged=ch; return cloneRC();
+    }catch(e){
+      if(e&&(e.status===400||e.status===404||e.status===406)){ useSmart=false; return await rebuildFull(); }    // เซิร์ฟเวอร์ไม่รองรับคำสั่งกรอง → กลับไปวิธีเดิม (ดึงเต็ม)
+      throw e;
+    }
+  }
   async function upsertMany(records){
     for(let i=0;i<records.length;i+=100){
-      const now=new Date().toISOString();
-      const rows=records.slice(i,i+100).map(r=>({record_key:r.key,entity_type:r.type,payload:r.payload,record_date:r.date||null,updated_at:now}));
-      await api('POST','?on_conflict=record_key',rows,{'Prefer':'resolution=merge-duplicates,return=minimal'});
+      const part=records.slice(i,i+100), ts=tsNow();
+      const rows=part.map(r=>({record_key:r.key,entity_type:r.type,payload:r.payload,record_date:r.date||null,updated_at:ts}));
+      const res=await api('POST','?on_conflict=record_key&select=record_key,updated_at',rows,{'Prefer':'resolution=merge-duplicates,return=representation'},'up');
+      if(RC){
+        const back=new Map((Array.isArray(res)?res:[]).map(x=>[x.record_key,String(x.updated_at||'')]));
+        part.forEach(r=>{ const u=back.get(r.key); if(u&&RC){ RC.set(r.key,{key:r.key,type:r.type,payload:r.payload,date:r.date||null,json:r.json||cj(r.payload),updatedAt:u}); if(u>rcMax) rcMax=u; } else RC=null; });
+        rcVer++;
+      }
     }
   }
   async function deleteMany(records){
-    for(const r of records) await api('DELETE','?record_key=eq.'+encodeURIComponent(r.key),null,{'Prefer':'return=minimal'});
+    for(const r of records){ await api('DELETE','?record_key=eq.'+encodeURIComponent(r.key),null,{'Prefer':'return=minimal'},'del'); if(RC){ RC.delete(r.key); rcVer++; } }
   }
   function remoteModel(map){
     const m={tracker:[],trash:[],checklist:{days:{},conf:{},notes:{}},title:null,sharedLocal:{}};
@@ -1944,10 +2033,12 @@ window.__SEED_V12={"version":12,"source":"snapshot v9 (16 ต.ค. 2569)","track
   async function syncNow(force){
     if(!cfg.enabled){setStatus('off','ปิดการใช้ฐานข้อมูลกลาง — ข้อมูลยังอยู่เฉพาะเครื่องนี้');return;}
     if(!valid()){setStatus('off','ยังไม่ได้ตั้งค่า Supabase — กด “Cloud DB” เพื่อตรวจสอบ');return;}
-    if(syncing){again=true;return;} syncing=true; clearTimeout(timer);timer=0;setStatus('busy','กำลังบันทึกข้อมูลกลาง…');
+    if(syncing){again=true;return;}
+    if(!force&&Date.now()<pausedUntil){ setStatus('error',quotaMsg()); return; }
+    syncing=true; clearTimeout(timer);timer=0;setStatus('busy','กำลังบันทึกข้อมูลกลาง…');
     const local=recMap(appModel()),baseline=new Map(cache);
     try{
-      const latest=await fetchRows();
+      const latest=await fetchRows(force?{force:true}:undefined);
       const changed=[],removed=[],conf=[]; let auto=0;
       if(force){
         local.forEach(r=>changed.push(r));
@@ -1965,14 +2056,14 @@ window.__SEED_V12={"version":12,"source":"snapshot v9 (16 ต.ค. 2569)","track
       const finalMap=await fetchRows();
       lastSync=new Date().toLocaleString('th-TH'); saveBase(finalMap);
       if(localMoved(local)){ cache=local; again=true; }
-      else if(safeToApply()){cache=finalMap;applyRemote(remoteModel(finalMap));}else cache=local;
+      else if(safeToApply()){cache=finalMap;applyRemote(remoteModel(finalMap));appliedVer=rcVer;}else cache=local;
       ready=true;setStatus('ok','เชื่อมต่อ <b>'+esc(table())+'</b> · บันทึกแล้ว '+esc(lastSync));
     }catch(e){setStatus('error','Sync ไม่สำเร็จ — '+errText(e));throw e;}
     finally{syncing=false;if(again){again=false;setTimeout(()=>syncNow(false).catch(()=>{}),100);}}
   }
   function queue(){
     if(!cfg.enabled||!valid())return;
-    clearTimeout(timer);timer=setTimeout(()=>syncNow(false).catch(()=>{}),850);
+    clearTimeout(timer);timer=setTimeout(()=>syncNow(false).catch(()=>{}),1500);
   }
   const syncSig=()=>base()+'|'+table();
   function loadBase(){ try{ const o=JSON.parse(localStorage.getItem(BASEK)||'null'); return (o&&o.v===1&&o.s===syncSig()&&o.m&&typeof o.m==='object')?o.m:null; }catch(e){ return null; } }
@@ -2029,7 +2120,7 @@ window.__SEED_V12={"version":12,"source":"snapshot v9 (16 ต.ค. 2569)","track
     if(!cfg.enabled){setStatus('off','ปิดการใช้ฐานข้อมูลกลาง — ข้อมูลยังอยู่เฉพาะเครื่องนี้');return;}
     if(!valid()){setStatus('off','ยังไม่ได้ตั้งค่า Supabase — ใส่ค่าที่ต้นไฟล์ก่อนเผยแพร่');return;}
     setStatus('busy','กำลังเชื่อมต่อ Supabase…');
-    const remote=await fetchRows();cache=remote;ready=true;
+    const remote=await fetchRows({force:true});cache=remote;ready=true;
     if(loadRemote&&remote.size){
       migrateLegacy(remote);
       const local=recMap(appModel()), drop=seedDrops(remote), B=loadBase();
@@ -2037,7 +2128,7 @@ window.__SEED_V12={"version":12,"source":"snapshot v9 (16 ต.ค. 2569)","track
       const mg=mergeRecords(local,remote,B);
       if(!B) backupLocal(local,remote);
       noteConflicts(mg.conflicts);
-      applyRemote(remoteModel(mg.M)); saveBase(remote); seedFinish();
+      applyRemote(remoteModel(mg.M)); appliedVer=rcVer; saveBase(remote); seedFinish();
       const legacyLayout=Array.from(remote.values()).some(r=>r.payload&&r.payload.mjk==='core'&&!(r.payload.v&&r.payload.v.layout===2));
       if(mg.kept||legacyLayout) queue();
     }
@@ -2046,18 +2137,28 @@ window.__SEED_V12={"version":12,"source":"snapshot v9 (16 ต.ค. 2569)","track
     setStatus('ok','เชื่อมต่อ <b>'+esc(table())+'</b> · '+(remote.size?'ดึงข้อมูลกลางล่าสุดแล้ว':'ย้ายข้อมูลในเครื่องขึ้นฐานข้อมูลแล้ว'));
     if(window.__runLineCheck)setTimeout(window.__runLineCheck,200);
   }
-  async function refreshRemote(showToast){
+  async function refreshRemote(showToast,manual){
     if(!valid()||syncing||!safeToApply())return;
-    const remote=await fetchRows();
+    const remote=await fetchRows(manual?{verify:true}:undefined);
     if(localMoved(cache)){ queue(); return; }
-    cache=remote;ready=true;applyRemote(remoteModel(remote));saveBase(remote);
+    if(!lastChanged&&rcVer===appliedVer&&ready){                                    // ไม่มีอะไรเปลี่ยนทั้งฝั่งเซิร์ฟเวอร์และฝั่งเครื่อง → ไม่ต้องวาดหน้าใหม่
+      lastSync=new Date().toLocaleString('th-TH');setStatus('ok','เชื่อมต่อ <b>'+esc(table())+'</b> · ตรวจสอบล่าสุด '+esc(lastSync));
+      if(showToast&&typeof toast==='function')toast('↻ ข้อมูลเป็นปัจจุบันแล้ว');
+      return;
+    }
+    cache=remote;ready=true;applyRemote(remoteModel(remote));appliedVer=rcVer;saveBase(remote);
     lastSync=new Date().toLocaleString('th-TH');setStatus('ok','เชื่อมต่อ <b>'+esc(table())+'</b> · อัปเดตล่าสุด '+esc(lastSync));
     if(showToast&&typeof toast==='function')toast('↻ ดึงข้อมูลล่าสุดแล้ว');
   }
+  let pollFails=0, pollT=0, lastAct=Date.now(), hiddenAt=0;
   async function refreshSilent(){
     if(!cfg.enabled||!valid()||syncing||timer||document.hidden||!safeToApply())return;
-    try{await refreshRemote(false);}catch(e){setStatus('error','ดึงข้อมูลไม่สำเร็จ — '+errText(e));}
+    if(Date.now()<pausedUntil)return;
+    try{await refreshRemote(false);pollFails=0;}
+    catch(e){ pollFails=Math.min(pollFails+1,5); if(e&&(e.status===402||e.status===429)) setStatus('error',quotaMsg()); else setStatus('error','ดึงข้อมูลไม่สำเร็จ — '+errText(e)); }
   }
+  function pollDelay(){ const idle=Date.now()-lastAct; let d=idle>600000?300000:30000; if(pollFails) d=Math.min(900000,d*Math.pow(2,pollFails)); return d; }   // ไม่มีคนใช้ >10 นาที → ถามทุก 5 นาที · ผิดพลาด → ถอยห่างขึ้นเรื่อย ๆ
+  function schedulePoll(){ clearTimeout(pollT); pollT=setTimeout(async()=>{ try{ await refreshSilent(); }finally{ schedulePoll(); } },pollDelay()); }
   function fillForm(){
     if(g('spSite'))g('spSite').value=cfg.supabaseUrl||'';
     if(g('spKey'))g('spKey').value=cfg.supabaseKey||'';
@@ -2068,7 +2169,7 @@ window.__SEED_V12={"version":12,"source":"snapshot v9 (16 ต.ค. 2569)","track
     cfg.supabaseUrl=g('spSite').value.trim().replace(/\/$/,'');
     cfg.supabaseKey=g('spKey').value.trim();
     cfg.tableName=g('spList').value.trim()||'countermeasure_records';
-    cfg.enabled=g('spOn').checked;saveCfg();ready=false;cache.clear();
+    cfg.enabled=g('spOn').checked;saveCfg();ready=false;cache.clear();RC=null;useFlt=true;useSmart=true;
   }
   async function diag(){
     const out=g('spDiagOut'), L=[]; if(!out) return;
@@ -2098,17 +2199,18 @@ window.__SEED_V12={"version":12,"source":"snapshot v9 (16 ต.ค. 2569)","track
     g('spClose').onclick=()=>g('ovSP').classList.remove('on');
     g('ovSP').onclick=e=>{if(e.target===g('ovSP'))g('ovSP').classList.remove('on');};
     g('spConnect').onclick=async()=>{readForm();if(!cfg.enabled){setStatus('off','ปิดการใช้ฐานข้อมูลกลางแล้ว');toast('ปิด Cloud DB แล้ว');return;}try{await connect(true);toast('✅ เชื่อมต่อ Supabase แล้ว');}catch(e){setStatus('error','เชื่อมต่อไม่สำเร็จ — '+errText(e));alert('เชื่อมต่อไม่สำเร็จ: '+e.message);}};
-    g('spRefresh').onclick=async()=>{readForm();if(!cfg.enabled){alert('กรุณาเปิดสวิตช์ Cloud DB ก่อน');return;}try{await refreshRemote(true);}catch(e){setStatus('error','ดึงข้อมูลไม่สำเร็จ — '+errText(e));alert(e.message);}};
+    g('spRefresh').onclick=async()=>{readForm();if(!cfg.enabled){alert('กรุณาเปิดสวิตช์ Cloud DB ก่อน');return;}try{pausedUntil=0;await refreshRemote(true,true);}catch(e){setStatus('error','ดึงข้อมูลไม่สำเร็จ — '+errText(e));alert(e.message);}};
     g('spPush').onclick=async()=>{readForm();if(!cfg.enabled){alert('กรุณาเปิดสวิตช์ Cloud DB ก่อน');return;}if(!confirm('ส่งข้อมูลในเครื่องขึ้น Cloud DB?\nข้อมูลกลางที่ไม่มีอยู่ในเครื่องนี้จะถูกลบ'))return;try{await syncNow(true);toast('✅ ส่งข้อมูลขึ้น Cloud DB แล้ว');}catch(e){alert(e.message);}};
-    g('spReset').onclick=async()=>{try{localStorage.removeItem(CFG);}catch(e){}cfg=defaults();ready=false;cache.clear();fillForm();toast('↺ กลับไปใช้ค่าที่ฝังในไฟล์แล้ว');if(valid()){try{await connect(true);}catch(e){setStatus('error','เชื่อมต่อไม่สำเร็จ — '+errText(e));}}else setStatus('off','ค่าที่ฝังในไฟล์ยังไม่ครบ — กรุณาแก้ COUNTERMEASURE_CLOUD_DEFAULTS');};
+    g('spReset').onclick=async()=>{try{localStorage.removeItem(CFG);}catch(e){}cfg=defaults();ready=false;cache.clear();RC=null;useFlt=true;useSmart=true;fillForm();toast('↺ กลับไปใช้ค่าที่ฝังในไฟล์แล้ว');if(valid()){try{await connect(true);}catch(e){setStatus('error','เชื่อมต่อไม่สำเร็จ — '+errText(e));}}else setStatus('off','ค่าที่ฝังในไฟล์ยังไม่ครบ — กรุณาแก้ COUNTERMEASURE_CLOUD_DEFAULTS');};
     g('spSyncBtn').onclick=()=>{if(!valid()){g('ovSP').classList.add('on');toast('กรุณาตั้งค่า Supabase ก่อน');return;}syncNow(false).then(()=>toast('✅ Sync Cloud DB แล้ว')).catch(e=>alert(e.message));};
-    setInterval(refreshSilent,30000);
-    document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout(refreshSilent,500);});
+    ['pointerdown','keydown','wheel','touchstart'].forEach(ev=>window.addEventListener(ev,()=>{lastAct=Date.now();},{passive:true,capture:true}));
+    schedulePoll();
+    document.addEventListener('visibilitychange',()=>{ if(document.hidden){ hiddenAt=Date.now(); return; } if(hiddenAt&&Date.now()-hiddenAt>180000) rcKeysAt=0; hiddenAt=0; setTimeout(refreshSilent,500); });
     window.addEventListener('online',()=>setTimeout(refreshSilent,500));
     if(valid())connect(true).catch(e=>setStatus('error','เชื่อมต่อไม่สำเร็จ — '+errText(e)));
     else setStatus('off','ยังไม่ได้ตั้งค่า Supabase — ข้อมูลยังอยู่เฉพาะเครื่องนี้');
   }
-  window.SPDB={bind:bind,queue:queue,sync:syncNow,isConfigured:()=>valid(),config:()=>Object.assign({},cfg),diagnose:diag,conflicts:()=>readConf(),clearConflicts:()=>{ try{ localStorage.removeItem(CFK); }catch(e){} }};
+  window.SPDB={usage:usage,fmtBytes:fmtB,bind:bind,queue:queue,sync:syncNow,isConfigured:()=>valid(),config:()=>Object.assign({},cfg),diagnose:diag,conflicts:()=>readConf(),clearConflicts:()=>{ try{ localStorage.removeItem(CFK); }catch(e){} }};
   /* Any edit made by any page is queued automatically, even if that module did not call SPDB.queue(). */
   try{
     const nativeSet=Storage.prototype.setItem,nativeRemove=Storage.prototype.removeItem,nativeClear=Storage.prototype.clear;
@@ -10343,7 +10445,7 @@ function buildMenu(){
   const cls=h.s==='ok'?'':(h.s==='busy'?'warn':'bad');
   const bk=h.lb?('สำรองล่าสุด '+(h.days===0?'วันนี้':h.days+' วันที่แล้ว')):'ยังไม่เคยสำรองข้อมูล';
   m.innerHTML=
-    '<div class="nv-hl"><div class="r"><i class="'+cls+'"></i><span>☁ Cloud DB: <b>'+E(cloud)+'</b></span></div><div class="r"><i class="'+(h.noBk?'warn':'')+'"></i><span>💾 <b>'+E(bk)+'</b></span></div></div>'+
+    '<div class="nv-hl"><div class="r"><i class="'+cls+'"></i><span>☁ Cloud DB: <b>'+E(cloud)+'</b></span></div><div class="r"><i class="'+(h.noBk?'warn':'')+'"></i><span>💾 <b>'+E(bk)+'</b></span></div>'+((window.SPDB&&SPDB.usage)?(()=>{ const u=SPDB.usage(); return '<div class="r"><i class="'+(u.paused?'bad':'')+'"></i><span>📡 ดึงข้อมูล Cloud DB วันนี้ <b>'+SPDB.fmtBytes(u.today.b)+'</b>'+(u.paused?' · <b>พักซิงก์ (โดนจำกัดโควตา)</b>':'')+'</span></div>'; })():'')+'</div>'+
     '<div class="nv-ms">สำรอง & ข้อมูล</div>'+
     MI('💾','Backup ทั้งหมด','ไฟล์เดียว: Tracker · Checklist · Mission · Hoshin · Main QE Jobs · ประชุม','data-b="bkBtn"')+
     MI('📂','Restore จากไฟล์','นำข้อมูลที่เคย Backup กลับเข้ามา','data-b="rsBtn"')+
