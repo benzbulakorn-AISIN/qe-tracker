@@ -8898,9 +8898,9 @@ function readCfg(){
   return {people:normPeople(src),skip:Array.isArray(o&&o.skip)?o.skip.map(String):[]};
 }
 function saveCfg(){ try{ localStorage.setItem(KC,JSON.stringify({v:1,people:cfg.people,skip:cfg.skip})); }catch(e){} }
-let ui={date:today,view:'day',at:true};
-try{ const u=JSON.parse(localStorage.getItem(UIK)||'null'); if(u){ if(u.view==='week') ui.view='week'; if(u.at===false) ui.at=false; } }catch(e){}
-const saveUI=()=>{ try{ localStorage.setItem(UIK,JSON.stringify({view:ui.view,at:ui.at})); }catch(e){} };
+let ui={date:today,view:'day',at:true,cp:true};
+try{ const u=JSON.parse(localStorage.getItem(UIK)||'null'); if(u){ if(u.view==='week') ui.view='week'; if(u.at===false) ui.at=false; if(u.cp===false) ui.cp=false; } }catch(e){}
+const saveUI=()=>{ try{ localStorage.setItem(UIK,JSON.stringify({view:ui.view,at:ui.at,cp:ui.cp})); }catch(e){} };
 const P=id=>cfg.people.find(p=>p.id===id);
 const hasAll=t=>/(^|[^a-z])all([^a-z]|$)/i.test(t)||/ทุกคน/.test(t);
 function aliasHit(a,t){ return /^[\x00-\x7f]+$/.test(a)?new RegExp('(?<![a-z0-9])'+escRe(a)).test(t):t.indexOf(a)>=0; }
@@ -9207,6 +9207,46 @@ const st=document.createElement('style'); st.id='mgStyle'; st.textContent=`
 .mg-stp{margin:6px 0;padding:8px 12px;border:1px dashed var(--line);border-radius:10px;background:var(--soft);font-size:12.5px;line-height:1.85}
 .mg-stp code{background:var(--inp);border:1px solid var(--line);border-radius:6px;padding:1px 6px;font-size:12px;word-break:break-all;user-select:all}
 .mg-pr{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}.mg-pr span{padding:2px 10px;border-radius:99px;font-size:12px;font-weight:700;border:1px solid var(--line)}.mg-pr .g{background:rgba(34,197,94,.18);color:var(--t-ok)}.mg-pr .b{background:rgba(239,68,68,.16);color:var(--t-dang)}
+
+/* ---- โหมดกะทัดรัด (ค่าเริ่มต้น): แถวเตี้ยลง ~45% · การ์ดคนเป็นแถบเดียว · ซ่อนคำแนะนำ — เหมาะกับการแคปหน้าจอลง LINE ---- */
+#viewMeet.mg-cp .mg-head{margin:0 0 6px}
+#viewMeet.mg-cp .mg-head h1{font-size:20px}
+#viewMeet.mg-cp .mg-head small{display:none}
+#viewMeet.mg-cp .mg-bar{padding:5px 8px;margin:0 0 8px;gap:6px}
+#viewMeet.mg-cp .mg-bar .btn-g,#viewMeet.mg-cp .mg-bar .btn-p{padding:4px 10px;font-size:12px}
+#viewMeet.mg-cp .mg-bar input[type=date]{padding:4px 8px}
+#viewMeet.mg-cp .mg-seg button{padding:4px 11px;font-size:12px}
+#viewMeet.mg-cp .mg-ol{margin:-2px 0 6px;font-size:12px}
+#viewMeet.mg-cp .mg-day{font-size:15px;margin:0 0 6px}
+#viewMeet.mg-cp .mg-day small{font-size:12px}
+#viewMeet.mg-cp .mg-people{grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:6px;margin:0 0 8px}
+#viewMeet.mg-cp .mg-pc{padding:4px 10px;gap:8px;border-radius:10px;border-left-width:4px;box-shadow:none}
+#viewMeet.mg-cp .mg-av{width:24px;height:24px;font-size:12px}
+#viewMeet.mg-cp .mg-pc>div{display:flex;flex-wrap:wrap;align-items:center;gap:0 6px}
+#viewMeet.mg-cp .mg-pc b{display:inline;font-size:13px}
+#viewMeet.mg-cp .mg-pc small{display:inline;font-size:11px}
+#viewMeet.mg-cp .mg-flag{margin:0;font-size:10px}
+#viewMeet.mg-cp .mg-list{gap:4px}
+#viewMeet.mg-cp .mg-row{grid-template-columns:104px minmax(0,1fr) auto auto auto;gap:4px 10px;padding:4px 10px;border-left-width:4px;border-radius:9px;box-shadow:none}
+#viewMeet.mg-cp .mg-mid{display:contents}
+#viewMeet.mg-cp .mg-t{display:flex;align-items:baseline;gap:2px;text-align:left;white-space:nowrap}
+#viewMeet.mg-cp .mg-t b{display:inline;font-size:14px}
+#viewMeet.mg-cp .mg-t span{display:inline;font-size:12px}
+#viewMeet.mg-cp .mg-t span::before{content:'–'}
+#viewMeet.mg-cp .mg-t small{display:none}
+#viewMeet.mg-cp .mg-ti{font-size:13.5px;line-height:1.3}
+#viewMeet.mg-cp .mg-sub{margin:0;gap:5px;flex-wrap:wrap;flex-direction:row-reverse;justify-content:flex-start;max-width:420px;font-size:11px}
+#viewMeet.mg-cp .mg-sub>span:first-child{display:none}
+#viewMeet.mg-cp .mg-room{min-width:110px;width:150px;flex:0 0 auto;max-width:250px;padding:2px 7px;font-size:12px;height:26px}
+@supports (field-sizing:content){#viewMeet.mg-cp .mg-room{field-sizing:content;width:auto}}
+#viewMeet.mg-cp .mg-bad,#viewMeet.mg-cp .mg-un{font-size:10px;padding:0 7px}
+#viewMeet.mg-cp .mg-src{font-size:10px}
+#viewMeet.mg-cp .mg-who{gap:4px;flex-wrap:nowrap}
+#viewMeet.mg-cp .mg-ch{padding:3px 9px;font-size:12px;border-width:1.5px}
+#viewMeet.mg-cp .mg-ac button{padding:2px 7px;font-size:11.5px;border-radius:7px}
+#viewMeet.mg-cp .mg-hint{display:none}
+#viewMeet.mg-cp .mg-wk th,#viewMeet.mg-cp .mg-wk td{padding:5px 6px}
+@media(max-width:860px){#viewMeet.mg-cp .mg-row{grid-template-columns:90px minmax(0,1fr)}#viewMeet.mg-cp .mg-ti{grid-column:2}#viewMeet.mg-cp .mg-sub{grid-column:1/-1;flex-direction:row;max-width:none}#viewMeet.mg-cp .mg-sub>span:first-child{display:inline}#viewMeet.mg-cp .mg-who{flex-wrap:wrap}}
 @media(max-width:860px){.mg-row{grid-template-columns:78px 1fr}.mg-who,.mg-ac{grid-column:1/-1}.mg-fg{grid-template-columns:1fr}.mg-tr{grid-template-columns:34px 1fr}.mg-tr input:nth-child(n+3){grid-column:1/-1}}
 `; document.head.appendChild(st);
 
@@ -9239,13 +9279,13 @@ function chips(m,A,ds){
 }
 function rowHtml(m,A,ds){
   const un=!m.who.length, cf=A.conf[m.id]||[], bad=[];
-  if(cf.length) bad.push('<span class="mg-bad" title="คนที่มีประชุมซ้อนเวลา">⚠ ซ้อนเวลา: '+E(Array.from(new Set(cf)).map(id=>P(id)&&P(id).name).join(', '))+'</span>');
+  if(cf.length) bad.push('<span class="mg-bad" title="คนที่มีประชุมซ้อนเวลา">⚠ ซ้อน: '+E(Array.from(new Set(cf)).map(id=>P(id)&&P(id).name).join(', '))+'</span>');
   whoIds(m).forEach(id=>{ const l=A.lv[id], p=P(id); if(l&&leaveFull(l)&&p) bad.push('<span class="mg-bad" title="จากแท็บแผนลา">🌴 '+E(p.name)+' '+E(l.t)+'</span>'); });
   const invOnly=m.inv.filter(id=>m.who.indexOf(id)<0&&m.who.indexOf('all')<0&&P(id)).map(id=>P(id).name);
   return '<div class="mg-row'+(un?' un':(cf.length?' cf':' ok'))+'" data-m="'+E(m.id)+'">'+
-    '<div class="mg-t"><b>'+E(m.s||'--:--')+'</b><span>'+E(m.e||'--:--')+'</span><small>'+hrs(durOf(m))+' ชม.</small></div>'+
-    '<div><div class="mg-ti" data-mg="edit" data-m="'+E(m.id)+'" title="คลิกเพื่อแก้ไข">'+E(m.t||'(ไม่มีชื่อ)')+'</div>'+
-      '<div class="mg-sub"><span>📍</span><input class="mg-room" data-mg="room" data-m="'+E(m.id)+'" value="'+E(m.room)+'" placeholder="ห้องประชุม (ว่างไว้ได้)" autocomplete="off">'+
+    '<div class="mg-t" title="ระยะเวลา '+hrs(durOf(m))+' ชม."><b>'+E(m.s||'--:--')+'</b><span>'+E(m.e||'--:--')+'</span><small>'+hrs(durOf(m))+' ชม.</small></div>'+
+    '<div class="mg-mid"><div class="mg-ti" data-mg="edit" data-m="'+E(m.id)+'" title="คลิกเพื่อแก้ไข">'+E(m.t||'(ไม่มีชื่อ)')+'</div>'+
+      '<div class="mg-sub"><span>📍</span><input class="mg-room" data-mg="room" data-m="'+E(m.id)+'" value="'+E(m.room)+'" title="'+E(m.room)+'" placeholder="ห้องประชุม (ว่างไว้ได้)" autocomplete="off">'+
       (un?'<span class="mg-un">ยังไม่ระบุคน</span>':'')+bad.join('')+
       (m.src==='graph'?'<span class="mg-src" title="ดึงจาก Outlook อัตโนมัติ">Outlook ⟳</span>':m.src==='mail'?'<span class="mg-src" title="นำเข้าจากอีเมล Schedule">อีเมล ✉</span>':m.src==='ics'?'<span class="mg-src" title="นำเข้าจากไฟล์ .ics">.ics</span>':'')+
       (invOnly.length&&un?'<span class="mg-src" title="ถูกเชิญใน Outlook แต่ยังไม่ได้ลงชื่อ">เชิญ: '+E(invOnly.join(', '))+'</span>':'')+'</div></div>'+
@@ -9288,7 +9328,7 @@ function render(){
   const y=window.scrollY;
   let h='<div class="mg-head"><h1>🗓️ ประชุม · ลงคนเข้าร่วม</h1><small>ดึงประชุมจาก Outlook อัตโนมัติ · เลือกว่าใครเข้า · เตือนเวลาซ้อน/คนลา</small></div>'+
     '<div class="mg-bar"><button type="button" class="btn-g" data-mg="prev" title="วันก่อนหน้า">◀</button><input type="date" id="mgDate" value="'+E(ui.date)+'"><button type="button" class="btn-g" data-mg="next" title="วันถัดไป">▶</button><button type="button" class="btn-g" data-mg="today">วันนี้</button>'+
-    '<span class="mg-seg"><button type="button" class="'+(ui.view==='day'?'on':'')+'" data-mg="vday">วัน</button><button type="button" class="'+(ui.view==='week'?'on':'')+'" data-mg="vweek">สัปดาห์</button></span><span class="mg-sep"></span>'+
+    '<span class="mg-seg"><button type="button" class="'+(ui.view==='day'?'on':'')+'" data-mg="vday">วัน</button><button type="button" class="'+(ui.view==='week'?'on':'')+'" data-mg="vweek">สัปดาห์</button></span><span class="mg-seg" title="ขนาดแถวประชุม — กะทัดรัดเหมาะกับการแคปหน้าจอลง LINE"><button type="button" class="'+(ui.cp?'on':'')+'" data-mg="cpon">กะทัดรัด</button><button type="button" class="'+(!ui.cp?'on':'')+'" data-mg="cpoff">ปกติ</button></span><span class="mg-sep"></span>'+
     '<button type="button" class="btn-p" data-mg="add" style="animation:none">➕ เพิ่มประชุม</button>'+
     '<button type="button" class="'+(connected()?'btn-p':'btn-g')+'" data-mg="ol" '+(connected()?'style="animation:none"':'')+' title="ดึงประชุมจาก Outlook อัตโนมัติ">'+(connected()?'🔄 ซิงก์ Outlook':'🔗 เชื่อม Outlook อัตโนมัติ')+'</button>'+
     '<button type="button" class="btn-g" data-mg="imp">📥 นำเข้า (ไฟล์ / ข้อความ)</button>'+
@@ -9297,7 +9337,7 @@ function render(){
     '<span class="mg-grow"></span><button type="button" class="btn-g" data-mg="team" title="ชื่อทีม / อีเมล / ชื่อประชุมที่ข้ามเสมอ">👥 ตั้งค่าทีม</button><button type="button" class="btn-g" data-mg="exp" title="สำรองข้อมูลประชุมทั้งหมด">💾 JSON</button><button type="button" class="btn-g" data-mg="impjson" title="นำเข้าไฟล์สำรอง">📂</button><input type="file" id="mgJson" accept=".json,application/json" style="display:none"></div>';
   h+=olLine();
   h+=ui.view==='week'?renderWeek():renderDay();
-  view.innerHTML=h; lastSig=sigNow(); if(window.scrollY!==y) window.scrollTo(0,y);
+  view.innerHTML=h; view.classList.toggle('mg-cp',!!ui.cp); lastSig=sigNow(); if(window.scrollY!==y) window.scrollTo(0,y);
 }
 
 /* ================= แก้ไขข้อมูล ================= */
@@ -9670,6 +9710,7 @@ view.addEventListener('click',async e=>{
   const b=e.target.closest('[data-mg]'); if(!b) return; const a=b.dataset.mg, id=b.dataset.m;
   if(a==='prev'||a==='next'){ const step=ui.view==='week'?7:1; ui.date=addD(ui.date,a==='prev'?-step:step); render(); }
   else if(a==='today'){ ui.date=today; render(); }
+  else if(a==='cpon'||a==='cpoff'){ ui.cp=(a==='cpon'); saveUI(); render(); }
   else if(a==='vday'||a==='vweek'){ ui.view=a==='vday'?'day':'week'; saveUI(); render(); }
   else if(a==='goday'){ ui.date=b.dataset.d; ui.view='day'; saveUI(); render(); window.scrollTo(0,0); }
   else if(a==='add') editModal(null);
@@ -9729,6 +9770,571 @@ document.addEventListener('click',async e=>{
   else if(b.dataset.mgt==='copy'){ if(await copyText(scheduleText(today,ui.at))) say('📋 คัดลอกข้อความ Schedule วันนี้แล้ว'); }
 });
 window.__MTG={open:openMeet,parseText:parseText,icsEvents:icsEvents,scheduleText:scheduleText,getDay:getDay,setDay:setDay,cfg:()=>cfg,analyze:analyze,sync:gSync,gcfg:()=>gcfg,connected:connected,importMail:importMailText,decodeMtg:decodeMtg,applyCands:applyCands,prepText:prepText};
+})();
+
+</script>
+<script id="navAddon">
+/* ===== Navigation add-on v18 : แถบเมนูใหม่ — เห็นครบทุกแท็บเสมอ · ปุ่มเครื่องมือซ้อนแนวตั้ง · ไม่รก =====
+   v18: แท็บแบ่งความกว้างเท่ากัน (ไม่เลื่อนซ้าย-ขวา) · ค้นหา/คู่มือ/เครื่องมือซ้อนกัน 2 ชั้น · เลื่อนหน้าแล้วย่อโดยเนื้อหาไม่กระตุก ·
+        มือถือเป็นกริด 7 ช่อง (ไอคอน + ชื่อสั้น) · แถบคำอธิบายบางลง · แถบเครื่องมือ Tracker เหลือปุ่มที่ใช้บ่อย · รวมแถบเตือนซ้ำซ้อน
+   • ไม่แก้ตรรกะเดิมของแท็บใด ๆ — ใช้ปุ่มแท็บเดิม (tabD/tabG/tabS/tabT/tabJ/tabM/tabH) และปุ่มเครื่องมือเดิมทั้งหมด (สั่งผ่าน .click())
+   • วางไว้ท้ายไฟล์ ก่อน </body> (หลังสคริปต์ Meetings add-on) · ใช้คลาสขึ้นต้น nv- เพื่อไม่ชนกับ ux- / td- / mg- เดิม */
+(function(){
+'use strict';
+if(window.__NAV_ADDON) return; window.__NAV_ADDON=true;
+const g=id=>document.getElementById(id);
+const bar=document.querySelector('.tabbar');
+if(!bar||!g('tabT')) return;
+const E=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const LSget=k=>{ try{ return localStorage.getItem(k); }catch(e){ return null; } };
+const LSset=(k,v)=>{ try{ localStorage.setItem(k,v); }catch(e){} };
+const say=(m,c)=>{ try{ toast(m,c); }catch(e){} };
+const isMac=/Mac|iPhone|iPad/.test(navigator.platform||'');
+const KSEEN='ux_nav_seen', KCTX='ux_nav_ctx';
+const MOBILE=()=>window.innerWidth<=900;
+
+/* ================= นิยามเมนู ================= */
+const ORDER=['tabD','tabG','tabS','tabT','tabJ','tabM','tabH'];          // Alt+1 … Alt+7
+const GROUPS=[
+  {id:'daily',n:'ประจำวัน',tabs:['tabD','tabG','tabS']},
+  {id:'track',n:'ติดตามงาน',tabs:['tabT','tabJ']},
+  {id:'plan', n:'เป้าหมาย & แผน',tabs:['tabM','tabH']}
+];
+const mjTab=k=>({run:()=>{ const b=document.querySelector('#viewMainJobs [data-mj-tab="'+k+'"]'); if(b) b.click(); }});
+const T={
+  tabD:{ic:'☀️',n:'วันนี้',sn:'วันนี้',d:'งานที่ต้องทำวันนี้',view:'viewToday',
+    what:'หน้าสรุปประจำวัน — ดึงงานจากทุกแท็บมารวมให้เห็นในหน้าเดียว',
+    when:'เปิดเป็นอย่างแรกทุกเช้า (ตั้งให้เป็นหน้าแรกของเว็บได้ที่ติ๊ก “เปิดเป็นหน้าแรก”)',
+    has:['งานใน Tracker ที่เลยกำหนด · ครบวันนี้ · ภายใน 3 วัน','Checklist ของวันนี้ + งานค้างจากวันก่อน','กิจกรรม Q-patrol audit, QE Follow-up และกำหนด Hoshin ที่ใกล้ถึง','คนไม่อยู่วันนี้ (จากแผนลา)','ปุ่ม ➕ เพิ่มงานใหม่ และ 📋 คัดลอกสรุปไปวางใน Teams / LINE'],
+    links:[{t:'➕ เพิ่มงานใหม่',sel:'[data-td="add"]',kw:'เพิ่มงาน งานใหม่ add task'},{t:'📋 คัดลอกสรุปวันนี้',sel:'[data-td="copy"]',kw:'คัดลอก สรุป copy teams line'}]},
+  tabG:{ic:'🗓️',n:'ประชุม',sn:'ประชุม',d:'ลงคนเข้าประชุม',view:'viewMeet',
+    what:'ลงว่าใครเข้าประชุมไหน และสร้างข้อความ Schedule ไว้วางใน Teams',
+    when:'ทุกเช้าหลังเห็นตารางประชุมของวัน',
+    has:['นำเข้าประชุมจากอีเมล Schedule (ปุ่ม 📋 วางจากอีเมล หรือลิงก์ในอีเมล), ไฟล์ .ics หรือพิมพ์เอง','คลิกชื่อคนเพื่อลงรายชื่อ · เตือนเวลาซ้อนและคนที่ลา','มุมมอง วัน / สัปดาห์ นับจำนวนประชุมรายคน','📋 คัดลอกข้อความ Schedule พร้อมวางใน Teams'],
+    links:[{t:'📋 วางจากอีเมล',sel:'[data-mg="clip"]',kw:'วาง อีเมล schedule paste email'},{t:'📥 นำเข้า (ไฟล์ / ข้อความ)',sel:'[data-mg="imp"]',kw:'นำเข้า ics import ไฟล์'},{t:'📋 คัดลอกข้อความ Schedule',sel:'[data-mg="copy"]',kw:'คัดลอก schedule copy teams'},{t:'🗓 มุมมองสัปดาห์',sel:'[data-mg="vweek"]',kw:'สัปดาห์ week'},{t:'👥 ตั้งค่าทีม',sel:'[data-mg="team"]',kw:'ทีม คน อีเมล team'}]},
+  tabS:{ic:'📝',n:'Checklist',sn:'Checklist',d:'จดงานรายวัน',view:'viewSheet',
+    what:'จดรายการที่ต้องทำของแต่ละวัน แบบตาราง Excel',
+    when:'ตอนเช้าเพื่อวางแผนวัน และติ๊กเมื่อทำเสร็จ',
+    has:['คลิกช่อง ✓ ให้เป็น O เมื่อเสร็จ · ✔ Confirm เพื่อล็อกรายการ','⤵ ดึงงานค้างจากวันก่อน · วางหลายบรรทัดจาก Excel ได้','ปุ่ม → Tracker ส่งรายการไปกรอกเป็นปัญหาใน Tracker','ค้นหา keyword ในทุกวัน + กล่องบันทึกเพิ่มเติม'],
+    links:[{t:'🔍 ค้นหาในทุกวัน',focus:'#shQ',kw:'ค้นหา search keyword'},{t:'⤵ ดึงงานค้างจากวันก่อน',sel:'#shCarry',global:1,kw:'ค้าง ดึงงาน carry'},{t:'📄 บันทึกเพิ่มเติม',scroll:'.nt-box',kw:'บันทึก note'}]},
+  tabT:{ic:'📊',n:'Tracker',sn:'Tracker',d:'ปัญหา & มาตรการ',view:'viewTracker',
+    what:'บันทึกปัญหา มาตรการแก้ไข และกำหนดเสร็จ (Due Date) พร้อมติดตามการเลื่อน (Rev.)',
+    when:'เมื่อพบปัญหาใหม่ หรือต้องอัปเดต / เลื่อน / ปิดงาน',
+    has:['การ์ดสรุป Done / Remaining / Overdue + กราฟสถานะ','ปฏิทินตาม Due Date (คลิกวันเพื่อเพิ่มรายการ)','ฟอร์มเพิ่มรายการ + ตารางค้นหา/กรอง · ✓ ปิดงาน · 📅 เลื่อน Due','สรุปตามผู้แจ้ง · Export CSV · 🔔 LINE · 🗑 ถังขยะ'],
+    links:[{t:'➕ เพิ่มรายการ (ปัญหาใหม่)',scroll:'#f',focus:'#owner',kw:'เพิ่ม ปัญหา issue add form'},{t:'📅 ปฏิทิน Due Date',scroll:'#calBox',kw:'ปฏิทิน calendar due'},{t:'📋 ตารางรายการ',scroll:'.tw',kw:'ตาราง table รายการ'},{t:'👥 สรุปตามผู้แจ้ง',scroll:'#ownBox',kw:'ผู้แจ้ง owner สรุป'}]},
+  tabJ:{ic:'🧰',n:'Main QE Jobs',sn:'Main QE',d:'PCR · Claim · New',view:'viewMainJobs',
+    what:'งานหลักของ QE แบ่งเป็น 5 แถบย่อย',
+    when:'เมื่อต้องอัปเดตสถานะ PCR / Claim / โครงการใหม่',
+    has:['1 · PCR Status — นับ Done / On-plan / Delay แยกตามผู้รับผิดชอบ','2 · Claim & Complaint — แผน Q-patrol audit + โฟลเดอร์ / ลิงก์','3 · New project — Schedule, PV result และ QE Follow-up (Supplier / In-house / Customer)','4 · PCR / PV audit matching · 5 · SSA Update — ลิงก์ไปไฟล์กลาง'],
+    links:[Object.assign({t:'1 · PCR Status',kw:'pcr status customer in-house supplier'},mjTab('pcr')),
+      {t:'2 · Q-patrol audit (แผน)',kw:'q-patrol audit แผน claim complaint ตรวจ',run:()=>{ const q=s=>document.querySelector('#viewMainJobs '+s); const c=q('[data-mj-tab="claim"]'); if(c) c.click(); setTimeout(()=>{ const v=q('[data-mje="claimv"][data-v="plan"]'); if(v&&!v.classList.contains('on')) v.click(); },60); }},
+      Object.assign({t:'2 · Claim & Complaint',kw:'claim complaint โฟลเดอร์ yokoten'},mjTab('claim')),
+      Object.assign({t:'3 · New project (Schedule · PV · Follow-up)',kw:'new project pv schedule follow-up follow up supplier in-house customer'},mjTab('new')),
+      Object.assign({t:'4 · PCR / PV audit matching',kw:'audit matching pv'},mjTab('audit')),
+      Object.assign({t:'5 · SSA Update',kw:'ssa'},mjTab('ssa'))]},
+  tabM:{ic:'🎯',n:'7 Mission',sn:'Mission',d:'เป้าหมาย · OT · ลา',view:'viewMission',
+    what:'เป้าหมายและผลการดำเนินงานรายเดือนของ 7 Mission แยกตามปีงบประมาณ (เม.ย. – มี.ค.)',
+    when:'อัปเดตเดือนละครั้ง หรือเมื่อต้องดูแผนลา / OT',
+    has:['📊 สรุปผล % ต่อ Mission · 📋 Action Plan (P / R / J)','⏱ OT Control — OT รายคน รายเดือน เทียบเป้า','🌴 แผนลา แลกวันหยุด อบรม + วันลาคงเหลือ'],
+    links:[{t:'📊 สรุปผล %',sel:'[data-act="vw"][data-v="sum"]',kw:'สรุป ผล mission percent'},{t:'📋 Action Plan (P / R / J)',sel:'[data-act="vw"][data-v="plan"]',kw:'action plan แผน'},{t:'⏱ OT Control',sel:'[data-act="vw"][data-v="ot"]',kw:'ot โอที overtime'},{t:'🌴 แผนลา แลกวันหยุด อบรม',sel:'[data-act="vw"][data-v="lv"]',kw:'ลา พักร้อน ลาป่วย ลากิจ อบรม leave'}]},
+  tabH:{ic:'🧭',n:'Hoshin',sn:'Hoshin',d:'นโยบายประจำปี',view:'viewHoshin',
+    what:'กิจกรรมนโยบายประจำปี (Hoshin) และสถานะรายไลน์',
+    when:'ติดตามกำหนดเสร็จของแต่ละไลน์ และเตรียมรายงาน',
+    has:['ภาพรวม % ที่ผ่าน + ไทม์ไลน์กำหนดเสร็จ','ตารางไลน์ × หัวข้อ (✓ OK · ▲ บางส่วน · ✗ NG) เรียงลำดับได้','แต่ละหัวข้อมี Milestone, ตารางรายไลน์ และ Overall status'],
+    links:[{t:'📊 ภาพรวม Hoshin',sel:'[data-act="hnav"][data-v="dash"]',kw:'ภาพรวม overview'},{t:'⚙ ตั้งค่า / กิจกรรม',sel:'[data-act="hset"]',kw:'ตั้งค่า กิจกรรม setting'}]}
+};
+const tabIds=ORDER.filter(id=>g(id));
+if(tabIds.length<5) return;                                         // โครงหน้าไม่ตรงกับที่คาด — ไม่แตะเมนูเดิม
+
+/* ================= CSS ================= */
+const st=document.createElement('style'); st.id='nvStyle'; st.textContent=`
+html{scroll-padding-top:90px}
+/* ---- แถบเมนูหลัก: แท็บแบ่งความกว้างเท่ากัน เห็นครบทุกแท็บ · เครื่องมือซ้อน 2 ชั้นทางขวา ---- */
+#nvNav.tabbar{display:flex;flex-wrap:nowrap;align-items:stretch;gap:10px;position:sticky;top:6px;z-index:8;margin:0 0 10px;padding:7px 8px;border:1px solid var(--line);border-bottom:1px solid var(--line);border-radius:16px;background:color-mix(in srgb,var(--pop) 90%,transparent);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:0 6px 24px var(--sh)}
+#nvNav .nv-tabs{display:flex;align-items:stretch;gap:8px;min-width:0;flex:1 1 0}
+#nvNav .nv-grp{display:flex;flex-direction:column;gap:2px;min-width:0;padding:3px 4px 4px;border-radius:12px;background:color-mix(in srgb,var(--soft) 75%,transparent)}
+#nvNav .nv-gl{font-size:10.5px;letter-spacing:.3px;color:var(--mut);font-weight:800;padding:0 7px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#nvNav .nv-gt{display:flex;gap:2px;min-width:0;flex:1}
+body #nvNav .nv-gt button.nv-tab{display:flex;flex-direction:row;align-items:center;gap:7px;flex:1 1 0;min-width:0;min-height:44px;padding:5px 8px;margin:0;border-radius:10px;border:1px solid transparent;background:transparent;color:var(--mut);font-size:14px;line-height:1.2;text-align:left;white-space:nowrap;position:relative;box-shadow:none;cursor:pointer}
+body #nvNav .nv-gt button.nv-tab:hover{background:var(--soft2);color:var(--txt)}
+body #nvNav button.nv-tab:focus-visible,#nvNav .nv-tb:focus-visible,.nv-mi:focus-visible{outline:2px solid var(--pri);outline-offset:2px}
+body #nvNav .nv-gt button.nv-tab.on{background:color-mix(in srgb,var(--pri) 20%,var(--card));color:var(--txt);border-color:var(--pri);box-shadow:0 0 0 1px var(--pri) inset,0 4px 14px var(--ring)}
+#nvNav .nv-ic{font-size:19px;line-height:1;flex:0 0 auto}
+#nvNav .nv-tx{display:flex;flex-direction:column;min-width:0;flex:1 1 auto}
+#nvNav .nv-tx b,#nvNav .nv-tx small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#nvNav .nv-tx b{font-size:13.5px;font-weight:800;line-height:1.25}
+#nvNav .nv-tx b .s{display:none}
+#nvNav .nv-tx small{font-size:10.5px;font-weight:600;color:var(--mut);line-height:1.3}
+body #nvNav button.nv-tab.on .nv-tx small{color:var(--txt);opacity:.8}
+#nvNav .nv-bd{position:absolute;top:-7px;right:-2px;min-width:19px;height:19px;padding:0 5px;border-radius:99px;font-size:10.5px;font-weight:800;font-style:normal;display:inline-flex;align-items:center;justify-content:center;color:#fff;background:var(--dang);border:2px solid var(--pop);line-height:1;z-index:1}
+#nvNav .nv-bd[hidden]{display:none}
+#nvNav .nv-bd.w{background:#f59e0b;color:#2b1a00}
+#nvNav .nv-bd.i{background:#3b82f6}
+/* เครื่องมือ: ค้นหาอยู่แถวบน · คู่มือ + เครื่องมืออยู่แถวล่าง */
+#nvNav .nv-tools{display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:30px;gap:5px;flex:0 0 190px;width:190px;align-self:center;position:relative}
+#nvNav .nv-tb{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:30px;padding:0 10px;margin:0;border-radius:9px;border:1px solid var(--line);background:transparent;color:var(--txt);font-size:12.5px;font-weight:700;cursor:pointer;line-height:1;position:relative;white-space:nowrap;min-width:0}
+#nvNav .nv-tb:hover{border-color:var(--pri);background:var(--soft2)}
+#nvNav #nvSearch{grid-column:1/-1;justify-content:space-between;background:color-mix(in srgb,var(--soft) 80%,transparent)}
+#nvNav .nv-tb kbd{font-size:10.5px;font-family:inherit;padding:1px 6px;border-radius:5px;border:1px solid var(--line);color:var(--mut);background:var(--soft)}
+#nvNav .nv-mw{position:relative;display:flex;min-width:0}
+#nvNav .nv-mw .nv-tb{flex:1}
+#nvNav .nv-dot{position:absolute;top:-4px;right:-4px;width:12px;height:12px;border-radius:50%;border:2px solid var(--pop);background:#22c55e}
+#nvNav .nv-dot.warn{background:#f59e0b}#nvNav .nv-dot.bad{background:#ef4444}
+/* เลื่อนหน้าแล้วย่อ: ซ่อนคำอธิบาย + เครื่องมือเรียงแถวเดียวเป็นไอคอน */
+#nvNav.nv-c .nv-gl,#nvNav.nv-c .nv-tx small{display:none}
+#nvNav.nv-c .nv-grp{padding:3px}
+body #nvNav.nv-c .nv-gt button.nv-tab{min-height:38px}
+#nvNav.nv-c .nv-tools{grid-template-columns:repeat(3,34px);grid-auto-rows:34px;flex:0 0 auto;width:auto}
+#nvNav.nv-c .nv-tb{height:34px;padding:0;width:34px}
+#nvNav.nv-c .nv-l,#nvNav.nv-c #nvSearch kbd{display:none}
+#nvNav.nv-c #nvSearch{grid-column:auto;justify-content:center}
+#nvNav.nv-c .nv-mw .nv-tb{width:34px}
+/* เมนูเครื่องมือ */
+.nv-menu{position:absolute;right:0;top:calc(100% + 10px);width:350px;max-width:92vw;max-height:78vh;overflow:auto;background:var(--pop);color:var(--txt);border:1px solid var(--line);border-radius:14px;padding:8px;box-shadow:0 18px 50px var(--shp);z-index:12}
+.nv-menu[hidden]{display:none}
+.nv-ms{font-size:10.5px;letter-spacing:.3px;color:var(--mut);font-weight:800;margin:10px 8px 4px}
+.nv-mi{display:flex;gap:10px;align-items:flex-start;width:100%;text-align:left;padding:8px 10px;margin:0;border-radius:10px;border:0;background:transparent;color:var(--txt);font-size:13px;font-weight:700;cursor:pointer;line-height:1.3}
+.nv-mi:hover{background:var(--soft2)}
+.nv-mi .mi-ic{font-size:17px;line-height:1.1;width:22px;text-align:center;flex:0 0 auto}
+.nv-mi small{display:block;color:var(--mut);font-weight:500;font-size:11.5px;margin-top:2px;line-height:1.4}
+.nv-mi.on{background:color-mix(in srgb,var(--pri) 16%,transparent)}
+.nv-mi .nv-ck{margin-left:auto;color:var(--pri);font-weight:800}
+.nv-hl{margin:4px 2px 6px;padding:9px 11px;border:1px solid var(--line);border-radius:12px;background:var(--soft);font-size:12px;line-height:1.7}
+.nv-hl .r{display:flex;gap:8px;align-items:center}
+.nv-hl i{width:10px;height:10px;border-radius:50%;display:inline-block;background:#22c55e;flex:0 0 auto}
+.nv-hl i.warn{background:#f59e0b}.nv-hl i.bad{background:#ef4444}
+/* แถบคำอธิบายแท็บ (บาง · บรรทัดเดียว) + ต้อนรับ — ใส่คลาส tabbar เพื่อให้ฟังก์ชันส่งรูปเข้า LINE ตัดออกจากภาพ */
+body .tabbar.nv-box{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;position:static;margin:0 0 12px;padding:6px 12px;border:1px solid var(--line);border-left:3px solid var(--pri);border-radius:11px;background:color-mix(in srgb,var(--card) 70%,transparent);box-shadow:none;color:var(--txt)}
+body .tabbar.nv-box[hidden]{display:none}
+.nv-cx-m{display:flex;flex-wrap:wrap;align-items:baseline;gap:0 10px;flex:1 1 280px;min-width:0;font-size:12.5px;line-height:1.5}
+.nv-cx-m b{font-size:13px;white-space:nowrap}.nv-cx-m span{color:var(--mut)}
+.nv-cx-c{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.nv-chip{padding:4px 10px;margin:0;border-radius:99px;font-size:11.5px;font-weight:700;border:1px solid var(--line);background:transparent;color:var(--txt);cursor:pointer;line-height:1.2;white-space:nowrap}
+.nv-chip:hover{border-color:var(--pri);background:var(--soft2)}
+.nv-x{padding:3px 8px;margin:0;border-radius:8px;font-size:12px;border:1px solid var(--line);background:transparent;color:var(--mut);cursor:pointer;line-height:1.2}
+.nv-x:hover{border-color:var(--pri);color:var(--txt)}
+body .tabbar.nv-box.nv-wel{padding:9px 14px;border-left-color:#f59e0b;background:linear-gradient(90deg,rgba(245,158,11,.12),transparent 55%),var(--card)}
+.nv-ov{position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.6);display:flex;justify-content:center;padding:16px;overflow:auto}
+.nv-ov.pal{align-items:flex-start;padding-top:12vh}
+.nv-ov.gd{align-items:flex-start}
+.nv-pal{width:100%;max-width:640px;background:var(--pop);color:var(--txt);border:1px solid var(--line);border-radius:16px;box-shadow:0 24px 70px rgba(0,0,0,.5);overflow:hidden}
+.nv-pi{display:flex;gap:10px;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line)}
+.nv-pi input{flex:1;border:0;background:transparent;font-size:16px;color:var(--txt);outline:none;padding:4px 2px;box-shadow:none}
+.nv-pi kbd,.nv-kbd{font-size:11px;font-family:inherit;padding:2px 7px;border-radius:6px;border:1px solid var(--line);color:var(--mut);background:var(--soft);white-space:nowrap}
+.nv-pl{max-height:50vh;overflow:auto;padding:6px}
+.nv-pg{font-size:10.5px;font-weight:800;color:var(--mut);margin:8px 10px 3px;letter-spacing:.3px}
+.nv-pr{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;cursor:pointer}
+.nv-pr.on{background:color-mix(in srgb,var(--pri) 20%,transparent);box-shadow:0 0 0 1px var(--pri) inset}
+.nv-pr .p-ic{font-size:18px;width:24px;text-align:center}
+.nv-pr b{display:block;font-size:13.5px}.nv-pr small{display:block;color:var(--mut);font-size:11.5px}
+.nv-pr em{margin-left:auto;font-style:normal;font-size:10.5px;color:var(--mut);white-space:nowrap}
+.nv-pf{padding:8px 14px;border-top:1px solid var(--line);font-size:11.5px;color:var(--mut);display:flex;gap:12px;flex-wrap:wrap}
+.nv-pe{padding:22px;text-align:center;color:var(--mut);font-size:13px}
+.nv-gdm{width:100%;max-width:980px;background:var(--pop);color:var(--txt);border:1px solid var(--line);border-radius:16px;box-shadow:0 24px 70px rgba(0,0,0,.5);padding:20px 22px;margin:auto 0}
+.nv-gdm h2{margin:0 0 4px;font-size:22px}
+.nv-gdm .sb{color:var(--mut);font-size:13px;line-height:1.6;margin:0 0 12px}
+.nv-gh{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.nv-sec{margin:16px 0 8px;font-size:12px;font-weight:800;color:var(--mut);letter-spacing:.3px}
+.nv-steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:10px}
+.nv-step{display:flex;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--soft);font-size:13px;line-height:1.55}
+.nv-step .n{flex:0 0 auto;width:26px;height:26px;border-radius:50%;background:var(--pri);color:var(--on-pri);display:flex;align-items:center;justify-content:center;font-weight:800}
+.nv-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:12px}
+.nv-card{border:1px solid var(--line);border-radius:14px;padding:12px 14px;background:var(--card);box-shadow:0 1px 4px var(--sh)}
+.nv-card.hi{box-shadow:0 0 0 2px var(--pri),0 6px 20px var(--ring)}
+.nv-card h4{margin:0 0 2px;font-size:15px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.nv-card .w{font-size:12.5px;color:var(--txt);margin:2px 0 4px;line-height:1.5}
+.nv-card .wn{font-size:11.5px;color:var(--mut);margin-bottom:5px}
+.nv-card ul{margin:0 0 8px;padding-left:18px;font-size:12px;line-height:1.6;color:var(--mut)}
+.nv-card .go{padding:6px 12px;font-size:12.5px;font-weight:700;margin:0;border-radius:9px;border:1px solid var(--pri);background:color-mix(in srgb,var(--pri) 14%,transparent);color:var(--txt);cursor:pointer}
+.nv-card .go:hover{background:var(--pri);color:var(--on-pri)}
+.nv-keys{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:6px 18px;font-size:12.5px}
+.nv-keys div{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:4px 0;border-bottom:1px dashed var(--line)}
+.nv-note{margin-top:12px;padding:10px 12px;border:1px dashed var(--line);border-radius:12px;background:var(--soft);font-size:12.5px;line-height:1.65}
+.nv-act{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+/* ---- ลดความรกในหน้าอื่น ---- */
+#viewTracker .tools.nv-tl #rsBtn,#viewTracker .tools.nv-tl #abBtn,#viewTracker .tools.nv-tl #lnBtn,#viewTracker .tools.nv-tl #thBtn{display:none}
+#viewTracker .tools.nv-tl #csvBtn{margin-left:auto}
+#viewTracker .tools.nv-tl{gap:8px}
+#viewTracker .tools.nv-tl input#q{min-width:140px;flex:0 1 165px}
+#viewTracker .tools.nv-tl select{min-width:118px;max-width:170px;flex:0 1 auto}
+.nv-hide{display:none!important}
+.td-qb.td{display:none}
+#viewToday .td-sys{display:inline-flex;margin:0 8px 8px 0;max-width:100%;vertical-align:top}
+/* ---- ความกว้างจอ: ≤1180 ใช้ชื่อสั้น · ≤1000 ซ่อนคำอธิบาย · ≤900 เป็นกริดแบบมือถือ ---- */
+@media(max-width:1000px){
+  #nvNav .nv-tx small{display:none}
+  body #nvNav .nv-gt button.nv-tab{min-height:40px;padding:5px 7px;gap:6px}
+  #nvNav .nv-tools{flex-basis:152px;width:152px}
+  #nvNav #nvSearch kbd{display:none}
+  #nvNav #nvSearch{justify-content:center}
+}
+@media(max-width:1180px){ #nvNav .nv-tx b .f{display:none} #nvNav .nv-tx b .s{display:inline} }
+@media(max-width:900px){
+  #nvNav.tabbar{flex-direction:column;gap:5px;padding:6px;top:4px}
+  #nvNav .nv-tabs{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px;flex:none}
+  #nvNav .nv-grp,#nvNav .nv-gt{display:contents}
+  #nvNav .nv-gl{display:none}
+  body #nvNav .nv-gt button.nv-tab{flex-direction:column;justify-content:center;gap:1px;min-height:50px;padding:4px 1px;text-align:center}
+  #nvNav .nv-tx{align-items:center;flex:none;max-width:100%}
+  #nvNav .nv-tx b{font-size:10.5px}
+  #nvNav .nv-ic{font-size:18px}
+  #nvNav .nv-bd{top:-5px;right:2px;min-width:16px;height:16px;font-size:9.5px}
+  #nvNav .nv-tools{display:flex;width:auto;flex:none;gap:6px;align-self:stretch}
+  #nvNav #nvSearch{flex:1;justify-content:center}
+  #nvNav .nv-mw{flex:0 0 auto}
+  #nvNav #nvHelp .nv-l,#nvNav #nvMenuBtn .nv-l{display:none}
+  #nvNav #nvHelp,#nvNav .nv-mw .nv-tb{padding:0 14px;flex:0 0 auto}
+  #nvNav.nv-c .nv-tx{display:none}
+  body #nvNav.nv-c .nv-gt button.nv-tab{min-height:36px}
+  #nvNav.nv-c .nv-tools{display:flex;width:auto}
+  #nvNav.nv-c .nv-tb{width:auto;padding:0 12px;height:30px}
+  #nvNav.nv-c #nvSearch .nv-l{display:inline}
+  #nvNav.nv-c #nvSearch{width:auto;flex:1}
+  .nv-menu{position:fixed;left:8px;right:8px;top:70px;width:auto;max-width:none}
+  .nv-cx-m span{display:none}
+  body .tabbar.nv-box{padding:6px 10px;margin-bottom:10px}
+  .nv-cx-c{flex-wrap:nowrap;overflow-x:auto;max-width:100%;scrollbar-width:none}
+}
+@media(prefers-reduced-motion:reduce){#nvNav *{transition:none!important}}
+`; document.head.appendChild(st);
+
+/* ================= สร้างเมนู (ใช้ปุ่มแท็บเดิม: ย้ายตำแหน่ง ไม่สร้างใหม่ — ตัวจัดการเดิมยังทำงานครบ) ================= */
+const orig=document.createElement('div'); orig.className='nv-orig'; orig.hidden=true;
+['themeBtn','spBtn','imgBtn'].forEach(id=>{ const b=g(id); if(b) orig.appendChild(b); });
+
+const tabsWrap=document.createElement('div'); tabsWrap.className='nv-tabs'; tabsWrap.setAttribute('role','tablist'); tabsWrap.setAttribute('aria-label','เมนูหลัก');
+GROUPS.forEach(gr=>{
+  const ids=gr.tabs.filter(id=>g(id)); if(!ids.length) return;
+  const box=document.createElement('div'); box.className='nv-grp'; box.setAttribute('role','presentation'); box.style.flex=ids.length+' 1 0';
+  box.innerHTML='<span class="nv-gl" aria-hidden="true">'+E(gr.n)+'</span><div class="nv-gt" role="presentation"></div>';
+  const row=box.querySelector('.nv-gt');
+  ids.forEach(id=>{
+    const b=g(id), d=T[id], k=ORDER.indexOf(id)+1;
+    b.className='tabbtn nv-tab'+(b.classList.contains('on')?' on':'');
+    b.innerHTML='<span class="nv-ic" aria-hidden="true">'+d.ic+'</span><span class="nv-tx"><b><span class="f">'+E(d.n)+'</span><span class="s">'+E(d.sn||d.n)+'</span></b><small>'+E(d.d)+'</small></span><i class="nv-bd" hidden></i>';
+    b.type='button'; b.setAttribute('role','tab'); b.setAttribute('aria-controls',d.view); b.setAttribute('aria-label',d.n+' — '+d.d+' (Alt+'+k+')'); b.dataset.k=String(k);
+    row.appendChild(b);
+  });
+  tabsWrap.appendChild(box);
+});
+
+const tools=document.createElement('div'); tools.className='nv-tools';
+tools.innerHTML=
+  '<button type="button" class="nv-tb" id="nvSearch" title="ค้นหาเมนู / คำสั่งทั้งหมด ('+(isMac?'⌘':'Ctrl')+'+K หรือกด /)" aria-label="ค้นหาเมนูและคำสั่ง"><span><span aria-hidden="true">🔍</span> <span class="nv-l">ค้นหา</span></span><kbd>'+(isMac?'⌘K':'Ctrl K')+'</kbd></button>'+
+  '<button type="button" class="nv-tb" id="nvHelp" title="คู่มือ — แต่ละเมนูมีอะไร ใช้ตอนไหน" aria-label="คู่มือการใช้งาน"><span aria-hidden="true">❓</span><span class="nv-l">คู่มือ</span></button>'+
+  '<div class="nv-mw"><button type="button" class="nv-tb" id="nvMenuBtn" aria-haspopup="true" aria-expanded="false" aria-controls="nvMenu" title="เครื่องมือ: สำรองข้อมูล · Cloud DB · LINE · ธีม"><span aria-hidden="true">⚙</span><span class="nv-l">เครื่องมือ</span><i class="nv-dot" id="nvDot"></i></button><div class="nv-menu" id="nvMenu" hidden></div></div>';
+
+while(bar.firstChild) bar.removeChild(bar.firstChild);
+bar.id='nvNav'; bar.classList.add('nv-root'); bar.setAttribute('aria-label','เมนูหลัก'); bar.removeAttribute('role');
+bar.appendChild(tabsWrap); bar.appendChild(tools); bar.appendChild(orig);
+
+/* แถบต้อนรับ (ครั้งแรก) + แถบคำอธิบายแท็บ */
+const wel=document.createElement('div'); wel.className='tabbar nv-box nv-wel'; wel.hidden=true;
+wel.innerHTML='<div class="nv-cx-m"><b>👋 มาใช้ครั้งแรกใช่ไหม?</b><span>เมนูด้านบนแบ่งเป็น 3 กลุ่ม — ดูแผนที่เมนู 1 นาทีแล้วจะรู้ว่าอะไรอยู่ตรงไหน</span></div><div class="nv-cx-c"><button type="button" class="nv-chip" data-w="guide" style="background:var(--pri);color:var(--on-pri);border-color:var(--pri)">🧭 ดูแผนที่เมนู</button><button type="button" class="nv-chip" data-w="today">☀️ เริ่มที่หน้า “วันนี้”</button><button type="button" class="nv-x" data-w="x" title="ไม่ต้องแสดงอีก">✕ ปิด</button></div>';
+const ctx=document.createElement('div'); ctx.className='tabbar nv-box nv-ctx'; ctx.id='nvCtx'; ctx.setAttribute('role','note');
+bar.parentNode.insertBefore(wel,bar.nextSibling); bar.parentNode.insertBefore(ctx,wel.nextSibling);
+if(!LSget(KSEEN)) wel.hidden=false;
+wel.addEventListener('click',e=>{ const b=e.target.closest('[data-w]'); if(!b) return; const a=b.dataset.w;
+  if(a==='guide'){ markSeen(); openGuide(); } else if(a==='today'){ markSeen(); activate('tabD'); } else markSeen(); });
+function markSeen(){ LSset(KSEEN,'1'); wel.hidden=true; }
+
+/* ================= สถานะ / ฟังก์ชันพื้นฐาน ================= */
+const cur=()=>ORDER.find(id=>g(id)&&g(id).classList.contains('on'))||'tabT';
+function activate(id){ const b=g(id); if(!b) return; closeMenu(); b.click(); try{ window.scrollTo({top:0,behavior:'auto'}); }catch(e){} }
+function flashEl(e){ if(!e) return; e.classList.remove('td-fl'); void e.offsetWidth; e.classList.add('td-fl'); setTimeout(()=>e.classList.remove('td-fl'),2800); }
+function runLink(id,l){
+  if(cur()!==id){ const b=g(id); if(b) b.click(); }
+  setTimeout(()=>{
+    try{
+      if(l.run){ l.run(); return; }
+      const v=g(T[id].view)||document;
+      if(l.sel){ const e=(l.global?document:v).querySelector(l.sel); if(e) e.click(); else say('ไม่พบปุ่มนี้ในหน้า — ลองเปิดแท็บ '+T[id].n+' แล้วหาปุ่มเอง',true); }
+      if(l.scroll){ const e=document.querySelector(l.scroll); if(e){ e.scrollIntoView({behavior:'smooth',block:'start'}); flashEl(e); } }
+      if(l.focus){ const e=document.querySelector(l.focus); if(e) setTimeout(()=>{ try{ e.focus({preventScroll:true}); }catch(x){} },350); }
+    }catch(err){ console.error('[nav]',err); }
+  },90);
+}
+const typing=e=>{ const t=e.target; return !!t&&(/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)||t.isContentEditable); };
+
+/* ================= Sync สถานะแท็บ (aria + แถบคำอธิบาย) ================= */
+function ctxOn(){ return LSget(KCTX)!=='0'; }
+function renderCtx(){
+  const id=cur(), d=T[id]; if(!d){ ctx.hidden=true; return; }
+  ctx.hidden=!ctxOn();
+  ctx.innerHTML='<div class="nv-cx-m"><b>'+d.ic+' '+E(d.n)+'</b><span>'+E(d.what)+'</span></div><div class="nv-cx-c">'+
+    (d.links||[]).slice(0,5).map((l,i)=>'<button type="button" class="nv-chip" data-l="'+i+'">'+E(l.t)+'</button>').join('')+
+    '<button type="button" class="nv-x" data-l="hide" title="ซ่อนแถบคำอธิบายนี้ (เปิดกลับได้ที่ ⚙ เครื่องมือ)">✕</button></div>';
+}
+ctx.addEventListener('click',e=>{ const b=e.target.closest('[data-l]'); if(!b) return; const id=cur(), a=b.dataset.l;
+  if(a==='hide'){ LSset(KCTX,'0'); renderCtx(); say('ซ่อนแถบคำอธิบายแล้ว — เปิดกลับได้ที่ ⚙ เครื่องมือ'); }
+  else{ const l=(T[id].links||[])[+a]; if(l) runLink(id,l); } });
+let lastCur='';
+function syncActive(){
+  const id=cur();
+  tabIds.forEach(t=>{ const b=g(t); if(!b) return; const on=(t===id); b.setAttribute('aria-selected',on?'true':'false'); b.tabIndex=on?0:-1; });
+  if(id!==lastCur){ lastCur=id; renderCtx(); }
+}
+new MutationObserver(syncActive).observe(tabsWrap,{subtree:true,attributes:true,attributeFilter:['class']});
+tabsWrap.addEventListener('keydown',e=>{
+  const i=tabIds.indexOf(document.activeElement&&document.activeElement.id); if(i<0) return; let n=-1;
+  if(e.key==='ArrowRight') n=(i+1)%tabIds.length; else if(e.key==='ArrowLeft') n=(i-1+tabIds.length)%tabIds.length; else if(e.key==='Home') n=0; else if(e.key==='End') n=tabIds.length-1;
+  if(n>=0){ e.preventDefault(); g(tabIds[n]).focus(); } });
+
+/* ================= ป้ายแจ้งเตือนบนแท็บ ================= */
+const today0=()=>{ try{ return typeof today!=='undefined'?today:new Date().toISOString().slice(0,10); }catch(e){ return new Date().toISOString().slice(0,10); } };
+function setBadge(id,n,cls,tip){
+  const b=g(id); if(!b) return; const i=b.querySelector('.nv-bd'); if(!i) return;
+  if(n>0){ i.hidden=false; i.textContent=n>99?'99+':String(n); i.className='nv-bd'+(cls?' '+cls:''); } else i.hidden=true;
+  const d=T[id], k=ORDER.indexOf(id)+1; b.title=d.n+' — '+d.what+'\n'+(tip?tip+'\n':'')+'คีย์ลัด: Alt+'+k;
+}
+function refreshBadges(){
+  const t=today0(); let S=null;
+  try{ if(window.__TODAY&&window.__TODAY.collect) S=window.__TODAY.collect(); }catch(e){}
+  const L=a=>(a||[]).filter(x=>x.n<0).length, Z=a=>(a||[]).filter(x=>x.n===0).length;
+  try{ if(S){ const late=L(S.tr)+L(S.qp)+L(S.fu)+L(S.hs), td=Z(S.tr)+Z(S.qp)+Z(S.fu)+Z(S.hs);
+    setBadge('tabD',late||td,late?'':'w',late?('เลยกำหนด '+late+' รายการ'+(td?' · ครบวันนี้ '+td:'')):(td?'ครบกำหนดวันนี้ '+td+' รายการ':'')); } else setBadge('tabD',0); }catch(e){ setBadge('tabD',0); }
+  try{ const L2=(window.__MTG&&window.__MTG.getDay)?window.__MTG.getDay(t):[], un=L2.filter(m=>!m.who.length).length;
+    setBadge('tabG',un,'w',un?('วันนี้มี '+L2.length+' ประชุม · ยังไม่ระบุคน '+un):(L2.length?'วันนี้มี '+L2.length+' ประชุม · ลงคนครบแล้ว':'')); }catch(e){ setBadge('tabG',0); }
+  try{ const i=window.__checklist&&window.__checklist.info?window.__checklist.info(t):null, p=i&&i.total?i.total-i.done:0;
+    setBadge('tabS',p,'i',p?('Checklist วันนี้ค้าง '+p+' รายการ'):''); }catch(e){ setBadge('tabS',0); }
+  try{ const n=data.filter(isLate).length; setBadge('tabT',n,'',n?('เลยกำหนด '+n+' รายการ'):''); }catch(e){ setBadge('tabT',0); }
+  try{ const raw=JSON.parse(LSget('qe_mainjobs_data_v2')||'null'); let ql=0,pd=0;
+    if(raw){ ((raw.claimPlan&&raw.claimPlan.items)||[]).forEach(it=>(it.evs||[]).forEach(e=>{ if(e.st==='plan'&&e.pd<t) ql++; }));
+      ((raw.pcr&&raw.pcr.people)||[]).forEach(p=>(p.v||[]).forEach(a=>{ pd+=(a&&a[2])||0; })); }
+    const n=ql+pd; setBadge('tabJ',n,'',n?((ql?'Q-patrol เลยกำหนด '+ql:'')+(ql&&pd?' · ':'')+(pd?'PCR Delay '+pd:'')):''); }catch(e){ setBadge('tabJ',0); }
+  setBadge('tabM',0);
+  try{ const H=window.HS&&window.HS.get?window.HS.get():null; let n=0;
+    if(H&&H.years){ const ys=Object.keys(H.years).sort(), y=H.years[ys.indexOf(t.slice(0,4))>=0?t.slice(0,4):ys[ys.length-1]];
+      if(y) (y.topics||[]).forEach(tp=>(tp.lines||[]).forEach(l=>{ const d=l.due||tp.due; if(l.st!=='ok'&&d&&d<t) n++; })); }
+    setBadge('tabH',n,'',n?('ไลน์ที่เลยกำหนด '+n):''); }catch(e){ setBadge('tabH',0); }
+  paintHealth(); syncBars();
+}
+let rbT=0; const soon=()=>{ clearTimeout(rbT); rbT=setTimeout(refreshBadges,700); };
+document.addEventListener('click',soon,true); document.addEventListener('change',soon,true);
+setInterval(()=>{ if(!document.hidden) refreshBadges(); },20000);
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden) soon(); });
+
+/* ================= ย่อเมนูเมื่อเลื่อนหน้า (เนื้อหาไม่กระตุก: ชดเชยความสูงที่หายไปด้วย margin) ================= */
+let ticking=false;
+function applyCompact(){
+  const y=window.scrollY, on=bar.classList.contains('nv-c');
+  if(!on&&y>80){ const h0=bar.offsetHeight; bar.classList.add('nv-c'); const d=Math.max(0,h0-bar.offsetHeight); bar.style.marginBottom=(10+d)+'px'; }
+  else if(on&&y<30){ bar.classList.remove('nv-c'); bar.style.marginBottom=''; }
+}
+window.addEventListener('scroll',()=>{ if(ticking) return; ticking=true; requestAnimationFrame(()=>{ ticking=false; applyCompact(); }); },{passive:true});
+let rzT=0; window.addEventListener('resize',()=>{ clearTimeout(rzT); rzT=setTimeout(()=>{ bar.classList.remove('nv-c'); bar.style.marginBottom=''; applyCompact(); closeMenu(); },150); });
+
+/* ================= เมนูเครื่องมือ ================= */
+const themeNow=()=>{ const c=document.body.classList; return !c.contains('neo')?'classic':c.contains('holo')?'holo':c.contains('ember')?'ember':'neo'; };
+function setTheme(t){ const b=g('themeBtn'); if(!b) return; for(let i=0;i<5&&themeNow()!==t;i++) b.click(); }
+function health(){
+  const sp=g('spStatus'), s=sp?(sp.dataset.state||''):'', bad=(s==='error'||s==='off');
+  const lb=LSget('issue_tracker_lastbackup'), days=lb?Math.floor((Date.now()-new Date(lb))/864e5):null, noBk=(lb==null||days>=7);
+  return {s:s,bad:bad,lb:lb,days:days,noBk:noBk,level:(bad&&noBk)?'bad':(bad||noBk)?'warn':'ok'};
+}
+function paintHealth(){
+  const h=health(), d=g('nvDot'); if(d) d.className='nv-dot'+(h.level==='ok'?'':' '+h.level);
+  const mb=g('nvMenuBtn'); if(mb) mb.title='เครื่องมือ — '+(h.level==='ok'?'ข้อมูลปลอดภัย':h.level==='bad'?'⚠ Cloud DB ไม่เชื่อมต่อ และยังไม่ได้สำรองข้อมูลล่าสุด':'⚠ ควรตรวจการสำรองข้อมูล');
+  const m=g('nvMenu'); if(m&&!m.hidden) buildMenu();
+}
+const MI=(ic,n,d,attrs,extra)=>'<button type="button" class="nv-mi'+(extra&&extra.on?' on':'')+'" role="menuitem" '+attrs+'><span class="mi-ic" aria-hidden="true">'+ic+'</span><span><span>'+E(n)+'</span>'+(d?'<small>'+d+'</small>':'')+'</span>'+(extra&&extra.on?'<span class="nv-ck">✓</span>':'')+'</button>';
+function buildMenu(){
+  const h=health(), tn=themeNow(), m=g('nvMenu'); if(!m) return;
+  const cloud=h.s==='ok'?'เชื่อมต่อแล้ว — ซิงก์ข้อมูลขึ้น Cloud DB':h.s==='busy'?'กำลังซิงก์…':h.s==='off'?'ยังไม่ได้ตั้งค่า — ข้อมูลอยู่เฉพาะเครื่องนี้':h.s==='error'?'เชื่อมต่อไม่สำเร็จ — ข้อมูลอยู่เฉพาะเครื่องนี้':'ไม่ทราบสถานะ';
+  const cls=h.s==='ok'?'':(h.s==='busy'?'warn':'bad');
+  const bk=h.lb?('สำรองล่าสุด '+(h.days===0?'วันนี้':h.days+' วันที่แล้ว')):'ยังไม่เคยสำรองข้อมูล';
+  m.innerHTML=
+    '<div class="nv-hl"><div class="r"><i class="'+cls+'"></i><span>☁ Cloud DB: <b>'+E(cloud)+'</b></span></div><div class="r"><i class="'+(h.noBk?'warn':'')+'"></i><span>💾 <b>'+E(bk)+'</b></span></div></div>'+
+    '<div class="nv-ms">สำรอง & ข้อมูล</div>'+
+    MI('💾','Backup ทั้งหมด','ไฟล์เดียว: Tracker · Checklist · Mission · Hoshin · Main QE Jobs · ประชุม','data-b="bkBtn"')+
+    MI('📂','Restore จากไฟล์','นำข้อมูลที่เคย Backup กลับเข้ามา','data-b="rsBtn"')+
+    MI('⚙️','Auto-backup ลงโฟลเดอร์','สำรองอัตโนมัติทุกครั้งที่แก้ (Chrome / Edge)','data-b="abBtn"')+
+    MI('🗑','ถังขยะ','กู้รายการ Tracker ที่ลบไป','data-b="trBtn"')+
+    '<div class="nv-ms">เชื่อมต่อ</div>'+
+    MI('☁','ตั้งค่า / ตรวจสอบ Cloud DB','ดูสถานะและทดสอบการเชื่อมต่อ','data-b="spBtn"')+
+    MI('🔔','ตั้งค่า LINE','แจ้งเตือนงานเลยกำหนดเข้ากลุ่ม LINE','data-b="lnBtn"')+
+    MI('📷','ส่งรูปหน้าจอเข้า LINE','ถ่ายหน้าที่เปิดอยู่แล้วส่งทันที','data-b="imgBtn"')+
+    '<div class="nv-ms">หน้าตา</div>'+
+    [['neo','🌌','Neo','มืด · แสงฟ้า'],['holo','🌈','Holo','สว่าง · กระจกสีรุ้ง'],['ember','🔥','Ember','มืด · แสงส้ม'],['classic','🎨','Classic','เรียบ · ปรับสีเองได้']].map(x=>MI(x[1],x[2],x[3],'data-th="'+x[0]+'"',{on:tn===x[0]})).join('')+
+    MI('🖌️','ปรับชุดสี (สำหรับธีม Classic)','','data-b="thBtn"')+
+    '<div class="nv-ms">ช่วยเหลือ</div>'+
+    MI('🧭','แผนที่เมนู / คู่มือ','แต่ละเมนูมีอะไร ใช้ตอนไหน','data-a="guide"')+
+    MI('💬','แถบคำอธิบายใต้เมนู',ctxOn()?'กำลังแสดง — กดเพื่อซ่อน':'ซ่อนอยู่ — กดเพื่อแสดง','data-a="ctx"')+
+    MI('👋','แสดงข้อความต้อนรับอีกครั้ง','','data-a="wel"');
+}
+function openMenu(){
+  const m=g('nvMenu'); buildMenu();
+  if(MOBILE()) m.style.top=(bar.getBoundingClientRect().bottom+6)+'px'; else m.style.top='';
+  m.hidden=false; g('nvMenuBtn').setAttribute('aria-expanded','true'); const f=m.querySelector('.nv-mi'); if(f) f.focus();
+}
+function closeMenu(){ const m=g('nvMenu'); if(!m||m.hidden) return; m.hidden=true; g('nvMenuBtn').setAttribute('aria-expanded','false'); }
+g('nvMenuBtn').addEventListener('click',e=>{ e.stopPropagation(); const m=g('nvMenu'); if(m.hidden) openMenu(); else closeMenu(); });
+g('nvMenu').addEventListener('click',e=>{
+  const b=e.target.closest('.nv-mi'); if(!b) return;
+  if(b.dataset.b){ const t=g(b.dataset.b); closeMenu(); if(t) setTimeout(()=>t.click(),30); }
+  else if(b.dataset.th){ setTheme(b.dataset.th); buildMenu(); }
+  else if(b.dataset.a==='guide'){ closeMenu(); openGuide(); }
+  else if(b.dataset.a==='ctx'){ LSset(KCTX,ctxOn()?'0':'1'); renderCtx(); buildMenu(); }
+  else if(b.dataset.a==='wel'){ try{ localStorage.removeItem(KSEEN); }catch(x){} wel.hidden=false; closeMenu(); window.scrollTo(0,0); }
+});
+document.addEventListener('click',e=>{ const m=g('nvMenu'); if(!m||m.hidden||!e.isTrusted) return;   // !isTrusted = คลิกจากโค้ด (เช่น setTheme สั่ง themeBtn.click()) ไม่ถือเป็นคลิกนอกเมนู
+  const inside=(e.composedPath?e.composedPath():[]).some(n=>n&&n.classList&&n.classList.contains('nv-mw')); if(!inside) closeMenu(); });
+g('nvMenu').addEventListener('keydown',e=>{
+  if(e.key!=='ArrowDown'&&e.key!=='ArrowUp') return; const items=[...g('nvMenu').querySelectorAll('.nv-mi')], i=items.indexOf(document.activeElement); e.preventDefault();
+  items[(i+(e.key==='ArrowDown'?1:-1)+items.length)%items.length].focus(); });
+const spEl=g('spStatus'); if(spEl) new MutationObserver(paintHealth).observe(spEl,{attributes:true,attributeFilter:['data-state'],childList:true,subtree:true,characterData:true});
+
+/* ================= ลดความรก: แถบเครื่องมือ Tracker + แถบเตือนซ้ำซ้อน ================= */
+function tidyTracker(){
+  const t=document.querySelector('#viewTracker .tools'); if(!t||t.dataset.nv) return; t.dataset.nv='1'; t.classList.add('nv-tl');
+  const tr=g('trBtn'); if(!tr) return;
+  const more=document.createElement('button'); more.type='button'; more.className='btn-g'; more.id='nvMore'; more.textContent='⋯ อื่น ๆ';
+  more.title='Restore · Auto-backup · LINE · ธีมสี — อยู่ในเมนู ⚙ เครื่องมือ ด้านบน';
+  more.addEventListener('click',e=>{ e.stopPropagation(); openMenu(); });
+  tr.parentNode.insertBefore(more,tr.nextSibling);
+}
+function syncBars(){          // แถบ “ยังไม่เคยสำรอง” ซ้ำกับแถบเตือน Cloud DB (ซึ่งมีปุ่ม Backup + วันที่สำรองล่าสุดอยู่แล้ว) → ซ่อนอันซ้ำ แต่ไม่ซ่อนแถบขอสิทธิ์โฟลเดอร์
+  const w=g('uxWarn'), k=g('bkBar'); if(!w||!k) return;
+  k.classList.toggle('nv-hide',w.style.display==='block'&&!k.querySelector('#grantBtn'));
+}
+tidyTracker(); setInterval(()=>{ tidyTracker(); syncBars(); },3000);
+
+/* ================= คู่มือ / แผนที่เมนู ================= */
+let gd=null, gdPrev=null;
+function closeGuide(){ if(gd){ gd.remove(); gd=null; document.body.style.overflow=''; if(gdPrev&&gdPrev.focus){ try{ gdPrev.focus(); }catch(e){} } } }
+function openGuide(focusId){
+  closeGuide(); closePal(); gdPrev=document.activeElement;
+  const kk=id=>'Alt+'+(ORDER.indexOf(id)+1);
+  const card=id=>{ const d=T[id]; return '<div class="nv-card" data-t="'+id+'"><h4><span style="font-size:22px">'+d.ic+'</span>'+E(d.n)+'<span class="nv-kbd">'+kk(id)+'</span></h4><div class="w">'+E(d.what)+'</div><div class="wn">🕘 '+E(d.when)+'</div><ul>'+d.has.map(x=>'<li>'+E(x)+'</li>').join('')+'</ul><button type="button" class="go" data-go="'+id+'">ไปที่ '+E(d.n)+' →</button></div>'; };
+  gd=document.createElement('div'); gd.className='nv-ov gd'; gd.setAttribute('role','dialog'); gd.setAttribute('aria-modal','true'); gd.setAttribute('aria-label','แผนที่เมนูและคู่มือ');
+  gd.innerHTML='<div class="nv-gdm"><div class="nv-gh"><div><h2>🧭 แผนที่เมนู — เริ่มตรงไหนดี?</h2><div class="sb">ระบบนี้รวมงาน QE Electronics ไว้ที่เดียว เมนูด้านบนแบ่งเป็น 3 กลุ่มตามลำดับการทำงาน: <b>ประจำวัน</b> → <b>ติดตามงาน</b> → <b>เป้าหมาย &amp; แผน</b></div></div><button type="button" class="nv-x" data-g="close" style="font-size:14px;padding:6px 12px">✕ ปิด</button></div>'+
+    '<div class="nv-sec">☀️ เช้านี้ทำอะไรบ้าง (3 ขั้นตอน)</div><div class="nv-steps">'+
+      '<div class="nv-step"><span class="n">1</span><div><b>เปิด ☀️ วันนี้</b><br>ดูว่ามีงานเลยกำหนดหรือครบวันนี้อะไรบ้าง ป้ายแดงบนแท็บบอกจำนวนให้</div></div>'+
+      '<div class="nv-step"><span class="n">2</span><div><b>เปิด 🗓️ ประชุม</b><br>ลงว่าใครเข้าประชุมไหน แล้วกด 📋 คัดลอกข้อความ Schedule ไปวางใน Teams</div></div>'+
+      '<div class="nv-step"><span class="n">3</span><div><b>เปิด 📝 Checklist</b><br>จดงานของวัน ติ๊ก O เมื่อเสร็จ — มีปัญหาใหม่ให้กด “→ Tracker”</div></div></div>'+
+    GROUPS.map(gr=>'<div class="nv-sec" style="margin-top:18px">'+E(gr.n.toUpperCase())+'</div><div class="nv-cards">'+gr.tabs.filter(id=>T[id]&&g(id)).map(card).join('')+'</div>').join('')+
+    '<div class="nv-sec" style="margin-top:18px">⌨ คีย์ลัด</div><div class="nv-keys">'+
+      '<div><span>ค้นหาเมนู / คำสั่งทั้งหมด</span><span class="nv-kbd">'+(isMac?'⌘K':'Ctrl+K')+' หรือ /</span></div>'+
+      '<div><span>สลับแท็บ (ตามลำดับที่เห็น)</span><span class="nv-kbd">Alt+1 … Alt+7</span></div>'+
+      '<div><span>เลื่อนระหว่างแท็บเมื่อโฟกัสเมนู</span><span class="nv-kbd">← →</span></div>'+
+      '<div><span>ปิดหน้าต่าง / เมนูที่เปิดอยู่</span><span class="nv-kbd">Esc</span></div>'+
+      '<div><span>ย้อนกลับการแก้ไขล่าสุด (หน้า Tracker)</span><span class="nv-kbd">Ctrl+Z</span></div>'+
+      '<div><span>Checklist: เพิ่มแถว · เยื้อง · เลื่อนช่อง</span><span class="nv-kbd">Enter · Tab · ↑ ↓</span></div></div>'+
+    '<div class="nv-note"><b>🔒 ข้อมูลเก็บที่ไหน</b><br>ข้อมูลทั้งหมดเก็บในเบราว์เซอร์นี้ และซิงก์ขึ้น Cloud DB (Supabase) เมื่อเชื่อมต่อได้ — ดูจุดสีที่ปุ่ม <b>⚙ เครื่องมือ</b>: เขียว = ปลอดภัย · ส้ม/แดง = ควรกด <b>💾 Backup ทั้งหมด</b> เก็บไฟล์ไว้</div>'+
+    '<div class="nv-act"><button type="button" class="nv-chip" data-g="search">🔍 ลองค้นหาเมนู</button><button type="button" class="nv-chip" data-g="close" style="background:var(--pri);color:var(--on-pri);border-color:var(--pri)">เข้าใจแล้ว เริ่มใช้งาน</button></div></div>';
+  document.body.appendChild(gd); document.body.style.overflow='hidden';
+  gd.addEventListener('mousedown',e=>{ if(e.target===gd) closeGuide(); });
+  gd.addEventListener('click',e=>{ const b=e.target.closest('[data-go],[data-g]'); if(!b) return;
+    if(b.dataset.go){ const id=b.dataset.go; closeGuide(); activate(id); }
+    else if(b.dataset.g==='close') closeGuide(); else if(b.dataset.g==='search'){ closeGuide(); openPal(); } });
+  if(LSget(KSEEN)!=='1') markSeen();
+  const hi=focusId&&gd.querySelector('.nv-card[data-t="'+focusId+'"]');
+  if(hi){ hi.classList.add('hi'); setTimeout(()=>{ try{ hi.scrollIntoView({block:'center',behavior:'smooth'}); }catch(e){} },80); }
+  const x=gd.querySelector('[data-g="close"]'); if(x) x.focus();
+}
+g('nvHelp').addEventListener('click',()=>openGuide());
+
+/* ================= ค้นหาเมนู / คำสั่ง (Ctrl+K) ================= */
+function items(){
+  const A=[];
+  ORDER.filter(id=>g(id)).forEach(id=>{ const d=T[id]; A.push({g:'ไปที่แท็บ',ic:d.ic,n:d.n,s:d.what,kw:d.n+' '+d.d+' '+(d.links||[]).map(l=>l.t).join(' '),run:()=>activate(id),tag:'Alt+'+(ORDER.indexOf(id)+1)}); });
+  ORDER.filter(id=>g(id)).forEach(id=>{ (T[id].links||[]).forEach(l=>{ A.push({g:'หน้าย่อย / ปุ่มลัด',ic:T[id].ic,n:l.t,s:'ใน '+T[id].n,kw:(l.kw||'')+' '+T[id].n,run:()=>runLink(id,l)}); }); });
+  const btn=(id,ic,n,s,kw)=>({g:'เครื่องมือ',ic:ic,n:n,s:s,kw:kw,run:()=>{ const b=g(id); if(b) b.click(); }});
+  A.push(btn('bkBtn','💾','Backup ทั้งหมด','ดาวน์โหลดไฟล์สำรองข้อมูล','backup สำรอง ไฟล์ json ดาวน์โหลด'));
+  A.push(btn('rsBtn','📂','Restore จากไฟล์','นำข้อมูลสำรองกลับเข้ามา','restore กู้ข้อมูล นำเข้า'));
+  A.push(btn('abBtn','⚙️','Auto-backup','สำรองอัตโนมัติลงโฟลเดอร์','auto backup อัตโนมัติ โฟลเดอร์'));
+  A.push(btn('trBtn','🗑','ถังขยะ','กู้รายการ Tracker ที่ลบ','ถังขยะ trash กู้คืน ลบ'));
+  A.push(btn('spBtn','☁','Cloud DB','ตั้งค่า / ตรวจสอบการเชื่อมต่อ','cloud db supabase ฐานข้อมูล ซิงก์ sync'));
+  A.push(btn('lnBtn','🔔','ตั้งค่า LINE','แจ้งเตือนเข้ากลุ่ม LINE','line ไลน์ แจ้งเตือน notify'));
+  A.push(btn('imgBtn','📷','ส่งรูปหน้าจอเข้า LINE','ถ่ายหน้าที่เปิดอยู่แล้วส่ง','รูป ภาพ หน้าจอ screenshot line'));
+  A.push(btn('thBtn','🖌️','ปรับชุดสี (Classic)','เลือกชุดสีสำเร็จรูปหรือกำหนดเอง','สี ธีม theme color'));
+  [['neo','🌌','Neo'],['holo','🌈','Holo'],['ember','🔥','Ember'],['classic','🎨','Classic']].forEach(x=>A.push({g:'หน้าตา',ic:x[1],n:'ธีม '+x[2],s:themeNow()===x[0]?'กำลังใช้อยู่':'สลับธีม',kw:'ธีม theme สี มืด สว่าง dark light '+x[2],run:()=>setTheme(x[0])}));
+  A.push({g:'ช่วยเหลือ',ic:'🧭',n:'แผนที่เมนู / คู่มือ',s:'แต่ละเมนูมีอะไร ใช้ตอนไหน',kw:'คู่มือ ช่วยเหลือ help guide วิธีใช้ แผนที่',run:()=>openGuide()});
+  return A;
+}
+let pal=null, pItems=[], pSel=0, pList=[], pPrev=null;
+function closePal(){ if(pal){ pal.remove(); pal=null; if(pPrev&&pPrev.focus){ try{ pPrev.focus(); }catch(e){} } } }
+function score(it,tokens){
+  const h=(it.n+' '+(it.s||'')+' '+(it.kw||'')).toLowerCase(), n=it.n.toLowerCase(); let sc=0;
+  for(const t of tokens){ const i=h.indexOf(t); if(i<0) return -1; sc+=(n.indexOf(t)===0?30:n.indexOf(t)>0?20:10)-Math.min(i,9)*.1; }
+  return sc;
+}
+function palRender(q){
+  const tokens=String(q||'').toLowerCase().split(/\s+/).filter(Boolean);
+  let list;
+  if(!tokens.length) list=pItems.filter(x=>x.g==='ไปที่แท็บ'||x.g==='เครื่องมือ'&&/Backup|Cloud|LINE/.test(x.n)).slice(0,12);
+  else list=pItems.map(x=>({x:x,s:score(x,tokens)})).filter(r=>r.s>=0).sort((a,b)=>b.s-a.s).slice(0,40).map(r=>r.x);
+  pList=list; pSel=0; const box=g('nvPl');
+  if(!list.length){ box.innerHTML='<div class="nv-pe">ไม่พบ “'+E(q)+'” — ลองคำสั้น ๆ เช่น <b>ลา</b> · <b>ot</b> · <b>pcr</b> · <b>backup</b> · <b>ประชุม</b></div>'; return; }
+  let h='', last='';
+  list.forEach((x,i)=>{ if(x.g!==last){ last=x.g; h+='<div class="nv-pg">'+E(x.g)+'</div>'; }
+    h+='<div class="nv-pr'+(i===0?' on':'')+'" role="option" data-i="'+i+'" aria-selected="'+(i===0)+'"><span class="p-ic">'+x.ic+'</span><div><b>'+E(x.n)+'</b><small>'+E(x.s||'')+'</small></div>'+(x.tag?'<em class="nv-kbd">'+E(x.tag)+'</em>':'')+'</div>'; });
+  box.innerHTML=h;
+}
+function palSel(i){ pSel=(i+pList.length)%Math.max(1,pList.length); const rows=g('nvPl').querySelectorAll('.nv-pr'); rows.forEach(r=>{ const on=+r.dataset.i===pSel; r.classList.toggle('on',on); r.setAttribute('aria-selected',on); if(on) r.scrollIntoView({block:'nearest'}); }); }
+function palRun(i){ const x=pList[i]; if(!x) return; closePal(); closeMenu(); setTimeout(()=>{ try{ x.run(); }catch(e){ console.error(e); } },40); }
+function openPal(){
+  closePal(); closeGuide(); closeMenu(); pPrev=document.activeElement; pItems=items();
+  pal=document.createElement('div'); pal.className='nv-ov pal'; pal.setAttribute('role','dialog'); pal.setAttribute('aria-modal','true'); pal.setAttribute('aria-label','ค้นหาเมนูและคำสั่ง');
+  pal.innerHTML='<div class="nv-pal"><div class="nv-pi"><span aria-hidden="true">🔍</span><input id="nvPq" placeholder="ค้นหา เช่น แผนลา · ot · pcr · backup · ประชุม · q-patrol" autocomplete="off" aria-label="พิมพ์คำค้นหา"><kbd>Esc</kbd></div><div class="nv-pl" id="nvPl" role="listbox"></div><div class="nv-pf"><span>↑ ↓ เลือก</span><span>Enter เปิด</span><span>Esc ปิด</span><span style="margin-left:auto">พิมพ์ชื่อเมนู ปุ่ม หรือสิ่งที่อยากทำ</span></div></div>';
+  document.body.appendChild(pal);
+  const q=g('nvPq'); palRender('');
+  q.addEventListener('input',()=>palRender(q.value));
+  q.addEventListener('keydown',e=>{
+    if(e.key==='ArrowDown'){ e.preventDefault(); palSel(pSel+1); } else if(e.key==='ArrowUp'){ e.preventDefault(); palSel(pSel-1); }
+    else if(e.key==='Enter'){ e.preventDefault(); palRun(pSel); } });
+  pal.addEventListener('mousedown',e=>{ if(e.target===pal) closePal(); });
+  g('nvPl').addEventListener('mousemove',e=>{ const r=e.target.closest('.nv-pr'); if(r&&+r.dataset.i!==pSel) palSel(+r.dataset.i); });
+  g('nvPl').addEventListener('click',e=>{ const r=e.target.closest('.nv-pr'); if(r) palRun(+r.dataset.i); });
+  setTimeout(()=>q.focus(),10);
+}
+g('nvSearch').addEventListener('click',openPal);
+
+/* ================= คีย์ลัด ================= */
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){ if(pal){ e.stopPropagation(); closePal(); return; } if(gd){ e.stopPropagation(); closeGuide(); return; } const m=g('nvMenu'); if(m&&!m.hidden){ e.stopPropagation(); closeMenu(); const b=g('nvMenuBtn'); if(b) b.focus(); return; } }
+  if((e.ctrlKey||e.metaKey)&&!e.altKey&&e.key.toLowerCase()==='k'){ e.preventDefault(); if(pal) closePal(); else openPal(); return; }
+  if(e.altKey&&!e.ctrlKey&&!e.metaKey&&/^Digit[1-7]$/.test(e.code)){ if(g('nfOv')) return; const id=ORDER[+e.code.slice(5)-1]; if(id&&g(id)){ e.preventDefault(); activate(id); } return; }
+  if(e.key==='/'&&!e.ctrlKey&&!e.altKey&&!e.metaKey&&!typing(e)&&!pal&&!gd){ e.preventDefault(); openPal(); }
+},true);
+
+/* ================= ข้อมูลประชุมรวมในไฟล์ Backup (ปุ่ม 💾 Backup ทั้งหมด) ================= */
+(function(){
+  const KD='qe_mtg_d_', KC='qe_mtg_cfg';
+  function snap(){
+    const days={}; let n=0;
+    for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k&&k.indexOf(KD)===0){ try{ days[k.slice(KD.length)]=JSON.parse(localStorage.getItem(k)); n++; }catch(e){} } }
+    let cfg=null; try{ cfg=JSON.parse(localStorage.getItem(KC)||'null'); }catch(e){}
+    return (n||cfg)?{v:1,cfg:cfg,days:days}:null;
+  }
+  try{
+    if(typeof payloadText==='function'){
+      const orig=payloadText;
+      payloadText=function(){ const txt=orig.apply(this,arguments); try{ const o=JSON.parse(txt), m=snap(); if(m) o.meetings=m; return JSON.stringify(o,null,2); }catch(e){ return txt; } };
+    }
+  }catch(e){ console.warn('[nav] backup patch skipped',e); }
+  const rf=g('rsFile');
+  if(rf) rf.addEventListener('change',e=>{
+    const f=e.target.files&&e.target.files[0]; if(!f) return;
+    const fr=new FileReader();
+    fr.onload=()=>{ try{
+      const p=JSON.parse(fr.result), m=p&&p.meetings; if(!m||!m.days) return;
+      const ds=Object.keys(m.days).filter(k=>/^\d{4}-\d{2}-\d{2}$/.test(k)&&Array.isArray(m.days[k])&&m.days[k].length); if(!ds.length) return;
+      setTimeout(()=>{
+        if(!window.confirm('ไฟล์สำรองนี้มีข้อมูลประชุม '+ds.length+' วัน\n\nนำเข้ากลับด้วยไหม? (วันที่ซ้ำกับในเครื่องจะถูกแทนที่)')) return;
+        ds.forEach(k=>{ try{ localStorage.setItem(KD+k,JSON.stringify(m.days[k])); }catch(x){} });
+        if(m.cfg&&Array.isArray(m.cfg.people)&&m.cfg.people.length){ try{ localStorage.setItem(KC,JSON.stringify(m.cfg)); }catch(x){} }
+        say('✅ นำเข้าข้อมูลประชุม '+ds.length+' วันแล้ว'); refreshBadges();
+      },700);
+    }catch(err){} };
+    fr.readAsText(f);
+  },true);
+})();
+
+/* ================= เริ่มต้น ================= */
+syncActive(); refreshBadges(); paintHealth();
+setTimeout(()=>{ syncActive(); refreshBadges(); },1500);
+window.__NAV={open:openGuide,palette:openPal,refresh:refreshBadges,activate:activate,items:items};
 })();
 
 </script>
