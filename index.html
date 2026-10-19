@@ -2256,7 +2256,7 @@ window.__SEED_V12={"version":12,"source":"snapshot v9 (16 ต.ค. 2569)","track
      • เครื่องใหม่: ไม่ส่งข้อมูลตั้งต้น/ของเก่าในเครื่องขึ้นไปทับ Cloud เงียบ ๆ
      • PIN เก็บเป็นแฮช ตรวจที่หน้าเว็บ — ไม่ใช่ความปลอดภัยระดับเซิร์ฟเวอร์ */
   const WHOK='ux_me', MODEK='ux_savemode', DEVK='ux_dev_id', RPL='ux_rp_list', PRUNEK='ux_prune_day', SNAPK='ux_snap_day', ACFGC='ux_cfg_cache';
-  const PRES='countermeasure-presence:', AUD='countermeasure-audit:', AUTHP='countermeasure-auth:', SNAP='countermeasure-snap:', ACFGK=AUTHP+'~cfg', APPVER='29';
+  const PRES='countermeasure-presence:', AUD='countermeasure-audit:', AUTHP='countermeasure-auth:', SNAP='countermeasure-snap:', ACFGK=AUTHP+'~cfg', APPVER='30';
   var clockOff=0, lastOK=0, newDev=null;
   const lsGet=k=>{ try{ return localStorage.getItem(k); }catch(e){ return null; } };
   const lsSet=(k,v)=>{ try{ localStorage.setItem(k,v); return true; }catch(e){ return false; } };
@@ -8248,7 +8248,7 @@ function renderIns(){
     `<button type="button" class="nf-ichip nf-iadd" data-a="insadd" title="เพิ่ม${M.one}ใหม่ — ได้แผนติดตามชุดใหม่ครบทุกหัวข้อ">${M.add}</button></div>`;
   const x=L.find(i=>i.id===cur);
   h+=`<div class="nf-insbar"><span>กำลังดู <b>${E(cat)} ▸ ${E(insName(cat,x,L))}</b></span>${x.ref?`<span title="${E(refParts(x.ref).join(', '))}">· ${M.refS}: ${E(clipS(refParts(x.ref).join(', '),70))}</span>`:''}<span class="nf-grow"></span>`+
-    `<button type="button" class="nf-b" data-a="insedit">✎ แก้ไขชื่อ / Part No.</button><button type="button" class="nf-b" data-a="insdel" ${L.length<2?'disabled title="ต้องเหลืออย่างน้อย 1 ชุด"':''}>🗑 ลบ${M.one}นี้</button></div>`;
+    `<button type="button" class="nf-b" data-a="tplrest" title="เติมหัวข้อมาตรฐาน (Default list) ที่หายไปกลับเข้าชุดนี้ — รายการที่มีอยู่แล้วไม่ถูกแตะ">♻ เรียก Default list</button><button type="button" class="nf-b" data-a="insedit">✎ แก้ไขชื่อ / Part No.</button><button type="button" class="nf-b" data-a="insdel" ${L.length<2?'disabled title="ต้องเหลืออย่างน้อย 1 ชุด"':''}>🗑 ลบ${M.one}นี้</button></div>`;
   el.innerHTML=h;
 }
 function visible(){
@@ -8276,7 +8276,7 @@ function rowHtml(c,it){
 function renderTable(){
   const el=Q('#nfTbl'); if(!el) return; const rows=visible();
   el.innerHTML=`<div class="nf-tw"><table class="nf-t"><thead><tr><th>No.</th><th style="text-align:left">Follow-up item</th><th>Format</th><th>Stage</th><th>Owner</th><th>Plan</th><th>Actual</th><th>Status</th><th>Rev.</th><th>Tracker</th><th></th></tr></thead><tbody>`+
-    (rows.length?rows.map(it=>rowHtml(state.tab,it)).join(''):`<tr><td colspan="11" class="nf-empty">ไม่พบรายการ</td></tr>`)+`</tbody></table></div>`;
+    (rows.length?rows.map(it=>rowHtml(state.tab,it)).join(''):`<tr><td colspan="11" class="nf-empty">${catItems(state.tab).length?'ไม่พบรายการ (ลองล้างตัวกรอง/คำค้น)':`ยังไม่มีหัวข้อในชุดนี้ — <button type="button" class="nf-b" data-a="tplrest" style="margin-left:6px">♻ เรียก Default list (${TPL[state.tab].length} หัวข้อ)</button>`}</td></tr>`)+`</tbody></table></div>`;
 }
 function renderTools(){
   const el=Q('#nfTools'); if(!el) return;
@@ -8475,6 +8475,23 @@ function editIns(cat,id,name,ref){
   const S=readS(), P=ensureProj(S,state.name), x=P.ins[cat].find(i=>i.id===id); if(!x) return;
   x.name=name; x.ref=ref; afterInsChange(P,cat); writeS(S); renderAll(); toast('✅ บันทึกชื่อ / Part No. แล้ว');
 }
+function tplRestore(){
+  const cat=state.tab, id=curIns(cat), key=t=>String(t.no).trim()+'|'+String(t.task).trim().toLowerCase();
+  const have=new Set(W.cats[cat].filter(t=>t.ins===id).map(key)), ids=new Set(W.cats[cat].map(t=>t.id));
+  const S0=readS(), miss=mkItems(cat,S0.newproj.pv.codes||[],id).filter(t=>!have.has(key(t)));
+  if(!miss.length){ toast('✓ หัวข้อ Default ของ '+cat+' ครบแล้ว ('+TPL[cat].length+' หัวข้อ) — ไม่มีอะไรต้องเติม'); return; }
+  const go=()=>{
+    const S=readS(), P=ensureProj(S,state.name), base=W.cats[cat].reduce((m,t)=>Math.max(m,+t.order||0),-1)+1;
+    miss.forEach((t,i)=>{ while(ids.has(t.id)) t.id+='r'; ids.add(t.id); t.order=base+TPL[cat].findIndex(x=>x[0]===t.no&&x[1]===t.task); });
+    P.cats[cat].push(...clone(miss)); P._seeded=true; afterInsChange(P,cat); writeS(S);
+    B.cats[cat].push(...clone(miss)); W.cats[cat].push(...clone(miss)); state.search=''; state.status='all'; state.stage='all';
+    renderAll(true); toast('♻ เติมหัวข้อ Default กลับ '+miss.length+' หัวข้อ ('+cat+')');
+  };
+  const n=W.cats[cat].filter(t=>t.ins===id).length;
+  openMo(`<h3>♻ เรียก Default list — ${E(cat)}</h3><div class="nf-sub">ชุดนี้มี <b>${n}</b> หัวข้อ · Default มี <b>${TPL[cat].length}</b> หัวข้อ<br>จะเติมกลับ <b>${miss.length}</b> หัวข้อที่หายไป (ยังว่าง: Owner / Plan / Actual)<br>หัวข้อที่มีอยู่แล้วและข้อมูลที่กรอกไว้ <b>ไม่ถูกแตะ</b></div><div class="nf-sub" style="max-height:180px;overflow:auto;font-size:12px">${miss.map(t=>E(t.no+' '+t.task)).join('<br>')}</div><div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px"><button type="button" class="nf-b" data-x="no">ยกเลิก</button><button type="button" class="nf-b" data-x="ok" style="background:var(--pri);color:var(--on-pri);border-color:var(--pri)">เติม ${miss.length} หัวข้อ</button></div>`,m=>{
+    m.querySelector('[data-x="no"]').onclick=closeMo; m.querySelector('[data-x="ok"]').onclick=()=>{ closeMo(); go(); };
+  });
+}
 function insDel(){
   const cat=state.tab, M=MULTI[cat]; if(!M) return; const L=W.ins[cat], cur=L.find(x=>x.id===curIns(cat)); if(L.length<2){ toast('ต้องเหลืออย่างน้อย 1 ชุด',true); return; }
   const its=W.cats[cat].filter(t=>t.ins===cur.id), linked=its.filter(trackerLinked).length;
@@ -8600,6 +8617,7 @@ function onClick(e){
   else if(a==='insadd') insModal('add');
   else if(a==='insedit') insModal('edit');
   else if(a==='insdel') insDel();
+  else if(a==='tplrest') tplRestore();
   else if(a==='add') addItem();
   else if(a==='bulkown') bulkOwner();
   else if(a==='done'){ const r=wItem(b.dataset.id); if(r){ r.it.status='done'; if(!r.it.actual) r.it.actual=todayISO(); renderAll(); } }
