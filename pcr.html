@@ -203,7 +203,7 @@ window.PCR_DEFAULTS={url:'https://avqprchbdmacbomptxte.supabase.co/rest/v1/',key
    ===================================================================== */
 (function(){
 'use strict';
-const APP_VER='1.0';
+const APP_VER='2.0-PCR-CONFIRMATION';
 /* ---------- ค่าตั้งต้น: ใส่ก่อนอัปโหลดขึ้น GitHub เพื่อให้ทุกคนใช้ได้ทันที ---------- */
 const DEFAULTS=window.PCR_DEFAULTS||{url:'',key:'',table:'pcr_records',names:['Earn','Natcha','Mana','Benz']};
 
@@ -229,7 +229,8 @@ const enc=encodeURIComponent;
 const pad=n=>String(n).padStart(2,'0');
 const todayISO=()=>{const d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());};
 const isISO=s=>/^\d{4}-\d{2}-\d{2}$/.test(String(s||''));
-const fmtD=s=>isISO(s)?(+s.slice(8))+'-'+MON[+s.slice(5,7)-1]+'-'+s.slice(2,4):'';
+const isTBC=s=>/^t\.?b\.?c\.?$/i.test(String(s||'').trim());
+const fmtD=s=>{s=String(s||'').trim();if(!s)return '';if(isTBC(s))return 'T.B.C.';if(isISO(s))return (+s.slice(8))+'-'+MON[+s.slice(5,7)-1]+'-'+s.slice(2,4);let d=new Date(s);return Number.isNaN(d.getTime())?s:d.getDate()+'-'+MON[d.getMonth()]+'-'+String(d.getFullYear()).slice(-2);};
 const dnum=s=>{const a=String(s).split('-').map(Number);return Math.round(Date.UTC(a[0],a[1]-1,a[2])/864e5);};
 const diffDays=(s)=>isISO(s)?dnum(s)-dnum(todayISO()):null;
 const clip=(s,n)=>{s=String(s||'');return s.length>n?s.slice(0,n-1)+'…':s;};
@@ -282,7 +283,20 @@ function newPayload(o){
     meetPlan:[],meetDate:'',trialStart:'',prepCheckDate:'',custPcrDate:'',trialOther:'',
     peValid:'',peFail:'',qaValid:'',qaFail:'',fcDate:'',firstLotInform:'',firstLotNo:'',actualChange:'',
     qsDate:'',dmgmDate:'',dmgmJudge:'',finalDue:'',allActDue:'',momByQe:false,regDate:'',sign:{},
-    formLink:o.formLink||'',links:[],prep:{},risk:[],actions:[],mom:[],log:[],v:1};
+    remainingAction:'',closeOverrideReason:'',lastChecklistReview:'',
+    formLink:o.formLink||'',links:[],prep:{},risk:[],actions:[],mom:[],log:[],v:2};
+}
+
+function normalizePayload(raw){
+  const p=Object.assign(newPayload({}),raw||{});
+  p.cats=Array.isArray(p.cats)?p.cats:[]; p.review=p.review&&typeof p.review==='object'?p.review:{};
+  p.sign=p.sign&&typeof p.sign==='object'?p.sign:{}; p.prep=p.prep&&typeof p.prep==='object'?p.prep:{};
+  p.links=Array.isArray(p.links)?p.links:[]; p.risk=Array.isArray(p.risk)?p.risk:[];
+  p.actions=Array.isArray(p.actions)?p.actions:[]; p.mom=Array.isArray(p.mom)?p.mom:[]; p.log=Array.isArray(p.log)?p.log:[];
+  Object.keys(p.prep).forEach(k=>p.prep[k]=Object.assign({doc:'',url:'',pic:'',plan:'',actual:'',status:'',qs:'',judgement:'',remark:'',rev:0,hist:[]},p.prep[k]||{}));
+  p.actions=p.actions.map(a=>Object.assign({task:'',countermeasure:'',dept:'',resp:'',due:'',originalDue:'',status:'',evidenceUrl:'',result:'',note:'',closeDate:'',rev:0,hist:[]},a||{}));
+  p.mom=p.mom.map(m=>{m=Object.assign({subject:'',date:'',time:'',place:'',attend:'',cc:'',agenda:'',judgement:'',nextMeeting:'',link:'',updatedBy:'',items:[]},m||{});m.items=(Array.isArray(m.items)?m.items:[]).map(i=>Object.assign({kadai:'',cm:'',resp:'',dept:'',due:'',originalDue:'',status:'On-plan',result:'',evidenceUrl:'',rev:0,hist:[]},i||{}));return m;});
+  return p;
 }
 const RISK_G=[['รายละเอียดการเปลี่ยนแปลง (1)–(7)',[['line','(1) Line No.'],['proc','(2) Process Name'],['point','(3) หัวข้อการเปลี่ยนแปลง'],['type','(4) New / Change','sel',['','New','Change']],['sc','(5) SC point'],['detail','(6) รายละเอียดการเปลี่ยนแปลง','ta'],['purpose','(7) วัตถุประสงค์','ta']]],
   ['ผลกระทบที่อาจเกิดขึ้น (8)–(10)',[['effect','(8) หัวข้อปัญหาที่อาจเกิดขึ้น','ta'],['ppc','(9) หัวข้อทวนสอบ PPC','ta'],['fmea','(10) หัวข้อทวนสอบ FMEA','ta']]],
@@ -307,10 +321,17 @@ function openStats(p){
   return {pd,pt,ad,kd};
 }
 function buildSummary(p){
-  const o=openStats(p), pdOut={},ptOut={};
-  Object.keys(o.pd).forEach(k=>{ if(o.pd[k].length) pdOut[k]=o.pd[k].slice().sort(); });
-  Object.keys(o.pt).forEach(k=>{ if(o.pt[k][0]) ptOut[k]=o.pt[k]; });
-  return {n:p.pcrNo,d:clip(p.detail,160),l:p.lineNo,o:p.owner,dp:p.issueDept,q:p.qe,st:p.stage|0,as:p.as||'active',sop:p.sop||'',fd:p.finalDue||'',aj:p.dmgmJudge||'',cats:(p.cats||[]).map(Number),form:!!(p.formLink&&p.formLink.trim()),pd:pdOut,pt:ptOut,ad:o.ad.slice().sort(),kd:o.kd.slice().sort()};
+  p=normalizePayload(p); const o=openStats(p),pdOut={},ptOut={};
+  Object.keys(o.pd).forEach(k=>{if(o.pd[k].length)pdOut[k]=o.pd[k].slice().sort();});
+  Object.keys(o.pt).forEach(k=>{if(o.pt[k][0])ptOut[k]=o.pt[k];});
+  const ap=applicable(p).filter(x=>x.d.status!=='NA'), completed=ap.filter(x=>x.d.status==='O').length;
+  const overdue=ap.filter(x=>isOpen(x.d.status)&&isISO(x.d.plan)&&diffDays(x.d.plan)<0).length;
+  const noPlanN=ap.filter(x=>isOpen(x.d.status)&&!x.d.plan).length;
+  const openActions=(p.actions||[]).filter(a=>isOpen(a.status));
+  const overdueActions=openActions.filter(a=>isISO(a.due)&&diffDays(a.due)<0).length;
+  const momItems=(p.mom||[]).flatMap(m=>m.items||[]),openMom=momItems.filter(i=>i.status!=='Done');
+  const overdueMom=openMom.filter(i=>isISO(i.due)&&diffDays(i.due)<0).length;
+  return {n:p.pcrNo,d:clip(p.detail,160),l:p.lineNo,o:p.owner,dp:p.issueDept,q:p.qe,st:p.stage|0,as:p.as||'active',sop:p.sop||'',qs:p.qsDate||'',da:p.dmgmDate||'',fd:p.finalDue||'',aad:p.allActDue||'',aj:p.dmgmJudge||'',ra:p.remainingAction||'',reg:p.regDate||'',momQ:!!p.momByQe,cats:(p.cats||[]).map(Number),form:!!(p.formLink&&p.formLink.trim()),pd:pdOut,pt:ptOut,ad:o.ad.slice().sort(),kd:o.kd.slice().sort(),checkTotal:ap.length,checkDone:completed,checkPending:Math.max(0,ap.length-completed),checkOverdue:overdue,checkNoPlan:noPlanN,checkPct:ap.length?Math.round(completed*100/ap.length):0,openAction:openActions.length,overdueAction:overdueActions,momCount:(p.mom||[]).length,openMom:openMom.length,overdueMom:overdueMom};
 }
 function allDates(s){
   const a=[]; Object.values(s.pd||{}).forEach(x=>a.push(...x)); a.push(...(s.ad||[]),...(s.kd||[]));
@@ -319,13 +340,16 @@ function allDates(s){
 function nextDue(s){const d=allDates(s).filter(isISO).sort();return d[0]||'';}
 function noPlan(s){let n=0;Object.values(s.pd||{}).forEach(x=>x.forEach(v=>{if(!v)n++;}));return n;}
 function health(s){
-  if(s.as==='cancel') return {k:'cancel',t:'ยกเลิก',i:'✕',sev:9};
-  if(s.as==='hold') return {k:'hold',t:'พักไว้',i:'⏸',sev:8};
-  if((s.st|0)>=6) return {k:'done',t:'ปิดแล้ว',i:'✓',sev:7};
-  const ds=allDates(s).filter(isISO).map(diffDays); const late=ds.filter(x=>x<0).length||s.aj==='Not pass';
-  if(late) return {k:'late',t:'ล่าช้า',i:'⚠',sev:0,n:ds.filter(x=>x<0).length};
-  if(ds.some(x=>x<=7)) return {k:'soon',t:'ใกล้ครบ ≤7 วัน',i:'⏱',sev:1};
-  return {k:'ok',t:'ตามแผน',i:'●',sev:2};
+  if(s.as==='cancel')return {k:'cancel',t:'Cancelled / ยกเลิก',i:'✕',sev:9};
+  if(s.as==='hold')return {k:'hold',t:'Hold / พักไว้',i:'⏸',sev:8};
+  if((s.st|0)>=6)return {k:'done',t:'Closed / ปิดแล้ว',i:'✓',sev:7};
+  if(s.aj==='Not pass')return {k:'late',t:'Not pass',i:'✕',sev:0};
+  const ds=allDates(s).filter(isISO).map(diffDays);
+  if(ds.some(x=>x<0))return {k:'late',t:'Overdue / ล่าช้า',i:'⚠',sev:0,n:ds.filter(x=>x<0).length};
+  if(ds.some(x=>x<=7))return {k:'soon',t:'Due soon ≤7 วัน',i:'⏱',sev:1};
+  if(s.aj==='Pass with condition')return {k:'soon',t:'Pass with condition',i:'△',sev:2};
+  if(s.aj==='Pass')return {k:'done',t:'Pass',i:'✓',sev:3};
+  return {k:'ok',t:'On plan / ตามแผน',i:'●',sev:4};
 }
 const tagHtml=h=>'<span class="tag '+h.k+'">'+h.i+' '+h.t+'</span>';
 function pendChips(s,only){
@@ -422,7 +446,7 @@ function renderDash(){
   const stc=STAGES.map((n,i)=>all.filter(r=>(r.summary||{}).st===i&&(r.summary||{}).as!=='cancel').length);
   const list=filtered();
   const kb=(k,cls,n,t)=>'<button class="kpi '+cls+(ui.health===k?' on':'')+'" data-hf="'+k+'"><b>'+n+'</b><span>'+t+'</span></button>';
-  let h='<h1>Dashboard · PCR In-house</h1><div class="sub" style="margin-bottom:12px">'+act.length+' PCR ที่ยังดำเนินการ · อัปเดตจากข้อมูลล่าสุดที่โหลด · คลิกการ์ดเพื่อกรอง คลิกแถวเพื่อเปิดรายละเอียด</div>';
+  let h='<h1>PCR In-house Process Confirmation</h1><div class="sub"><b>PCR Process Audit &amp; Approval Status</b> · Product group: Electronics part</div><div class="sub" style="margin-bottom:12px">'+act.length+' PCR ที่ยังดำเนินการ · อัปเดตจากข้อมูลล่าสุดที่โหลด · คลิกการ์ดเพื่อกรอง คลิกแถวเพื่อเปิดรายละเอียด</div>';
   h+='<div class="kpis"><button class="kpi'+(ui.health===''?' on':'')+'" data-hf=""><b>'+all.length+'</b><span>PCR ทั้งหมด</span></button>'+kb('late','late',cnt.late,'⚠ ล่าช้า')+kb('soon','soon',cnt.soon,'⏱ ใกล้ครบ ≤7 วัน')+kb('nodoc','',cnt.nodoc,'📎 ยังไม่มี F-QA-018')+kb('noplan','',all.filter(r=>noPlan(r.summary||{})>0).length,'📅 มีเอกสารที่ยังไม่ระบุ Plan')+kb('done','ok',cnt.done,'✓ ปิดแล้ว')+'</div>';
   h+='<div class="card"><h2>ค้างตามหน่วยงาน (เอกสาร/Checklist ที่ยังไม่เสร็จ)</h2><div class="dm">'+dmat.map(d=>'<button data-df="'+d.k+'" class="'+(ui.dept===d.k?'on':'')+'" title="กรอง PCR ที่ '+esc(DEPT_FULL[d.k])+' ยังค้าง"><b>'+d.k+'</b><div class="n'+(d.over?' late':'')+'">'+d.open+'</div><small>ค้าง '+d.pc+' PCR'+(d.over?' · <span style="color:var(--dang);font-weight:700">⚠ เลยกำหนด '+d.over+'</span>':'')+'</small></button>').join('')+'</div></div>';
   h+='<div class="card"><h2>ขั้นตอนของ PCR</h2><div class="chips"><button class="chip'+(ui.stage===''?' on':'')+'" data-sf="">ทั้งหมด '+all.filter(r=>(r.summary||{}).as!=='cancel').length+'</button>'+STAGES.map((n,i)=>'<button class="chip'+(ui.stage===String(i)?' on':'')+'" data-sf="'+i+'">'+(i+1)+'. '+esc(n)+' <b>'+stc[i]+'</b></button>').join('')+'</div></div>';
@@ -472,7 +496,7 @@ async function route(){
   if(!m){ cur=null; const ap=$('app'); ap.onclick=ap.oninput=ap.onchange=null; renderChrome(); renderDash(); window.scrollTo(0,0); return; }
   const id=decodeURIComponent(m[1]); $('app').innerHTML='<div class="empty"><b>กำลังเปิด PCR…</b></div>';
   try{ const r=await Store.get(id); if(!r){ cur=null; $('app').innerHTML='<div class="card empty"><b>ไม่พบ PCR “'+esc(id)+'”</b>อาจถูกพิมพ์ผิด หรือยังไม่ได้บันทึก<br><br><a class="btn" href="#/">← กลับ Dashboard</a></div>'; return; }
-    const p=Object.assign(newPayload({}),r.payload||{}); cur={id:r.id,rev:r.rev,archived:!!r.archived,base:clone(p),p,dirty:false,tab:m[2]||'form',fAll:false,fDept:''}; renderDetail(); window.scrollTo(0,0);
+    const p=normalizePayload(r.payload||{}); cur={id:r.id,rev:r.rev,archived:!!r.archived,base:clone(p),p,dirty:false,tab:m[2]||'form',fAll:false,fDept:''}; renderDetail(); window.scrollTo(0,0);
   }catch(e){ cur=null; $('app').innerHTML='<div class="banner err"><span class="grow">⚠ เปิด PCR ไม่ได้: '+esc(friendly(e))+'</span><a class="btn s" href="#/">← กลับ</a></div>'; }
 }
 
@@ -525,7 +549,7 @@ function tForm(){
   h+=sec('D. การประชุม & การทดลอง','<div class="lb" style="font-weight:700;font-size:12px;color:var(--mut);margin-bottom:4px">Meeting plan (หน่วยงานที่เข้าร่วม)</div><div class="chips" style="margin-bottom:10px">'+MEET_DEPTS.map(k=>'<label class="chk"><input type="checkbox" data-meet="'+esc(k)+'"'+((p.meetPlan||[]).includes(k)?' checked':'')+'> '+esc(k)+'</label>').join(' &nbsp; ')+'</div><div class="grid">'+fld('meetDate','Meeting date',{t:'date'})+fld('trialStart','Trial start date (LVPT/HVPT)',{t:'date'})+fld('prepCheckDate','ตรวจ Process change preparation (หน้า 2) วันที่',{t:'date'})+fld('custPcrDate','Customer PCR approve วันที่',{t:'date'})+fld('trialOther','อื่น ๆ (Other)',{w:'w2'})+'</div>');
   h+=sec('E. Validation & Implement','<div class="grid">'+fld('peValid','PE · Efficiency (Capacity/Capability/IMDS)',{t:'sel',opts:['','Passed','Failed']})+fld('peFail','PE · Failed item',{w:'w2'})+fld('qaValid','QA · Quality (HVPT result)',{t:'sel',opts:['','Passed','Failed']})+fld('qaFail','QA · Failed items',{w:'w2'})+fld('fcDate','PC · Forecast to change date',{t:'date'})+fld('firstLotInform','Inform first lot to customer',{t:'sel',opts:[['','—'],['yes','Yes'],['no','No']]})+fld('firstLotNo','First Lot No.')+fld('actualChange','Actual change date',{t:'date'})+'</div>');
   const sg=SIGN.map(k=>'<tr><td><b>'+k+'</b></td><td><label class="chk"><input type="checkbox" data-p="sign|'+k+'|issued"'+((p.sign[k]||{}).issued?' checked':'')+'> Issued</label></td><td><label class="chk"><input type="checkbox" data-p="sign|'+k+'|approved"'+((p.sign[k]||{}).approved?' checked':'')+'> Approved</label></td></tr>').join('')+'<tr><td><b>QS</b></td><td colspan="2"><label class="chk"><input type="checkbox" data-p="sign|QS|checked"'+((p.sign.QS||{}).checked?' checked':'')+'> Checked</label></td></tr><tr><td><b>PCR center</b></td><td colspan="2"><label class="chk"><input type="checkbox" data-p="sign|CENTER|checked"'+((p.sign.CENTER||{}).checked?' checked':'')+'> Checked</label></td></tr>';
-  h+=sec('F. Audit & Approval (ตามตาราง PCR in-house process audit & Approval status)','<div class="grid">'+fld('qsDate','QS-QE & Core team cross check the document date',{t:'date',w:'w2'})+fld('dmgmDate','DM-GM Process confirmation (วันที่ audit)',{t:'date',w:'w2'})+fld('dmgmJudge','Judgement',{t:'sel',opts:[['','—'],['Pass','Pass'],['Pass with condition','Pass with condition'],['Not pass','Not pass']]})+fld('finalDue','Final due date of PCR Part approve',{t:'date'})+fld('allActDue','Due date of all action for PCR sign',{t:'date'})+fld('regDate','Process confirmation sheet sign / Register date',{t:'date'})+'<div class="f"><div class="lb">MOM by QE</div><label class="chk"><input type="checkbox" data-p="momByQe"'+(p.momByQe?' checked':'')+'> ทำ MOM แล้ว</label></div></div><h3 style="margin-top:14px">ลงนาม (Sign-off)</h3><table class="dsum"><tbody>'+sg+'</tbody></table>');
+  h+=sec('F. Audit & Approval (ตามตาราง PCR in-house process audit & Approval status)','<div class="grid">'+fld('qsDate','QS-QE & Core team cross check the document date',{t:'date',w:'w2'})+fld('dmgmDate','DM-GM Process confirmation (วันที่ audit)',{t:'date',w:'w2'})+fld('dmgmJudge','Judgement',{t:'sel',opts:[['','—'],['Pass','Pass'],['Pass with condition','Pass with condition'],['Not pass','Not pass']]})+fld('finalDue','Final due date of PCR Part approve',{t:'date'})+fld('allActDue','Due date of all action for PCR sign',{t:'date'})+fld('regDate','Process confirmation sheet sign / Register date',{t:'date'})+fld('remainingAction','Remaining action / Remark',{t:'ta',w:'w2'})+'<div class="f"><div class="lb">MOM by QE</div><label class="chk"><input type="checkbox" data-p="momByQe"'+(p.momByQe?' checked':'')+'> ทำ MOM แล้ว</label></div></div><h3 style="margin-top:14px">ลงนาม (Sign-off)</h3><table class="dsum"><tbody>'+sg+'</tbody></table>');
   return h;
 }
 /* --- tab 2: checklist --- */
@@ -535,17 +559,17 @@ function tPrep(){
   const o=openStats(p); let h='<div class="bar"><label class="chk"><input type="checkbox" id="onlyOpen"'+(cur.fAll?'':' checked')+'> แสดงเฉพาะที่ค้าง</label><span class="af">สถานะ: ● เสร็จ · ▲ กำลังทำ · ✕ ล่าช้า · – ไม่เกี่ยวข้อง · แถวแดง = เลยกำหนด · Rev.n = เลื่อน Plan มาแล้ว n ครั้ง</span></div>';
   const groups={}; list.forEach(x=>{const k=x.it.dept==='ALL'?'OWN':x.it.dept;(groups[k]=groups[k]||[]).push(x);});
   DORDER.forEach(k=>{ const g=groups[k]; if(!g) return; const t=o.pt[k]||[0,0]; const rowsH=g.filter(x=>cur.fAll||isOpen(x.d.status)).map(x=>prepRow(x)).join('');
-    h+='<div class="dg" data-dg="'+k+'"><header><h3>'+k+' · '+esc(DEPT_FULL[k])+'</h3><span class="chip cnt">เสร็จ '+t[1]+' / '+t[0]+' · ค้าง '+(t[0]-t[1])+'</span><span class="grow"></span><span class="bulk"><label class="sr" for="bp_'+k+'">PIC</label><input id="bp_'+k+'" placeholder="PIC ทั้งแผนก"><label class="sr" for="bd_'+k+'">Plan</label><input id="bd_'+k+'" type="date" aria-label="Plan ทั้งแผนก"><button class="btn s" data-bulk="'+k+'" title="ใส่ค่าให้เฉพาะรายการที่ยังว่าง">ใส่ค่าที่ว่าง</button></span></header><div class="tw2"><table class="ck"><thead><tr><th>No.</th><th>Preparation item</th><th>Doc. No. / Evidence · Link</th><th>PIC</th><th>Plan</th><th>Actual</th><th>Status</th><th>QS</th><th>Remark</th></tr></thead><tbody>'+(rowsH||'<tr><td colspan="9" class="empty" style="padding:14px">✓ ไม่มีรายการค้างในหน่วยงานนี้</td></tr>')+'</tbody></table></div></div>'; });
+    h+='<div class="dg" data-dg="'+k+'"><header><h3>'+k+' · '+esc(DEPT_FULL[k])+'</h3><span class="chip cnt">เสร็จ '+t[1]+' / '+t[0]+' · ค้าง '+(t[0]-t[1])+'</span><span class="grow"></span><span class="bulk"><label class="sr" for="bp_'+k+'">PIC</label><input id="bp_'+k+'" placeholder="PIC ทั้งแผนก"><label class="sr" for="bd_'+k+'">Plan</label><input id="bd_'+k+'" type="date" aria-label="Plan ทั้งแผนก"><button class="btn s" data-bulk="'+k+'" title="ใส่ค่าให้เฉพาะรายการที่ยังว่าง">ใส่ค่าที่ว่าง</button></span></header><div class="tw2"><table class="ck"><thead><tr><th>Dept.</th><th>No.</th><th>Preparation item</th><th title="Change-category applicability">Cat. 1–9</th><th>Doc. No. / Evidence · Link</th><th>PIC</th><th>Plan</th><th>Actual</th><th>Status</th><th>QS</th><th>Judgement</th><th>Remark</th></tr></thead><tbody>'+(rowsH||'<tr><td colspan="12" class="empty" style="padding:14px">✓ ไม่มีรายการค้างในหน่วยงานนี้</td></tr>')+'</tbody></table></div></div>'; });
   return h;
 }
 function prepRow(x){
   const it=x.it,d=x.d,no=it.no,pf='prep|'+no+'|', late=isOpen(d.status)&&isISO(d.plan)&&diffDays(d.plan)<0;
   const old=(d.hist||[]).length?'<span class="old" title="'+esc(d.hist.map(h=>fmtD(h.f)+' → '+fmtD(h.t)).join(' | '))+'">'+esc(fmtD(d.hist[d.hist.length-1].f))+'</span><span class="rev">Rev.'+(d.rev||d.hist.length)+'</span>':'';
-  return '<tr data-no="'+esc(no)+'" class="'+(late?'late':d.status==='O'?'done':'')+'"><td class="no">'+esc(no)+'</td><td class="nm">'+esc(it.name)+(x.extra?'<small style="color:var(--warn)">ไม่ตรงประเภทที่เลือก แต่มีข้อมูลอยู่</small>':'')+'</td>'+
+  return '<tr data-no="'+esc(no)+'" class="'+(late?'late':d.status==='O'?'done':'')+'"><td><b>'+esc(it.dept==='ALL'?'Owner':it.dept)+'</b></td><td class="no">'+esc(no)+'</td><td class="nm">'+esc(it.name)+(x.extra?'<small style="color:var(--warn)">ไม่ตรงประเภทที่เลือก แต่มีข้อมูลอยู่</small>':'')+'</td>'+
     '<td class="doc"><input class="cell" data-p="'+pf+'doc" value="'+esc(d.doc||'')+'" placeholder="เลขเอกสาร / หลักฐาน" aria-label="Doc No. '+esc(no)+'"><div style="display:flex;gap:4px"><input class="cell" data-p="'+pf+'url" value="'+esc(d.url||'')+'" placeholder="Link (SharePoint / path)" aria-label="Link '+esc(no)+'">'+(safeUrl(d.url)?'<a class="open-ic" href="'+esc(d.url)+'" target="_blank" rel="noopener" title="เปิดเอกสาร">↗</a>':d.url?'<button class="open-ic" data-copy="'+esc(d.url)+'" title="คัดลอก path">📋</button>':'')+'</div></td>'+
     '<td class="pic"><input class="cell" data-p="'+pf+'pic" value="'+esc(d.pic||'')+'" aria-label="PIC '+esc(no)+'"></td><td class="dt"><input class="cell" type="date" data-p="'+pf+'plan" value="'+esc(d.plan||'')+'" aria-label="Plan '+esc(no)+'">'+old+'</td><td class="dt"><input class="cell" type="date" data-p="'+pf+'actual" value="'+esc(d.actual||'')+'" aria-label="Actual '+esc(no)+'"></td>'+
     '<td class="st"><select class="cell" data-p="'+pf+'status" aria-label="Status '+esc(no)+'">'+Object.keys(ST).map(k=>'<option value="'+k+'"'+((d.status||'')===k?' selected':'')+'>'+ST[k][1]+' '+ST[k][0]+'</option>').join('')+'</select></td>'+
-    '<td class="qs"><select class="cell" data-p="'+pf+'qs" aria-label="QS cross check '+esc(no)+'"><option value="">–</option><option value="O"'+(d.qs==='O'?' selected':'')+'>O</option><option value="X"'+(d.qs==='X'?' selected':'')+'>X</option></select></td><td class="rm"><input class="cell" data-p="'+pf+'remark" value="'+esc(d.remark||'')+'" aria-label="Remark '+esc(no)+'"></td></tr>';
+    '<td class="qs"><select class="cell" data-p="'+pf+'qs" aria-label="QS cross check '+esc(no)+'"><option value="">–</option><option value="O"'+(d.qs==='O'?' selected':'')+'>O</option><option value="X"'+(d.qs==='X'?' selected':'')+'>X</option></select></td><td><select class="cell" data-p="'+pf+'judgement" aria-label="Judgement '+esc(no)+'"><option value="">–</option><option'+(d.judgement==='Pass'?' selected':'')+'>Pass</option><option'+(d.judgement==='Not pass'?' selected':'')+'>Not pass</option></select></td><td class="rm"><input class="cell" data-p="'+pf+'remark" value="'+esc(d.remark||'')+'" aria-label="Remark '+esc(no)+'"></td></tr>';
 }
 /* --- tab 3: risk --- */
 function tRisk(){
@@ -567,11 +591,10 @@ function tPlan(){
     const pend=app.filter(x=>(x.it.dept==='ALL'?'OWN':x.it.dept)===k&&isOpen(x.d.status)).map(x=>x.it.no+' '+clip(x.it.name,34)); 
     h+='<tr><td><b>'+k+'</b></td><td class="num">'+t[0]+'</td><td class="num">'+t[1]+'</td><td class="num" style="font-weight:800">'+(t[0]-t[1])+'</td><td class="num" style="'+(over?'color:var(--dang);font-weight:800':'')+'">'+(over?'⚠ '+over:'0')+'</td><td>'+(np||'–')+'</td><td>'+(dates[0]?esc(fmtD(dates[0])):'–')+'</td><td class="pl">'+(pend.length?esc(pend.slice(0,4).join(' · '))+(pend.length>4?' … +'+(pend.length-4):'')+' <button class="btn s" data-jump="'+k+'">ดูใน Checklist →</button>':'✓ ครบ')+'</td></tr>'; });
   h+=(any?'':'<tr><td colspan="8" class="empty">เลือก Change categories ที่แท็บ ① ก่อน</td></tr>')+'</tbody></table></div></div>';
-  h+='<div class="card"><h2>Action plan</h2><p class="legend">งานเพิ่มเติมนอกเหนือจาก Checklist · เปลี่ยน Due แล้วระบบเก็บวันที่เดิมเป็น Rev.</p><div class="bar"><button class="btn p" id="addAct">＋ เพิ่ม Action</button></div>';
-  if(!(p.actions||[]).length) h+='<div class="empty" style="padding:14px"><b>ยังไม่มี Action plan</b>กด “＋ เพิ่ม Action”</div>';
-  else{ h+='<div class="tw"><table class="kd"><thead><tr><th>#</th><th>Action</th><th>หน่วยงาน</th><th>ผู้รับผิดชอบ</th><th>Due</th><th>สถานะ</th><th>หมายเหตุ</th><th></th></tr></thead><tbody>';
-    p.actions.forEach((a,i)=>{ const late=isOpen(a.status)&&isISO(a.due)&&diffDays(a.due)<0; h+='<tr class="'+(late?'late':'')+'" style="'+(late?'background:#fff5f5':'')+'"><td>'+(i+1)+'</td><td><textarea class="cell" data-p="actions|'+i+'|task" aria-label="Action '+(i+1)+'">'+esc(a.task||'')+'</textarea></td><td><select class="cell" data-p="actions|'+i+'|dept" aria-label="หน่วยงาน"><option value="">—</option>'+DORDER.map(k=>'<option'+(a.dept===k?' selected':'')+'>'+k+'</option>').join('')+'</select></td><td><input class="cell" data-p="actions|'+i+'|resp" value="'+esc(a.resp||'')+'" aria-label="ผู้รับผิดชอบ"></td><td><input class="cell" type="date" data-p="actions|'+i+'|due" value="'+esc(a.due||'')+'" aria-label="Due">'+((a.hist||[]).length?'<span class="rev" style="font-size:11px;font-weight:800;color:var(--warn)">Rev.'+a.rev+'</span> <span class="hist">เดิม '+esc(fmtD(a.hist[a.hist.length-1].f))+'</span>':'')+'</td><td><select class="cell" data-p="actions|'+i+'|status" aria-label="สถานะ">'+Object.keys(ST).slice(0,4).map(k=>'<option value="'+k+'"'+((a.status||'')===k?' selected':'')+'>'+ST[k][1]+' '+ST[k][0]+'</option>').join('')+'</select></td><td><input class="cell" data-p="actions|'+i+'|note" value="'+esc(a.note||'')+'" aria-label="หมายเหตุ"></td><td><button class="btn s d" data-rmact="'+i+'" aria-label="ลบ Action '+(i+1)+'">ลบ</button></td></tr>'; });
-    h+='</tbody></table></div>'; }
+  h+='<div class="card"><h2>Action Plan</h2><p class="legend">งานเพิ่มเติมจาก Audit, Not pass, Pass with condition และ Remaining action แยกจาก Preparation Checklist</p><div class="bar"><button class="btn p" id="addAct">＋ เพิ่ม Action</button></div>';
+  if(!(p.actions||[]).length) h+='<div class="empty"><b>ยังไม่มี Action Plan</b></div>';
+  else{h+='<div class="tw"><table class="kd"><thead><tr><th>No.</th><th>Action / Kadai</th><th>Countermeasure</th><th>Dept.</th><th>Responsible</th><th>Original due</th><th>Current due</th><th>Status</th><th>Evidence / Link</th><th>Result / Remark</th><th></th></tr></thead><tbody>';
+  p.actions.forEach((a,i)=>{const late=isOpen(a.status)&&isISO(a.due)&&diffDays(a.due)<0,ap='actions|'+i+'|';h+='<tr style="'+(late?'background:#fff5f5':'')+'"><td>'+(i+1)+(late?'<span class="tag late">⚠ Overdue</span>':'')+'</td><td><textarea class="cell" data-p="'+ap+'task">'+esc(a.task||'')+'</textarea></td><td><textarea class="cell" data-p="'+ap+'countermeasure">'+esc(a.countermeasure||'')+'</textarea></td><td><input class="cell" data-p="'+ap+'dept" value="'+esc(a.dept||'')+'"></td><td><input class="cell" data-p="'+ap+'resp" value="'+esc(a.resp||'')+'"></td><td>'+esc(fmtD(a.originalDue||((a.hist||[])[0]||{}).f)||'–')+'</td><td><input class="cell" type="date" data-p="'+ap+'due" value="'+esc(a.due||'')+'">'+((a.hist||[]).length?'<span class="rev">Rev.'+(a.rev||a.hist.length)+'</span>':'')+'</td><td><select class="cell" data-p="'+ap+'status">'+Object.keys(ST).map(k=>'<option value="'+k+'"'+((a.status||'')===k?' selected':'')+'>'+ST[k][1]+' '+ST[k][0]+'</option>').join('')+'</select></td><td><input class="cell" data-p="'+ap+'evidenceUrl" value="'+esc(a.evidenceUrl||'')+'" placeholder="https://… or path">'+(safeUrl(a.evidenceUrl)?'<a class="open-ic" href="'+esc(a.evidenceUrl)+'" target="_blank" rel="noopener">↗</a>':'')+'</td><td><textarea class="cell" data-p="'+ap+'result">'+esc(a.result||a.note||'')+'</textarea></td><td><button class="btn s d" data-rmact="'+i+'">ลบ</button></td></tr>';});h+='</tbody></table></div>';}
   return h+'</div>';
 }
 /* --- tab 5: MOM --- */
@@ -580,7 +603,7 @@ function tMom(){
   if(!(p.mom||[]).length) h+='<div class="card empty"><b>ยังไม่มี MOM</b>กด “＋ เพิ่ม MOM” เพื่อบันทึกการประชุมครั้งแรก</div>';
   (p.mom||[]).forEach((m,i)=>{ const mp='mom|'+i+'|';
     h+='<div class="ic"><header><b>MOM #'+(i+1)+'</b><span class="chip">'+esc(fmtD(m.date)||'ยังไม่ระบุวันที่')+'</span><span class="grow"></span><button class="btn s" data-copymom="'+i+'">📋 คัดลอกเป็นข้อความ</button><button class="btn s d" data-rmmom="'+i+'">ลบ MOM นี้</button></header><div class="in"><div class="grid">'+
-      fld(mp+'subject','Subject',{w:'w2'})+fld(mp+'date','Date',{t:'date'})+fld(mp+'time','Time')+fld(mp+'place','Place')+fld(mp+'attend','Attendance',{t:'ta',w:'w2',ph:'รายชื่อผู้เข้าร่วม'})+fld(mp+'agenda','Agenda',{t:'ta',w:'w2'})+fld(mp+'link','Link ไฟล์ MOM (ถ้ามี)',{t:'url',w:'w2'})+'</div><div class="grp">Follow up Kadai</div>';
+      fld(mp+'subject','Subject',{w:'w2'})+fld(mp+'date','Date',{t:'date'})+fld(mp+'time','Time')+fld(mp+'place','Place')+fld(mp+'attend','Attendance',{t:'ta',w:'w2',ph:'รายชื่อผู้เข้าร่วม'})+fld(mp+'cc','CC',{t:'ta',w:'w2'})+fld(mp+'agenda','Agenda',{t:'ta',w:'w2'})+fld(mp+'judgement','Judgement')+fld(mp+'nextMeeting','Next meeting date',{t:'date'})+fld(mp+'link','Link ไฟล์ MOM (ถ้ามี)',{t:'url',w:'w2'})+'</div><div class="grp">Follow up Kadai</div>';
     if(!(m.items||[]).length) h+='<div class="empty" style="padding:10px">ยังไม่มีหัวข้อ</div>';
     else{ h+='<div class="tw"><table class="kd"><thead><tr><th>#</th><th>Kadai</th><th>C/M</th><th>Resp.</th><th>Due</th><th>Follow up</th><th></th></tr></thead><tbody>'; m.items.forEach((k,j)=>{ const kp=mp+'items|'+j+'|', late=k.status!=='Done'&&isISO(k.due)&&diffDays(k.due)<0;
       h+='<tr style="'+(late?'background:#fff5f5':'')+'"><td>'+(j+1)+'</td><td><textarea class="cell" data-p="'+kp+'kadai" aria-label="Kadai">'+esc(k.kadai||'')+'</textarea></td><td><textarea class="cell" data-p="'+kp+'cm" aria-label="C/M">'+esc(k.cm||'')+'</textarea></td><td><input class="cell" data-p="'+kp+'resp" value="'+esc(k.resp||'')+'" aria-label="Resp"></td><td><input class="cell" type="date" data-p="'+kp+'due" value="'+esc(k.due||'')+'" aria-label="Due">'+((k.hist||[]).length?'<span class="hist">Rev.'+k.rev+' · เดิม '+esc(fmtD(k.hist[k.hist.length-1].f))+'</span>':'')+'</td><td><select class="cell" data-p="'+kp+'status" aria-label="Follow up">'+Object.keys(KST).map(s=>'<option value="'+s+'"'+((k.status||'On-plan')===s?' selected':'')+'>'+KST[s]+'</option>').join('')+'</select></td><td><button class="btn s d" data-rmkd="'+i+'|'+j+'" aria-label="ลบหัวข้อ">ลบ</button></td></tr>'; }); h+='</tbody></table></div>'; }
@@ -608,7 +631,7 @@ function wireDetail(){
     const t=e.target; let b;
     if((b=t.closest('[data-tab]'))){ cur.tab=b.dataset.tab; history.replaceState(null,'','#/pcr/'+enc(cur.id)+'/'+cur.tab); document.querySelectorAll('.tabs button').forEach(x=>{x.classList.toggle('on',x===b);x.setAttribute('aria-selected',x===b);}); renderTabBody(); return; }
     if((b=t.closest('[data-stage]'))){ const n=+b.dataset.stage; if(n===(cur.p.stage|0)) return;
-      if(n>=6){ const o=openStats(cur.p), open=DORDER.reduce((a,k)=>a+o.pd[k].length,0); if(open&&!(await askConfirm('ยังมีเอกสารใน Checklist ค้าง '+open+' รายการ\nF-QA-018 กำหนดให้ Owner แนบเอกสารครบก่อนปิด PCR\n\nต้องการปิด PCR ทั้งที่ยังค้างหรือไม่?',{title:'ปิด PCR?',yes:'ปิดทั้งที่ค้าง',danger:true}))) return; }
+      if(n>=6){const x=closeIssues(cur.p),total=x.prep.length+x.evidence.length+x.acts.length+x.moms.length;if(total){const reason=prompt('ยังมีรายการค้าง '+total+' รายการ\nChecklist '+x.prep.length+' · ไม่มี Evidence '+x.evidence.length+' · Action '+x.acts.length+' · MOM Kadai '+x.moms.length+'\nหากยืนยันปิด โปรดระบุเหตุผล:','');if(!reason||!reason.trim())return;cur.p.closeOverrideReason=reason.trim();(cur.p.log=cur.p.log||[]).push({at:new Date().toISOString(),by:me,what:'ปิด PCR ทั้งที่มีรายการค้าง: '+reason.trim()});}}
       cur.p.stage=n; cur.dirty=true; renderDetail(); return; }
     if(t.id==='bSave'||t.id==='bSave2'){saveCur();return;}
     if(t.id==='bDl'){downloadCopy();return;}
@@ -618,11 +641,11 @@ function wireDetail(){
     if((b=t.closest('[data-copy]'))){ try{await navigator.clipboard.writeText(b.dataset.copy);toast('คัดลอก path แล้ว — วางใน File Explorer (Ctrl+L)');}catch(x){toast('คัดลอกไม่ได้ — เลือกข้อความด้วยมือ',true);} return; }
     if(t.id==='addRisk'){ (cur.p.risk=cur.p.risk||[]).push({status:'',judge:''}); cur.dirty=true; renderTabBody(); refreshChrome(); return; }
     if((b=t.closest('[data-rmrisk]'))){ if(await askConfirm('ลบจุดเปลี่ยนแปลงที่ '+(+b.dataset.rmrisk+1)+' ?',{danger:true,yes:'ลบ'})){ cur.p.risk.splice(+b.dataset.rmrisk,1); cur.dirty=true; renderTabBody(); refreshChrome(); } return; }
-    if(t.id==='addAct'){ (cur.p.actions=cur.p.actions||[]).push({task:'',dept:'',resp:'',due:'',status:'',note:''}); cur.dirty=true; renderTabBody(); refreshChrome(); return; }
+    if(t.id==='addAct'){ (cur.p.actions=cur.p.actions||[]).push({task:'',countermeasure:'',dept:'',resp:'',originalDue:'',due:'',status:'',evidenceUrl:'',result:'',note:'',closeDate:'',hist:[]}); cur.dirty=true; renderTabBody(); refreshChrome(); return; }
     if((b=t.closest('[data-rmact]'))){ if(await askConfirm('ลบ Action ที่ '+(+b.dataset.rmact+1)+' ?',{danger:true,yes:'ลบ'})){ cur.p.actions.splice(+b.dataset.rmact,1); cur.dirty=true; renderTabBody(); refreshChrome(); } return; }
-    if(t.id==='addMom'){ (cur.p.mom=cur.p.mom||[]).push({subject:cur.p.detail?'PCR : '+cur.p.detail:'',date:todayISO(),time:'',place:'',attend:'',agenda:'',link:'',items:[]}); cur.dirty=true; renderTabBody(); refreshChrome(); return; }
+    if(t.id==='addMom'){ (cur.p.mom=cur.p.mom||[]).push({subject:cur.p.detail?'PCR : '+cur.p.detail:'',date:todayISO(),time:'',place:'',attend:'',cc:'',agenda:'',judgement:'',nextMeeting:'',link:'',updatedBy:me,items:[]}); cur.dirty=true; renderTabBody(); refreshChrome(); return; }
     if((b=t.closest('[data-rmmom]'))){ if(await askConfirm('ลบ MOM #'+(+b.dataset.rmmom+1)+' และหัวข้อทั้งหมดใน MOM นี้?',{danger:true,yes:'ลบ'})){ cur.p.mom.splice(+b.dataset.rmmom,1); cur.dirty=true; renderTabBody(); refreshChrome(); } return; }
-    if((b=t.closest('[data-addkd]'))){ cur.p.mom[+b.dataset.addkd].items.push({kadai:'',cm:'',resp:'',due:'',status:'On-plan'}); cur.dirty=true; renderTabBody(); refreshChrome(); return; }
+    if((b=t.closest('[data-addkd]'))){ cur.p.mom[+b.dataset.addkd].items.push({kadai:'',cm:'',resp:'',dept:'',originalDue:'',due:'',status:'On-plan',result:'',evidenceUrl:'',hist:[]}); cur.dirty=true; renderTabBody(); refreshChrome(); return; }
     if((b=t.closest('[data-rmkd]'))){ const [i,j]=b.dataset.rmkd.split('|').map(Number); cur.p.mom[i].items.splice(j,1); cur.dirty=true; renderTabBody(); refreshChrome(); return; }
     if((b=t.closest('[data-copymom]'))){ copyMom(+b.dataset.copymom); return; }
     if(t.id==='addLink'){ (cur.p.links=cur.p.links||[]).push({label:'',url:''}); cur.dirty=true; renderTabBody(); return; }
@@ -649,11 +672,21 @@ function wireDetail(){
   app.oninput=onEdit; app.onchange=onEdit;
 }
 function validate(){
-  const p=cur.p, miss=[]; cur.showErr=true;
-  if(!String(p.detail||'').trim()) miss.push('PCR Detail');
-  if(!String(p.formLink||'').trim()) miss.push('Link ไฟล์ F-QA-018');
+  const p=cur.p,miss=[];cur.showErr=true;
+  if(!String(p.detail||'').trim())miss.push('PCR Detail');
+  if(!String(p.formLink||'').trim())miss.push('Link ไฟล์ F-QA-018');
+  if(p.dmgmJudge==='Not pass'&&!(p.actions||[]).length)miss.push('Not pass ต้องมี Action Plan อย่างน้อย 1 รายการ');
+  if(p.dmgmJudge==='Pass with condition'&&!String(p.remainingAction||'').trim()&&!(p.actions||[]).length)miss.push('Pass with condition ต้องมี Remaining action หรือ Action Plan');
   return miss;
 }
+function closeIssues(p){
+ const prep=applicable(p).filter(x=>x.d.status!=='O'&&x.d.status!=='NA');
+ const evidence=applicable(p).filter(x=>x.d.status==='O'&&!String(x.d.doc||'').trim()&&!String(x.d.url||'').trim());
+ const acts=(p.actions||[]).filter(a=>a.status!=='O'&&a.status!=='NA');
+ const moms=(p.mom||[]).flatMap(m=>m.items||[]).filter(i=>i.status!=='Done');
+ return {prep,evidence,acts,moms};
+}
+
 function diffText(a,b){
   const out=[]; const lab={detail:'รายละเอียด',partNo:'Part No.',partName:'Part Name',model:'Model',lineNo:'Line',processName:'Process',owner:'Owner',qe:'QE',sop:'SOP target',stage:'ขั้นตอน',as:'สถานะ',cats:'ประเภทการเปลี่ยนแปลง',formLink:'Link F-QA-018',dmgmJudge:'Judgement audit',finalDue:'Final due',qsDate:'QS cross check',dmgmDate:'DM-GM audit',content:'เนื้อหา',issueDept:'หน่วยงานที่ออก',custApproval:'Customer approval',meetDate:'Meeting date',trialStart:'Trial start'};
   Object.keys(lab).forEach(k=>{ if(JSON.stringify(a[k])!==JSON.stringify(b[k])) out.push(lab[k]+(k==='stage'?' → '+STAGES[b.stage|0]:k==='dmgmJudge'||k==='as'?' → '+(b[k]||'–'):'')); });
@@ -668,7 +701,7 @@ async function saveCur(force){
   if(!cur.dirty&&!force){toast('ไม่มีการแก้ไขที่ต้องบันทึก');return;}
   cur.saving=true; const bs=[$('bSave'),$('bSave2')]; bs.forEach(b=>{if(b){b.disabled=true;b.textContent='กำลังบันทึก…';}});
   const p=clone(cur.p); (p.log=p.log||[]).push({at:new Date().toISOString(),by:me,what:diffText(cur.base,p)}); if(p.log.length>80) p.log=p.log.slice(-80);
-  try{ const r=await Store.update(cur.id,cur.rev,{payload:p,summary:buildSummary(p),updated_by:me||null}); cur.rev=r.rev; cur.p=Object.assign(newPayload({}),p); cur.base=clone(cur.p); cur.dirty=false; rows.set(cur.id,{id:r.id,rev:r.rev,summary:r.summary,updated_at:r.updated_at,updated_by:r.updated_by,archived:!!r.archived}); cur.saving=false; toast('💾 บันทึกแล้ว'); renderDetail(); }
+  try{ const r=await Store.update(cur.id,cur.rev,{payload:p,summary:buildSummary(p),updated_by:me||null}); cur.rev=r.rev; cur.p=normalizePayload(p); cur.base=clone(cur.p); cur.dirty=false; rows.set(cur.id,{id:r.id,rev:r.rev,summary:r.summary,updated_at:r.updated_at,updated_by:r.updated_by,archived:!!r.archived}); cur.saving=false; toast('💾 บันทึกแล้ว'); renderDetail(); }
   catch(e){ cur.saving=false; bs.forEach(b=>{if(b){b.disabled=false;}}); const a=$('bSave'); if(a) a.textContent='💾 บันทึก'; const c=$('bSave2'); if(c) c.textContent='💾 บันทึก (Ctrl+S)';
     if(e.conflict) conflictModal(); else { toast('บันทึกไม่สำเร็จ — '+friendly(e),true); if(e.status===402||e.status===429||!e.status) modal('<h2>บันทึกขึ้น Cloud ไม่สำเร็จ</h2><p>'+esc(friendly(e))+'</p><p>ข้อมูลที่แก้ยังอยู่ในหน้านี้ — กด “ดาวน์โหลดสำเนา” เก็บไว้ก่อนเพื่อกันหาย</p><div class="act"><button class="btn" data-x="c">ปิด</button><button class="btn p" data-x="d">⬇ ดาวน์โหลดสำเนา</button></div>',{init:o=>{o.querySelector('[data-x=c]').onclick=closeModal;o.querySelector('[data-x=d]').onclick=()=>{downloadCopy();};}}); } }
 }
@@ -705,7 +738,7 @@ function newModal(){
     catch(x){ err(x.dup?'มี PCR No. นี้อยู่แล้วในระบบ':'สร้างไม่สำเร็จ — '+friendly(x)); } };
 }
 function parseDate(s){
-  s=String(s||'').trim(); if(!s||/^t\.?b\.?c\.?$/i.test(s)) return ''; if(isISO(s)) return s;
+  s=String(s||'').trim(); if(!s) return ''; if(isTBC(s)) return 'T.B.C.'; if(isISO(s)) return s;
   let m=/^(\d{1,2})[-\s]([A-Za-z]{3})[a-z]*[-\s](\d{2,4})$/.exec(s); if(m){const mi=MON.findIndex(x=>x.toLowerCase()===m[2].toLowerCase());if(mi>=0){let y=+m[3];if(y<100)y+=2000;return y+'-'+pad(mi+1)+'-'+pad(+m[1]);}}
   m=/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/.exec(s); if(m){const a=+m[1],b=+m[2],y=+m[3]; if(a>12&&b<=12) return y+'-'+pad(b)+'-'+pad(a); if(b>12&&a<=12) return y+'-'+pad(a)+'-'+pad(b); return null;}
   return null;
