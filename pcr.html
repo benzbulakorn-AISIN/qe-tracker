@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PCR In-house Log Sheet · QE Electronics</title>
+<meta name="robots" content="noindex">
+<style>
+:root{
+  --bg:#f5f6f8;--card:#fff;--line:#e3e6eb;--line2:#cfd5de;--txt:#1f2937;--mut:#5b6472;--soft:#f6f7f9;--soft2:#eef1f5;
+  --pri:#2563eb;--pri-d:#1d4ed8;--on-pri:#fff;--ok:#15803d;--ok-bg:#dcfce7;--warn:#b45309;--warn-bg:#fef3c7;--dang:#b91c1c;--dang-bg:#fee2e2;--info:#1d4ed8;--info-bg:#dbeafe;--gray-bg:#e5e7eb;
+  --s1:4px;--s2:8px;--s3:12px;--s4:16px;--s5:24px;--s6:32px;--r1:6px;--r2:8px;--r3:12px;--sh:0 1px 2px rgba(16,24,40,.06);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--txt);font:14px/1.5 "Segoe UI",Tahoma,"Noto Sans Thai",sans-serif}
+a{color:var(--pri)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:where(button,a,input,select,textarea,summary,[tabindex]):focus-visible{outline:2px solid var(--pri);outline-offset:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+/* ---------- header ---------- */
+.hd{position:sticky;top:0;z-index:50;background:#fff;border-bottom:1px solid var(--line);box-shadow:var(--sh)}
+.hd-in{max-width:1480px;margin:auto;padding:10px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.brand{display:flex;flex-direction:column;line-height:1.2;margin-right:auto;min-width:0}
+.brand b{font-size:18px}.brand small{color:var(--mut);font-size:12px}
+.brand a{text-decoration:none;color:inherit}
+.btn{display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:6px 14px;border-radius:var(--r2);border:1px solid var(--line2);background:#fff;font-weight:600;font-size:13px;white-space:nowrap}
+.btn:hover{background:var(--soft2)}
+.btn.p{background:var(--pri);border-color:var(--pri);color:#fff}.btn.p:hover{background:var(--pri-d)}
+.btn.d{color:var(--dang);border-color:#f3b4b4}.btn.d:hover{background:var(--dang-bg)}
+.btn.s{min-height:30px;padding:3px 10px;font-size:12px}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.pill{display:inline-flex;align-items:center;gap:6px;min-height:30px;padding:3px 12px;border-radius:99px;border:1px solid var(--line);background:var(--soft);font-size:12px;font-weight:700}
+.pill i{width:9px;height:9px;border-radius:50%;background:#9ca3af;display:inline-block}
+.pill.ok i{background:#22c55e}.pill.err i{background:#ef4444}.pill.busy i{background:#f59e0b}
+.me{min-height:34px;padding:4px 8px;border:1px solid var(--line2);border-radius:var(--r2);background:#fff}
+/* ---------- layout ---------- */
+main{max-width:1480px;margin:auto;padding:16px}
+.banner{margin:0 0 12px;padding:10px 14px;border-radius:var(--r2);border:1px solid var(--line2);background:#fff;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.banner.warn{background:var(--warn-bg);border-color:#f5d28a}.banner.info{background:var(--info-bg);border-color:#9ec1f7}.banner.err{background:var(--dang-bg);border-color:#f3b4b4}
+.banner .grow{flex:1;min-width:200px}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:17px;margin:0 0 8px}h3{font-size:15px;margin:0 0 6px}
+.sub{color:var(--mut);font-size:13px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:0 0 16px}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:var(--r3);padding:10px 14px;text-align:left;box-shadow:var(--sh)}
+button.kpi{cursor:pointer}button.kpi:hover{border-color:var(--pri)}
+.kpi.on{border-color:var(--pri);box-shadow:inset 0 0 0 1px var(--pri)}
+.kpi b{display:block;font-size:26px;line-height:1.1}.kpi span{color:var(--mut);font-size:13px}
+.kpi.late b{color:var(--dang)}.kpi.soon b{color:var(--warn)}.kpi.ok b{color:var(--ok)}
+.card{background:#fff;border:1px solid var(--line);border-radius:var(--r3);padding:14px 16px;box-shadow:var(--sh);margin-bottom:16px}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 12px}
+.bar input[type=search],.bar select{min-height:34px;padding:4px 10px;border:1px solid var(--line2);border-radius:var(--r2);background:#fff}
+.bar input[type=search]{min-width:220px;flex:1;max-width:340px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:99px;border:1px solid var(--line);background:var(--soft);font-size:12px;font-weight:700;white-space:nowrap}
+button.chip{cursor:pointer;min-height:28px}button.chip:hover{border-color:var(--pri)}
+.chip.on{background:var(--pri);border-color:var(--pri);color:#fff}
+.chip.late{background:var(--dang-bg);border-color:#f3b4b4;color:var(--dang)}
+.chip.soon{background:var(--warn-bg);border-color:#f5d28a;color:var(--warn)}
+.chip.ok{background:var(--ok-bg);border-color:#a7e3b9;color:var(--ok)}
+.chip.info{background:var(--info-bg);border-color:#9ec1f7;color:var(--info)}
+.chip.gray{background:var(--gray-bg);color:#374151}
+.af{font-size:12px;color:var(--mut)}
+/* ---------- table ---------- */
+.tw{overflow:auto;border:1px solid var(--line);border-radius:var(--r3);background:#fff;box-shadow:var(--sh)}
+table{border-collapse:separate;border-spacing:0;width:100%;font-size:13px}
+th{position:sticky;top:0;z-index:2;background:var(--soft2);text-align:left;font-weight:700;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap;font-size:12px}
+td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+tbody tr:hover>td{background:#f8fafc}
+tr.row{cursor:pointer}
+td.n a{font-weight:800;text-decoration:none}
+td small{display:block;color:var(--mut);font-size:12px}
+.tag{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:99px;font-size:12px;font-weight:800;white-space:nowrap}
+.tag.late{background:var(--dang-bg);color:var(--dang)}.tag.soon{background:var(--warn-bg);color:var(--warn)}.tag.ok{background:var(--info-bg);color:var(--info)}.tag.done{background:var(--ok-bg);color:var(--ok)}.tag.hold{background:var(--gray-bg);color:#374151}.tag.cancel{background:var(--gray-bg);color:#6b7280;text-decoration:line-through}
+.stp{display:flex;gap:3px;align-items:center}
+.stp i{width:16px;height:7px;border-radius:4px;background:var(--line2);display:inline-block}
+.stp i.d{background:#86b3f7}.stp i.c{background:var(--pri)}
+.empty{padding:36px 16px;text-align:center;color:var(--mut)}
+.empty b{display:block;color:var(--txt);font-size:15px;margin-bottom:4px}
+/* ---------- dept matrix ---------- */
+.dm{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.dm button{background:#fff;border:1px solid var(--line);border-radius:var(--r2);padding:8px 12px;text-align:left}
+.dm button:hover{border-color:var(--pri)}.dm button.on{border-color:var(--pri);box-shadow:inset 0 0 0 1px var(--pri)}
+.dm b{font-size:13px}.dm .n{font-size:22px;font-weight:800;line-height:1.1;margin-top:2px}.dm small{color:var(--mut);font-size:12px;display:block}
+.dm .n.late{color:var(--dang)}
+/* ---------- detail ---------- */
+.dh{background:#fff;border:1px solid var(--line);border-radius:var(--r3);padding:12px 16px;margin-bottom:12px;box-shadow:var(--sh);position:sticky;top:58px;z-index:40}
+.dh-top{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.dh-top h1{margin:0;font-size:20px}
+.dh-act{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.dirty{font-size:12px;font-weight:700;color:var(--warn)}
+.stg{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.stg button{border:1px solid var(--line2);background:#fff;border-radius:99px;padding:3px 12px;font-size:12px;font-weight:700;min-height:28px}
+.stg button.past{background:var(--info-bg);border-color:#9ec1f7;color:var(--info)}
+.stg button.cur{background:var(--pri);border-color:var(--pri);color:#fff}
+.tabs{display:flex;gap:4px;flex-wrap:wrap;margin:0 0 12px;border-bottom:1px solid var(--line)}
+.tabs button{border:1px solid transparent;border-bottom:0;background:transparent;padding:8px 14px;font-weight:700;border-radius:var(--r2) var(--r2) 0 0;color:var(--mut);min-height:38px}
+.tabs button.on{background:#fff;border-color:var(--line);color:var(--txt);box-shadow:0 2px 0 #fff}
+.tabs button .bd{display:inline-block;min-width:18px;padding:0 5px;margin-left:4px;border-radius:99px;background:var(--gray-bg);font-size:11px}
+.tabs button .bd.late{background:var(--dang-bg);color:var(--dang)}.tabs button .bd.warn{background:var(--warn-bg);color:var(--warn)}
+details.sec{background:#fff;border:1px solid var(--line);border-radius:var(--r3);margin-bottom:12px;box-shadow:var(--sh)}
+details.sec>summary{cursor:pointer;padding:12px 16px;font-weight:800;font-size:15px;list-style:none;display:flex;align-items:center;gap:8px}
+details.sec>summary::-webkit-details-marker{display:none}
+details.sec>summary::before{content:'▸';color:var(--mut)}details.sec[open]>summary::before{content:'▾'}
+details.sec>.in{padding:4px 16px 16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+.grid .w2{grid-column:span 2}.grid .w3{grid-column:1/-1}
+.f label,.f .lb{display:block;font-size:12px;font-weight:700;color:var(--mut);margin:0 0 3px}
+.f label .req{color:var(--dang)}
+.f input[type=text],.f input[type=date],.f input[type=url],.f select,.f textarea,.cell{width:100%;min-height:34px;padding:5px 9px;border:1px solid var(--line2);border-radius:var(--r2);background:#fff}
+.f textarea,textarea.cell{min-height:64px;resize:vertical}
+.f .hint{font-size:12px;color:var(--mut);margin-top:2px}
+.f.bad input,.f.bad select,.f.bad textarea{border-color:var(--dang);background:#fff7f7}
+.f .err{font-size:12px;color:var(--dang);margin-top:2px;font-weight:700}
+.cats{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:6px}
+.cats label{display:flex;gap:8px;align-items:flex-start;padding:6px 10px;border:1px solid var(--line);border-radius:var(--r2);background:#fff;font-size:13px;cursor:pointer}
+.cats label:has(input:checked){border-color:var(--pri);background:var(--info-bg)}
+.cats input{margin-top:3px;width:16px;height:16px}
+.chk{display:inline-flex;gap:6px;align-items:center;font-size:13px}
+.chk input{width:16px;height:16px}
+.rv{display:grid;grid-template-columns:70px 120px 1fr 120px;gap:8px;align-items:center;margin-bottom:6px}
+.rv b{font-size:13px}
+/* checklist */
+.dg{margin-bottom:14px;background:#fff;border:1px solid var(--line);border-radius:var(--r3);overflow:hidden}
+.dg>header{display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:10px 14px;background:var(--soft2);border-bottom:1px solid var(--line)}
+.dg>header h3{margin:0}.dg>header .grow{flex:1}
+.dg>header .bulk{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.dg>header .bulk input{min-height:30px;padding:2px 8px;border:1px solid var(--line2);border-radius:var(--r1);width:120px}
+.tw2{overflow:auto}
+.ck{min-width:1020px}
+.ck td{padding:6px 8px}
+.ck .no{width:46px;font-weight:700;color:var(--mut)}
+.ck .nm{min-width:240px;max-width:340px}
+.ck .doc{min-width:200px}.ck .doc .cell+.cell{margin-top:4px;font-size:12px}
+.ck .pic{width:110px}.ck .dt{width:138px}.ck .st{width:128px}.ck .qs{width:76px}.ck .rm{min-width:170px}
+.ck tr.late>td{background:#fff5f5}.ck tr.done>td{background:#f4fbf6}
+.ck .rev{display:inline-block;margin-top:2px;font-size:11px;font-weight:800;padding:0 6px;border-radius:99px;background:var(--warn-bg);color:var(--warn)}
+.ck .old{font-size:11px;color:var(--mut);text-decoration:line-through;display:block}
+.cell{min-height:32px;padding:3px 7px;font-size:13px}
+.open-ic{display:inline-flex;align-items:center;justify-content:center;min-width:32px;min-height:32px;border:1px solid var(--line2);border-radius:var(--r1);background:#fff;text-decoration:none;font-size:14px}
+/* cards (risk / mom) */
+.ic{background:#fff;border:1px solid var(--line);border-radius:var(--r3);margin-bottom:12px;box-shadow:var(--sh)}
+.ic>header{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--soft)}
+.ic>header b{font-size:14px}.ic>header .grow{flex:1}
+.ic>.in{padding:12px 14px}
+.grp{margin:10px 0 4px;font-size:12px;font-weight:800;color:var(--mut);text-transform:none}
+.kd{min-width:780px}
+.hist{font-size:12px;color:var(--mut)}
+.dsum{width:100%}
+.dsum td,.dsum th{padding:7px 10px}
+.dsum .num{text-align:right;font-variant-numeric:tabular-nums}
+.pl{font-size:12px;color:var(--mut)}
+.log li{padding:6px 0;border-bottom:1px dashed var(--line);font-size:13px}
+.log time{color:var(--mut);font-size:12px;margin-right:8px}
+ul{margin:0;padding-left:18px}ul.log{list-style:none;padding:0}
+/* modal + toast */
+.mo{position:fixed;inset:0;z-index:200;background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center;padding:16px}
+.md{width:100%;max-width:560px;max-height:92vh;overflow:auto;background:#fff;border-radius:16px;padding:18px 20px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.md.w{max-width:820px}
+.md h2{margin-bottom:10px}.md .act{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:14px}
+.md pre{background:var(--soft);padding:10px;border-radius:var(--r2);overflow:auto;font-size:12px;max-height:240px;white-space:pre-wrap}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:300;background:#111827;color:#fff;padding:10px 18px;border-radius:99px;font-size:13px;font-weight:600;max-width:92vw;box-shadow:0 8px 30px rgba(0,0,0,.3)}
+.toast.err{background:#991b1b}
+.sticky-save{position:sticky;bottom:0;z-index:30;background:rgba(255,255,255,.96);border-top:1px solid var(--line);padding:8px 16px;margin:0 -16px;display:none;gap:10px;align-items:center}
+.sticky-save.on{display:flex}
+.legend{font-size:12px;color:var(--mut);margin:0 0 10px}
+@media(max-width:900px){
+  main{padding:10px}
+  .grid .w2{grid-column:1/-1}
+  .rv{grid-template-columns:60px 1fr}
+  .dh{position:static}
+  table.stack thead{display:none}
+  table.stack,table.stack tbody,table.stack tr,table.stack td{display:block;width:100%}
+  table.stack tr{border-bottom:8px solid var(--bg);padding:6px 0}
+  table.stack td{border:0;padding:3px 12px}
+  table.stack td::before{content:attr(data-l);display:block;font-size:11px;font-weight:700;color:var(--mut)}
+  table.stack td.n::before{display:none}
+}
+@media print{.hd,.tabs,.dh-act,.sticky-save,.btn{display:none!important}body{background:#fff}.dh{position:static;box-shadow:none}details.sec{break-inside:avoid}details.sec>*{display:block}}
+
+</style>
+</head>
+<body>
+<header class="hd" id="hd" role="banner"></header>
+<main>
+  <div id="bn"></div>
+  <div id="app" aria-live="polite"><div class="empty"><b>กำลังโหลด…</b></div></div>
+</main>
+<noscript>ต้องเปิด JavaScript เพื่อใช้งานหน้านี้</noscript>
+<script>
+/* ===== ใส่ค่าที่นี่ก่อนอัปโหลดขึ้น GitHub เพื่อให้ทุกคนใช้ข้อมูลกลางทันที (ไม่ต้องตั้งค่าทีละเครื่อง) =====
+   url  = Project URL ของ Supabase  (Project Settings → API)   เช่น https://abcdxyz.supabase.co
+   key  = Publishable / anon key   (ห้ามใส่ service_role key เด็ดขาด)
+   ปล่อยว่างไว้ = เปิดหน้าแล้วเป็น "โหมดทดลองในเครื่อง" และตั้งค่าที่ปุ่ม ⚙ ได้ */
+window.PCR_DEFAULTS={url:'https://avqprchbdmacbomptxte.supabase.co/rest/v1/',key:'sb_publishable_3pH_N9h366PvG0Tr9liQOA_NtNPnEaU',table:'pcr_records',names:['Earn','Natcha','Mana','Benz']};
+</script>
+<script>
+/* =====================================================================
+   PCR In-house Log Sheet · QE Electronics
+   - หน้าเว็บไฟล์เดียว (ฝากบน GitHub Pages) · ข้อมูลอยู่ที่ Supabase ตาราง pcr_records
+   - ไม่ตั้งค่า Supabase = โหมดทดลองในเครื่อง (localStorage)
+   ===================================================================== */
+(function(){
+'use strict';
+const APP_VER='1.0';
+/* ---------- ค่าตั้งต้น: ใส่ก่อนอัปโหลดขึ้น GitHub เพื่อให้ทุกคนใช้ได้ทันที ---------- */
+const DEFAULTS=window.PCR_DEFAULTS||{url:'',key:'',table:'pcr_records',names:['Earn','Natcha','Mana','Benz']};
+
+/* ---------- ข้อมูลอ้างอิงจากฟอร์ม F-QA-018 ---------- */
+const PREP=[{"no":"1","name":"Initial part inspection results","dept":"ALL","app":null,"head":true},{"no":"1.1","name":"Dimensional results","dept":"ALL","app":[1,1,1,1,1,1,1,1,1]},{"no":"1.2","name":"Function test / Reliability results","dept":"ALL","app":[1,1,1,1,1,1,1,1,1]},{"no":"1.3","name":"PPAP review results , PSW","dept":"ALL","app":[1,1,0,1,0,0,0,0,0]},{"no":"1.4","name":"HVPT result (HVPT Production after all items issued completed)","dept":"ALL","app":[1,1,1,1,1,1,1,1,1]},{"no":"2","name":"Process planning sheet (PPS)","dept":"PE","app":[1,0,0,1,1,1,1,1,1]},{"no":"3","name":"FMEA","dept":"PE","app":[1,1,1,1,1,1,1,1,1]},{"no":"4","name":"Special characteristic list","dept":"PE","app":[1,0,0,1,1,0,0,0,0]},{"no":"5","name":"General engineering design sheet (GEDS)","dept":"PE","app":[1,0,0,0,0,0,0,0,1]},{"no":"6","name":"Gauge list","dept":"PE","app":[1,0,0,1,1,0,0,0,0]},{"no":"7","name":"Tool control list (For machining process),Jig, die, mold spare part list","dept":"PE","app":[1,0,0,1,1,1,0,0,0]},{"no":"8","name":"Control general sheet (Issue measuring sheet)","dept":"PE","app":[1,0,0,0,0,0,0,0,0]},{"no":"9","name":"Pokayoke list","dept":"PE","app":[1,0,0,1,1,0,1,0,0]},{"no":"10","name":"Drawing , M/C manual and jig/ mold/ die","dept":"PE","app":[1,0,0,0,1,1,0,0,0]},{"no":"11","name":"Set up & PM Jig, die, mold check sheet maintenance instruction","dept":"PE","app":[1,0,0,0,1,1,0,1,0]},{"no":"12","name":"Sub material / material / Raw material application sheet","dept":"PE","app":[1,1,0,1,1,0,0,0,0]},{"no":"13","name":"Limit sample (OK, NG master)","dept":"PE","app":[1,0,0,1,1,0,1,0,0]},{"no":"14","name":"M/C spare part list","dept":"MT","app":[1,0,0,0,0,1,0,0,0]},{"no":"15","name":"PM check sheet","dept":"MT","app":[1,0,0,0,0,1,0,0,0]},{"no":"16","name":"Line ANDON & facility & fan establishment","dept":"UT","app":[1,0,1,0,0,1,0,0,1]},{"no":"17","name":"Process capability (Cpk) (In-house process, supplier)","dept":"QA","app":[1,1,1,1,0,1,1,0,0]},{"no":"18","name":"Supplier approve part process","dept":"QA","app":[0,1,0,1,0,0,0,0,0]},{"no":"19","name":"Result of inspector training","dept":"QA","app":[1,1,0,1,1,1,1,1,1]},{"no":"20","name":"Inspection standard for customer approve/In-house/Component part","dept":"QA","app":[1,1,0,1,1,0,0,0,0]},{"no":"21","name":"Limit sample list , limit sample part","dept":"QA","app":[1,0,0,1,1,0,0,0,0]},{"no":"22","name":"Measuring tool and gauge for QC receiving","dept":"QA","app":[1,0,0,1,0,0,0,0,0]},{"no":"23","name":"FMEA","dept":"QA","app":[1,1,1,1,1,1,1,1,1]},{"no":"24","name":"PPC","dept":"QA","app":[1,1,0,1,0,1,1,1,1]},{"no":"25","name":"Control plan","dept":"QA","app":[1,0,0,1,1,1,1,1,1]},{"no":"26","name":"Inspection instruction sheet","dept":"QA","app":[1,1,0,1,0,0,0,0,0]},{"no":"27","name":"Special process audit  / (1.Heat treatment, 2.Welding, 3.Plastic welding, 4.Adhesion, 5.Soldering, 6.Rubber processing, 7.Sintering / 8.Plastic molding, 9.Surface treatment, 10.Casting, 11.Caulking)","dept":"QA","app":[1,1,0,1,0,1,1,1,1]},{"no":"28","name":"Full layout","dept":"QA","app":[1,1,0,1,0,0,0,0,0]},{"no":"29","name":"SOC / IMDS","dept":"QA","app":[1,1,0,1,0,0,0,0,0]},{"no":"30","name":"C/F","dept":"QA","app":[1,0,0,0,0,0,0,0,0]},{"no":"31","name":"Process Audit & Co-check","dept":"QA","app":[1,1,1,1,0,1,1,1,1]},{"no":"32","name":"Risk verification sheet for changing points","dept":"QA","app":[1,1,1,1,0,1,1,1,1]},{"no":"33","name":"Check notes in the drawing","dept":"QA","app":[1,1,1,1,0,1,1,1,1]},{"no":"34","name":"Preparation of jig table & measurement","dept":"MFG","app":[1,0,0,1,0,1,1,1,0]},{"no":"35","name":"Shelf , Chutes , Part Jig, Measurement Tool","dept":"MFG","app":[1,1,0,1,0,1,0,0,0]},{"no":"36","name":"Model change board (Detail part list)/  Instruction","dept":"MFG","app":[1,0,0,1,0,0,0,0,0]},{"no":"37","name":"Cp sheet","dept":"MFG","app":[1,0,0,0,0,0,1,0,0]},{"no":"38","name":"Standardize work chart / Man - M/C Chart","dept":"MFG","app":[1,0,0,0,0,0,0,0,1]},{"no":"39","name":"Work instruction / One point lesson","dept":"MFG","app":[1,0,0,1,0,1,1,1,1]},{"no":"40","name":"Machine check sheet","dept":"MFG","app":[1,0,0,0,0,1,1,0,0]},{"no":"41","name":"Product check sheet","dept":"MFG","app":[1,0,0,1,0,0,0,0,0]},{"no":"42","name":"Pokayoke check sheet","dept":"MFG","app":[1,0,0,1,1,0,1,0,0]},{"no":"43","name":"In process kanban & post kanban ( PI & PW)","dept":"MFG","app":[1,0,0,1,0,0,0,0,0]},{"no":"44","name":"Production control chart & quality control chart","dept":"MFG","app":[1,0,0,0,0,0,0,0,0]},{"no":"45","name":"Machine safety check instruction , Q-Com","dept":"MFG","app":[1,0,0,0,0,1,0,0,0]},{"no":"46","name":"Condition Control Check ( Chemical , Injection , Welding , etc.)","dept":"MFG","app":[1,0,0,0,0,1,1,0,0]},{"no":"47","name":"In-process boxes","dept":"MFG","app":[1,1,0,1,0,0,0,0,0]},{"no":"48","name":"Skill map","dept":"MFG","app":[1,0,1,1,0,1,1,1,1]},{"no":"49","name":"Packaging standard (Supplier/In-process/Customer)","dept":"PC","app":[1,1,0,1,0,0,0,0,0]},{"no":"50","name":"Production Plan","dept":"PC","app":[1,1,0,1,0,0,0,0,0]},{"no":"51","name":"Bill of material (BOM)","dept":"PC","app":[1,1,0,1,0,0,0,0,0]},{"no":"52","name":"ECI information","dept":"PC","app":[1,1,0,1,0,0,0,0,0]},{"no":"53","name":"Process flow chart/MIFC","dept":"PC","app":[1,0,0,0,0,0,0,0,1]},{"no":"54","name":"Part & Coil store (In-house & Finish Goods and supplier parts stock)","dept":"PC","app":[1,0,0,1,0,0,0,0,0]},{"no":"55","name":"FG Kanban","dept":"PC","app":[1,0,0,0,0,0,0,0,0]},{"no":"56","name":"Preparation boxes","dept":"PC","app":[1,1,0,1,0,0,0,0,0]}];
+const CATS=[[1,'New / Add process','กระบวนการใหม่ / เพิ่ม'],[2,'Location of sourcing','เปลี่ยนแหล่งที่มา'],[3,'Re-Location','พื้นที่ใหม่'],[4,'Material change','เปลี่ยนวัตถุดิบ'],[5,'Abolish process','ยกเลิกกระบวนการ'],[6,'Machinery and equipment','เครื่องจักร / เครื่องมือ'],[7,'Process condition','จุดควบคุมกระบวนการ'],[8,'Operation method','วิธีการปฏิบัติ'],[9,'Rearrange process','จัดกระบวนการใหม่ (Combine line)']];
+const DEPT={OWN:'Owner',PE:'PE',MT:'MT',UT:'UT',QA:'QA',MFG:'MFG',PC:'PC'};
+const DEPT_FULL={OWN:'Owner (เจ้าของ PCR · Have to do items)',PE:'Production Engineering',MT:'MT',UT:'UT',QA:'Quality Assurance',MFG:'Manufacturing',PC:'Production Control'};
+const DORDER=['OWN','PE','MT','UT','QA','MFG','PC'];
+const STAGES=['ออก PCR','ทบทวน/ประชุม','ทดลอง LVPT/HVPT','QS check / DM-GM audit','Part approve','เริ่มใช้ (SOP)','ปิด PCR'];
+const ST={'':['ยังไม่เริ่ม','○'],P:['กำลังทำ','▲'],O:['เสร็จ','●'],X:['ล่าช้า','✕'],NA:['ไม่เกี่ยวข้อง','–']};
+const KST={'Done':'เสร็จ','On-plan':'ตามแผน','Delay':'ล่าช้า'};
+const ISSUE_DEPTS=['PE','QA','MFG','PC','MT','UT','OMC'];
+const MEET_DEPTS=['PE','QA','MFG','PC','OMC','Safe./Env.','MT','UT'];
+const SIGN=['PE','MT','UT','QA','MFG','PC'];
+const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+/* ---------- ตัวช่วย ---------- */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const clone=o=>JSON.parse(JSON.stringify(o));
+const enc=encodeURIComponent;
+const pad=n=>String(n).padStart(2,'0');
+const todayISO=()=>{const d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());};
+const isISO=s=>/^\d{4}-\d{2}-\d{2}$/.test(String(s||''));
+const fmtD=s=>isISO(s)?(+s.slice(8))+'-'+MON[+s.slice(5,7)-1]+'-'+s.slice(2,4):'';
+const dnum=s=>{const a=String(s).split('-').map(Number);return Math.round(Date.UTC(a[0],a[1]-1,a[2])/864e5);};
+const diffDays=(s)=>isISO(s)?dnum(s)-dnum(todayISO()):null;
+const clip=(s,n)=>{s=String(s||'');return s.length>n?s.slice(0,n-1)+'…':s;};
+const lsGet=k=>{try{return localStorage.getItem(k);}catch(e){return null;}};
+const lsSet=(k,v)=>{try{localStorage.setItem(k,v);return true;}catch(e){return false;}};
+const jget=(k,d)=>{try{const v=JSON.parse(lsGet(k)||'null');return v==null?d:v;}catch(e){return d;}};
+const safeUrl=u=>/^https?:\/\//i.test(String(u||'').trim());
+const normId=s=>String(s||'').trim().toUpperCase().replace(/\s+/g,'');
+
+/* ---------- ตั้งค่า / ผู้ใช้ ---------- */
+let cfg=Object.assign({},DEFAULTS,jget('pcr_cfg_v1',{}));
+if(!cfg.names||!cfg.names.length) cfg.names=DEFAULTS.names;
+const useRemote=()=>!!(cfg.url&&cfg.key&&!cfg.forceLocal);
+let me=lsGet('pcr_me')||'';
+function usage(n){const k=todayISO(),u=jget('pcr_usage_v1',{});if(!u[k]){Object.keys(u).sort().slice(0,-6).forEach(x=>delete u[x]);u[k]={n:0,b:0};}u[k].n++;u[k].b+=n;lsSet('pcr_usage_v1',JSON.stringify(u));}
+const fmtB=b=>b<1024?b+' B':b<1048576?(b/1024).toFixed(1)+' KB':(b/1048576).toFixed(2)+' MB';
+
+/* ---------- Storage adapters ---------- */
+async function api(method,query,body,extra){
+  const key=cfg.key, h=Object.assign({apikey:key,'Content-Type':'application/json',Accept:'application/json'},extra||{});
+  if(/^eyJ[\w-]+\./.test(key)) h.Authorization='Bearer '+key;
+  const r=await fetch(cfg.url.replace(/\/$/,'')+'/rest/v1/'+(cfg.table||'pcr_records')+(query||''),{method,headers:h,body:body?JSON.stringify(body):undefined,cache:'no-store',mode:'cors'});
+  const t=await r.text(); usage(t.length); let j=null; try{j=t?JSON.parse(t):null;}catch(e){j=null;}
+  if(!r.ok){const e=new Error((j&&(j.message||j.hint))||('HTTP '+r.status));e.status=r.status;e.code=j&&j.code;throw e;}
+  return j;
+}
+const Remote={
+  async list(){return api('GET','?select=id,rev,summary,updated_at,updated_by,archived&order=id.asc');},
+  async probe(){const r=await api('GET','?select=updated_at&order=updated_at.desc&limit=1');return r&&r[0]?r[0].updated_at:'';},
+  async get(id){const r=await api('GET','?id=eq.'+enc(id)+'&select=*');return r&&r[0]||null;},
+  async create(row){try{const r=await api('POST','?select=id,rev,summary,updated_at,updated_by,archived',row,{Prefer:'return=representation'});return r[0];}catch(e){if(e.status===409||e.code==='23505'){e.dup=true;}throw e;}},
+  async update(id,rev,patch){const r=await api('PATCH','?id=eq.'+enc(id)+'&rev=eq.'+rev+'&select=id,rev,summary,updated_at,updated_by,archived',patch,{Prefer:'return=representation'});if(!r||!r.length){const e=new Error('conflict');e.conflict=true;throw e;}return r[0];}
+};
+const LS_LOCAL='pcr_local_v1';
+const Local={
+  _all(){return jget(LS_LOCAL,{});},_save(o){if(!lsSet(LS_LOCAL,JSON.stringify(o)))throw new Error('พื้นที่เก็บข้อมูลในเบราว์เซอร์เต็ม');},
+  async list(){return Object.values(this._all()).map(r=>({id:r.id,rev:r.rev,summary:r.summary,updated_at:r.updated_at,updated_by:r.updated_by,archived:!!r.archived}));},
+  async probe(){return '';},
+  async get(id){return clone(this._all()[id]||null);},
+  async create(row){const a=this._all();if(a[row.id]){const e=new Error('dup');e.dup=true;throw e;}const r=Object.assign({rev:1,archived:false},row,{updated_at:new Date().toISOString()});a[row.id]=r;this._save(a);return clone(r);},
+  async update(id,rev,patch){const a=this._all(),r=a[id];if(!r||r.rev!==rev){const e=new Error('conflict');e.conflict=true;throw e;}Object.assign(r,patch,{rev:rev+1,updated_at:new Date().toISOString()});this._save(a);return clone(r);}
+};
+const Store={get impl(){return useRemote()?Remote:Local;},list(){return this.impl.list();},probe(){return this.impl.probe();},get(i){return this.impl.get(i);},create(r){return this.impl.create(r);},update(i,v,p){return this.impl.update(i,v,p);}};
+
+/* ---------- โครงสร้าง PCR ---------- */
+function newPayload(o){
+  return {partNo:'',partName:'',model:'',lineNo:o.lineNo||'',processName:'',owner:o.owner||'',issueDate:todayISO(),issueDept:o.dept||'',qe:o.qe||'',sop:o.sop||'',
+    detail:o.detail||'',stage:0,as:'active',cats:o.cats||[],content:'',curProc:'',newProc:'',custApproval:'',custPcrNo:'',
+    review:{},ppsChange:'',ppsNo:'',ppsRev:'',fmeaChange:'',fmeaNo:'',fmeaRev:'',informCust:'',
+    meetPlan:[],meetDate:'',trialStart:'',prepCheckDate:'',custPcrDate:'',trialOther:'',
+    peValid:'',peFail:'',qaValid:'',qaFail:'',fcDate:'',firstLotInform:'',firstLotNo:'',actualChange:'',
+    qsDate:'',dmgmDate:'',dmgmJudge:'',finalDue:'',allActDue:'',momByQe:false,regDate:'',sign:{},
+    formLink:o.formLink||'',links:[],prep:{},risk:[],actions:[],mom:[],log:[],v:1};
+}
+const RISK_G=[['รายละเอียดการเปลี่ยนแปลง (1)–(7)',[['line','(1) Line No.'],['proc','(2) Process Name'],['point','(3) หัวข้อการเปลี่ยนแปลง'],['type','(4) New / Change','sel',['','New','Change']],['sc','(5) SC point'],['detail','(6) รายละเอียดการเปลี่ยนแปลง','ta'],['purpose','(7) วัตถุประสงค์','ta']]],
+  ['ผลกระทบที่อาจเกิดขึ้น (8)–(10)',[['effect','(8) หัวข้อปัญหาที่อาจเกิดขึ้น','ta'],['ppc','(9) หัวข้อทวนสอบ PPC','ta'],['fmea','(10) หัวข้อทวนสอบ FMEA','ta']]],
+  ['การทวนสอบ (11)–(12.4)',[['factor','(11) ปัจจัยที่อาจทำให้เกิดปัญหา','ta'],['verify','(12.1) หัวข้อที่ต้องทวนสอบ','ta'],['trial','(12.2) รูปแบบการทดลอง','ta'],['criteria','(12.3) เกณฑ์ Pass / Not pass','ta'],['result','(12.4) ผลการทดลอง','sel',['','Passed','Not passed']]]],
+  ['มาตรการ (13)–(14)',[['prevent','(13) การป้องกันการเกิดปัญหา','ta'],['detect','(14) การป้องกันปัญหาหลุดรอด','ta']]],
+  ['การติดตาม (15)–(20)',[['pic','(15) ผู้รับผิดชอบ (PIC)'],['due','(16) กำหนดเสร็จ','date'],['status','(17) สถานะ','st'],['core','(18) แผนก/Core team'],['judge','(19) Judgment','st'],['remark','(20) หมายเหตุ','ta']]]];
+
+/* ---------- คำนวณสถานะ / สรุป ---------- */
+function applicable(p){
+  const sel=new Set((p.cats||[]).map(Number)), out=[];
+  PREP.forEach(it=>{ if(it.head) return; const d=p.prep[it.no]||{}; const app=it.app&&it.app.some((v,i)=>v&&sel.has(i+1)); const has=!!(d.doc||d.url||d.pic||d.plan||d.actual||d.status||d.remark); if(app||has) out.push({it,d,extra:!app}); });
+  return out;
+}
+const isOpen=st=>st!=='O'&&st!=='NA';
+function openStats(p){
+  const pd={},pt={},ad=[],kd=[];
+  DORDER.forEach(k=>{pt[k]=[0,0];pd[k]=[];});
+  applicable(p).forEach(({it,d})=>{ const k=it.dept==='ALL'?'OWN':it.dept; if(!pt[k]){pt[k]=[0,0];pd[k]=[];} if(d.status==='NA') return; pt[k][0]++; if(d.status==='O') pt[k][1]++; else pd[k].push(d.plan||''); });
+  (p.actions||[]).forEach(a=>{ if(isOpen(a.status)) ad.push(a.due||''); });
+  (p.risk||[]).forEach(r=>{ if(isOpen(r.status)&&(r.point||r.detail)) ad.push(r.due||''); });
+  (p.mom||[]).forEach(m=>(m.items||[]).forEach(i=>{ if(i.status!=='Done') kd.push(i.due||''); }));
+  return {pd,pt,ad,kd};
+}
+function buildSummary(p){
+  const o=openStats(p), pdOut={},ptOut={};
+  Object.keys(o.pd).forEach(k=>{ if(o.pd[k].length) pdOut[k]=o.pd[k].slice().sort(); });
+  Object.keys(o.pt).forEach(k=>{ if(o.pt[k][0]) ptOut[k]=o.pt[k]; });
+  return {n:p.pcrNo,d:clip(p.detail,160),l:p.lineNo,o:p.owner,dp:p.issueDept,q:p.qe,st:p.stage|0,as:p.as||'active',sop:p.sop||'',fd:p.finalDue||'',aj:p.dmgmJudge||'',cats:(p.cats||[]).map(Number),form:!!(p.formLink&&p.formLink.trim()),pd:pdOut,pt:ptOut,ad:o.ad.slice().sort(),kd:o.kd.slice().sort()};
+}
+function allDates(s){
+  const a=[]; Object.values(s.pd||{}).forEach(x=>a.push(...x)); a.push(...(s.ad||[]),...(s.kd||[]));
+  if((s.st|0)<5&&s.sop) a.push(s.sop); return a;
+}
+function nextDue(s){const d=allDates(s).filter(isISO).sort();return d[0]||'';}
+function noPlan(s){let n=0;Object.values(s.pd||{}).forEach(x=>x.forEach(v=>{if(!v)n++;}));return n;}
+function health(s){
+  if(s.as==='cancel') return {k:'cancel',t:'ยกเลิก',i:'✕',sev:9};
+  if(s.as==='hold') return {k:'hold',t:'พักไว้',i:'⏸',sev:8};
+  if((s.st|0)>=6) return {k:'done',t:'ปิดแล้ว',i:'✓',sev:7};
+  const ds=allDates(s).filter(isISO).map(diffDays); const late=ds.filter(x=>x<0).length||s.aj==='Not pass';
+  if(late) return {k:'late',t:'ล่าช้า',i:'⚠',sev:0,n:ds.filter(x=>x<0).length};
+  if(ds.some(x=>x<=7)) return {k:'soon',t:'ใกล้ครบ ≤7 วัน',i:'⏱',sev:1};
+  return {k:'ok',t:'ตามแผน',i:'●',sev:2};
+}
+const tagHtml=h=>'<span class="tag '+h.k+'">'+h.i+' '+h.t+'</span>';
+function pendChips(s,only){
+  const out=[]; DORDER.forEach(k=>{ const a=(s.pd||{})[k]; if(!a||!a.length) return; const over=a.filter(v=>isISO(v)&&diffDays(v)<0).length; if(only&&only!==k) return; out.push('<span class="chip'+(over?' late':'')+'" title="'+esc(DEPT_FULL[k])+' ค้าง '+a.length+(over?' · เลยกำหนด '+over:'')+'">'+k+' '+a.length+(over?' ⚠'+over:'')+'</span>'); });
+  return out.join(' ')||'<span class="af">–</span>';
+}
+
+/* ---------- state ---------- */
+let rows=new Map(), loaded=false, loadErr='', probeTok='', staleBanner=false, showArch=false;
+let ui=Object.assign({q:'',stage:'',health:'',dept:'',qe:'',sort:'urgent'},jget('pcr_ui_v1',{}));
+let cur=null; // {id,rev,base,p,dirty,tab,fAll,fDept}
+const saveUI=()=>lsSet('pcr_ui_v1',JSON.stringify(ui));
+
+/* ---------- toast / modal ---------- */
+function toast(m,err){const t=document.createElement('div');t.className='toast'+(err?' err':'');t.setAttribute('role','status');t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),err?5200:2600);}
+let MO=null;
+function closeModal(){if(MO){MO.remove();MO=null;}}
+function modal(html,o){
+  o=o||{}; closeModal(); const ov=document.createElement('div'); ov.className='mo'; ov.innerHTML='<div class="md'+(o.wide?' w':'')+'" role="dialog" aria-modal="true">'+html+'</div>'; document.body.appendChild(ov); MO=ov;
+  ov.addEventListener('mousedown',e=>{if(e.target===ov&&!o.sticky)closeModal();});
+  const f=ov.querySelector('input:not([type=checkbox]),textarea,select'); if(f&&!o.nofocus) f.focus();
+  if(o.init) o.init(ov); return ov;
+}
+function askConfirm(msg,o){
+  o=o||{}; return new Promise(res=>{
+    const ov=modal('<h2>'+esc(o.title||'ยืนยัน')+'</h2><p style="white-space:pre-wrap;margin:0">'+esc(msg)+'</p><div class="act"><button class="btn" data-x="n">'+esc(o.no||'ยกเลิก')+'</button><button class="btn '+(o.danger?'d':'p')+'" data-x="y">'+esc(o.yes||'ตกลง')+'</button></div>',{sticky:true,nofocus:true});
+    const done=v=>{closeModal();res(v);}; ov.querySelector('[data-x=n]').onclick=()=>done(false); ov.querySelector('[data-x=y]').onclick=()=>done(true);
+    (o.danger?ov.querySelector('[data-x=n]'):ov.querySelector('[data-x=y]')).focus();
+    ov.addEventListener('keydown',e=>{if(e.key==='Escape')done(false);});
+  });
+}
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&MO) closeModal();
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='s'&&cur){e.preventDefault();saveCur();}
+});
+
+/* ---------- โหลดข้อมูล ---------- */
+async function loadAll(quiet){
+  try{ const list=await Store.list(); rows=new Map(list.map(r=>[r.id,r])); loaded=true; loadErr=''; staleBanner=false; try{probeTok=await Store.probe();}catch(e){} }
+  catch(e){ loadErr=friendly(e); loaded=true; }
+  renderChrome(); if(!cur) renderDash(); if(!quiet&&!loadErr) toast('โหลดข้อมูลแล้ว '+rows.size+' PCR');
+}
+function friendly(e){
+  const m=String((e&&e.message)||e), s=e&&e.status;
+  if(/Failed to fetch|NetworkError|Load failed/i.test(m)) return 'ติดต่อ Supabase ไม่ได้ (อินเทอร์เน็ตหลุด หรือเครือข่ายบริษัทบล็อก supabase.co) — ลองกด ↻ อีกครั้ง';
+  if(s===402||s===429) return 'Supabase จำกัดโควตา (HTTP '+s+') — ข้อมูลที่แก้ยังอยู่ในหน้านี้ รอแล้วลองบันทึกใหม่ หรือกด “ดาวน์โหลดสำเนา”';
+  if(s===401||s===403) return 'Supabase ไม่อนุญาต (key หรือสิทธิ์ RLS ไม่ถูกต้อง) — แจ้งผู้ดูแล';
+  if(s===404||/does not exist|Could not find the table/i.test(m)) return 'ไม่พบตาราง '+(cfg.table||'pcr_records')+' — รันไฟล์ SQL ที่ Supabase ก่อน';
+  if(s>=500) return 'Supabase ขัดข้องชั่วคราว (HTTP '+s+') — ลองใหม่ในอีกสักครู่';
+  return m;
+}
+setInterval(async()=>{ if(document.hidden||!useRemote()||cur&&cur.dirty) return; try{const t=await Store.probe(); if(probeTok&&t&&t!==probeTok){staleBanner=true;renderChrome();} if(!probeTok) probeTok=t;}catch(e){} },300000);
+
+/* ---------- header ---------- */
+function renderChrome(){
+  const remote=useRemote();
+  const st=!loaded?['busy','กำลังโหลด…']:loadErr?['err','ออฟไลน์/ผิดพลาด']:remote?['ok','Supabase เชื่อมต่อแล้ว']:['busy','โหมดทดลองในเครื่อง'];
+  const opts=cfg.names.map(n=>'<option'+(n===me?' selected':'')+'>'+esc(n)+'</option>').join('');
+  $('hd').innerHTML='<div class="hd-in"><div class="brand"><a href="#/"><b>PCR In-house Log Sheet</b></a><small>QE Electronics · Process Change Request (F-QA-018)</small></div>'+
+    '<span class="pill '+st[0]+'" title="'+esc(loadErr)+'"><i></i>'+esc(st[1])+'</span>'+
+    '<label class="sr" for="me">ผู้ใช้</label><select id="me" class="me" title="ใช้บันทึกว่าใครแก้ (ไม่ใช่การล็อกอิน)"><option value="">— เลือกชื่อ —</option>'+opts+'</select>'+
+    '<button class="btn" id="bRef" title="โหลดข้อมูลล่าสุด">↻ รีเฟรช</button><button class="btn p" id="bNew">＋ PCR ใหม่</button><button class="btn" id="bImp">📋 วางจาก Excel</button><button class="btn" id="bCsv">⬇ CSV</button><button class="btn" id="bSet">⚙ ตั้งค่า</button><button class="btn" id="bHelp">❓ วิธีใช้</button></div>';
+  $('me').onchange=e=>{me=e.target.value;lsSet('pcr_me',me);};
+  $('bRef').onclick=()=>doRefresh(); $('bNew').onclick=newModal; $('bImp').onclick=importModal; $('bCsv').onclick=exportCsv; $('bSet').onclick=settingsModal; $('bHelp').onclick=helpModal;
+  const bn=[]; if(!remote) bn.push('<div class="banner warn"><span class="grow">🧪 <b>โหมดทดลองในเครื่อง</b> — ข้อมูลเก็บเฉพาะเบราว์เซอร์นี้ ยังไม่แชร์ให้ทีม · ตั้งค่า Supabase ที่ ⚙ เพื่อใช้ข้อมูลกลาง</span><button class="btn s" id="bgo">⚙ ตั้งค่า</button></div>');
+  if(loadErr) bn.push('<div class="banner err"><span class="grow">⚠ '+esc(loadErr)+'</span><button class="btn s" id="bretry">↻ ลองใหม่</button></div>');
+  if(staleBanner&&!(cur&&cur.dirty)) bn.push('<div class="banner info"><span class="grow">🔄 มีคนแก้ข้อมูลใหม่ — กด รีเฟรช เพื่อดูล่าสุด</span><button class="btn s" id="bstale">↻ รีเฟรช</button></div>');
+  if(!me) bn.push('<div class="banner info"><span class="grow">👤 เลือกชื่อของคุณที่มุมขวาบน เพื่อบันทึกว่าใครแก้ไข</span></div>');
+  $('bn').innerHTML=bn.join('');
+  const g=$('bgo'); if(g) g.onclick=settingsModal; const r=$('bretry'); if(r) r.onclick=()=>doRefresh(); const s=$('bstale'); if(s) s.onclick=()=>doRefresh();
+}
+async function doRefresh(){ if(cur&&cur.dirty&&!(await askConfirm('มีการแก้ไขที่ยังไม่บันทึกในหน้านี้\nรีเฟรชจะไม่ทิ้งงานของคุณ (เฉพาะรายการรวม) — ต้องการรีเฟรชรายการหรือไม่?',{yes:'รีเฟรช'}))) return; await loadAll(); }
+
+/* ---------- Dashboard ---------- */
+function filtered(){
+  const q=ui.q.trim().toLowerCase(); let a=[...rows.values()].filter(r=>showArch?true:!r.archived);
+  a=a.filter(r=>{const s=r.summary||{}; const h=health(s);
+    if(q&&!((s.n||'')+' '+(s.d||'')+' '+(s.l||'')+' '+(s.o||'')+' '+(s.q||'')).toLowerCase().includes(q)) return false;
+    if(ui.stage!==''&&(s.st|0)!==+ui.stage) return false;
+    if(ui.health){ if(ui.health==='nodoc'){ if(s.form) return false; } else if(ui.health==='noplan'){ if(!noPlan(s)) return false; } else if(h.k!==ui.health) return false; }
+    if(ui.dept&&!((s.pd||{})[ui.dept]||[]).length) return false;
+    if(ui.qe&&(s.q||'')!==ui.qe) return false; return true;});
+  const key={urgent:r=>{const s=r.summary||{};return [health(s).sev,nextDue(s)||'9999',s.n||''];},no:r=>[0,'',(r.summary||{}).n||''],sop:r=>[0,(r.summary||{}).sop||'9999',(r.summary||{}).n||'']}[ui.sort]||null;
+  a.sort((x,y)=>{const A=key(x),B=key(y);for(let i=0;i<A.length;i++){if(A[i]<B[i])return -1;if(A[i]>B[i])return 1;}return 0;});
+  return a;
+}
+function renderDash(){
+  if(cur) return; const app=$('app'); document.title='PCR In-house Log Sheet · QE Electronics';
+  if(!loaded){app.innerHTML='<div class="empty"><b>กำลังโหลดข้อมูล…</b></div>';return;}
+  const all=[...rows.values()].filter(r=>showArch?true:!r.archived), act=all.filter(r=>{const s=r.summary||{};return s.as!=='cancel'&&(s.st|0)<6;});
+  const cnt={late:0,soon:0,done:0,nodoc:0,audit:0}; all.forEach(r=>{const s=r.summary||{},h=health(s); if(h.k==='late')cnt.late++; if(h.k==='soon')cnt.soon++; if(h.k==='done')cnt.done++; if(!s.form&&s.as!=='cancel')cnt.nodoc++; if((s.st|0)===3&&h.k!=='done'&&s.as!=='cancel')cnt.audit++;});
+  const qes=[...new Set(all.map(r=>(r.summary||{}).q).filter(Boolean))].sort();
+  const dmat=DORDER.map(k=>{let open=0,over=0,pc=0;act.forEach(r=>{const a=((r.summary||{}).pd||{})[k]||[];if(a.length){pc++;open+=a.length;over+=a.filter(v=>isISO(v)&&diffDays(v)<0).length;}});return {k,open,over,pc};});
+  const stc=STAGES.map((n,i)=>all.filter(r=>(r.summary||{}).st===i&&(r.summary||{}).as!=='cancel').length);
+  const list=filtered();
+  const kb=(k,cls,n,t)=>'<button class="kpi '+cls+(ui.health===k?' on':'')+'" data-hf="'+k+'"><b>'+n+'</b><span>'+t+'</span></button>';
+  let h='<h1>Dashboard · PCR In-house</h1><div class="sub" style="margin-bottom:12px">'+act.length+' PCR ที่ยังดำเนินการ · อัปเดตจากข้อมูลล่าสุดที่โหลด · คลิกการ์ดเพื่อกรอง คลิกแถวเพื่อเปิดรายละเอียด</div>';
+  h+='<div class="kpis"><button class="kpi'+(ui.health===''?' on':'')+'" data-hf=""><b>'+all.length+'</b><span>PCR ทั้งหมด</span></button>'+kb('late','late',cnt.late,'⚠ ล่าช้า')+kb('soon','soon',cnt.soon,'⏱ ใกล้ครบ ≤7 วัน')+kb('nodoc','',cnt.nodoc,'📎 ยังไม่มี F-QA-018')+kb('noplan','',all.filter(r=>noPlan(r.summary||{})>0).length,'📅 มีเอกสารที่ยังไม่ระบุ Plan')+kb('done','ok',cnt.done,'✓ ปิดแล้ว')+'</div>';
+  h+='<div class="card"><h2>ค้างตามหน่วยงาน (เอกสาร/Checklist ที่ยังไม่เสร็จ)</h2><div class="dm">'+dmat.map(d=>'<button data-df="'+d.k+'" class="'+(ui.dept===d.k?'on':'')+'" title="กรอง PCR ที่ '+esc(DEPT_FULL[d.k])+' ยังค้าง"><b>'+d.k+'</b><div class="n'+(d.over?' late':'')+'">'+d.open+'</div><small>ค้าง '+d.pc+' PCR'+(d.over?' · <span style="color:var(--dang);font-weight:700">⚠ เลยกำหนด '+d.over+'</span>':'')+'</small></button>').join('')+'</div></div>';
+  h+='<div class="card"><h2>ขั้นตอนของ PCR</h2><div class="chips"><button class="chip'+(ui.stage===''?' on':'')+'" data-sf="">ทั้งหมด '+all.filter(r=>(r.summary||{}).as!=='cancel').length+'</button>'+STAGES.map((n,i)=>'<button class="chip'+(ui.stage===String(i)?' on':'')+'" data-sf="'+i+'">'+(i+1)+'. '+esc(n)+' <b>'+stc[i]+'</b></button>').join('')+'</div></div>';
+  h+='<div class="bar"><label class="sr" for="q">ค้นหา</label><input type="search" id="q" placeholder="🔍 ค้นหา PCR No. / รายละเอียด / Line / Owner" value="'+esc(ui.q)+'"><label class="sr" for="fq">QE</label><select id="fq"><option value="">QE ทุกคน</option>'+qes.map(q=>'<option'+(ui.qe===q?' selected':'')+'>'+esc(q)+'</option>').join('')+'</select><label class="sr" for="fs">เรียง</label><select id="fs"><option value="urgent"'+(ui.sort==='urgent'?' selected':'')+'>เรียง: เร่งด่วนก่อน</option><option value="no"'+(ui.sort==='no'?' selected':'')+'>เรียง: PCR No.</option><option value="sop"'+(ui.sort==='sop'?' selected':'')+'>เรียง: SOP target</option></select><label class="chk"><input type="checkbox" id="fa"'+(showArch?' checked':'')+'> แสดงที่เก็บถาวร</label>';
+  const act2=[ui.q&&'ค้นหา “'+esc(ui.q)+'”',ui.stage!==''&&'ขั้นตอน '+(+ui.stage+1),ui.health&&'สถานะ: '+esc({late:'ล่าช้า',soon:'ใกล้ครบ',done:'ปิดแล้ว',nodoc:'ไม่มี F-QA-018',noplan:'ไม่ระบุ Plan'}[ui.health]),ui.dept&&'ค้างที่ '+ui.dept,ui.qe&&'QE '+esc(ui.qe)].filter(Boolean);
+  if(act2.length) h+='<span class="af">กำลังกรอง: '+act2.join(' · ')+'</span><button class="btn s" id="fclr">✕ ล้างตัวกรอง</button>';
+  h+='<span class="af" style="margin-left:auto">แสดง '+list.length+' / '+all.length+'</span></div>';
+  if(!list.length){
+    h+='<div class="card empty"><b>'+(all.length?'ไม่พบ PCR ที่ตรงกับตัวกรอง':'ยังไม่มี PCR ในระบบ')+'</b>'+(all.length?'ลองล้างตัวกรอง หรือเปลี่ยนคำค้นหา<br><br><button class="btn" id="fclr2">✕ ล้างตัวกรอง</button>':'กด <b style="display:inline">＋ PCR ใหม่</b> หรือ <b style="display:inline">📋 วางจาก Excel</b> เพื่อนำเข้ารายการจากไฟล์ PCR in-house process audit & Approval status')+'</div>';
+  } else {
+    h+='<div class="tw"><table class="stack"><thead><tr><th>PCR No.</th><th>รายละเอียด / Line</th><th>Owner / หน่วยงาน</th><th>QE</th><th>ขั้นตอน</th><th>SOP target</th><th>ครบถัดไป</th><th>ค้างตามหน่วยงาน</th><th>สถานะ</th></tr></thead><tbody>';
+    list.forEach(r=>{const s=r.summary||{},hh=health(s),nd=nextDue(s),ndd=nd?diffDays(nd):null;
+      h+='<tr class="row" data-id="'+esc(r.id)+'" tabindex="0"><td class="n" data-l="PCR No."><a href="#/pcr/'+enc(r.id)+'">'+esc(s.n||r.id)+'</a>'+(r.archived?' <span class="chip gray">เก็บถาวร</span>':'')+(s.form?'':'<small style="color:var(--dang);font-weight:700">⚠ ไม่มี F-QA-018</small>')+'</td>'+
+        '<td data-l="รายละเอียด">'+esc(clip(s.d,110))+'<small>'+(s.l?'Line '+esc(s.l)+' · ':'')+(s.cats||[]).map(c=>'#'+c).join(' ')+'</small></td>'+
+        '<td data-l="Owner">'+esc(s.o||'–')+'<small>'+esc(s.dp||'')+'</small></td><td data-l="QE">'+esc(s.q||'–')+'</td>'+
+        '<td data-l="ขั้นตอน"><div class="stp" title="'+esc(STAGES[s.st|0])+'">'+STAGES.map((_,i)=>'<i class="'+(i<(s.st|0)?'d':i===(s.st|0)?'c':'')+'"></i>').join('')+'</div><small>'+((s.st|0)+1)+'. '+esc(STAGES[s.st|0])+'</small></td>'+
+        '<td data-l="SOP target">'+esc(fmtD(s.sop)||'–')+'</td><td data-l="ครบถัดไป" style="white-space:nowrap">'+(nd?'<span style="'+(ndd<0?'color:var(--dang);font-weight:700':ndd<=7?'color:var(--warn);font-weight:700':'')+'">'+esc(fmtD(nd))+'</span><small>'+(ndd<0?'เลย '+(-ndd)+' วัน':ndd===0?'วันนี้':'อีก '+ndd+' วัน')+'</small>':'–')+'</td>'+
+        '<td data-l="ค้างตามหน่วยงาน"><div class="chips">'+pendChips(s)+'</div></td><td data-l="สถานะ">'+tagHtml(hh)+(noPlan(s)?'<small>ไม่ระบุ Plan '+noPlan(s)+'</small>':'')+'</td></tr>';});
+    h+='</tbody></table></div>';
+  }
+  h+='<p class="af" style="margin-top:12px">ข้อมูลโหลดจาก '+(useRemote()?'Supabase (ดึงเฉพาะสรุปรายการ ไม่ดึงรายละเอียดทั้งหมด)':'เบราว์เซอร์นี้')+' · ข้อมูลที่ดึงวันนี้ '+fmtB((jget('pcr_usage_v1',{})[todayISO()]||{b:0}).b)+'</p>';
+  app.innerHTML=h;
+}
+document.addEventListener('click',e=>{
+  if(cur) return; const t=e.target;
+  const hf=t.closest('[data-hf]'); if(hf){ui.health=ui.health===hf.dataset.hf?'':hf.dataset.hf;saveUI();renderDash();return;}
+  const df=t.closest('[data-df]'); if(df){ui.dept=ui.dept===df.dataset.df?'':df.dataset.df;saveUI();renderDash();return;}
+  const sf=t.closest('[data-sf]'); if(sf){ui.stage=ui.stage===sf.dataset.sf?'':sf.dataset.sf;saveUI();renderDash();return;}
+  if(t.id==='fclr'||t.id==='fclr2'){ui.q=ui.stage=ui.health=ui.dept=ui.qe='';saveUI();renderDash();return;}
+  const tr=t.closest('tr.row'); if(tr&&!t.closest('a')){go('#/pcr/'+enc(tr.dataset.id));}
+});
+document.addEventListener('keydown',e=>{ if(!cur&&e.key==='Enter'){const tr=e.target.closest&&e.target.closest('tr.row'); if(tr) go('#/pcr/'+enc(tr.dataset.id));} });
+document.addEventListener('input',e=>{ if(cur) return; if(e.target.id==='q'){ui.q=e.target.value;saveUI();clearTimeout(window.__qt);window.__qt=setTimeout(()=>{renderDash();const q=$('q');if(q){q.focus();q.setSelectionRange(q.value.length,q.value.length);}},180);} });
+document.addEventListener('change',e=>{ if(cur) return; const t=e.target; if(t.id==='fq'){ui.qe=t.value;saveUI();renderDash();} else if(t.id==='fs'){ui.sort=t.value;saveUI();renderDash();} else if(t.id==='fa'){showArch=t.checked;renderDash();} });
+
+/* ---------- routing ---------- */
+let navBusy=false;
+function go(h){ if(location.hash===h){route();return;} location.hash=h; }
+window.addEventListener('hashchange',async()=>{
+  if(navBusy) return;
+  if(cur&&cur.dirty){ const target=location.hash; const ok=await askConfirm('มีการแก้ไขที่ยังไม่ได้บันทึก\nถ้าออกจากหน้านี้ ข้อมูลที่แก้ค้างไว้จะหายไป',{title:'ออกจากหน้านี้?',yes:'ออกโดยไม่บันทึก',no:'อยู่ต่อ',danger:true}); if(!ok){navBusy=true;history.replaceState(null,'','#/pcr/'+enc(cur.id));setTimeout(()=>navBusy=false,0);return;} cur.dirty=false; }
+  route();
+});
+window.addEventListener('beforeunload',e=>{ if(cur&&cur.dirty){e.preventDefault();e.returnValue='มีการแก้ไขที่ยังไม่ได้บันทึก';return e.returnValue;} });
+async function route(){
+  const m=/^#\/pcr\/([^/]+)(?:\/(\w+))?/.exec(location.hash||'');
+  if(!m){ cur=null; const ap=$('app'); ap.onclick=ap.oninput=ap.onchange=null; renderChrome(); renderDash(); window.scrollTo(0,0); return; }
+  const id=decodeURIComponent(m[1]); $('app').innerHTML='<div class="empty"><b>กำลังเปิด PCR…</b></div>';
+  try{ const r=await Store.get(id); if(!r){ cur=null; $('app').innerHTML='<div class="card empty"><b>ไม่พบ PCR “'+esc(id)+'”</b>อาจถูกพิมพ์ผิด หรือยังไม่ได้บันทึก<br><br><a class="btn" href="#/">← กลับ Dashboard</a></div>'; return; }
+    const p=Object.assign(newPayload({}),r.payload||{}); cur={id:r.id,rev:r.rev,archived:!!r.archived,base:clone(p),p,dirty:false,tab:m[2]||'form',fAll:false,fDept:''}; renderDetail(); window.scrollTo(0,0);
+  }catch(e){ cur=null; $('app').innerHTML='<div class="banner err"><span class="grow">⚠ เปิด PCR ไม่ได้: '+esc(friendly(e))+'</span><a class="btn s" href="#/">← กลับ</a></div>'; }
+}
+
+/* ---------- Detail ---------- */
+const TABS=[['form','① รายละเอียด PCR'],['prep','② Checklist เอกสาร'],['risk','③ Risk verification'],['plan','④ แผน & ค้างตามหน่วยงาน'],['mom','⑤ MOM'],['docs','⑥ เอกสาร / Link'],['log','⑦ ประวัติ']];
+function gp(path){return path.split('|').reduce((o,k)=>o==null?o:o[k],cur.p);}
+function sp(path,val){
+  const ks=path.split('|'),last=ks.pop(); let o=cur.p; for(const k of ks){ if(o[k]==null) o[k]=/^\d+$/.test(k)?{}:{}; o=o[k]; }
+  const old=o[last];
+  if((last==='plan'||last==='due')&&typeof val==='string'){ if(old&&val!==old){ o.rev=(o.rev||0)+1; (o.hist=o.hist||[]).push({f:old,t:val,at:new Date().toISOString(),by:me}); } }
+  o[last]=val; cur.dirty=true;
+}
+function fld(path,label,o){
+  o=o||{}; const t=o.t||'text', v=gp(path), id='f_'+path.replace(/\W/g,'_'), bad=o.req&&!String(v||'').trim()&&cur.showErr;
+  let inp; if(t==='ta') inp='<textarea id="'+id+'" data-p="'+esc(path)+'"'+(o.ph?' placeholder="'+esc(o.ph)+'"':'')+'>'+esc(v)+'</textarea>';
+  else if(t==='sel') inp='<select id="'+id+'" data-p="'+esc(path)+'">'+o.opts.map(x=>{const a=Array.isArray(x)?x:[x,x||'—'];return '<option value="'+esc(a[0])+'"'+(String(v||'')===String(a[0])?' selected':'')+'>'+esc(a[1])+'</option>';}).join('')+'</select>';
+  else inp='<input id="'+id+'" type="'+(t==='date'?'date':t==='url'?'url':'text')+'" data-p="'+esc(path)+'" value="'+esc(v)+'"'+(o.ph?' placeholder="'+esc(o.ph)+'"':'')+(o.list?' list="'+o.list+'"':'')+'>';
+  return '<div class="f'+(bad?' bad':'')+(o.w?' '+o.w:'')+'"><label for="'+id+'">'+esc(label)+(o.req?' <span class="req" title="จำเป็น">*</span>':'')+'</label>'+inp+(o.hint?'<div class="hint">'+esc(o.hint)+'</div>':'')+(bad?'<div class="err">กรุณากรอก</div>':'')+'</div>';
+}
+function renderDetail(){
+  const y0=window.scrollY; const p=cur.p, s=buildSummary(p), h=health(s), nd=nextDue(s); document.title=(p.pcrNo||cur.id)+' · PCR In-house';
+  const o=openStats(p); const prepOpen=DORDER.reduce((a,k)=>a+o.pd[k].length,0), prepLate=DORDER.reduce((a,k)=>a+o.pd[k].filter(v=>isISO(v)&&diffDays(v)<0).length,0);
+  const badge=(n,l)=>n?'<span class="bd'+(l?' late':'')+'">'+n+'</span>':'';
+  let h1='<div class="dh" id="dh"><div class="dh-top"><a class="btn s" href="#/" title="กลับ Dashboard">← Dashboard</a><h1>'+esc(p.pcrNo||cur.id)+'</h1><span id="dhTag">'+tagHtml(h)+'</span>'+(cur.archived?'<span class="chip gray">เก็บถาวร</span>':'')+
+    '<span class="sub" id="dhSub">'+esc(clip(p.detail,90))+'</span><div class="dh-act"><span class="dirty" id="dirty">'+(cur.dirty?'● ยังไม่ได้บันทึก':'')+'</span><button class="btn" id="bDl" title="ดาวน์โหลดสำเนา JSON">⬇ สำเนา</button><button class="btn" id="bPrint">🖨 พิมพ์</button><button class="btn p" id="bSave">💾 บันทึก</button></div></div>'+
+    '<div class="stg" role="group" aria-label="ขั้นตอนของ PCR">'+STAGES.map((n,i)=>'<button data-stage="'+i+'" class="'+(i<(p.stage|0)?'past':i===(p.stage|0)?'cur':'')+'" aria-pressed="'+(i===(p.stage|0))+'">'+(i+1)+'. '+esc(n)+'</button>').join('')+'<span style="margin-left:auto"></span><label class="sr" for="asel">สถานะ</label><select id="asel" data-p="as" style="min-height:28px"><option value="active"'+(p.as==='active'?' selected':'')+'>ดำเนินการ</option><option value="hold"'+(p.as==='hold'?' selected':'')+'>พักไว้</option><option value="cancel"'+(p.as==='cancel'?' selected':'')+'>ยกเลิก</option></select></div></div>';
+  h1+='<div class="tabs" role="tablist">'+TABS.map(t=>'<button role="tab" data-tab="'+t[0]+'" class="'+(cur.tab===t[0]?'on':'')+'" aria-selected="'+(cur.tab===t[0])+'">'+t[1]+(t[0]==='prep'?badge(prepOpen,prepLate):t[0]==='docs'&&!(p.formLink||'').trim()?'<span class="bd late">!</span>':'')+'</button>').join('')+'</div><div id="tabBody"></div><div class="sticky-save'+(cur.dirty?' on':'')+'" id="ss"><span class="dirty">● มีการแก้ไขที่ยังไม่บันทึก</span><button class="btn p" id="bSave2">💾 บันทึก (Ctrl+S)</button></div>';
+  $('app').innerHTML=h1; renderTabBody(); wireDetail(); window.scrollTo(0,y0);
+}
+function refreshChrome(){
+  const p=cur.p, s=buildSummary(p), h=health(s); const t=$('dhTag'); if(t) t.innerHTML=tagHtml(h); const sub=$('dhSub'); if(sub) sub.textContent=clip(p.detail,90);
+  const d=$('dirty'); if(d) d.textContent=cur.dirty?'● ยังไม่ได้บันทึก':''; const ss=$('ss'); if(ss) ss.classList.toggle('on',!!cur.dirty);
+  const o=openStats(p); const prepOpen=DORDER.reduce((a,k)=>a+o.pd[k].length,0), late=DORDER.reduce((a,k)=>a+o.pd[k].filter(v=>isISO(v)&&diffDays(v)<0).length,0);
+  const tb=document.querySelector('.tabs [data-tab=prep]'); if(tb){ tb.innerHTML=TABS[1][1]+(prepOpen?'<span class="bd'+(late?' late':'')+'">'+prepOpen+'</span>':''); }
+  document.querySelectorAll('[data-dg]').forEach(g=>{ const k=g.dataset.dg; const x=o.pt[k]||[0,0]; const c=g.querySelector('.cnt'); if(c) c.textContent='เสร็จ '+x[1]+' / '+x[0]+' · ค้าง '+(x[0]-x[1]); });
+}
+function renderTabBody(){
+  const b=$('tabBody'); if(!b) return; const y=window.scrollY;
+  b.innerHTML=({form:tForm,prep:tPrep,risk:tRisk,plan:tPlan,mom:tMom,docs:tDocs,log:tLog}[cur.tab]||tForm)();
+  window.scrollTo(0,y);
+}
+/* --- tab 1: ฟอร์ม --- */
+function tForm(){
+  const p=cur.p; const sec=(t,body,open)=>'<details class="sec"'+(open?' open':'')+'><summary>'+t+'</summary><div class="in">'+body+'</div></details>';
+  const issue=ISSUE_DEPTS.map(x=>[x,x]); issue.unshift(['','—']);
+  let h=sec('A. ข้อมูลหลักของ PCR','<div class="grid">'+fld('pcrNo','PCR No.',{ph:'เช่น SAI26-053',hint:'ตั้งตอนสร้างแล้วแก้ไม่ได้'}).replace('<input ','<input readonly ')+fld('detail','PCR Detail (ชื่อเรื่อง)',{w:'w2',req:true})+fld('partNo','Part No.')+fld('partName','Part Name')+fld('model','Model')+fld('lineNo','Line No.')+fld('processName','Process Name')+fld('owner','Process Owner')+fld('issueDate','Issue date',{t:'date'})+fld('issueDept','หน่วยงานที่ออก PCR',{t:'sel',opts:issue})+fld('qe','QE in-charge')+fld('sop','SOP target date (วันกำหนด SOP)',{t:'date'})+'</div>',true);
+  h+=sec('B. ประเภทการเปลี่ยนแปลง & เนื้อหา','<div class="lb" style="font-weight:700;font-size:12px;color:var(--mut);margin-bottom:4px">Change categories — เลือกแล้วระบบจะแสดงเฉพาะเอกสารที่เกี่ยวข้องในแท็บ ②</div><div class="cats">'+CATS.map(c=>'<label><input type="checkbox" data-cat="'+c[0]+'"'+((p.cats||[]).map(Number).includes(c[0])?' checked':'')+'><span><b>'+c[0]+'.</b> '+esc(c[1])+'<br><small style="color:var(--mut)">'+esc(c[2])+'</small></span></label>').join('')+'</div><div class="grid" style="margin-top:12px">'+fld('content','Content of Change (รายละเอียดการเปลี่ยนแปลง)',{t:'ta',w:'w3'})+fld('curProc','Current process (กระบวนการปัจจุบัน)',{t:'ta',w:'w2'})+fld('newProc','New process (กระบวนการใหม่)',{t:'ta',w:'w2'})+fld('custApproval','ลูกค้า (Customer approval)',{t:'sel',opts:[['','—'],['need','Need customer approval'],['noneed','No need']]})+fld('custPcrNo','Customer PCR No.')+'</div>',true);
+  const rvRows=['PE','QA','MFG','PC','MT','UT'].map(k=>'<div class="rv"><b>'+k+'</b><select data-p="review|'+k+'|should" aria-label="'+k+' Should change"><option value="">Should change?</option><option value="yes"'+((p.review[k]||{}).should==='yes'?' selected':'')+'>Yes</option><option value="no"'+((p.review[k]||{}).should==='no'?' selected':'')+'>No</option></select><input class="cell" data-p="review|'+k+'|reason" value="'+esc((p.review[k]||{}).reason||'')+'" placeholder="Reason" aria-label="'+k+' reason"><label class="chk"><input type="checkbox" data-p="review|'+k+'|reviewed"'+((p.review[k]||{}).reviewed?' checked':'')+'> Reviewed</label></div>').join('');
+  h+=sec('C. ทบทวนการเปลี่ยนแปลงโดยหน่วยงาน (Review of Changing)',rvRows+'<div class="grid" style="margin-top:10px">'+fld('ppsChange','PPS shall be changed/review',{t:'sel',opts:['','Changed','Review']})+fld('ppsNo','PPS No.')+fld('ppsRev','PPS Revise No.')+fld('fmeaChange','FMEA shall be changed/review',{t:'sel',opts:['','Changed','Review']})+fld('fmeaNo','FMEA No.')+fld('fmeaRev','FMEA Revise No.')+fld('informCust','Inform Customer',{t:'sel',opts:[['','—'],['need','Need'],['noneed','No need']]})+'</div>');
+  h+=sec('D. การประชุม & การทดลอง','<div class="lb" style="font-weight:700;font-size:12px;color:var(--mut);margin-bottom:4px">Meeting plan (หน่วยงานที่เข้าร่วม)</div><div class="chips" style="margin-bottom:10px">'+MEET_DEPTS.map(k=>'<label class="chk"><input type="checkbox" data-meet="'+esc(k)+'"'+((p.meetPlan||[]).includes(k)?' checked':'')+'> '+esc(k)+'</label>').join(' &nbsp; ')+'</div><div class="grid">'+fld('meetDate','Meeting date',{t:'date'})+fld('trialStart','Trial start date (LVPT/HVPT)',{t:'date'})+fld('prepCheckDate','ตรวจ Process change preparation (หน้า 2) วันที่',{t:'date'})+fld('custPcrDate','Customer PCR approve วันที่',{t:'date'})+fld('trialOther','อื่น ๆ (Other)',{w:'w2'})+'</div>');
+  h+=sec('E. Validation & Implement','<div class="grid">'+fld('peValid','PE · Efficiency (Capacity/Capability/IMDS)',{t:'sel',opts:['','Passed','Failed']})+fld('peFail','PE · Failed item',{w:'w2'})+fld('qaValid','QA · Quality (HVPT result)',{t:'sel',opts:['','Passed','Failed']})+fld('qaFail','QA · Failed items',{w:'w2'})+fld('fcDate','PC · Forecast to change date',{t:'date'})+fld('firstLotInform','Inform first lot to customer',{t:'sel',opts:[['','—'],['yes','Yes'],['no','No']]})+fld('firstLotNo','First Lot No.')+fld('actualChange','Actual change date',{t:'date'})+'</div>');
+  const sg=SIGN.map(k=>'<tr><td><b>'+k+'</b></td><td><label class="chk"><input type="checkbox" data-p="sign|'+k+'|issued"'+((p.sign[k]||{}).issued?' checked':'')+'> Issued</label></td><td><label class="chk"><input type="checkbox" data-p="sign|'+k+'|approved"'+((p.sign[k]||{}).approved?' checked':'')+'> Approved</label></td></tr>').join('')+'<tr><td><b>QS</b></td><td colspan="2"><label class="chk"><input type="checkbox" data-p="sign|QS|checked"'+((p.sign.QS||{}).checked?' checked':'')+'> Checked</label></td></tr><tr><td><b>PCR center</b></td><td colspan="2"><label class="chk"><input type="checkbox" data-p="sign|CENTER|checked"'+((p.sign.CENTER||{}).checked?' checked':'')+'> Checked</label></td></tr>';
+  h+=sec('F. Audit & Approval (ตามตาราง PCR in-house process audit & Approval status)','<div class="grid">'+fld('qsDate','QS-QE & Core team cross check the document date',{t:'date',w:'w2'})+fld('dmgmDate','DM-GM Process confirmation (วันที่ audit)',{t:'date',w:'w2'})+fld('dmgmJudge','Judgement',{t:'sel',opts:[['','—'],['Pass','Pass'],['Pass with condition','Pass with condition'],['Not pass','Not pass']]})+fld('finalDue','Final due date of PCR Part approve',{t:'date'})+fld('allActDue','Due date of all action for PCR sign',{t:'date'})+fld('regDate','Process confirmation sheet sign / Register date',{t:'date'})+'<div class="f"><div class="lb">MOM by QE</div><label class="chk"><input type="checkbox" data-p="momByQe"'+(p.momByQe?' checked':'')+'> ทำ MOM แล้ว</label></div></div><h3 style="margin-top:14px">ลงนาม (Sign-off)</h3><table class="dsum"><tbody>'+sg+'</tbody></table>');
+  return h;
+}
+/* --- tab 2: checklist --- */
+function tPrep(){
+  const p=cur.p, list=applicable(p); const cats=(p.cats||[]).length;
+  if(!cats) return '<div class="card empty"><b>ยังไม่ได้เลือกประเภทการเปลี่ยนแปลง</b>เลือก Change categories ที่แท็บ ① (หัวข้อ B) ก่อน ระบบจะแสดงเฉพาะเอกสารที่เกี่ยวข้อง (ตามตารางหน้า 2 ของ F-QA-018)</div>';
+  const o=openStats(p); let h='<div class="bar"><label class="chk"><input type="checkbox" id="onlyOpen"'+(cur.fAll?'':' checked')+'> แสดงเฉพาะที่ค้าง</label><span class="af">สถานะ: ● เสร็จ · ▲ กำลังทำ · ✕ ล่าช้า · – ไม่เกี่ยวข้อง · แถวแดง = เลยกำหนด · Rev.n = เลื่อน Plan มาแล้ว n ครั้ง</span></div>';
+  const groups={}; list.forEach(x=>{const k=x.it.dept==='ALL'?'OWN':x.it.dept;(groups[k]=groups[k]||[]).push(x);});
+  DORDER.forEach(k=>{ const g=groups[k]; if(!g) return; const t=o.pt[k]||[0,0]; const rowsH=g.filter(x=>cur.fAll||isOpen(x.d.status)).map(x=>prepRow(x)).join('');
+    h+='<div class="dg" data-dg="'+k+'"><header><h3>'+k+' · '+esc(DEPT_FULL[k])+'</h3><span class="chip cnt">เสร็จ '+t[1]+' / '+t[0]+' · ค้าง '+(t[0]-t[1])+'</span><span class="grow"></span><span class="bulk"><label class="sr" for="bp_'+k+'">PIC</label><input id="bp_'+k+'" placeholder="PIC ทั้งแผนก"><label class="sr" for="bd_'+k+'">Plan</label><input id="bd_'+k+'" type="date" aria-label="Plan ทั้งแผนก"><button class="btn s" data-bulk="'+k+'" title="ใส่ค่าให้เฉพาะรายการที่ยังว่าง">ใส่ค่าที่ว่าง</button></span></header><div class="tw2"><table class="ck"><thead><tr><th>No.</th><th>Preparation item</th><th>Doc. No. / Evidence · Link</th><th>PIC</th><th>Plan</th><th>Actual</th><th>Status</th><th>QS</th><th>Remark</th></tr></thead><tbody>'+(rowsH||'<tr><td colspan="9" class="empty" style="padding:14px">✓ ไม่มีรายการค้างในหน่วยงานนี้</td></tr>')+'</tbody></table></div></div>'; });
+  return h;
+}
+function prepRow(x){
+  const it=x.it,d=x.d,no=it.no,pf='prep|'+no+'|', late=isOpen(d.status)&&isISO(d.plan)&&diffDays(d.plan)<0;
+  const old=(d.hist||[]).length?'<span class="old" title="'+esc(d.hist.map(h=>fmtD(h.f)+' → '+fmtD(h.t)).join(' | '))+'">'+esc(fmtD(d.hist[d.hist.length-1].f))+'</span><span class="rev">Rev.'+(d.rev||d.hist.length)+'</span>':'';
+  return '<tr data-no="'+esc(no)+'" class="'+(late?'late':d.status==='O'?'done':'')+'"><td class="no">'+esc(no)+'</td><td class="nm">'+esc(it.name)+(x.extra?'<small style="color:var(--warn)">ไม่ตรงประเภทที่เลือก แต่มีข้อมูลอยู่</small>':'')+'</td>'+
+    '<td class="doc"><input class="cell" data-p="'+pf+'doc" value="'+esc(d.doc||'')+'" placeholder="เลขเอกสาร / หลักฐาน" aria-label="Doc No. '+esc(no)+'"><div style="display:flex;gap:4px"><input class="cell" data-p="'+pf+'url" value="'+esc(d.url||'')+'" placeholder="Link (SharePoint / path)" aria-label="Link '+esc(no)+'">'+(safeUrl(d.url)?'<a class="open-ic" href="'+esc(d.url)+'" target="_blank" rel="noopener" title="เปิดเอกสาร">↗</a>':d.url?'<button class="open-ic" data-copy="'+esc(d.url)+'" title="คัดลอก path">📋</button>':'')+'</div></td>'+
+    '<td class="pic"><input class="cell" data-p="'+pf+'pic" value="'+esc(d.pic||'')+'" aria-label="PIC '+esc(no)+'"></td><td class="dt"><input class="cell" type="date" data-p="'+pf+'plan" value="'+esc(d.plan||'')+'" aria-label="Plan '+esc(no)+'">'+old+'</td><td class="dt"><input class="cell" type="date" data-p="'+pf+'actual" value="'+esc(d.actual||'')+'" aria-label="Actual '+esc(no)+'"></td>'+
+    '<td class="st"><select class="cell" data-p="'+pf+'status" aria-label="Status '+esc(no)+'">'+Object.keys(ST).map(k=>'<option value="'+k+'"'+((d.status||'')===k?' selected':'')+'>'+ST[k][1]+' '+ST[k][0]+'</option>').join('')+'</select></td>'+
+    '<td class="qs"><select class="cell" data-p="'+pf+'qs" aria-label="QS cross check '+esc(no)+'"><option value="">–</option><option value="O"'+(d.qs==='O'?' selected':'')+'>O</option><option value="X"'+(d.qs==='X'?' selected':'')+'>X</option></select></td><td class="rm"><input class="cell" data-p="'+pf+'remark" value="'+esc(d.remark||'')+'" aria-label="Remark '+esc(no)+'"></td></tr>';
+}
+/* --- tab 3: risk --- */
+function tRisk(){
+  const p=cur.p; let h='<p class="legend">Risk verification sheet for changing points (หน้า 3 ของ F-QA-018) · 1 การ์ด = 1 จุดเปลี่ยนแปลง · สถานะ ● เสร็จ ▲ กำลังทำ ✕ ล่าช้า</p><div class="bar"><button class="btn p" id="addRisk">＋ เพิ่มจุดเปลี่ยนแปลง</button></div>';
+  if(!(p.risk||[]).length) h+='<div class="card empty"><b>ยังไม่มีรายการ Risk verification</b>กด “＋ เพิ่มจุดเปลี่ยนแปลง” เพื่อเริ่ม</div>';
+  (p.risk||[]).forEach((r,i)=>{
+    h+='<div class="ic"><header><b>จุดที่ '+(i+1)+'</b><span class="chip '+(r.result==='Not passed'?'late':r.result==='Passed'?'ok':'')+'">'+esc(r.result||'ยังไม่มีผลทดลอง')+'</span><span class="grow"></span><button class="btn s d" data-rmrisk="'+i+'">ลบแถวนี้</button></header><div class="in">';
+    RISK_G.forEach(g=>{ h+='<div class="grp">'+esc(g[0])+'</div><div class="grid">'+g[1].map(f=>{ const path='risk|'+i+'|'+f[0], t=f[2]||'text'; if(t==='st'){ const v=r[f[0]]||''; return '<div class="f"><label>'+esc(f[1])+'</label><select data-p="'+path+'" aria-label="'+esc(f[1])+'">'+Object.keys(ST).slice(0,4).map(k=>'<option value="'+k+'"'+(v===k?' selected':'')+'>'+ST[k][1]+' '+ST[k][0]+'</option>').join('')+'</select></div>'; }
+      if(t==='date') return '<div class="f"><label>'+esc(f[1])+'</label><input type="date" data-p="'+path+'" value="'+esc(r[f[0]]||'')+'">'+((r.hist||[]).length?'<div class="hint">Rev.'+r.rev+' · เดิม '+esc(fmtD(r.hist[r.hist.length-1].f))+'</div>':'')+'</div>';
+      return fld(path,f[1],{t:t==='ta'?'ta':t==='sel'?'sel':'text',opts:f[3],w:t==='ta'?'w2':''}); }).join('')+'</div>'; });
+    h+='</div></div>'; });
+  return h;
+}
+/* --- tab 4: แผน --- */
+function tPlan(){
+  const p=cur.p,o=openStats(p); let h='<div class="card"><h2>ค้างตามหน่วยงาน — เอกสารที่ยังไม่เสร็จ</h2><div class="tw"><table class="dsum"><thead><tr><th>หน่วยงาน</th><th class="num">ทั้งหมด</th><th class="num">เสร็จ</th><th class="num">ค้าง</th><th class="num">เลยกำหนด</th><th>ไม่ระบุ Plan</th><th>ครบถัดไป</th><th>เอกสารที่ค้าง</th></tr></thead><tbody>';
+  const app=applicable(p); let any=false;
+  DORDER.forEach(k=>{ const t=o.pt[k]; if(!t||!t[0]) return; any=true; const dates=o.pd[k].filter(isISO).sort(); const over=dates.filter(v=>diffDays(v)<0).length, np=o.pd[k].filter(v=>!v).length;
+    const pend=app.filter(x=>(x.it.dept==='ALL'?'OWN':x.it.dept)===k&&isOpen(x.d.status)).map(x=>x.it.no+' '+clip(x.it.name,34)); 
+    h+='<tr><td><b>'+k+'</b></td><td class="num">'+t[0]+'</td><td class="num">'+t[1]+'</td><td class="num" style="font-weight:800">'+(t[0]-t[1])+'</td><td class="num" style="'+(over?'color:var(--dang);font-weight:800':'')+'">'+(over?'⚠ '+over:'0')+'</td><td>'+(np||'–')+'</td><td>'+(dates[0]?esc(fmtD(dates[0])):'–')+'</td><td class="pl">'+(pend.length?esc(pend.slice(0,4).join(' · '))+(pend.length>4?' … +'+(pend.length-4):'')+' <button class="btn s" data-jump="'+k+'">ดูใน Checklist →</button>':'✓ ครบ')+'</td></tr>'; });
+  h+=(any?'':'<tr><td colspan="8" class="empty">เลือก Change categories ที่แท็บ ① ก่อน</td></tr>')+'</tbody></table></div></div>';
+  h+='<div class="card"><h2>Action plan</h2><p class="legend">งานเพิ่มเติมนอกเหนือจาก Checklist · เปลี่ยน Due แล้วระบบเก็บวันที่เดิมเป็น Rev.</p><div class="bar"><button class="btn p" id="addAct">＋ เพิ่ม Action</button></div>';
+  if(!(p.actions||[]).length) h+='<div class="empty" style="padding:14px"><b>ยังไม่มี Action plan</b>กด “＋ เพิ่ม Action”</div>';
+  else{ h+='<div class="tw"><table class="kd"><thead><tr><th>#</th><th>Action</th><th>หน่วยงาน</th><th>ผู้รับผิดชอบ</th><th>Due</th><th>สถานะ</th><th>หมายเหตุ</th><th></th></tr></thead><tbody>';
+    p.actions.forEach((a,i)=>{ const late=isOpen(a.status)&&isISO(a.due)&&diffDays(a.due)<0; h+='<tr class="'+(late?'late':'')+'" style="'+(late?'background:#fff5f5':'')+'"><td>'+(i+1)+'</td><td><textarea class="cell" data-p="actions|'+i+'|task" aria-label="Action '+(i+1)+'">'+esc(a.task||'')+'</textarea></td><td><select class="cell" data-p="actions|'+i+'|dept" aria-label="หน่วยงาน"><option value="">—</option>'+DORDER.map(k=>'<option'+(a.dept===k?' selected':'')+'>'+k+'</option>').join('')+'</select></td><td><input class="cell" data-p="actions|'+i+'|resp" value="'+esc(a.resp||'')+'" aria-label="ผู้รับผิดชอบ"></td><td><input class="cell" type="date" data-p="actions|'+i+'|due" value="'+esc(a.due||'')+'" aria-label="Due">'+((a.hist||[]).length?'<span class="rev" style="font-size:11px;font-weight:800;color:var(--warn)">Rev.'+a.rev+'</span> <span class="hist">เดิม '+esc(fmtD(a.hist[a.hist.length-1].f))+'</span>':'')+'</td><td><select class="cell" data-p="actions|'+i+'|status" aria-label="สถานะ">'+Object.keys(ST).slice(0,4).map(k=>'<option value="'+k+'"'+((a.status||'')===k?' selected':'')+'>'+ST[k][1]+' '+ST[k][0]+'</option>').join('')+'</select></td><td><input class="cell" data-p="actions|'+i+'|note" value="'+esc(a.note||'')+'" aria-label="หมายเหตุ"></td><td><button class="btn s d" data-rmact="'+i+'" aria-label="ลบ Action '+(i+1)+'">ลบ</button></td></tr>'; });
+    h+='</tbody></table></div>'; }
+  return h+'</div>';
+}
+/* --- tab 5: MOM --- */
+function tMom(){
+  const p=cur.p; let h='<p class="legend">Minute of Meeting · แต่ละหัวข้อ (Kadai) มี Resp./Due/สถานะ · เลื่อน Due แล้วระบบเก็บ Rev. · หัวข้อที่ไม่ Done นับเป็นงานค้างบน Dashboard</p><div class="bar"><button class="btn p" id="addMom">＋ เพิ่ม MOM</button></div>';
+  if(!(p.mom||[]).length) h+='<div class="card empty"><b>ยังไม่มี MOM</b>กด “＋ เพิ่ม MOM” เพื่อบันทึกการประชุมครั้งแรก</div>';
+  (p.mom||[]).forEach((m,i)=>{ const mp='mom|'+i+'|';
+    h+='<div class="ic"><header><b>MOM #'+(i+1)+'</b><span class="chip">'+esc(fmtD(m.date)||'ยังไม่ระบุวันที่')+'</span><span class="grow"></span><button class="btn s" data-copymom="'+i+'">📋 คัดลอกเป็นข้อความ</button><button class="btn s d" data-rmmom="'+i+'">ลบ MOM นี้</button></header><div class="in"><div class="grid">'+
+      fld(mp+'subject','Subject',{w:'w2'})+fld(mp+'date','Date',{t:'date'})+fld(mp+'time','Time')+fld(mp+'place','Place')+fld(mp+'attend','Attendance',{t:'ta',w:'w2',ph:'รายชื่อผู้เข้าร่วม'})+fld(mp+'agenda','Agenda',{t:'ta',w:'w2'})+fld(mp+'link','Link ไฟล์ MOM (ถ้ามี)',{t:'url',w:'w2'})+'</div><div class="grp">Follow up Kadai</div>';
+    if(!(m.items||[]).length) h+='<div class="empty" style="padding:10px">ยังไม่มีหัวข้อ</div>';
+    else{ h+='<div class="tw"><table class="kd"><thead><tr><th>#</th><th>Kadai</th><th>C/M</th><th>Resp.</th><th>Due</th><th>Follow up</th><th></th></tr></thead><tbody>'; m.items.forEach((k,j)=>{ const kp=mp+'items|'+j+'|', late=k.status!=='Done'&&isISO(k.due)&&diffDays(k.due)<0;
+      h+='<tr style="'+(late?'background:#fff5f5':'')+'"><td>'+(j+1)+'</td><td><textarea class="cell" data-p="'+kp+'kadai" aria-label="Kadai">'+esc(k.kadai||'')+'</textarea></td><td><textarea class="cell" data-p="'+kp+'cm" aria-label="C/M">'+esc(k.cm||'')+'</textarea></td><td><input class="cell" data-p="'+kp+'resp" value="'+esc(k.resp||'')+'" aria-label="Resp"></td><td><input class="cell" type="date" data-p="'+kp+'due" value="'+esc(k.due||'')+'" aria-label="Due">'+((k.hist||[]).length?'<span class="hist">Rev.'+k.rev+' · เดิม '+esc(fmtD(k.hist[k.hist.length-1].f))+'</span>':'')+'</td><td><select class="cell" data-p="'+kp+'status" aria-label="Follow up">'+Object.keys(KST).map(s=>'<option value="'+s+'"'+((k.status||'On-plan')===s?' selected':'')+'>'+KST[s]+'</option>').join('')+'</select></td><td><button class="btn s d" data-rmkd="'+i+'|'+j+'" aria-label="ลบหัวข้อ">ลบ</button></td></tr>'; }); h+='</tbody></table></div>'; }
+    h+='<div class="bar" style="margin-top:8px"><button class="btn s" data-addkd="'+i+'">＋ เพิ่มหัวข้อ</button></div></div></div>'; });
+  return h;
+}
+/* --- tab 6: เอกสาร --- */
+function tDocs(){
+  const p=cur.p, bad=!(p.formLink||'').trim()&&cur.showErr;
+  let h='<div class="card"><h2>เอกสาร F-QA-018 (จำเป็น)</h2><p class="sub">PCR ทุกฉบับต้องมีลิงก์ไฟล์ Excel F-QA-018 (Process Change Request) ที่ถูกต้อง — ใส่ SharePoint URL หรือ path ของ Drive X</p><div class="f'+(bad?' bad':'')+'"><label for="f_formLink">Link / path ไฟล์ F-QA-018 <span class="req">*</span></label><div style="display:flex;gap:6px"><input id="f_formLink" type="text" data-p="formLink" value="'+esc(p.formLink||'')+'" placeholder="https://… หรือ \\\\sa-fs02\\private\\…">'+(safeUrl(p.formLink)?'<a class="btn" href="'+esc(p.formLink)+'" target="_blank" rel="noopener">↗ เปิด</a>':p.formLink?'<button class="btn" data-copy="'+esc(p.formLink)+'">📋 คัดลอก path</button>':'')+'</div>'+(bad?'<div class="err">ต้องกรอก — ไม่มี F-QA-018 จะบันทึกไม่ได้</div>':'')+'<div class="hint">เบราว์เซอร์เปิดโฟลเดอร์เครือข่ายโดยตรงไม่ได้ — กด “คัดลอก path” แล้ววางใน File Explorer (Ctrl+L)</div></div></div>';
+  h+='<div class="card"><h2>เอกสารอื่น ๆ ของ PCR นี้</h2><p class="sub">เช่น MOM, PPS, FMEA, Control plan, ผลทดลอง — เก็บ Link ไว้ที่เดียว ไม่ต้องไล่หา</p><div class="bar"><button class="btn p" id="addLink">＋ เพิ่ม Link</button></div>';
+  if(!(p.links||[]).length) h+='<div class="empty" style="padding:12px">ยังไม่มี Link</div>';
+  else{ h+='<div class="tw"><table class="kd"><thead><tr><th>ชื่อเอกสาร</th><th>Link / path</th><th></th><th></th></tr></thead><tbody>'; p.links.forEach((l,i)=>{ h+='<tr><td><input class="cell" data-p="links|'+i+'|label" value="'+esc(l.label||'')+'" aria-label="ชื่อเอกสาร"></td><td><input class="cell" data-p="links|'+i+'|url" value="'+esc(l.url||'')+'" aria-label="Link"></td><td>'+(safeUrl(l.url)?'<a class="btn s" href="'+esc(l.url)+'" target="_blank" rel="noopener">↗ เปิด</a>':l.url?'<button class="btn s" data-copy="'+esc(l.url)+'">📋 คัดลอก</button>':'')+'</td><td><button class="btn s d" data-rmlink="'+i+'">ลบ</button></td></tr>'; }); h+='</tbody></table></div>'; }
+  return h+'</div>';
+}
+function tLog(){
+  const l=(cur.p.log||[]).slice().reverse(); let h='<div class="card"><h2>ประวัติการบันทึก</h2>';
+  if(!l.length) h+='<div class="empty" style="padding:12px">ยังไม่มีประวัติ — จะเริ่มบันทึกตั้งแต่การบันทึกครั้งแรก</div>'; else h+='<ul class="log">'+l.map(x=>'<li><time>'+esc(new Date(x.at).toLocaleString('en-GB',{day:'numeric',month:'short',year:'2-digit',hour:'2-digit',minute:'2-digit'}))+'</time><b>'+esc(x.by||'ไม่ระบุ')+'</b> · '+esc(x.what)+'</li>').join('')+'</ul>';
+  return h+'<div class="bar" style="margin-top:12px"><button class="btn d" id="bArch">'+(cur.archived?'↩ นำกลับจากที่เก็บถาวร':'📦 เก็บถาวร PCR นี้ (ไม่ลบข้อมูล)')+'</button></div><p class="af">ระบบไม่มีปุ่มลบถาวร (ป้องกันข้อมูลหาย) — เก็บถาวรแล้วจะซ่อนจาก Dashboard แต่กู้คืนได้</p></div>';
+}
+/* ---------- events (detail) ---------- */
+function wireDetail(){
+  const app=$('app');
+  app.onclick=async e=>{
+    const t=e.target; let b;
+    if((b=t.closest('[data-tab]'))){ cur.tab=b.dataset.tab; history.replaceState(null,'','#/pcr/'+enc(cur.id)+'/'+cur.tab); document.querySelectorAll('.tabs button').forEach(x=>{x.classList.toggle('on',x===b);x.setAttribute('aria-selected',x===b);}); renderTabBody(); return; }
+    if((b=t.closest('[data-stage]'))){ const n=+b.dataset.stage; if(n===(cur.p.stage|0)) return;
+      if(n>=6){ const o=openStats(cur.p), open=DORDER.reduce((a,k)=>a+o.pd[k].length,0); if(open&&!(await askConfirm('ยังมีเอกสารใน Checklist ค้าง '+open+' รายการ\nF-QA-018 กำหนดให้ Owner แนบเอกสารครบก่อนปิด PCR\n\nต้องการปิด PCR ทั้งที่ยังค้างหรือไม่?',{title:'ปิด PCR?',yes:'ปิดทั้งที่ค้าง',danger:true}))) return; }
+      cur.p.stage=n; cur.dirty=true; renderDetail(); return; }
+    if(t.id==='bSave'||t.id==='bSave2'){saveCur();return;}
+    if(t.id==='bDl'){downloadCopy();return;}
+    if(t.id==='bPrint'){ document.querySelectorAll('details.sec').forEach(d=>d.open=true); window.print(); return; }
+    if((b=t.closest('[data-bulk]'))){ const k=b.dataset.bulk, pic=$('bp_'+k).value.trim(), dt=$('bd_'+k).value; let n=0; applicable(cur.p).forEach(x=>{ if((x.it.dept==='ALL'?'OWN':x.it.dept)!==k) return; const d=(cur.p.prep[x.it.no]=cur.p.prep[x.it.no]||{}); if(pic&&!d.pic){d.pic=pic;n++;} if(dt&&!d.plan){d.plan=dt;n++;} }); if(n){cur.dirty=true;renderTabBody();refreshChrome();toast('ใส่ค่าให้ '+n+' ช่อง (เฉพาะที่ว่าง)');} else toast('ไม่มีช่องว่างให้ใส่ หรือยังไม่ได้กรอกค่า'); return; }
+    if((b=t.closest('[data-jump]'))){ cur.tab='prep'; cur.fAll=false; renderDetail(); setTimeout(()=>{const g=document.querySelector('[data-dg="'+b.dataset.jump+'"]');if(g)g.scrollIntoView({block:'start'});},50); return; }
+    if((b=t.closest('[data-copy]'))){ try{await navigator.clipboard.writeText(b.dataset.copy);toast('คัดลอก path แล้ว — วางใน File Explorer (Ctrl+L)');}catch(x){toast('คัดลอกไม่ได้ — เลือกข้อความด้วยมือ',true);} return; }
+    if(t.id==='addRisk'){ (cur.p.risk=cur.p.risk||[]).push({status:'',judge:''}); cur.dirty=true; renderTabBody(); refreshChrome(); return; }
+    if((b=t.closest('[data-rmrisk]'))){ if(await askConfirm('ลบจุดเปลี่ยนแปลงที่ '+(+b.dataset.rmrisk+1)+' ?',{danger:true,yes:'ลบ'})){ cur.p.risk.splice(+b.dataset.rmrisk,1); cur.dirty=true; renderTabBody(); refreshChrome(); } return; }
+    if(t.id==='addAct'){ (cur.p.actions=cur.p.actions||[]).push({task:'',dept:'',resp:'',due:'',status:'',note:''}); cur.dirty=true; renderTabBody(); refreshChrome(); return; }
+    if((b=t.closest('[data-rmact]'))){ if(await askConfirm('ลบ Action ที่ '+(+b.dataset.rmact+1)+' ?',{danger:true,yes:'ลบ'})){ cur.p.actions.splice(+b.dataset.rmact,1); cur.dirty=true; renderTabBody(); refreshChrome(); } return; }
+    if(t.id==='addMom'){ (cur.p.mom=cur.p.mom||[]).push({subject:cur.p.detail?'PCR : '+cur.p.detail:'',date:todayISO(),time:'',place:'',attend:'',agenda:'',link:'',items:[]}); cur.dirty=true; renderTabBody(); refreshChrome(); return; }
+    if((b=t.closest('[data-rmmom]'))){ if(await askConfirm('ลบ MOM #'+(+b.dataset.rmmom+1)+' และหัวข้อทั้งหมดใน MOM นี้?',{danger:true,yes:'ลบ'})){ cur.p.mom.splice(+b.dataset.rmmom,1); cur.dirty=true; renderTabBody(); refreshChrome(); } return; }
+    if((b=t.closest('[data-addkd]'))){ cur.p.mom[+b.dataset.addkd].items.push({kadai:'',cm:'',resp:'',due:'',status:'On-plan'}); cur.dirty=true; renderTabBody(); refreshChrome(); return; }
+    if((b=t.closest('[data-rmkd]'))){ const [i,j]=b.dataset.rmkd.split('|').map(Number); cur.p.mom[i].items.splice(j,1); cur.dirty=true; renderTabBody(); refreshChrome(); return; }
+    if((b=t.closest('[data-copymom]'))){ copyMom(+b.dataset.copymom); return; }
+    if(t.id==='addLink'){ (cur.p.links=cur.p.links||[]).push({label:'',url:''}); cur.dirty=true; renderTabBody(); return; }
+    if((b=t.closest('[data-rmlink]'))){ cur.p.links.splice(+b.dataset.rmlink,1); cur.dirty=true; renderTabBody(); return; }
+    if(t.id==='bArch'){ archive(); return; }
+  };
+  const onEdit=e=>{
+    const t=e.target;
+    if(t.id==='onlyOpen'){ cur.fAll=!t.checked; renderTabBody(); return; }
+    if(t.dataset&&t.dataset.cat){ const n=+t.dataset.cat, a=new Set((cur.p.cats||[]).map(Number)); t.checked?a.add(n):a.delete(n); cur.p.cats=[...a].sort((x,y)=>x-y); cur.dirty=true; refreshChrome(); return; }
+    if(t.dataset&&t.dataset.meet){ const a=new Set(cur.p.meetPlan||[]); t.checked?a.add(t.dataset.meet):a.delete(t.dataset.meet); cur.p.meetPlan=[...a]; cur.dirty=true; refreshChrome(); return; }
+    if(!t.dataset||!t.dataset.p) return;
+    const path=t.dataset.p, last=path.split('|').pop(); const val=t.type==='checkbox'?t.checked:t.value;
+    if(path==='pcrNo') return;
+    const isDate=(last==='plan'||last==='due');
+    if(e.type==='input'&&(isDate||t.tagName==='SELECT'||t.type==='date'||t.type==='checkbox')) return;     // เลือก/วันที่/ติ๊ก ใช้ตอน change
+    sp(path,val); const d=$('dirty'); if(d) d.textContent='● ยังไม่ได้บันทึก'; const ss=$('ss'); if(ss) ss.classList.add('on');
+    if(e.type==='change'){
+      if(path.startsWith('prep|')&&/\|(plan|status|actual)$/.test(path)){ const no=path.split('|')[1], tr=document.querySelector('tr[data-no="'+no+'"]'), x=applicable(cur.p).find(z=>z.it.no===no); if(tr&&x) tr.outerHTML=prepRow(x); }
+      else if(/\|(status|due|result)$/.test(path)||/\|items\|\d+\|(status|due)$/.test(path)) renderTabBody();
+      refreshChrome(); if(path==='as') renderDetail();
+    } else if(path==='detail') refreshChrome();
+  };
+  app.oninput=onEdit; app.onchange=onEdit;
+}
+function validate(){
+  const p=cur.p, miss=[]; cur.showErr=true;
+  if(!String(p.detail||'').trim()) miss.push('PCR Detail');
+  if(!String(p.formLink||'').trim()) miss.push('Link ไฟล์ F-QA-018');
+  return miss;
+}
+function diffText(a,b){
+  const out=[]; const lab={detail:'รายละเอียด',partNo:'Part No.',partName:'Part Name',model:'Model',lineNo:'Line',processName:'Process',owner:'Owner',qe:'QE',sop:'SOP target',stage:'ขั้นตอน',as:'สถานะ',cats:'ประเภทการเปลี่ยนแปลง',formLink:'Link F-QA-018',dmgmJudge:'Judgement audit',finalDue:'Final due',qsDate:'QS cross check',dmgmDate:'DM-GM audit',content:'เนื้อหา',issueDept:'หน่วยงานที่ออก',custApproval:'Customer approval',meetDate:'Meeting date',trialStart:'Trial start'};
+  Object.keys(lab).forEach(k=>{ if(JSON.stringify(a[k])!==JSON.stringify(b[k])) out.push(lab[k]+(k==='stage'?' → '+STAGES[b.stage|0]:k==='dmgmJudge'||k==='as'?' → '+(b[k]||'–'):'')); });
+  const dp=Object.keys(Object.assign({},a.prep,b.prep)).filter(k=>JSON.stringify((a.prep||{})[k])!==JSON.stringify((b.prep||{})[k])); if(dp.length) out.push('Checklist '+dp.length+' รายการ ('+dp.slice(0,6).join(', ')+(dp.length>6?'…':'')+')');
+  [['actions','Action plan'],['mom','MOM'],['risk','Risk'],['links','Link']].forEach(([k,l])=>{ if(JSON.stringify(a[k]||[])!==JSON.stringify(b[k]||[])) out.push(l); });
+  if(JSON.stringify(a.review)!==JSON.stringify(b.review)||JSON.stringify(a.sign)!==JSON.stringify(b.sign)) out.push('Review/Sign-off');
+  return out.length?out.join(' · ').slice(0,260):'แก้ไขข้อมูล';
+}
+async function saveCur(force){
+  if(!cur||cur.saving) return; const miss=validate();
+  if(miss.length){ renderTabBody(); toast('ยังไม่ครบ: '+miss.join(', '),true); if(miss.some(x=>/F-QA/.test(x))&&cur.tab!=='docs'&&!miss.includes('PCR Detail')){cur.tab='docs';renderDetail();} return; }
+  if(!cur.dirty&&!force){toast('ไม่มีการแก้ไขที่ต้องบันทึก');return;}
+  cur.saving=true; const bs=[$('bSave'),$('bSave2')]; bs.forEach(b=>{if(b){b.disabled=true;b.textContent='กำลังบันทึก…';}});
+  const p=clone(cur.p); (p.log=p.log||[]).push({at:new Date().toISOString(),by:me,what:diffText(cur.base,p)}); if(p.log.length>80) p.log=p.log.slice(-80);
+  try{ const r=await Store.update(cur.id,cur.rev,{payload:p,summary:buildSummary(p),updated_by:me||null}); cur.rev=r.rev; cur.p=Object.assign(newPayload({}),p); cur.base=clone(cur.p); cur.dirty=false; rows.set(cur.id,{id:r.id,rev:r.rev,summary:r.summary,updated_at:r.updated_at,updated_by:r.updated_by,archived:!!r.archived}); cur.saving=false; toast('💾 บันทึกแล้ว'); renderDetail(); }
+  catch(e){ cur.saving=false; bs.forEach(b=>{if(b){b.disabled=false;}}); const a=$('bSave'); if(a) a.textContent='💾 บันทึก'; const c=$('bSave2'); if(c) c.textContent='💾 บันทึก (Ctrl+S)';
+    if(e.conflict) conflictModal(); else { toast('บันทึกไม่สำเร็จ — '+friendly(e),true); if(e.status===402||e.status===429||!e.status) modal('<h2>บันทึกขึ้น Cloud ไม่สำเร็จ</h2><p>'+esc(friendly(e))+'</p><p>ข้อมูลที่แก้ยังอยู่ในหน้านี้ — กด “ดาวน์โหลดสำเนา” เก็บไว้ก่อนเพื่อกันหาย</p><div class="act"><button class="btn" data-x="c">ปิด</button><button class="btn p" data-x="d">⬇ ดาวน์โหลดสำเนา</button></div>',{init:o=>{o.querySelector('[data-x=c]').onclick=closeModal;o.querySelector('[data-x=d]').onclick=()=>{downloadCopy();};}}); } }
+}
+function conflictModal(){
+  modal('<h2>⚠ มีคนอื่นแก้ PCR นี้ไปแล้ว</h2><p>ระหว่างที่คุณแก้ไข มีผู้ใช้อีกคนบันทึก PCR นี้ก่อน ถ้าบันทึกทับ การแก้ไขของเขาจะหายไป</p><div class="act"><button class="btn" data-x="dl">⬇ ดาวน์โหลดสำเนาของฉัน</button><button class="btn" data-x="reload">โหลดของล่าสุด (ทิ้งของฉัน)</button><button class="btn d" data-x="over">บันทึกทับของเขา</button></div>',{sticky:true,init:o=>{
+    o.querySelector('[data-x=dl]').onclick=downloadCopy;
+    o.querySelector('[data-x=reload]').onclick=async()=>{closeModal();cur.dirty=false;await route();toast('โหลดข้อมูลล่าสุดแล้ว');};
+    o.querySelector('[data-x=over]').onclick=async()=>{ closeModal(); try{ const r=await Store.get(cur.id); cur.rev=r.rev; await saveCur(true); }catch(e){toast(friendly(e),true);} };
+  }});
+}
+function downloadCopy(){
+  const blob=new Blob([JSON.stringify({app:'pcr-inhouse',id:cur.id,at:new Date().toISOString(),by:me,payload:cur.p},null,1)],{type:'application/json'}), a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='PCR_'+cur.id.replace(/[^\w-]+/g,'_')+'_'+todayISO()+'.json'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+}
+async function archive(){
+  const to=!cur.archived; if(!(await askConfirm(to?'เก็บถาวร PCR '+cur.id+' ?\nจะซ่อนจาก Dashboard (ข้อมูลไม่ถูกลบ กู้คืนได้)':'นำ PCR '+cur.id+' กลับมาแสดงบน Dashboard?',{yes:to?'เก็บถาวร':'นำกลับ',danger:to}))) return;
+  if(cur.dirty&&!(await askConfirm('มีการแก้ไขที่ยังไม่บันทึก — บันทึกก่อนแล้วค่อยเก็บถาวรไหม?',{yes:'บันทึกก่อน'}))) return; if(cur.dirty) await saveCur(); if(cur.dirty) return;
+  try{ const r=await Store.update(cur.id,cur.rev,{archived:to,updated_by:me||null}); cur.rev=r.rev; cur.archived=to; rows.set(cur.id,Object.assign(rows.get(cur.id)||{},{id:r.id,rev:r.rev,archived:to,summary:r.summary})); toast(to?'เก็บถาวรแล้ว':'นำกลับแล้ว'); go('#/'); }catch(e){ if(e.conflict) conflictModal(); else toast(friendly(e),true); }
+}
+function copyMom(i){
+  const p=cur.p,m=p.mom[i]; const t=['MINUTE OF MEETING','PCR : '+(p.pcrNo||'')+' — '+(p.detail||''),'Subject : '+(m.subject||''),'Date : '+fmtD(m.date)+(m.time?'  Time : '+m.time:'')+(m.place?'  Place : '+m.place:''),'Attendance : '+(m.attend||'').replace(/\n/g,', '),'Agenda : '+(m.agenda||'').replace(/\n/g,'; '),'','Follow up:'].concat((m.items||[]).map((k,j)=>(j+1)+'. '+(k.kadai||'')+' → '+(k.cm||'')+' | '+(k.resp||'')+' | '+(fmtD(k.due)||'T.B.C.')+' | '+(KST[k.status]||k.status))).join('\n');
+  navigator.clipboard.writeText(t).then(()=>toast('คัดลอก MOM แล้ว — วางใน Teams/LINE ได้'),()=>toast('คัดลอกไม่ได้',true));
+}
+
+/* ---------- สร้าง PCR / นำเข้า ---------- */
+function catBoxes(){return '<div class="cats">'+CATS.map(c=>'<label><input type="checkbox" name="cat" value="'+c[0]+'"><span><b>'+c[0]+'.</b> '+esc(c[1])+'<br><small style="color:var(--mut)">'+esc(c[2])+'</small></span></label>').join('')+'</div>';}
+function newModal(){
+  const ov=modal('<h2>＋ PCR ใหม่</h2><form id="nf" novalidate><div class="grid"><div class="f"><label for="n_no">PCR No. <span class="req">*</span></label><input id="n_no" type="text" placeholder="เช่น SAI26-053" required></div><div class="f w2"><label for="n_dt">PCR Detail <span class="req">*</span></label><input id="n_dt" type="text" required></div><div class="f"><label for="n_ln">Line</label><input id="n_ln" type="text"></div><div class="f"><label for="n_ow">Owner</label><input id="n_ow" type="text"></div><div class="f"><label for="n_dp">หน่วยงานที่ออก</label><select id="n_dp"><option value="">—</option>'+ISSUE_DEPTS.map(x=>'<option>'+x+'</option>').join('')+'</select></div><div class="f"><label for="n_qe">QE in-charge</label><input id="n_qe" type="text" value="'+esc(me)+'"></div><div class="f"><label for="n_sp">SOP target</label><input id="n_sp" type="date"></div><div class="f w3"><label for="n_fl">Link ไฟล์ F-QA-018 <span class="req">*</span></label><input id="n_fl" type="text" placeholder="https://… (SharePoint) หรือ path Drive X"><div class="hint">จำเป็น — PCR ทุกฉบับต้องมีเอกสาร F-QA-018 อ้างอิง</div></div></div><div class="lb" style="font-weight:700;font-size:12px;color:var(--mut);margin:12px 0 4px">Change categories (เลือกได้หลายข้อ — กำหนดเอกสารที่ต้องเตรียม)</div>'+catBoxes()+'<div class="err" id="n_err" style="color:var(--dang);font-weight:700;margin-top:8px"></div><div class="act"><button type="button" class="btn" data-x="c">ยกเลิก</button><button type="submit" class="btn p">สร้าง PCR</button></div></form>',{wide:true});
+  ov.querySelector('[data-x=c]').onclick=closeModal;
+  ov.querySelector('#nf').onsubmit=async e=>{ e.preventDefault(); const v=i=>ov.querySelector('#'+i).value.trim(), err=m=>{ov.querySelector('#n_err').textContent=m;};
+    const no=v('n_no'), id=normId(no); if(!no) return err('กรุณากรอก PCR No.'); if(!v('n_dt')) return err('กรุณากรอก PCR Detail'); if(!v('n_fl')) return err('กรุณากรอก Link ไฟล์ F-QA-018 (จำเป็น)');
+    if(rows.has(id)) return err('มี PCR No. นี้อยู่แล้ว');
+    const cats=[...ov.querySelectorAll('input[name=cat]:checked')].map(x=>+x.value); const p=newPayload({detail:v('n_dt'),lineNo:v('n_ln'),owner:v('n_ow'),dept:v('n_dp'),qe:v('n_qe'),sop:v('n_sp'),cats,formLink:v('n_fl')}); p.pcrNo=no; p.log=[{at:new Date().toISOString(),by:me,what:'สร้าง PCR'}];
+    try{ const r=await Store.create({id,rev:1,summary:buildSummary(p),payload:p,archived:false,updated_by:me||null}); rows.set(id,{id:r.id,rev:r.rev,summary:r.summary,updated_at:r.updated_at,updated_by:r.updated_by,archived:false}); closeModal(); toast('สร้าง PCR '+no+' แล้ว'); go('#/pcr/'+enc(id)); }
+    catch(x){ err(x.dup?'มี PCR No. นี้อยู่แล้วในระบบ':'สร้างไม่สำเร็จ — '+friendly(x)); } };
+}
+function parseDate(s){
+  s=String(s||'').trim(); if(!s||/^t\.?b\.?c\.?$/i.test(s)) return ''; if(isISO(s)) return s;
+  let m=/^(\d{1,2})[-\s]([A-Za-z]{3})[a-z]*[-\s](\d{2,4})$/.exec(s); if(m){const mi=MON.findIndex(x=>x.toLowerCase()===m[2].toLowerCase());if(mi>=0){let y=+m[3];if(y<100)y+=2000;return y+'-'+pad(mi+1)+'-'+pad(+m[1]);}}
+  m=/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/.exec(s); if(m){const a=+m[1],b=+m[2],y=+m[3]; if(a>12&&b<=12) return y+'-'+pad(b)+'-'+pad(a); if(b>12&&a<=12) return y+'-'+pad(a)+'-'+pad(b); return null;}
+  return null;
+}
+function importModal(){
+  const ov=modal('<h2>📋 วางรายการ PCR จาก Excel</h2><p class="sub">คัดลอกตารางจากไฟล์ “PCR in-house process audit Approval status” (เลือกแถวแล้ว Ctrl+C) มาวางด้านล่าง · ลำดับคอลัมน์: <b>PCR No. | PCR Detail | Line | Owner | หน่วยงาน | QE in-charge | SOP target | Link F-QA-018</b> (คอลัมน์หลังสุดเว้นได้)</p><textarea id="im" style="width:100%;min-height:150px;border:1px solid var(--line2);border-radius:8px;padding:8px" placeholder="วางที่นี่…"></textarea><div id="imp" style="margin-top:8px"></div><div class="act"><button class="btn" data-x="c">ยกเลิก</button><button class="btn" data-x="p">ตรวจสอบ</button><button class="btn p" data-x="g" disabled>นำเข้า</button></div>',{wide:true});
+  let ready=[]; ov.querySelector('[data-x=c]').onclick=closeModal;
+  ov.querySelector('[data-x=p]').onclick=()=>{ const lines=ov.querySelector('#im').value.split(/\r?\n/).map(l=>l.split('\t')).filter(r=>r.some(x=>x.trim())); ready=[]; const bad=[],dup=[],badDate=[];
+    const body=lines.filter((r,i)=>!(i===0&&(!/\d/.test((r[0]||''))||/detail|รายละเอียด/i.test(r[1]||'')))); const shift=body.length&&body.every(r=>/^\d+$/.test((r[0]||'').trim()))?1:0;
+    body.forEach((r0,i)=>{ const r=r0.slice(shift); const no=(r[0]||'').trim(); const id=normId(no); if(!id){bad.push(i+1);return;} if(rows.has(id)||ready.some(x=>x.id===id)){dup.push(no);return;}
+      const sop=parseDate(r[6]); if(r[6]&&sop===null) badDate.push(no); ready.push({id,no,detail:(r[1]||'').trim(),line:(r[2]||'').trim(),owner:(r[3]||'').trim(),dept:(r[4]||'').trim().toUpperCase(),qe:(r[5]||'').trim(),sop:sop||'',link:(r[7]||'').trim()}); });
+    ov.querySelector('#imp').dataset.shift=shift;
+    ov.querySelector('#imp').innerHTML='<div class="banner'+(ready.length?' info':' warn')+'"><span class="grow">พร้อมนำเข้า <b>'+ready.length+'</b> รายการ'+(shift?' · ตรวจพบคอลัมน์ลำดับ (No.) ข้ามให้อัตโนมัติ':'')+(dup.length?' · ข้ามซ้ำ '+dup.length+' ('+esc(dup.slice(0,4).join(', '))+')':'')+(bad.length?' · ข้ามแถวที่ไม่มี PCR No. '+bad.length:'')+(badDate.length?' · อ่านวันที่ SOP ไม่ได้ '+badDate.length+' รายการ (รูปแบบวันที่กำกวม เช่น 01/02/2026 — ใช้ 2026-02-01 หรือ 1-Feb-26)':'')+'</span></div>'+(ready.length?'<div class="tw" style="max-height:200px"><table><thead><tr><th>PCR No.</th><th>Detail</th><th>Line</th><th>Owner</th><th>Dept</th><th>QE</th><th>SOP</th><th>F-QA-018</th></tr></thead><tbody>'+ready.map(x=>'<tr><td>'+esc(x.no)+'</td><td>'+esc(clip(x.detail,50))+'</td><td>'+esc(x.line)+'</td><td>'+esc(x.owner)+'</td><td>'+esc(x.dept)+'</td><td>'+esc(x.qe)+'</td><td>'+esc(fmtD(x.sop))+'</td><td>'+(x.link?'✓':'<span style="color:var(--dang)">⚠ ไม่มี</span>')+'</td></tr>').join('')+'</tbody></table></div><p class="af">PCR ที่ยังไม่มี Link F-QA-018 จะถูกนำเข้าแต่ติดธง ⚠ จนกว่าจะเพิ่ม Link (แท็บ ⑥)</p>':'');
+    ov.querySelector('[data-x=g]').disabled=!ready.length; };
+  ov.querySelector('[data-x=g]').onclick=async()=>{ let ok=0,fail=0; const gb=ov.querySelector('[data-x=g]'); gb.disabled=true; gb.textContent='กำลังนำเข้า…';
+    for(const x of ready){ const p=newPayload({detail:x.detail,lineNo:x.line,owner:x.owner,dept:x.dept,qe:x.qe,sop:x.sop,formLink:x.link,cats:[]}); p.pcrNo=x.no; p.log=[{at:new Date().toISOString(),by:me,what:'นำเข้าจาก Excel'}];
+      try{ const r=await Store.create({id:x.id,rev:1,summary:buildSummary(p),payload:p,archived:false,updated_by:me||null}); rows.set(x.id,{id:r.id,rev:r.rev,summary:r.summary,updated_at:r.updated_at,updated_by:r.updated_by,archived:false}); ok++; }catch(e){fail++;} }
+    closeModal(); toast('นำเข้า '+ok+' รายการ'+(fail?' · ไม่สำเร็จ '+fail:'')+' — เปิดแต่ละ PCR เพื่อเลือก Change categories',fail>0); renderDash(); };
+}
+function exportCsv(){
+  const hd=['PCR No.','Detail','Line','Owner','Dept','QE','ขั้นตอน','SOP target','สถานะ','ครบถัดไป','เอกสารค้าง (รวม)','เลยกำหนด','มี F-QA-018','ค้างแยกหน่วยงาน'];
+  const out=[hd].concat(filtered().map(r=>{const s=r.summary||{},h=health(s),pd=s.pd||{};let n=0,l=0;Object.values(pd).forEach(a=>{n+=a.length;l+=a.filter(v=>isISO(v)&&diffDays(v)<0).length;});return [s.n,s.d,s.l,s.o,s.dp,s.q,(s.st+1)+'. '+STAGES[s.st|0],fmtD(s.sop),h.t,fmtD(nextDue(s)),n,l,s.form?'Y':'N',DORDER.filter(k=>(pd[k]||[]).length).map(k=>k+':'+pd[k].length).join(' ')];}));
+  const csv='\ufeff'+out.map(r=>r.map(c=>'"'+String(c==null?'':c).replace(/"/g,'""')+'"').join(',')).join('\r\n'); const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})); a.download='PCR_dashboard_'+todayISO()+'.csv'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+}
+/* ---------- ตั้งค่า / วิธีใช้ ---------- */
+function settingsModal(){
+  const u=jget('pcr_usage_v1',{}), td=u[todayISO()]||{n:0,b:0};
+  const ov=modal('<h2>⚙ ตั้งค่า</h2><div class="grid"><div class="f w3"><label for="s_u">Supabase Project URL</label><input id="s_u" type="text" value="'+esc(cfg.url)+'" placeholder="https://xxxx.supabase.co"></div><div class="f w3"><label for="s_k">Publishable / anon key (ห้ามใช้ service_role)</label><input id="s_k" type="password" value="'+esc(cfg.key)+'" autocomplete="off"></div><div class="f"><label for="s_t">ชื่อตาราง</label><input id="s_t" type="text" value="'+esc(cfg.table||'pcr_records')+'"></div><div class="f w2"><label for="s_n">รายชื่อผู้ใช้ (คั่นด้วย , )</label><input id="s_n" type="text" value="'+esc(cfg.names.join(', '))+'"></div></div><label class="chk" style="margin-top:10px"><input type="checkbox" id="s_l"'+(cfg.forceLocal?' checked':'')+'> ใช้โหมดทดลองในเครื่อง (ไม่ต่อ Supabase)</label><div id="s_out" style="margin-top:10px"></div><p class="af">ข้อมูลที่เครื่องนี้ดึงวันนี้: '+td.n+' คำขอ · '+fmtB(td.b)+' (เทียบกับโควตา Egress ของ Supabase)</p><div class="act"><button class="btn" data-x="c">ปิด</button><button class="btn" data-x="t">🔍 ทดสอบการเชื่อมต่อ</button><button class="btn p" data-x="s">บันทึกและโหลดใหม่</button></div>',{wide:true});
+  const read=()=>({url:ov.querySelector('#s_u').value.trim().replace(/\/$/,''),key:ov.querySelector('#s_k').value.trim(),table:ov.querySelector('#s_t').value.trim()||'pcr_records',names:ov.querySelector('#s_n').value.split(',').map(x=>x.trim()).filter(Boolean),forceLocal:ov.querySelector('#s_l').checked});
+  ov.querySelector('[data-x=c]').onclick=closeModal;
+  ov.querySelector('[data-x=s]').onclick=async()=>{ cfg=Object.assign({},DEFAULTS,read()); lsSet('pcr_cfg_v1',JSON.stringify({url:cfg.url,key:cfg.key,table:cfg.table,names:cfg.names,forceLocal:cfg.forceLocal})); closeModal(); loaded=false; renderChrome(); await loadAll(); route(); };
+  ov.querySelector('[data-x=t]').onclick=async()=>{ const c=read(), out=ov.querySelector('#s_out'), L=[]; const add=(ok,t)=>{L.push((ok?'✅ ':'❌ ')+t);out.innerHTML='<pre>'+esc(L.join('\n'))+'</pre>';}; const old=cfg; cfg=Object.assign({},old,c,{forceLocal:false});
+    try{ if(!cfg.url||!cfg.key){add(false,'ยังไม่ได้กรอก URL / key');return;} await api('GET','?select=id&limit=1'); add(true,'อ่านตารางได้');
+      const tid='__probe_'+Date.now(); try{ await api('POST','',{id:tid,rev:1,summary:{},payload:{probe:1},archived:true},{Prefer:'return=minimal'}); add(true,'เขียนได้ (INSERT)'); try{ await api('PATCH','?id=eq.'+enc(tid)+'&rev=eq.1',{archived:true},{Prefer:'return=minimal'}); add(true,'แก้ไขได้ (UPDATE)'); }catch(e){add(false,'UPDATE ไม่ได้: '+friendly(e));} L.push('ℹ️ แถวทดสอบ '+tid+' ถูกเก็บถาวรไว้ (ระบบไม่มีสิทธิ์ลบ — ลบเองได้ใน Supabase Table Editor)'); out.innerHTML='<pre>'+esc(L.join('\n'))+'</pre>'; }catch(e){add(false,'INSERT ไม่ได้: '+friendly(e)+' — ตรวจ RLS policy');}
+    }catch(e){ add(false,'อ่านไม่ได้: '+friendly(e)); } finally{ cfg=old; } };
+}
+function helpModal(){
+  modal('<h2>❓ วิธีใช้</h2><ol style="padding-left:20px;line-height:1.8"><li><b>Dashboard</b> — เห็น PCR ทั้งหมด ขั้นตอน และเอกสารที่ค้างแยกหน่วยงาน คลิกการ์ด/ชิปเพื่อกรอง</li><li><b>＋ PCR ใหม่</b> — ต้องใส่ PCR No., Detail และ Link ไฟล์ F-QA-018 · เลือก Change categories เพื่อให้ระบบสร้าง Checklist เอกสารที่ต้องเตรียม</li><li><b>เปิด PCR</b> — แท็บ ① รายละเอียด (หน้า 1) ② Checklist (หน้า 2) ③ Risk verification (หน้า 3) ④ แผน & ค้างตามหน่วยงาน ⑤ MOM ⑥ เอกสาร/Link ⑦ ประวัติ</li><li><b>บันทึก</b> — แก้ไขแล้วกด 💾 บันทึก (Ctrl+S) · ถ้ามีคนอื่นแก้ก่อน ระบบจะเตือนไม่ให้ทับเงียบ ๆ</li><li><b>เลื่อน Plan/Due</b> — แก้วันที่ได้เลย ระบบเก็บวันที่เดิมเป็น Rev.</li><li><b>ไม่มีปุ่มลบ PCR</b> — ใช้ “เก็บถาวร” แทน (กู้คืนได้)</li></ol><div class="act"><button class="btn p" data-x="c">เข้าใจแล้ว</button></div>',{init:o=>{o.querySelector('[data-x=c]').onclick=closeModal;}});
+}
+
+/* ---------- เริ่มต้น ---------- */
+(async function init(){
+  renderChrome();
+  await loadAll(true); route();
+})();
+})();
+
+</script>
+</body>
+</html>
