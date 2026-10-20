@@ -2256,7 +2256,7 @@ window.__SEED_V12={"version":12,"source":"snapshot v9 (16 ต.ค. 2569)","track
      • เครื่องใหม่: ไม่ส่งข้อมูลตั้งต้น/ของเก่าในเครื่องขึ้นไปทับ Cloud เงียบ ๆ
      • PIN เก็บเป็นแฮช ตรวจที่หน้าเว็บ — ไม่ใช่ความปลอดภัยระดับเซิร์ฟเวอร์ */
   const WHOK='ux_me', MODEK='ux_savemode', DEVK='ux_dev_id', RPL='ux_rp_list', PRUNEK='ux_prune_day', SNAPK='ux_snap_day', ACFGC='ux_cfg_cache';
-  const PRES='countermeasure-presence:', AUD='countermeasure-audit:', AUTHP='countermeasure-auth:', SNAP='countermeasure-snap:', ACFGK=AUTHP+'~cfg', APPVER='31';
+  const PRES='countermeasure-presence:', AUD='countermeasure-audit:', AUTHP='countermeasure-auth:', SNAP='countermeasure-snap:', ACFGK=AUTHP+'~cfg', APPVER='32';
   var clockOff=0, lastOK=0, newDev=null;
   const lsGet=k=>{ try{ return localStorage.getItem(k); }catch(e){ return null; } };
   const lsSet=(k,v)=>{ try{ localStorage.setItem(k,v); return true; }catch(e){ return false; } };
@@ -3657,9 +3657,10 @@ function viewSummary(y){
   return h+`</div></div>`;
 }
 
-function headCols(){ return PER.map((p,i)=>`<th class="${isAgg(i)?'agc':''}">${p}</th>`).join(''); }
+function curPer(){ const n=new Date(), fy=n.getMonth()>=3?n.getFullYear():n.getFullYear()-1; return +ui.year===fy?MON[(n.getMonth()+9)%12]:-1; }
+function headCols(){ const cp=curPer(); return PER.map((p,i)=>`<th class="${isAgg(i)?'agc':''}${i===cp?' curp':''}"${i===cp?' title="เดือนปัจจุบัน"':''}>${p}</th>`).join(''); }
 const COLW=66, PLAN_W=[38,230,76,64,84,26];
-function tblOpen(w){ const tot=w.reduce((a,b)=>a+b,0)+19*COLW; return `<table class="ms-tbl" style="width:${tot}px"><colgroup>`+w.map(x=>`<col style="width:${x}px">`).join('')+PER.map(()=>`<col style="width:${COLW}px">`).join('')+`</colgroup>`; }
+function tblOpen(w){ const tot=w.reduce((a,b)=>a+b,0)+19*COLW; return `<table class="ms-tbl" style="width:${tot}px"><colgroup>`+w.map(x=>`<col style="width:${x}px">`).join('')+PER.map((_,i)=>`<col class="${i===curPer()?'curp':''}" style="width:${COLW}px">`).join('')+`</colgroup>`; }
 function pcell(attrs,i,raw,eff,agg,part,ro,fx){
   const man=agg&&raw!=null&&raw!=='';
   const shown=agg&&!man?fv(eff):fv(raw);
@@ -4210,7 +4211,8 @@ function otMonth(y,m){
 }
 function otRowHtml(y,c,x,M){
   const mem=y.ot.members, S=y.ot.set, r=(M&&M.d&&M.d[x.d])||{}, we=x.w===0||x.w===6;
-  let h=`<tr data-d="${x.d}" class="${we?'wk':''}${x.avg>S.tgtDay+1e-9?' bad':''}"><td class="s1"><b>${x.d}</b> <small>${OT_DOW[x.w]}</small></td>`;
+  const nw=new Date(), isT=otYr(ui.year,c.m)===nw.getFullYear()&&otCalM(c.m)===nw.getMonth()&&x.d===nw.getDate();
+  let h=`<tr data-d="${x.d}" class="${we?'wk':''}${x.avg>S.tgtDay+1e-9?' bad':''}${isT?' tdy':''}"><td class="s1"><b>${x.d}</b> <small>${OT_DOW[x.w]}</small>${isT?' <em class="tdy-b">วันนี้</em>':''}</td>`;
   mem.forEach(p=>{ const v=r[p.id]||[0,0]; for(let k=0;k<2;k++){ const s=v[k]?f2(v[k]):''; h+=`<td><input class="oc ${k?'t30':'t15'}" data-m="${c.m}" data-d="${x.d}" data-p="${p.id}" data-k="${k}" value="${s}" data-orig="${s}" inputmode="decimal" autocomplete="off"></td>`; } });
   return h+`<td class="tt">${x.t?f2(x.t):''}</td><td class="av">${x.t?f2(+x.avg.toFixed(2)):''}</td><td>${f2(S.tgtDay)}</td><td class="jj">${otJb(x.t?x.j:'')}</td></tr>`;
 }
@@ -4594,14 +4596,14 @@ function lvMonthView(y,m){
     kpi('🔁',`${T.W} / ${T.H}`,'W มาทำงาน / H หยุดชดเชย','var(--t-vio)')+kpi('🌙',T.O,'OT ในวันหยุด (ครั้ง)')+
     kpi(X.conf.length?'⚠️':'✅',X.conf.length,X.conf.length?`วันที่คนไม่อยู่เกิน ${f2(lv.set.max)} คน`:'ไม่มีวันที่คนไม่อยู่ซ้อนกัน',X.conf.length?'var(--t-dang)':'var(--t-ok)')+`</div>`;
   h+=lvBrush();
-  const cw=[176].concat(X.days.map(()=>38),[54,54]), tw=cw.reduce((a,b)=>a+b,0);
-  h+=`<div class="lv-scroll"><table class="lv-tbl" style="width:${tw}px"><colgroup>${cw.map(x=>`<col style="width:${x}px">`).join('')}</colgroup><thead><tr><th class="nm">พนักงาน</th>`+
-    X.days.map(x=>`<th class="d${x.hol?' hol':x.we?' wk':''}" data-act="lvhol" data-d="${x.d}" title="${x.d} ${LV_ML[m-1]} — คลิกเพื่อ${x.hol?'ยกเลิก':'กำหนดเป็น'}วันหยุดนักขัตฤกษ์">${x.d}<small>${OT_DOW[x.w]}</small></th>`).join('')+`<th class="tt">ลา<small>วัน</small></th><th class="tt">อบรม<small>วัน</small></th></tr></thead><tbody>`;
+  const cw=[150].concat(X.days.map(()=>0),[52,52]), tw=150+X.days.length*30+104, nw=new Date(), tdy=(+ui.year===nw.getFullYear()&&m===nw.getMonth()+1)?nw.getDate():0;
+  h+=`<div class="lv-scroll"><table class="lv-tbl lv-fit" style="width:100%;min-width:${tw}px"><colgroup>${cw.map(x=>x?`<col style="width:${x}px">`:'<col>').join('')}</colgroup><thead><tr><th class="nm">พนักงาน</th>`+
+    X.days.map(x=>`<th class="d${x.hol?' hol':x.we?' wk':''}${x.d===tdy?' tdy':''}" data-act="lvhol" data-d="${x.d}" title="${x.d} ${LV_ML[m-1]} — คลิกเพื่อ${x.hol?'ยกเลิก':'กำหนดเป็น'}วันหยุดนักขัตฤกษ์">${x.d===tdy?'<em>วันนี้</em>':''}${x.d}<small>${OT_DOW[x.w]}</small></th>`).join('')+`<th class="tt">ลา<small>วัน</small></th><th class="tt">อบรม<small>วัน</small></th></tr></thead><tbody>`;
   X.persons.forEach(s=>{ const p=s.p;
-    h+=`<tr><td class="nm">${lvAv(p)}${E(p.name)}</td>`+X.days.map(x=>{ const c=(lv.months[m]&&lv.months[m].c[p.id+':'+x.d])||null, st=lvCellStyle(c);
-      return `<td class="lc${x.hol?' hl':x.we?' off':''}${c&&c.k==='P'?' k':''}${c&&c.n?' hn':''}" data-act="lvc" data-p="${E(p.id)}" data-d="${x.d}" ${st?`style="${st}"`:''} title="${E(lvCellTitle(c,p,x.d,m))}">${E(lvLabel(c))}</td>`; }).join('')+
+    h+=`<tr><td class="nm" title="${E(p.name)}">${lvAv(p)}<span class="lv-nmt">${E(p.name)}</span></td>`+X.days.map(x=>{ const c=(lv.months[m]&&lv.months[m].c[p.id+':'+x.d])||null, st=lvCellStyle(c);
+      return `<td class="lc${x.hol?' hl':x.we?' off':''}${x.d===tdy?' tdy':''}${c&&c.k==='P'?' k':''}${c&&c.n?' hn':''}" data-act="lvc" data-p="${E(p.id)}" data-d="${x.d}" ${st?`style="${st}"`:''} title="${E(lvCellTitle(c,p,x.d,m))}">${E(lvLabel(c))}</td>`; }).join('')+
       `<td class="tt">${s.Lh?lvDay1(s.Lh/hpd):'–'}</td><td class="tt">${s.Th?lvDay1(s.Th/hpd):'–'}</td></tr>`; });
-  h+=`<tr class="sum"><td class="nm">ไม่อยู่ (คน/วัน)</td>`+X.days.map(x=>`<td class="${x.away>lv.set.max?'cf':''}" title="${x.away?'ลา/อบรม/หยุดชดเชยเต็มวัน '+x.away+' คน':''}${x.part?' · ไม่เต็มวันรวม '+f2(x.part)+' ชม.':''}">${x.away?x.away:(x.part?'½':'')}</td>`).join('')+`<td class="tt">${lvDay1(T.Lh/hpd)}</td><td class="tt">${lvDay1(T.Th/hpd)}</td></tr></tbody></table></div>`;
+  h+=`<tr class="sum"><td class="nm">ไม่อยู่ (คน/วัน)</td>`+X.days.map(x=>`<td class="${x.away>lv.set.max?'cf':''}${x.d===tdy?' tdy':''}" title="${x.away?'ลา/อบรม/หยุดชดเชยเต็มวัน '+x.away+' คน':''}${x.part?' · ไม่เต็มวันรวม '+f2(x.part)+' ชม.':''}">${x.away?x.away:(x.part?'½':'')}</td>`).join('')+`<td class="tt">${lvDay1(T.Lh/hpd)}</td><td class="tt">${lvDay1(T.Th/hpd)}</td></tr></tbody></table></div>`;
   h+=`<div class="lv-leg"><b style="color:var(--txt)">สัญลักษณ์:</b>`+
     `<span><i style="background:${LV_K.L.bg}">ลา</i>ลาเต็มวัน</span><span><i style="background:${LV_PL.bg};color:${LV_PL.fg}">3F</i>ลาไม่เต็มวัน (ชม. + F เช้า / S บ่าย)</span>`+
     `<span><i style="background:${LV_K.T.bg}">อบรม</i>อบรม/ไปข้างนอกเต็มวัน</span><span><i style="background:${LV_PT.bg}">2S</i>อบรมไม่เต็มวัน</span>`+
@@ -11551,5 +11553,35 @@ small{font-size:max(11px,.85em)}
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
 })();
 
+</script>
+<style id="v32Style">
+/* v32: sticky ชื่อ/หัวข้อ ไม่หายเมื่อเลื่อนขวา (ยกเลิก overflow:hidden ของ table ทั่วไป) */
+.lv-tbl,.ms-tbl,.ot-tbl{overflow:visible!important}
+/* แผนลา: เห็นทั้งเดือนในจอเดียว */
+.lv-tbl.lv-fit td.nm,.lv-tbl.lv-fit th.nm{padding:0 8px}
+.lv-tbl td.nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lv-tbl td.nm .lv-nmt{vertical-align:middle}
+.lv-tbl.lv-fit td.lc{font-size:11px;letter-spacing:-.2px}
+.lv-tbl.lv-fit thead th.d{padding:4px 0}
+/* วันนี้ */
+.lv-tbl thead th.tdy{background:var(--pri)!important;color:#fff!important;box-shadow:inset 0 0 0 2px var(--pri)}
+.lv-tbl thead th.tdy em{display:block;font-style:normal;font-size:10px;font-weight:800;line-height:1.1;margin-bottom:1px}
+.lv-tbl td.tdy{box-shadow:inset 2px 0 0 var(--pri),inset -2px 0 0 var(--pri)}
+.lv-tbl td.lc.tdy:not([style]){background:color-mix(in srgb,var(--pri) 9%,transparent)}
+.lv-tbl tr.sum td.tdy{box-shadow:inset 2px 0 0 var(--pri),inset -2px 0 0 var(--pri),inset 0 -2px 0 var(--pri)}
+.ot-tbl tr.tdy td{background:color-mix(in srgb,var(--pri) 10%,var(--card))!important;border-top:2px solid var(--pri);border-bottom:2px solid var(--pri)}
+.ot-tbl tr.tdy td.s1{box-shadow:inset 3px 0 0 var(--pri)}
+.tdy-b{font-style:normal;font-size:10px;font-weight:800;color:#fff;background:var(--pri);border-radius:99px;padding:0 6px;margin-left:4px}
+.ms-tbl th.curp{background:var(--pri)!important;color:#fff!important}
+.ms-tbl col.curp{background:color-mix(in srgb,var(--pri) 8%,transparent)}
+/* แถบผู้ใช้ล่างซ้าย: ย่อเหลือไอคอนเมื่อไม่มีอะไรค้าง (ไม่บังตาราง) · ชี้เมาส์/โฟกัสเพื่อขยาย */
+.cb-pill[data-s="ok"]:not(:hover):not(:focus-within) .cb-wn,.cb-pill[data-s="ok"]:not(:hover):not(:focus-within) .cb-ol,.cb-pill[data-s="ok"]:not(:hover):not(:focus-within) .cb-st{display:none}
+.cb-pill[data-s="ok"]:not(:hover):not(:focus-within){opacity:.92}
+body{padding-bottom:64px}
+</style>
+<script id="v32Js">
+/* v32: แผนลาบนจอแคบ — เลื่อนไปที่วันนี้ให้เอง */
+(function(){ function go(){ const w=document.querySelector('#viewMission .lv-scroll'); if(!w||w.__v32) return; w.__v32=1; const t=w.querySelector('th.tdy'), n=w.querySelector('th.nm'); if(t&&n&&w.scrollWidth>w.clientWidth+4){ w.scrollLeft=Math.max(0,t.offsetLeft-n.offsetWidth-w.clientWidth/3); } }
+ let tm=0; new MutationObserver(()=>{ clearTimeout(tm); tm=setTimeout(go,60); }).observe(document.body,{childList:true,subtree:true}); })();
 </script>
 </body></html>
