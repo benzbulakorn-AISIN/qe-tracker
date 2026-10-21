@@ -12002,7 +12002,170 @@ function setStatus(s){g('qeChatStatus').textContent=s||'';}
 function drawRooms(){g('qeChatRooms').innerHTML=rooms.map(r=>'<button type="button" class="qec-room '+(r[0]===room?'on':'')+'" data-r="'+r[0]+'">'+r[1]+'</button>').join('');}
 function draw(list){const box=g('qeChatMessages'),who=me();if(!list.length){box.innerHTML='<div class="qec-empty">ยังไม่มีข้อความในห้องนี้</div>';return;}box.innerHTML=list.map(m=>'<div class="qec-row '+(m.sender_name===who?'me':'')+'"><div class="qec-meta">'+E(m.sender_name)+' · '+E(stamp(m.created_at))+'</div><div class="qec-bubble">'+E(m.message)+'</div></div>').join('');box.scrollTop=box.scrollHeight;}
 async function load(silent){if(!base||!key){setStatus('ไม่พบการตั้งค่า Supabase');return;}if(busy)return;busy=true;try{const url=base+'/rest/v1/chat_messages?select=id,room_key,sender_name,message,created_at&room_key=eq.'+encodeURIComponent(room)+'&deleted_at=is.null&order=created_at.asc&limit=100';const res=await fetch(url,{headers:headers()});const data=await res.json();if(!res.ok)throw new Error(data.message||'โหลดข้อความไม่สำเร็จ');const latest=data.length?Number(data[data.length-1].id):0;if(silent&&latest>(lastIds[room]||0)&&!g('qeChatPanel').classList.contains('on')){unread++;g('qeChatBadge').textContent=String(unread);g('qeChatBadge').classList.add('on');}lastIds[room]=latest;draw(data);if(!silent)setStatus('เชื่อมต่อแล้ว · '+data.length+' ข้อความ');}catch(e){setStatus('ผิดพลาด: '+(e.message||e));}finally{busy=false;}}
-async function send(){const input=g('qeChatInput'),text=input.value.trim(),name=me();if(!text)return;if(name==='Guest'){setStatus('กรุณา Login ชื่อผู้ใช้ก่อนส่งข้อความ');return;}const btn=g('qeChatSend');btn.disabled=true;setStatus('กำลังส่ง…');try{const res=await fetch(base+'/rest/v1/chat_messages',{method:'POST',headers:headers({'Content-Type':'application/json','Prefer':'return=minimal'}),body:JSON.stringify({room_key:room,sender_id:name,sender_name:name,message:text})});if(!res.ok){let x={};try{x=await res.json();}catch(e){}throw new Error(x.message||('ส่งไม่สำเร็จ '+res.status));}input.value='';await load(false);setStatus('ส่งแล้ว');}catch(e){setStatus('ผิดพลาด: '+(e.message||e));}finally{btn.disabled=false;input.focus();}}
+async function send() {
+  const input = g("qeChatInput");
+  const text = input.value.trim();
+  const name = me();
+
+  if (!text) {
+    return;
+  }
+
+  if (name === "Guest") {
+    setStatus(
+      "กรุณา Login ชื่อผู้ใช้ก่อนส่งข้อความ"
+    );
+    return;
+  }
+
+  const button = g("qeChatSend");
+
+  button.disabled = true;
+  setStatus("กำลังส่ง…");
+
+  try {
+    /*
+      ห้องทีมทั้งหมดเชื่อมกับกลุ่ม LINE
+
+      ห้อง PCR, Audit และ Meeting
+      จะเก็บเฉพาะใน QE Tracker
+    */
+    if (room === "qe-team") {
+      const functionUrl =
+        base +
+        "/functions/v1/line-send-message";
+
+      const response = await fetch(
+        functionUrl,
+        {
+          method: "POST",
+
+          headers: headers({
+            "Content-Type":
+              "application/json"
+          }),
+
+          body: JSON.stringify({
+            room_key:
+              "qe-team",
+
+            sender_id:
+              name,
+
+            sender_name:
+              name,
+
+            message:
+              text
+          })
+        }
+      );
+
+      const responseText =
+        await response.text();
+
+      let result = {};
+
+      try {
+        result =
+          JSON.parse(responseText);
+      } catch {
+        result = {};
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          result.error ||
+          "ส่งข้อความเข้า LINE ไม่สำเร็จ"
+        );
+      }
+
+      input.value = "";
+
+      await load(false);
+
+      setStatus(
+        "ส่งเข้า QE Tracker และกลุ่ม LINE แล้ว"
+      );
+    } else {
+      /*
+        ห้องเฉพาะงานยังบันทึกใน
+        Supabase Team Chat ตามเดิม
+      */
+      const response = await fetch(
+        base + "/rest/v1/chat_messages",
+        {
+          method: "POST",
+
+          headers: headers({
+            "Content-Type":
+              "application/json",
+
+            "Prefer":
+              "return=minimal"
+          }),
+
+          body: JSON.stringify({
+            room_key:
+              room,
+
+            sender_id:
+              name,
+
+            sender_name:
+              name,
+
+            message:
+              text,
+
+            source:
+              "tracker",
+
+            synced_to_line:
+              false
+          })
+        }
+      );
+
+      if (!response.ok) {
+        let result = {};
+
+        try {
+          result =
+            await response.json();
+        } catch {
+          result = {};
+        }
+
+        throw new Error(
+          result.message ||
+          "บันทึกข้อความไม่สำเร็จ"
+        );
+      }
+
+      input.value = "";
+
+      await load(false);
+
+      setStatus(
+        "บันทึกในห้อง " +
+        room +
+        " แล้ว"
+      );
+    }
+  } catch (error) {
+    setStatus(
+      "ผิดพลาด: " +
+      String(
+        error?.message ||
+        error
+      )
+    );
+  } finally {
+    button.disabled = false;
+    input.focus();
+  }
+}
 function open(){g('qeChatPanel').classList.add('on');unread=0;g('qeChatBadge').classList.remove('on');g('qeChatWho').textContent='ผู้ใช้: '+me();drawRooms();load(false);setTimeout(()=>g('qeChatInput').focus(),30);}
 function close(){g('qeChatPanel').classList.remove('on');}
 g('qeChatFab').addEventListener('click',open);g('qeChatClose').addEventListener('click',close);g('qeChatSend').addEventListener('click',send);g('qeChatInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}});g('qeChatRooms').addEventListener('click',e=>{const b=e.target.closest('[data-r]');if(!b)return;room=b.dataset.r;drawRooms();load(false);});
