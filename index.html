@@ -728,11 +728,24 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none!importa
 .ot-tbl tr.ot-tot td{position:sticky;bottom:0;background:var(--pop);font-weight:800;border-top:2px solid var(--line);z-index:3}
 .ot-tbl tr.ot-tot td.s1{z-index:5}
 .ot-mr{display:flex;gap:8px;align-items:center;margin:6px 0}
-.ot-mr .osname{flex:1}
+.ot-mr .osname{flex:1;min-width:0}
+.ot-mr .oscode{width:116px}
 .ot-mr .oscol{width:44px;height:34px;padding:2px;border-radius:8px;cursor:pointer}
 .ot-go{display:block;width:100%;margin-top:4px;padding:4px 8px;font-size:12px;border-radius:8px;border:1px solid var(--pri);background:color-mix(in srgb,var(--pri) 16%,transparent);color:var(--txt);font-weight:700;cursor:pointer}
 .ot-go:hover{background:var(--pri);color:var(--on-pri)}
 .ms-tbl .mi-name.otn{height:54px}
+.xl-h{font-weight:800;font-size:13px;margin:14px 0 6px}
+.xl-tbl{width:100%;min-width:0;table-layout:fixed;border-collapse:collapse;font-size:12.5px}
+.xl-tbl th,.xl-tbl td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+.xl-tbl th{font-size:12px;color:var(--mut);font-weight:700;background:var(--soft)}
+.xl-tbl .n{text-align:right}
+.xl-tbl td{word-break:break-word}
+.xl-tbl select{width:100%;padding:4px 6px}
+.xl-sc{max-height:240px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+.xl-ok{color:var(--ok);font-weight:700}.xl-bad{color:var(--t-dang);font-weight:700}.xl-mut{color:var(--mut);font-size:12px}
+.xl-ck{display:flex!important;gap:8px;align-items:flex-start;margin:10px 0 4px;font-size:13px;cursor:pointer}
+.xl-ck input{margin-top:3px;flex:none;width:auto!important;height:auto!important;min-width:0}
+.xl-ck span{flex:1}
 @media(max-width:760px){.ot-pr{grid-template-columns:100px minmax(0,1fr) 78px}.ot-mbar h2{font-size:18px}}
 </style>
 <style id="lvStyle">
@@ -3846,6 +3859,7 @@ function onModal(e){
   const t=e.target.closest('[data-ma]'); if(e.target===g('msOv')){ closeMsMod(); return; } if(!t||!ctx) return;
   const a=t.dataset.ma;
   if(a==='cancel') return closeMsMod();
+  if(ctx.t==='otxl') return otXlModal(a,t);
   if(ctx.t==='otset'||ctx.t==='otstart') return otModal(a,t);
   if(ctx.t&&ctx.t.indexOf('lv')===0) return lvModal(a,t);
   if(a==='addyear'){
@@ -3920,6 +3934,8 @@ function onClick(e){
     case 'otstart': otStartMod(); break;
     case 'otclr': otClear(+t.dataset.m); break;
     case 'otjson': otJson(); break;
+    case 'otxl': otXlOpen(); break;
+    case 'otundo': otXlUndo(); break;
     case 'lvm': ui.lvm=t.dataset.m; render(); break;
     case 'lvset': lvSetMod(); break;
     case 'lvstart': lvStartMod(); break;
@@ -4006,7 +4022,7 @@ const OT_SET0={tgtDay:2,tgtMonth:40,limitMonth:41};
 function otSan(o){
   o=clone(o||{}); const used=new Set();
   o.members=(Array.isArray(o.members)?o.members:[]).map((p,i)=>{ let id=String((p&&p.id)||('p'+(i+1))); while(used.has(id)) id+='x'; used.add(id);
-    return {id:id,name:String(p&&p.name!=null?p.name:('Member '+(i+1))),color:(p&&p.color)||OT_COL[i%OT_COL.length]}; });
+    return {id:id,code:String((p&&p.code)||'').trim(),name:String(p&&p.name!=null?p.name:('Member '+(i+1))),color:(p&&p.color)||OT_COL[i%OT_COL.length]}; });
   const s=o.set||{}; o.set={tgtDay:num(s.tgtDay)||OT_SET0.tgtDay,tgtMonth:num(s.tgtMonth)||OT_SET0.tgtMonth,limitMonth:num(s.limitMonth)||OT_SET0.limitMonth};
   o.link=o.link||'';
   const ms={};
@@ -4114,7 +4130,7 @@ function otNav(y,Yc){
   let h=`<div class="ot-nav"><button type="button" class="btn-g" data-act="vw" data-v="plan">← Action Plan</button><div class="ot-chips">`+
     `<button type="button" class="ot-chip${cur==='Y'?' on':''}" data-act="otm" data-m="Y">📊 ทั้งปี</button>`;
   Yc.ms.forEach((x,m)=>{ h+=`<button type="button" class="ot-chip${cur===String(m)?' on':''}" data-act="otm" data-m="${m}" data-chip="${m}" title="${OT_EN[m]}: ${x.any?f2(x.total)+' ชม.':'ยังไม่มีข้อมูล'}">${OT_MTH[m]}<i class="ot-dot ${x.j==='O'?'o':x.j==='X'?'x':''}"></i></button>`; });
-  return h+`</div><div class="ot-navr"><button type="button" class="btn-g" data-act="otset">⚙ ตั้งค่า / สมาชิก</button></div></div>`;
+  return h+`</div><div class="ot-navr">${(OTLAST&&OTLAST.fy===String(ui.year))?`<button type="button" class="btn-g" data-act="otundo" title="คืนค่า OT ก่อนนำเข้าไฟล์ Excel ครั้งล่าสุด" style="color:var(--t-dang)">↩ ย้อนกลับการนำเข้า</button> `:''}<button type="button" class="btn-p" data-act="otxl" title="นำเข้าชั่วโมง OT1.5 / OT3 จากไฟล์ Excel OT (ระบบเวลา/HR) ลงตารางรายวัน">📥 นำเข้าจาก Excel</button> <button type="button" class="btn-g" data-act="otset">⚙ ตั้งค่า / สมาชิก</button></div></div>`;
 }
 function viewOT(y){
   if(!y.ot) return otEmpty();
@@ -4214,7 +4230,7 @@ function otMonth(y,m){
     `<button type="button" class="btn-g" data-act="otclr" data-m="${m}" style="color:var(--t-dang)">🧹 ล้างข้อมูลเดือนนี้</button></div>`;
   h+=`<div id="otMA">${otSecA(y,c)}</div><div id="otMB">${otSecB(y,c)}</div>`;
   const cw=[84].concat(mem.flatMap(()=>[64,64]),[70,70,64,54]); const tw=cw.reduce((a,b)=>a+b,0);
-  h+=`<div class="ms-card ot-card"><h3>📝 ตารางกรอก OT รายวัน</h3><div class="ms-note" style="margin-bottom:8px">✏️ กรอกชั่วโมง OT1.5 / OT3.0 ของแต่ละคน — ผลรวม เฉลี่ย และ O/X คำนวณอัตโนมัติ · <kbd>Enter</kbd>/<kbd>↑</kbd><kbd>↓</kbd> เลื่อนช่อง · วางข้อมูลหลายแถว/หลายช่องจาก Excel ได้ (คัดลอกบล็อกตัวเลขแล้ววางที่ช่องแรก)</div><div class="ms-scroll"><table class="ot-tbl" style="width:${tw}px"><colgroup>${cw.map(x=>`<col style="width:${x}px">`).join('')}</colgroup><thead><tr><th rowspan="2" class="s1">วันที่</th>`+
+  h+=`<div class="ms-card ot-card"><h3>📝 ตารางกรอก OT รายวัน</h3><div class="ms-note" style="margin-bottom:8px">✏️ กรอกชั่วโมง OT1.5 / OT3.0 ของแต่ละคน — ผลรวม เฉลี่ย และ O/X คำนวณอัตโนมัติ · <kbd>Enter</kbd>/<kbd>↑</kbd><kbd>↓</kbd> เลื่อนช่อง · วางข้อมูลหลายแถว/หลายช่องจาก Excel ได้ (คัดลอกบล็อกตัวเลขแล้ววางที่ช่องแรก) · พิมพ์เวลาได้ เช่น 2:30 = 2.5 ชม. · หรือกด <b>📥 นำเข้าจาก Excel</b> ด้านบนเพื่อดึงจากไฟล์ OT ให้อัตโนมัติ</div><div class="ms-scroll"><table class="ot-tbl" style="width:${tw}px"><colgroup>${cw.map(x=>`<col style="width:${x}px">`).join('')}</colgroup><thead><tr><th rowspan="2" class="s1">วันที่</th>`+
     mem.map(p=>`<th colspan="2" style="--pc:${p.color}" class="ot-ph2">${E(p.name)}</th>`).join('')+`<th rowspan="2">รวมทีม</th><th rowspan="2">เฉลี่ย/คน</th><th rowspan="2">เป้า</th><th rowspan="2">ผล</th></tr><tr>`+mem.map(()=>`<th class="t15">OT1.5</th><th class="t30">OT3.0</th>`).join('')+`</tr></thead><tbody>`;
   c.dl.forEach(x=>{ h+=otRowHtml(y,c,x,M); });
   h+=`<tr class="ot-tot" id="otTot">${otTotHtml(c,S)}</tr></tbody></table></div></div>`;
@@ -4241,6 +4257,16 @@ function otRefreshM(y,m,d){
 }
 
 /* ---------- แก้ไขข้อมูล ---------- */
+/* แปลงค่าชั่วโมง: 2.5 | 2:30 | 2:30:00 | ว่าง/“-” = 0 · อ่านไม่ได้ = null */
+function otTime(v){
+  if(v==null) return 0;
+  if(typeof v==='number') return (isFinite(v)&&v>=0)?v:null;
+  const s=String(v).trim().replace(/,/g,'');
+  if(s===''||s==='-'||s==='–') return 0;
+  let m=/^(\d+):([0-5]?\d)(?::[0-5]?\d)?$/.exec(s); if(m) return +(+m[1]+(+m[2])/60).toFixed(4);
+  if(/^(\d+\.?\d*|\.\d+)$/.test(s)) return parseFloat(s);
+  return null;
+}
 function otSetCell(ot,m,d,pid,k,v){
   const M=otMon(ot,m), r=M.d[d]||(M.d[d]={}), cur=r[pid]||[0,0]; cur[k]=v;
   if(!cur[0]&&!cur[1]) delete r[pid]; else r[pid]=cur;
@@ -4248,8 +4274,8 @@ function otSetCell(ot,m,d,pid,k,v){
 }
 function otCell(el){
   const y=Y(), ot=y&&y.ot; if(!ot) return;
-  const m=+el.dataset.m, d=+el.dataset.d, raw=String(el.value).trim().replace(/,/g,''), v=raw===''?0:parseFloat(raw);
-  if(!isFinite(v)||v<0){ el.value=el.dataset.orig; toastMsg('⚠️ กรอกตัวเลข ≥ 0 เท่านั้น','var(--t-dang)'); return; }
+  const m=+el.dataset.m, d=+el.dataset.d, v=otTime(el.value);
+  if(v===null||v<0||v>24){ el.value=el.dataset.orig; toastMsg('⚠️ กรอกชั่วโมง 0–24 (เช่น 2.5 หรือ 2:30) เท่านั้น','var(--t-dang)'); return; }
   otSetCell(ot,m,d,el.dataset.p,+el.dataset.k,v);
   el.dataset.orig=v?f2(v):''; el.value=el.dataset.orig; touch(); otRefreshM(y,m,d);
 }
@@ -4289,7 +4315,7 @@ function otPaste(e){
   const m=+el.dataset.m, days=otDim(ui.year,m);
   const c0=mem.findIndex(p=>p.id===el.dataset.p)*2+(+el.dataset.k), d0=+el.dataset.d; let n=0;
   rows.forEach((cells,i)=>{ const d=d0+i; if(d>days) return;
-    cells.forEach((t,j)=>{ const c=c0+j; if(c>=mem.length*2) return; const v=String(t).trim().replace(/,/g,''); const x=v===''?0:parseFloat(v); if(!isFinite(x)||x<0) return;
+    cells.forEach((t,j)=>{ const c=c0+j; if(c>=mem.length*2) return; const x=otTime(t); if(x===null||x<0||x>24) return;
       otSetCell(ot,m,d,mem[Math.floor(c/2)].id,c%2,x); n++; }); });
   touch(); render(); toastMsg('วางข้อมูล OT '+n+' ช่อง');
 }
@@ -4301,7 +4327,7 @@ function otMeta(el){
 }
 
 /* ---------- เริ่มต้น / ตั้งค่า / สมาชิก ---------- */
-function otNewMembers(names){ return names.map((n,i)=>({id:'p'+(i+1),name:n,color:OT_COL[i%OT_COL.length]})); }
+function otNewMembers(names){ return names.map((n,i)=>({id:'p'+(i+1),code:'',name:n,color:OT_COL[i%OT_COL.length]})); }
 function otStartMod(){
   ctx={t:'otstart'};
   openMsMod(`<h3>➕ เริ่มสร้าง OT Control ปี ${E(ui.year)}</h3><div class="sub" style="margin-bottom:8px">พิมพ์รายชื่อสมาชิกที่ทำ OT (1 คนต่อ 1 บรรทัด) — เพิ่ม/ลบ/แก้ชื่อภายหลังได้ที่ปุ่ม ⚙ ตั้งค่า</div>`+
@@ -4309,14 +4335,14 @@ function otStartMod(){
     `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button type="button" class="btn-p" data-ma="otgo">สร้าง</button><button type="button" class="btn-g" data-ma="cancel">ยกเลิก</button></div>`,480);
 }
 function otMemRows(ot){
-  return ot.members.map(p=>`<div class="ot-mr" data-id="${E(p.id)}"><input type="color" class="oscol" value="${E(p.color)}"><input class="osname" value="${E(p.name)}" placeholder="ชื่อ"><button type="button" class="btn-g" data-ma="otdel" data-id="${E(p.id)}" title="ลบสมาชิก" style="color:var(--t-dang)">🗑</button></div>`).join('');
+  return ot.members.map(p=>`<div class="ot-mr" data-id="${E(p.id)}"><input type="color" class="oscol" value="${E(p.color)}"><input class="osname" value="${E(p.name)}" placeholder="ชื่อ"><input class="oscode" value="${E(p.code||'')}" placeholder="รหัสพนักงาน" title="รหัสพนักงาน (เช่น 6350) — ใช้จับคู่อัตโนมัติตอนนำเข้าไฟล์ Excel OT" inputmode="numeric"><button type="button" class="btn-g" data-ma="otdel" data-id="${E(p.id)}" title="ลบสมาชิก" style="color:var(--t-dang)">🗑</button></div>`).join('');
 }
 function otReadForm(){
   const y=Y(), ot=y.ot; if(!g('osD')) return;
   ot.set.tgtDay=num(g('osD').value)||OT_SET0.tgtDay; ot.set.tgtMonth=num(g('osM').value)||OT_SET0.tgtMonth; ot.set.limitMonth=num(g('osL').value)||OT_SET0.limitMonth;
   ot.link=g('osK').value||'';
   document.querySelectorAll('#osMem .ot-mr').forEach(row=>{ const p=ot.members.find(x=>x.id===row.dataset.id); if(!p) return;
-    p.name=row.querySelector('.osname').value.trim()||p.name; p.color=row.querySelector('.oscol').value||p.color; });
+    p.name=row.querySelector('.osname').value.trim()||p.name; p.color=row.querySelector('.oscol').value||p.color; const cd=row.querySelector('.oscode'); if(cd) p.code=cd.value.trim(); });
 }
 function otSetMod(){
   const y=Y(), ot=y.ot; ctx={t:'otset'};
@@ -4340,7 +4366,7 @@ function otModal(a,t){
   const y=Y(), ot=y.ot;
   if(a==='otsave'){ otReadForm(); closeMsMod(); touch(); render(); return; }
   if(a==='otadd'){ otReadForm(); let n=ot.members.length+1, id='p'+n; while(ot.members.some(p=>p.id===id)) id='p'+(++n);
-    ot.members.push({id:id,name:'Member '+(ot.members.length+1),color:OT_COL[ot.members.length%OT_COL.length]}); touch(); otSetMod(); return; }
+    ot.members.push({id:id,code:'',name:'Member '+(ot.members.length+1),color:OT_COL[ot.members.length%OT_COL.length]}); touch(); otSetMod(); return; }
   if(a==='otdel'){ otReadForm(); const id=t.dataset.id, p=ot.members.find(x=>x.id===id); if(!p) return;
     if(ot.members.length<=1){ alert('ต้องมีสมาชิกอย่างน้อย 1 คน'); return; }
     let cnt=0; Object.keys(ot.months).forEach(k=>Object.keys(ot.months[k].d||{}).forEach(d=>{ if(ot.months[k].d[d][id]) cnt++; }));
@@ -4350,6 +4376,261 @@ function otModal(a,t){
 }
 function otClear(m){
   const y=Y(), ot=y.ot; ask('ล้างข้อมูล OT เดือน '+OT_EN[m]+'-'+String(otYr(ui.year,m)).slice(2)+'?','ข้อมูล OT รายวันของเดือนนี้ทั้งหมดจะถูกลบ (WD/MP และ Actual (HR) ไม่เปลี่ยน)',()=>{ otMon(ot,m).d={}; touch(); render(); });
+}
+
+/* ---------- นำเข้าจากไฟล์ Excel OT (ระบบเวลา / HR) → ตารางกรอก OT รายวัน ----------
+   อ่านคอลัมน์: รหัส · ชื่อ · วันที่ (พ.ศ./ค.ศ.) · OT1.5 · OT3 (เวลา h:mm → ชม.ทศนิยม) · ข้ามแถว Total
+   OT1 / OT2 / OT0 ไม่มีช่องในตาราง จึงไม่นำเข้า (แต่แจ้งเตือนถ้ามีค่า) */
+let XL=null, OTLAST=null;
+const otFyOf=(y,mo)=>mo>=4?y:y-1, otMidx=mo=>(mo+8)%12;
+const otLbl=(fy,m)=>OT_EN[m]+'-'+String(otYr(fy,m)).slice(2);
+const otFx=v=>f2(+(+v).toFixed(2))||'0';
+
+function otDate(v){
+  if(v==null||v==='') return null;
+  if(typeof v==='number'){ if(v>20000&&v<80000){ const d=new Date(Date.UTC(1899,11,30)+Math.round(v)*864e5); return {y:d.getUTCFullYear(),mo:d.getUTCMonth()+1,d:d.getUTCDate()}; } return null; }
+  const s=String(v).trim(); let m=/^(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})/.exec(s), y,mo,d;
+  if(m){ y=+m[1]; mo=+m[2]; d=+m[3]; }
+  else{ m=/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/.exec(s); if(!m) return null; d=+m[1]; mo=+m[2]; y=+m[3]; if(mo>12&&d<=12){ const t=d; d=mo; mo=t; } }
+  if(y>=2400) y-=543;
+  if(mo<1||mo>12||d<1||d>new Date(y,mo,0).getDate()) return null;
+  return {y:y,mo:mo,d:d};
+}
+/* ---- อ่านไฟล์ .xlsx (zip + XML) โดยไม่ใช้ไลบรารีภายนอก ---- */
+function otZipIndex(buf){
+  const u=new Uint8Array(buf), dv=new DataView(buf); let e=-1;
+  for(let i=u.length-22;i>=Math.max(0,u.length-66000);i--){ if(dv.getUint32(i,true)===0x06054b50){ e=i; break; } }
+  if(e<0) throw new Error('ไม่ใช่ไฟล์ .xlsx (หรือไฟล์เสียหาย)');
+  const n=dv.getUint16(e+10,true); let p=dv.getUint32(e+16,true); const files={};
+  for(let i=0;i<n;i++){
+    if(dv.getUint32(p,true)!==0x02014b50) break;
+    const meth=dv.getUint16(p+10,true), csz=dv.getUint32(p+20,true), nl=dv.getUint16(p+28,true), xl=dv.getUint16(p+30,true), cl=dv.getUint16(p+32,true), lo=dv.getUint32(p+42,true);
+    files[new TextDecoder().decode(u.subarray(p+46,p+46+nl))]={meth:meth,csz:csz,lo:lo};
+    p+=46+nl+xl+cl;
+  }
+  return {u:u,dv:dv,files:files};
+}
+async function otZipGet(z,name){
+  const f=z.files[name]; if(!f) return null;
+  const nl=z.dv.getUint16(f.lo+26,true), xl=z.dv.getUint16(f.lo+28,true), s=f.lo+30+nl+xl, raw=z.u.subarray(s,s+f.csz);
+  if(f.meth===0) return new TextDecoder().decode(raw);
+  if(f.meth!==8) throw new Error('รูปแบบการบีบอัดของ .xlsx ไม่รองรับ');
+  if(typeof DecompressionStream==='undefined') throw new Error('เบราว์เซอร์นี้อ่าน .xlsx ตรง ๆ ไม่ได้ — คัดลอกตารางจาก Excel แล้ววางในช่องด้านล่างแทน');
+  const buf=await new Response(new Blob([raw]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer();
+  return new TextDecoder().decode(buf);
+}
+const otColIdx=ref=>{ const m=/^([A-Za-z]+)/.exec(ref); if(!m) return 0; let n=0; for(const ch of m[1].toUpperCase()) n=n*26+ch.charCodeAt(0)-64; return n-1; };
+const otTags=(el,n)=>Array.from(el.getElementsByTagNameNS('*',n));
+async function otXlsxRows(buf){
+  const z=otZipIndex(buf), P=s=>new DOMParser().parseFromString(s,'application/xml'), ss=[];
+  const ssx=await otZipGet(z,'xl/sharedStrings.xml');
+  if(ssx) otTags(P(ssx),'si').forEach(si=>ss.push(otTags(si,'t').map(t=>t.textContent).join('')));
+  let names=[]; const wb=await otZipGet(z,'xl/workbook.xml'), rl=await otZipGet(z,'xl/_rels/workbook.xml.rels');
+  if(wb&&rl){
+    const rel={}; otTags(P(rl),'Relationship').forEach(r=>{ rel[r.getAttribute('Id')]=r.getAttribute('Target'); });
+    otTags(P(wb),'sheet').forEach(sh=>{ let t=rel[sh.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships','id')||sh.getAttribute('r:id')]; if(t){ t=t.replace(/^\//,''); if(!/^xl\//.test(t)) t='xl/'+t; names.push(t); } });
+  }
+  names=names.filter(n=>z.files[n]);
+  if(!names.length) names=Object.keys(z.files).filter(n=>/^xl\/worksheets\/[^\/]+\.xml$/i.test(n)).sort();
+  if(!names.length) throw new Error('ไม่พบ Sheet ในไฟล์ .xlsx');
+  const out=[];
+  for(const n of names){
+    const doc=P(await otZipGet(z,n)), rows=[];
+    otTags(doc,'row').forEach((rw,k)=>{
+      const ri=(parseInt(rw.getAttribute('r'),10)||(k+1))-1, arr=rows[ri]=rows[ri]||[];
+      otTags(rw,'c').forEach(c=>{
+        const ci=otColIdx(c.getAttribute('r')||''), t=c.getAttribute('t'), ve=otTags(c,'v')[0]; let v='';
+        if(t==='s') v=ve?(ss[+ve.textContent]||''):'';
+        else if(t==='inlineStr') v=otTags(c,'t').map(x=>x.textContent).join('');
+        else if(t==='str'||t==='e'||t==='b') v=ve?ve.textContent:'';
+        else if(ve&&ve.textContent!==''){ const x=parseFloat(ve.textContent); v=isFinite(x)?x:ve.textContent; }
+        arr[ci]=v;
+      });
+    });
+    out.push(Array.from(rows,r=>r?Array.from(r,x=>x==null?'':x):[]));
+  }
+  return out;
+}
+function otTextRows(t){
+  t=String(t||'').replace(/^\ufeff/,'').replace(/\r/g,'');
+  const lines=t.split('\n').filter(l=>l.trim()!==''); if(!lines.length) return [];
+  if(/\t/.test(lines.slice(0,5).join('\n'))) return lines.map(l=>l.split('\t').map(x=>x.trim().replace(/^"(.*)"$/,'$1')));
+  return lines.map(l=>{ const o=[]; let cur='',q=false; for(let i=0;i<l.length;i++){ const ch=l[i]; if(q){ if(ch==='"'){ if(l[i+1]==='"'){ cur+='"'; i++; } else q=false; } else cur+=ch; } else if(ch==='"') q=true; else if(ch===','){ o.push(cur.trim()); cur=''; } else cur+=ch; } o.push(cur.trim()); return o; });
+}
+/* ---- แปลงตาราง → รายการ OT ---- */
+function otXlParse(rows){
+  const norm=s=>String(s==null?'':s).toLowerCase().replace(/\s+/g,''), recs=[], totals={}, warn=[]; let H=null, last='', hdr=false;
+  rows.forEach((r,ri)=>{
+    if(!r||!r.length) return;
+    const c=r.map(norm), i15=c.findIndex(x=>/^ot1\.5/.test(x));
+    if(i15>=0){
+      const fd=re=>c.findIndex(x=>re.test(x));
+      H={code:fd(/รหัส|^code|^emp(loyee)?(id|code|no)/),name:fd(/ชื่อ|^name/),date:fd(/วันที่|^date/),type:fd(/ประเภท|^type/),i15:i15,i3:fd(/^ot3(\.0)?($|[^\d.])/),i1:fd(/^ot1($|[^\d.])/),i2:fd(/^ot2($|[^\d.])/),i0:fd(/^ot0($|[^\d.])/)};
+      if(H.code<0||H.date<0){ warn.push('แถว '+(ri+1)+': พบหัว OT1.5 แต่ไม่พบคอลัมน์ “รหัส” หรือ “วันที่”'); H=null; return; }
+      if(H.i3<0) warn.push('ไม่พบคอลัมน์ OT3 — ใช้ค่า 0'); hdr=true; return;
+    }
+    if(!H) return;
+    const cell=i=>(i>=0&&i<r.length)?r[i]:'';
+    if(c.some(x=>x==='total'||x==='รวม'||x==='รวมทั้งหมด')){
+      const a=otTime(cell(H.i15)), b=H.i3>=0?otTime(cell(H.i3)):0;
+      if(last&&a!==null&&b!==null){ const t=totals[last]||(totals[last]={a:0,b:0}); t.a+=a; t.b+=b; } return;
+    }
+    const code=String(cell(H.code)).trim().replace(/\.0+$/,''); if(!code) return;
+    const dt=otDate(cell(H.date)); if(!dt){ warn.push('แถว '+(ri+1)+': อ่านวันที่ไม่ได้ (“'+cell(H.date)+'”)'); return; }
+    const a=otTime(cell(H.i15)), b=H.i3>=0?otTime(cell(H.i3)):0;
+    if(a===null||b===null){ warn.push('แถว '+(ri+1)+': ค่า OT อ่านไม่ได้ (“'+cell(H.i15)+'” / “'+(H.i3>=0?cell(H.i3):'')+'”)'); return; }
+    const ot=i=>i>=0?(otTime(cell(i))||0):0;
+    recs.push({code:code,name:String(cell(H.name)).trim(),y:dt.y,mo:dt.mo,d:dt.d,a:a,b:b,o1:ot(H.i1),o2:ot(H.i2),o0:ot(H.i0),type:String(cell(H.type)).trim(),row:ri+1}); last=code;
+  });
+  return {hdr:hdr,recs:recs,totals:totals,warn:warn};
+}
+const otXlPeople=recs=>{ const m=new Map(); recs.forEach(r=>{ let o=m.get(r.code); if(!o){ o={code:r.code,name:r.name,n:0}; m.set(r.code,o); } o.n++; if(!o.name&&r.name) o.name=r.name; }); return Array.from(m.values()); };
+function otXlGuess(y,pp){
+  const ot=y.ot, lv=y.lv, map={}, how={};
+  pp.forEach(p=>{
+    let mem=ot.members.find(x=>x.code&&String(x.code)===p.code);
+    if(mem) how[p.code]='code';
+    else if(lv&&lv.people&&lv.people.length===ot.members.length){ const i=lv.people.findIndex(x=>String(x.code)===p.code); if(i>=0){ mem=ot.members[i]; how[p.code]='lv'; } }
+    map[p.code]=mem?mem.id:'';
+  });
+  const seen={}; Object.keys(map).forEach(c=>{ const id=map[c]; if(!id) return; if(seen[id]){ map[c]=''; delete how[c]; } else seen[id]=1; });
+  return {map:map,how:how};
+}
+/* ---- ขั้นตอน UI ---- */
+function otXlOpen(){
+  const y=Y(); if(!y||!y.ot){ toastMsg('⚠️ ยังไม่ได้สร้าง OT Control ของปีนี้','var(--t-dang)'); return; }
+  ctx={t:'otxl'}; XL=null; otXlStart();
+}
+function otXlStart(msg){
+  openMsMod(`<h3>📥 นำเข้า OT จากไฟล์ Excel</h3>`+
+    `<div class="ms-help">ไฟล์จากระบบเวลา/HR ที่มีคอลัมน์ <b>รหัส · ชื่อ · วันที่ · OT1.5 · OT3</b> — อ่านเฉพาะ OT1.5 และ OT3 ใส่ลงตารางรายวันให้เอง (วันที่ พ.ศ./ค.ศ. ได้ · เวลา 2:30 = 2.5 ชม. · ข้ามแถว Total) · จะมีหน้าตัวอย่างให้ตรวจก่อนบันทึกทุกครั้ง</div>`+
+    `<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><button type="button" class="btn-p" data-ma="xlpick">📂 เลือกไฟล์ Excel (.xlsx / .csv)</button><input type="file" id="otXlFile" accept=".xlsx,.xlsm,.csv,.tsv,.txt" style="display:none"></div>`+
+    `<label style="margin-top:12px;display:block">หรือ คัดลอกตารางจาก Excel (รวมแถวหัวตาราง) มาวางที่นี่</label><textarea id="otXlTxt" rows="5" style="width:100%" placeholder="รหัส(Code)	ชื่อ(Name)	วันที่(Date)	…	OT1.5	OT2	OT3	OT0"></textarea>`+
+    `<div id="otXlMsg" class="ms-sub" style="margin:8px 0;min-height:18px;${msg?'color:var(--t-dang)':''}">${E(msg||'')}</div>`+
+    `<div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn-g" data-ma="xlread">อ่านข้อมูลที่วาง</button><button type="button" class="btn-g" data-ma="cancel">ปิด</button></div>`,620);
+}
+function otXlMsg(t,bad){ const el=g('otXlMsg'); if(!el) return; el.textContent=t; el.style.color=bad?'var(--t-dang)':''; }
+async function otXlReadFile(f){
+  otXlMsg('กำลังอ่านไฟล์ '+f.name+' …');
+  try{
+    let sheets;
+    if(/\.xls[xm]$/i.test(f.name)) sheets=await otXlsxRows(await f.arrayBuffer());
+    else if(/\.xls$/i.test(f.name)) throw new Error('ไฟล์ .xls (รุ่นเก่า) อ่านไม่ได้ — เปิดใน Excel แล้ว Save As เป็น .xlsx หรือคัดลอกตารางมาวาง');
+    else sheets=[otTextRows(await f.text())];
+    otXlLoad(sheets,f.name);
+  }catch(err){ otXlMsg('❌ '+((err&&err.message)||'อ่านไฟล์ไม่ได้'),true); }
+}
+function otXlLoad(sheets,src){
+  const recs=[], totals={}, warn=[]; let hdr=false;
+  sheets.forEach(rows=>{ const r=otXlParse(rows); if(r.hdr) hdr=true; recs.push(...r.recs); warn.push(...r.warn);
+    Object.keys(r.totals).forEach(k=>{ const t=totals[k]||(totals[k]={a:0,b:0}); t.a+=r.totals[k].a; t.b+=r.totals[k].b; }); });
+  if(!hdr) throw new Error('ไม่พบหัวตารางที่มีคอลัมน์ “รหัส / วันที่ / OT1.5” — ตรวจว่าคัดลอกรวมแถวหัวตารางมาด้วย');
+  if(!recs.length) throw new Error('พบหัวตารางแต่ไม่มีแถวข้อมูลพนักงาน');
+  const fys=Array.from(new Set(recs.map(r=>String(otFyOf(r.y,r.mo))))); let fy=String(ui.year);
+  if(fys.indexOf(fy)<0){ const c=fys.filter(f=>store.years[f]&&store.years[f].ot); if(c.length===1) fy=c[0]; }
+  const y=store.years[fy]; if(!y||!y.ot) throw new Error('ไฟล์นี้เป็นข้อมูลปีงบ FY'+fys.join(', FY')+' แต่ยังไม่มี OT Control ของปีนั้น');
+  const pp=otXlPeople(recs), gs=otXlGuess(y,pp);
+  XL={recs:recs,totals:totals,warn:warn,src:src,fy:fy,map:gs.map,how:gs.how,clear:false};
+  otXlShow();
+}
+function otXlPlan(){
+  const y=store.years[XL.fy], ot=y.ot, items={}, other={}; let dup=0;
+  XL.recs.forEach(r=>{
+    const f=String(otFyOf(r.y,r.mo)); if(f!==XL.fy){ other[f]=(other[f]||0)+1; return; }
+    const pid=XL.map[r.code]; if(!pid) return;
+    const m=otMidx(r.mo), k=pid+'|'+m, it=items[k]||(items[k]={pid:pid,m:m,days:{}});
+    if(it.days[r.d]) dup++; const c=it.days[r.d]||(it.days[r.d]=[0,0]); c[0]+=r.a; c[1]+=r.b;
+  });
+  const order=id=>ot.members.findIndex(p=>p.id===id), list=Object.keys(items).map(k=>items[k]).sort((a,b)=>order(a.pid)-order(b.pid)||a.m-b.m), over=[];
+  list.forEach(it=>{
+    const M=ot.months[it.m]||{d:{}}; let ba=0,bb=0,aa=0,ab=0,chg=0,nd=0;
+    new Set(Object.keys(M.d||{}).concat(Object.keys(it.days))).forEach(d=>{
+      const old=(M.d&&M.d[d]&&M.d[d][it.pid])||[0,0], inF=it.days[d]; ba+=old[0]; bb+=old[1];
+      const nw=inF?[+inF[0].toFixed(4),+inF[1].toFixed(4)]:(XL.clear?[0,0]:old);
+      aa+=nw[0]; ab+=nw[1]; if(Math.abs(nw[0]-old[0])>1e-9||Math.abs(nw[1]-old[1])>1e-9) chg++;
+      if(inF&&(inF[0]||inF[1])) nd++; if(inF&&inF[0]+inF[1]>24) over.push(otLbl(XL.fy,it.m)+' วันที่ '+d);
+    });
+    Object.assign(it,{ba:ba,bb:bb,aa:aa,ab:ab,chg:chg,nd:nd});
+  });
+  return {list:list,other:other,dup:dup,over:over};
+}
+function otXlShow(){
+  const y=store.years[XL.fy], ot=y.ot, mem=ot.members, pp=otXlPeople(XL.recs), P=otXlPlan();
+  const mname=id=>{ const p=mem.find(x=>x.id===id); return p?p.name:'?'; };
+  const sum=(code,k)=>XL.recs.filter(r=>r.code===code).reduce((s,r)=>s+r[k],0);
+  let h=`<h3>📥 นำเข้า OT จาก Excel · FY${E(XL.fy)}</h3><div class="ms-sub">ไฟล์: ${E(XL.src)} · อ่านได้ ${XL.recs.length} แถว · ${pp.length} คน</div>`;
+  h+=`<div class="xl-h">1) จับคู่พนักงานในไฟล์ → สมาชิกในตาราง</div><table class="xl-tbl"><colgroup><col style="width:9%"><col style="width:25%"><col style="width:7%"><col style="width:30%"><col style="width:29%"></colgroup><thead><tr><th>รหัส</th><th>ชื่อในไฟล์</th><th class="n">แถว</th><th>→ ใส่ในคอลัมน์ของ</th><th>ตรวจยอดรวม</th></tr></thead><tbody>`;
+  pp.forEach(p=>{
+    const t=XL.totals[p.code], a=sum(p.code,'a'), b=sum(p.code,'b');
+    const nums=`<div class="xl-mut">OT1.5 ${otFx(a)} · OT3 ${otFx(b)}</div>`;
+    const chk=t?((Math.abs(t.a-a)<0.01&&Math.abs(t.b-b)<0.01)?`<span class="xl-ok">✓ ตรงกับ Total ในไฟล์</span>${nums}`:`<span class="xl-bad">⚠ ไม่ตรง Total ในไฟล์</span>${nums}<div class="xl-mut">Total ในไฟล์ ${otFx(t.a)} / ${otFx(t.b)}</div>`):nums;
+    h+=`<tr><td>${E(p.code)}</td><td>${E(p.name)}</td><td class="n">${p.n}</td><td><select class="xlmap" data-code="${E(p.code)}"><option value="">— ไม่นำเข้า —</option>${mem.map(m=>`<option value="${E(m.id)}"${XL.map[p.code]===m.id?' selected':''}>${E(m.name)}${m.code?' ('+E(m.code)+')':''}</option>`).join('')}</select>${XL.how[p.code]==='lv'?'<div class="xl-mut">เดาจากรหัสในแผนลา — โปรดตรวจ</div>':''}</td><td>${chk}</td></tr>`;
+  });
+  h+=`</tbody></table>`;
+  h+=`<div class="xl-h">2) ตัวอย่างผลที่จะลงตาราง (ชั่วโมง)</div>`;
+  if(!P.list.length) h+=`<div class="ms-help">ยังไม่มีข้อมูลที่จะนำเข้า — เลือกสมาชิกในข้อ 1 ก่อน${Object.keys(P.other).length?' · ข้อมูลของปีงบอื่นถูกข้าม':''}</div>`;
+  else{
+    h+=`<div class="xl-sc"><table class="xl-tbl"><colgroup><col style="width:24%"><col style="width:14%"><col style="width:8%"><col style="width:24%"><col style="width:24%"><col style="width:6%"></colgroup><thead><tr><th>สมาชิก</th><th>เดือน</th><th class="n">วัน</th><th class="n">OT1.5 เดิม→ใหม่</th><th class="n">OT3.0 เดิม→ใหม่</th><th class="n">แก้</th></tr></thead><tbody>`;
+    P.list.forEach(it=>{ h+=`<tr><td>${E(mname(it.pid))}</td><td>${E(otLbl(XL.fy,it.m))}</td><td class="n">${it.nd}</td><td class="n">${otFx(it.ba)} → <b>${otFx(it.aa)}</b></td><td class="n">${otFx(it.bb)} → <b>${otFx(it.ab)}</b></td><td class="n${it.chg?'':' xl-mut'}">${it.chg||'–'}</td></tr>`; });
+    h+=`</tbody></table></div>`;
+  }
+  const mapped=Object.keys(XL.map).map(c=>XL.map[c]).filter(Boolean), missing=mem.filter(p=>mapped.indexOf(p.id)<0).map(p=>p.name), W=[];
+  if(missing.length) W.push('ไม่มีข้อมูลในไฟล์/ไม่ได้จับคู่: <b>'+E(missing.join(', '))+'</b> — ข้อมูลเดิมของคนเหล่านี้ไม่ถูกแตะ');
+  const oth=Object.keys(P.other); if(oth.length) W.push('ข้ามข้อมูลของปีงบอื่น: '+oth.map(f=>'FY'+E(f)+' ('+P.other[f]+' แถว)').join(', '));
+  const ox=XL.recs.reduce((s,r)=>s+r.o1+r.o2+r.o0,0); if(ox>0) W.push('ไฟล์มี OT1 / OT2 / OT0 รวม '+otFx(ox)+' ชม. — ตารางนี้มีเฉพาะ OT1.5 / OT3.0 จึงไม่นำเข้า');
+  if(P.dup) W.push('พบวันที่ซ้ำของคนเดียวกัน '+P.dup+' แถว — รวมชั่วโมงให้');
+  if(P.over.length) W.push('⚠ ชั่วโมงเกิน 24 ในวันเดียว: '+E(P.over.slice(0,5).join(', ')));
+  XL.warn.slice(0,6).forEach(w=>W.push('⚠ '+E(w))); if(XL.warn.length>6) W.push('… และอีก '+(XL.warn.length-6)+' แถวที่ข้าม');
+  if(W.length) h+=`<div class="ms-help">${W.map(w=>'• '+w).join('<br>')}</div>`;
+  h+=`<label class="xl-ck"><input type="checkbox" id="xlClr"${XL.clear?' checked':''}><span>ล้าง OT เดิมของวันที่ไม่อยู่ในไฟล์ (เฉพาะคน/เดือนที่มีในไฟล์) — ปกติไม่ต้องติ๊ก</span></label>`;
+  h+=`<div class="ms-sub" style="margin:2px 0 10px">วันที่อยู่ในไฟล์จะถูกเขียนทับด้วยค่าจากไฟล์ · นำเข้าแล้วกด “↩ ย้อนกลับการนำเข้า” ได้ที่แถบด้านบน</div>`;
+  h+=`<div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn-p" data-ma="xlgo"${P.list.length?'':' disabled'}>✅ นำเข้า${P.list.length?' '+P.list.reduce((s,i)=>s+i.nd,0)+' วัน':''}</button><button type="button" class="btn-g" data-ma="xlback">← เลือกไฟล์ใหม่</button><button type="button" class="btn-g" data-ma="cancel">ยกเลิก</button></div>`;
+  openMsMod(h,860);
+}
+function otXlModal(a,t){
+  if(a==='xlpick'){ const f=g('otXlFile'); if(f) f.click(); return; }
+  if(a==='xlback'){ XL=null; otXlStart(); return; }
+  if(a==='xlread'){
+    const tx=g('otXlTxt'); if(!tx||!tx.value.trim()){ otXlMsg('วางตารางจาก Excel ก่อน (รวมแถวหัวตาราง)',true); return; }
+    try{ otXlLoad([otTextRows(tx.value)],'ข้อมูลที่วาง'); }catch(err){ otXlMsg('❌ '+((err&&err.message)||'อ่านข้อมูลไม่ได้'),true); }
+    return;
+  }
+  if(a==='xlgo'&&XL) otXlGo();
+}
+function onModalChange(e){
+  const el=e.target; if(!ctx||ctx.t!=='otxl'||!el) return;
+  if(el.id==='otXlFile'){ const f=el.files&&el.files[0]; if(f) otXlReadFile(f); el.value=''; return; }
+  if(!XL) return;
+  if(el.classList&&el.classList.contains('xlmap')){
+    const code=el.dataset.code, id=el.value;
+    if(id) Object.keys(XL.map).forEach(c=>{ if(c!==code&&XL.map[c]===id){ XL.map[c]=''; delete XL.how[c]; } });
+    XL.map[code]=id; delete XL.how[code]; otXlShow(); return;
+  }
+  if(el.id==='xlClr'){ XL.clear=!!el.checked; otXlShow(); }
+}
+function otXlGo(){
+  const y=store.years[XL.fy], ot=y.ot, P=otXlPlan(); if(!P.list.length) return;
+  const snap={fy:String(XL.fy),months:{},codes:ot.members.map(p=>[p.id,p.code||'']),n:0};
+  P.list.forEach(it=>{ if(!(it.m in snap.months)) snap.months[it.m]=ot.months[it.m]?clone(ot.months[it.m]):null; });
+  const people={}, months={};
+  P.list.forEach(it=>{
+    const M=otMon(ot,it.m);
+    if(XL.clear) Object.keys(M.d).forEach(d=>{ if(M.d[d][it.pid]){ delete M.d[d][it.pid]; if(!Object.keys(M.d[d]).length) delete M.d[d]; } });
+    Object.keys(it.days).forEach(d=>{ const v=it.days[d]; otSetCell(ot,it.m,+d,it.pid,0,+v[0].toFixed(4)); otSetCell(ot,it.m,+d,it.pid,1,+v[1].toFixed(4)); if(v[0]||v[1]) snap.n++; });
+    people[it.pid]=1; months[it.m]=1;
+  });
+  Object.keys(XL.map).forEach(code=>{ const id=XL.map[code]; if(!id) return; ot.members.forEach(p=>{ if(p.id===id) p.code=code; else if(p.code===code) p.code=''; }); });
+  OTLAST=snap; const ms=Object.keys(months), np=Object.keys(people).length;
+  ui.year=String(XL.fy); ui.view='ot'; ui.otm=ms.length===1?ms[0]:'Y'; saveUI(); XL=null; closeMsMod(); touch(); render();
+  toastMsg('✅ นำเข้า OT แล้ว '+snap.n+' วัน · '+np+' คน · '+ms.map(m=>otLbl(snap.fy,+m)).join(', '));
+}
+function otXlUndo(){
+  const L=OTLAST; if(!L||L.fy!==String(ui.year)) return; const y=Y(); if(!y||!y.ot) return;
+  ask('ย้อนกลับการนำเข้า OT?','คืนค่า OT รายวันของเดือน '+Object.keys(L.months).map(m=>otLbl(L.fy,+m)).join(', ')+' กลับเป็นก่อนนำเข้าไฟล์ Excel ล่าสุด',()=>{
+    const ot=y.ot; Object.keys(L.months).forEach(m=>{ if(L.months[m]) ot.months[m]=clone(L.months[m]); else delete ot.months[m]; });
+    L.codes.forEach(c=>{ const p=ot.members.find(x=>x.id===c[0]); if(p) p.code=c[1]; });
+    OTLAST=null; touch(); render(); toastMsg('↩ ย้อนกลับการนำเข้าแล้ว');
+  });
 }
 
 /* ---------- ส่งออก ---------- */
@@ -4765,7 +5046,7 @@ function lvJson(){
 function bind(){
   const v=g('viewMission'); if(!v) return;
   v.addEventListener('click',onClick); v.addEventListener('change',onChange); v.addEventListener('keydown',onKey); v.addEventListener('paste',onPaste);
-  g('msOv').addEventListener('click',onModal);
+  g('msOv').addEventListener('click',onModal); g('msOv').addEventListener('change',onModalChange);
   g('msFile').addEventListener('change',e=>{ const f=e.target.files[0]; if(f) importFile(f); e.target.value=''; });
 }
 bind();
