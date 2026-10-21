@@ -11973,4 +11973,44 @@ window.__QE_AI={ask:ask,collectContext:collectContext,open:open};
 })();
 </script>
 <!-- ===== end QE AI Assistant add-on ===== -->
+<!-- ===== QE Team Chat add-on v1 ===== -->
+<style id="qeChatStyle">
+.qec-fab{position:fixed;right:18px;bottom:126px;z-index:244;border:0;border-radius:999px;padding:11px 16px;background:linear-gradient(135deg,#0284c7,#2563eb);color:#fff;font-weight:800;box-shadow:0 8px 24px rgba(37,99,235,.32);cursor:pointer}.qec-fab:hover{filter:brightness(1.08)}.qec-badge{display:none;min-width:20px;height:20px;padding:0 6px;margin-left:5px;border-radius:99px;background:#ef4444;color:#fff;font-size:11px;align-items:center;justify-content:center}.qec-badge.on{display:inline-flex}
+.qec-panel{position:fixed;right:18px;bottom:180px;z-index:245;width:min(390px,calc(100vw - 24px));height:min(610px,calc(100vh - 210px));display:none;flex-direction:column;background:var(--pop,#fff);color:var(--txt,#222);border:1px solid var(--line,#ddd);border-radius:18px;box-shadow:0 18px 60px rgba(0,0,0,.35);overflow:hidden}.qec-panel.on{display:flex}.qec-head{display:flex;align-items:center;gap:10px;padding:12px 14px;background:linear-gradient(135deg,#0284c7,#2563eb);color:#fff}.qec-head b{flex:1}.qec-online{font-size:11px;opacity:.9}.qec-close{border:0;background:rgba(255,255,255,.18);color:#fff;border-radius:8px;padding:5px 9px;cursor:pointer}.qec-rooms{display:flex;gap:6px;padding:8px;overflow-x:auto;border-bottom:1px solid var(--line)}.qec-room{white-space:nowrap;border:1px solid var(--line);background:var(--soft);color:var(--txt);border-radius:99px;padding:6px 10px;font-size:12px;font-weight:700;cursor:pointer}.qec-room.on{background:#2563eb;color:#fff;border-color:#2563eb}.qec-msgs{flex:1;overflow:auto;padding:12px;background:color-mix(in srgb,var(--soft) 60%,var(--card));display:flex;flex-direction:column;gap:8px}.qec-empty{text-align:center;color:var(--mut);padding:30px 10px;font-size:13px}.qec-row{display:flex;flex-direction:column;align-items:flex-start}.qec-row.me{align-items:flex-end}.qec-meta{font-size:10px;color:var(--mut);margin:0 5px 2px}.qec-bubble{max-width:84%;padding:8px 11px;border-radius:14px 14px 14px 4px;background:var(--card);border:1px solid var(--line);white-space:pre-wrap;word-break:break-word;font-size:13px;line-height:1.45}.qec-row.me .qec-bubble{background:#2563eb;color:#fff;border-color:#2563eb;border-radius:14px 14px 4px 14px}.qec-compose{padding:9px;border-top:1px solid var(--line);background:var(--card)}.qec-compose-row{display:flex;gap:7px}.qec-input{flex:1;min-width:0;min-height:40px;max-height:100px;resize:none;border:1px solid var(--line);background:var(--inp);color:var(--txt);border-radius:12px;padding:9px}.qec-send{border:0;border-radius:12px;background:#2563eb;color:#fff;padding:8px 14px;font-weight:800;cursor:pointer}.qec-send:disabled{opacity:.5}.qec-status{font-size:10px;color:var(--mut);margin-top:5px;min-height:14px}
+@media(max-width:600px){.qec-fab{right:10px;bottom:116px}.qec-panel{right:6px;bottom:168px;width:calc(100vw - 12px);height:min(620px,calc(100vh - 180px));border-radius:14px}}
+</style>
+<button type="button" id="qeChatFab" class="qec-fab">💬 Team Chat <span id="qeChatBadge" class="qec-badge">0</span></button>
+<section id="qeChatPanel" class="qec-panel" aria-label="QE Team Chat">
+  <header class="qec-head"><b>💬 QE Team Chat</b><span id="qeChatWho" class="qec-online"></span><button type="button" id="qeChatClose" class="qec-close">✕</button></header>
+  <nav id="qeChatRooms" class="qec-rooms"></nav>
+  <main id="qeChatMessages" class="qec-msgs"><div class="qec-empty">กำลังโหลดข้อความ…</div></main>
+  <footer class="qec-compose"><div class="qec-compose-row"><textarea id="qeChatInput" class="qec-input" maxlength="2000" placeholder="พิมพ์ข้อความ…"></textarea><button type="button" id="qeChatSend" class="qec-send">ส่ง</button></div><div id="qeChatStatus" class="qec-status" aria-live="polite"></div></footer>
+</section>
+<script id="qeChatAddon">
+(function(){
+'use strict';
+if(window.__QE_CHAT_ADDON)return;window.__QE_CHAT_ADDON=true;
+const g=id=>document.getElementById(id),cfg=window.COUNTERMEASURE_CLOUD_DEFAULTS||{};
+const base=String(cfg.supabaseUrl||'').replace(/\/$/,''),key=String(cfg.supabaseKey||'');
+const rooms=[['qe-team','ทีมทั้งหมด'],['pcr','PCR'],['audit','Audit'],['meeting','Meeting']];
+let room='qe-team',lastIds={},unread=0,timer=0,busy=false;
+const E=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const me=()=>String(localStorage.getItem('ux_me')||document.getElementById('cbWn')?.textContent||'Guest').trim()||'Guest';
+const headers=(extra={})=>Object.assign({'apikey':key,'Authorization':'Bearer '+key},extra);
+function stamp(v){try{return new Intl.DateTimeFormat('th-TH',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'short'}).format(new Date(v));}catch(e){return'';}}
+function setStatus(s){g('qeChatStatus').textContent=s||'';}
+function drawRooms(){g('qeChatRooms').innerHTML=rooms.map(r=>'<button type="button" class="qec-room '+(r[0]===room?'on':'')+'" data-r="'+r[0]+'">'+r[1]+'</button>').join('');}
+function draw(list){const box=g('qeChatMessages'),who=me();if(!list.length){box.innerHTML='<div class="qec-empty">ยังไม่มีข้อความในห้องนี้</div>';return;}box.innerHTML=list.map(m=>'<div class="qec-row '+(m.sender_name===who?'me':'')+'"><div class="qec-meta">'+E(m.sender_name)+' · '+E(stamp(m.created_at))+'</div><div class="qec-bubble">'+E(m.message)+'</div></div>').join('');box.scrollTop=box.scrollHeight;}
+async function load(silent){if(!base||!key){setStatus('ไม่พบการตั้งค่า Supabase');return;}if(busy)return;busy=true;try{const url=base+'/rest/v1/chat_messages?select=id,room_key,sender_name,message,created_at&room_key=eq.'+encodeURIComponent(room)+'&deleted_at=is.null&order=created_at.asc&limit=100';const res=await fetch(url,{headers:headers()});const data=await res.json();if(!res.ok)throw new Error(data.message||'โหลดข้อความไม่สำเร็จ');const latest=data.length?Number(data[data.length-1].id):0;if(silent&&latest>(lastIds[room]||0)&&!g('qeChatPanel').classList.contains('on')){unread++;g('qeChatBadge').textContent=String(unread);g('qeChatBadge').classList.add('on');}lastIds[room]=latest;draw(data);if(!silent)setStatus('เชื่อมต่อแล้ว · '+data.length+' ข้อความ');}catch(e){setStatus('ผิดพลาด: '+(e.message||e));}finally{busy=false;}}
+async function send(){const input=g('qeChatInput'),text=input.value.trim(),name=me();if(!text)return;if(name==='Guest'){setStatus('กรุณา Login ชื่อผู้ใช้ก่อนส่งข้อความ');return;}const btn=g('qeChatSend');btn.disabled=true;setStatus('กำลังส่ง…');try{const res=await fetch(base+'/rest/v1/chat_messages',{method:'POST',headers:headers({'Content-Type':'application/json','Prefer':'return=minimal'}),body:JSON.stringify({room_key:room,sender_id:name,sender_name:name,message:text})});if(!res.ok){let x={};try{x=await res.json();}catch(e){}throw new Error(x.message||('ส่งไม่สำเร็จ '+res.status));}input.value='';await load(false);setStatus('ส่งแล้ว');}catch(e){setStatus('ผิดพลาด: '+(e.message||e));}finally{btn.disabled=false;input.focus();}}
+function open(){g('qeChatPanel').classList.add('on');unread=0;g('qeChatBadge').classList.remove('on');g('qeChatWho').textContent='ผู้ใช้: '+me();drawRooms();load(false);setTimeout(()=>g('qeChatInput').focus(),30);}
+function close(){g('qeChatPanel').classList.remove('on');}
+g('qeChatFab').addEventListener('click',open);g('qeChatClose').addEventListener('click',close);g('qeChatSend').addEventListener('click',send);g('qeChatInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}});g('qeChatRooms').addEventListener('click',e=>{const b=e.target.closest('[data-r]');if(!b)return;room=b.dataset.r;drawRooms();load(false);});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')close();});
+timer=setInterval(()=>load(true),4000);window.addEventListener('beforeunload',()=>clearInterval(timer));drawRooms();load(true);
+window.__QE_CHAT={open,load,send};
+})();
+</script>
+<!-- ===== end QE Team Chat add-on ===== -->
+
 </body></html>
