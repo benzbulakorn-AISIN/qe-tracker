@@ -1849,7 +1849,15 @@ window.__SEED_V12={"version":12,"source":"snapshot v9 (16 ต.ค. 2569)","track
     const ck=m.checklist||{},days=ck.days||{},conf=ck.conf||{},notes=ck.notes||{};
     new Set([...Object.keys(days),...Object.keys(conf),...Object.keys(notes)]).forEach(d=>{
       const rows=days[d]||[],note=notes[d]||'',confirmedAt=conf[d]||null;
-      if(rows.length||note||confirmedAt)a.push({key:PREFIX+'checklist:'+d,type:'ChecklistDay',payload:{date:d,rows:rows,confirmedAt:confirmedAt,note:note},date:d});
+      /* v32.1: วันที่มีแต่แถวว่าง (draw() สร้างแถวว่างให้อัตโนมัติเมื่อแค่เปิดดู) ไม่นับเป็นข้อมูล → ไม่ขึ้น "ยังไม่บันทึก" เอง ยกเว้น Cloud มี record วันนั้นอยู่แล้ว */
+      const real=rows.some(r=>r&&((r.t&&String(r.t).trim())||(r.n&&String(r.n).trim())||r.st)), key=PREFIX+'checklist:'+d;
+      let cl=null; try{ cl=(cache&&cache.get(key))||null; }catch(e){}
+      if(real||note||confirmedAt){ a.push({key:key,type:'ChecklistDay',payload:{date:d,rows:rows,confirmedAt:confirmedAt,note:note},date:d}); }
+      else if(cl&&rows.length){                         // Cloud มี record วันนี้อยู่แล้ว
+        const cp=cl.payload||{}, cReal=(cp.rows||[]).some(r=>r&&((r.t&&String(r.t).trim())||(r.n&&String(r.n).trim())||r.st))||cp.note||cp.confirmedAt;
+        // Cloud ก็ว่างเหมือนกัน (record ว่างที่เวอร์ชันเก่าเคยส่งขึ้นไป แถวคนละ id) → ถือว่าตรงกัน ไม่ใช่การแก้ไข ; ถ้า Cloud มีเนื้อหาจริงแล้วเครื่องนี้ลบจนว่าง → ยังนับเป็นการแก้ไข
+        a.push({key:key,type:'ChecklistDay',payload:cReal?{date:d,rows:rows,confirmedAt:confirmedAt,note:note}:cp,date:d});
+      }
     });
     a.push({key:PREFIX+'config:app',type:'AppConfig',payload:{title:m.title||{}},date:null});
     if(window.MS&&m.missions)window.MS.records(m.missions,PREFIX).forEach(r=>a.push(r));
@@ -2313,7 +2321,10 @@ window.__SEED_V12={"version":12,"source":"snapshot v9 (16 ต.ค. 2569)","track
     if(!ready||!cache) return null;
     const local=recMap(appModel()), ch=[], rm=[];
     local.forEach((r,k)=>{ const o=cache.get(k); if(!o||o.type!==r.type||o.json!==r.json) ch.push(r); });
-    cache.forEach((r,k)=>{ if(!local.has(k)) rm.push(r); });
+    cache.forEach((r,k)=>{ if(local.has(k)) return;
+      /* v32.1: record Checklist ว่างเปล่าบน Cloud (v32 เดิมเคยส่งขึ้นไป) ที่เครื่องตัดทิ้งเอง (persist() ลบวันว่าง) ไม่นับเป็น "ลบ" */
+      if(r.type==='ChecklistDay'){ const p=r.payload||{}; if(!(p.rows||[]).some(x=>x&&((x.t&&String(x.t).trim())||(x.n&&String(x.n).trim())||x.st))&&!p.note&&!p.confirmedAt) return; }
+      rm.push(r); });
     return {local:local,ch:ch,rm:rm};
   }
   function refreshDirty(){
