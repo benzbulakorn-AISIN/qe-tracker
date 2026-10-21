@@ -12176,4 +12176,55 @@ window.__QE_CHAT={open,load,send};
 </script>
 <!-- ===== end QE Team Chat add-on ===== -->
 
+<!-- ===== My Work + compact navigation add-on v1 ===== -->
+<style id="myWorkNavStyle">
+#tabG{display:none!important}
+#viewMyWork{display:none}
+.mw-wrap{padding:2px 0 96px}.mw-head{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;margin-bottom:14px}.mw-head>div:first-child{flex:1;min-width:220px}.mw-head h1{margin:0 0 4px}.mw-sub{color:var(--mut);font-size:13px}.mw-user{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:7px 12px;font-size:12px;font-weight:800}.mw-kpis{display:grid;grid-template-columns:repeat(5,minmax(115px,1fr));gap:10px;margin:12px 0 14px}.mw-kpi{text-align:left;border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--txt);padding:12px;min-height:83px}.mw-kpi.on{outline:3px solid var(--ring);border-color:var(--pri)}.mw-kpi b{display:block;font-size:27px;line-height:1}.mw-kpi span{display:block;font-size:11px;color:var(--mut);margin-top:7px}.mw-kpi[data-f="late"] b{color:var(--dang)}.mw-kpi[data-f="today"] b{color:var(--warn)}.mw-kpi[data-f="soon"] b{color:#2563eb}.mw-kpi[data-f="mine"] b{color:var(--vio)}.mw-kpi[data-f="all"] b{color:var(--ok)}
+.mw-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}.mw-tools input,.mw-tools select{width:auto;min-width:150px}.mw-tools input{flex:1;min-width:220px}.mw-count{color:var(--mut);font-size:12px;margin-left:auto}.mw-list{display:flex;flex-direction:column;gap:9px}.mw-card{display:grid;grid-template-columns:6px minmax(0,1fr) auto;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:0 1px 4px var(--sh)}.mw-ac{background:var(--ac,#64748b)}.mw-body{padding:12px;min-width:0}.mw-topline{display:flex;gap:7px;align-items:center;flex-wrap:wrap}.mw-badge{font-size:10px;font-weight:800;color:#fff;background:var(--ac,#64748b);padding:3px 8px;border-radius:999px}.mw-src{font-size:10px;color:var(--mut);background:var(--soft2);padding:3px 8px;border-radius:999px}.mw-title{font-size:14px;font-weight:800}.mw-meta{display:flex;gap:8px 14px;flex-wrap:wrap;color:var(--mut);font-size:11px;margin-top:7px}.mw-next{margin-top:8px;background:var(--soft);border-radius:9px;padding:8px 10px;font-size:12px;line-height:1.45}.mw-act{display:flex;gap:5px;align-items:center;padding:10px}.mw-act button{padding:6px 9px}.mw-empty{display:none;text-align:center;color:var(--mut);padding:40px 14px;border:1px dashed var(--line);border-radius:14px;background:var(--card)}.mw-note{font-size:11px;color:var(--mut);margin-top:10px}
+@media(max-width:900px){.mw-kpis{grid-template-columns:repeat(2,1fr)}}@media(max-width:620px){.mw-card{grid-template-columns:6px 1fr}.mw-act{grid-column:2;padding-top:0}.mw-tools input{flex-basis:100%}.tabbar .tabbtn{padding-left:10px!important;padding-right:10px!important}}
+</style>
+<script id="myWorkNavAddon">
+(function(){
+'use strict';
+function bootMyWork(){
+if(window.__MY_WORK_NAV_ADDON)return;
+const g=id=>document.getElementById(id), bar=document.querySelector('.tabbar');
+if(!bar||!g('tabD')||!g('viewToday'))return false;
+window.__MY_WORK_NAV_ADDON=true;
+const E=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const day=s=>{if(!s)return'';if(/^\d{4}-\d{2}-\d{2}$/.test(s))return s;try{const d=new Date(s);return isNaN(d)?'':d.toISOString().slice(0,10)}catch(e){return''}};
+const today=day(new Date()), add=(ds,n)=>{const d=new Date(ds+'T00:00:00');d.setDate(d.getDate()+n);return day(d)};
+const user=()=>String(localStorage.getItem('ux_me')||g('cbWn')?.textContent||'').trim();
+const field=(o,keys,def='')=>{for(const k of keys)if(o&&o[k]!=null&&o[k]!=='')return o[k];return def};
+function trackerData(){try{return Array.isArray(data)?data:[]}catch(e){return[]}}
+function rows(){const me=user().toLowerCase();return trackerData().map((d,i)=>{const owner=String(field(d,['owner','who','reporter','name']));const status=String(field(d,['status','st'],'In Progress'));const due=day(field(d,['due','dueDate','due_date','date2','end']));const issue=String(field(d,['issue','problem','title'],'(ไม่มีชื่อรายการ)'));const cm=String(field(d,['cm','countermeasure','action','nextAction'],'')).trim();const done=/done|complete|closed/i.test(status);let level='normal',label='งานทั่วไป',ac='#64748b';if(!done&&due&&due<today){level='late';label='เลยกำหนด';ac='#dc2626'}else if(!done&&due===today){level='today';label='ครบกำหนดวันนี้';ac='#ea580c'}else if(!done&&due&&due>today&&due<=add(today,3)){level='soon';label='ภายใน 3 วัน';ac='#2563eb'}return{id:field(d,['id'],i),owner,status,due,issue,cm,done,level,label,ac,mine:!!me&&owner.toLowerCase()===me,raw:d}}).filter(x=>!x.done&&x.mine)}
+const tab=document.createElement('button');tab.type='button';tab.className='tabbtn';tab.id='tabW';tab.innerHTML='📥 งานของฉัน <span id="mwTabBadge" style="display:none;margin-left:4px;padding:1px 6px;border-radius:99px;background:var(--dang);color:#fff;font-size:10px"></span>';
+const td=g('tabD');td.parentNode.insertBefore(tab,td.nextSibling);
+const view=document.createElement('div');view.id='viewMyWork';g('viewToday').parentNode.insertBefore(view,g('viewToday').nextSibling);
+let filter='all';
+function allViews(){return ['viewToday','viewTracker','viewSheet','viewMission','viewHoshin','viewMainJobs','viewMeet','viewMyWork']}
+function allTabs(){return ['tabD','tabW','tabT','tabS','tabM','tabH','tabJ','tabG']}
+function show(){allViews().forEach(id=>{const e=g(id);if(e)e.style.display=id==='viewMyWork'?'block':'none'});allTabs().forEach(id=>{const e=g(id);if(e)e.classList.toggle('on',id==='tabW')});render();window.scrollTo(0,0)}
+function card(x){return '<article class="mw-card" data-level="'+x.level+'" style="--ac:'+x.ac+'"><div class="mw-ac"></div><div class="mw-body"><div class="mw-topline"><span class="mw-badge">'+x.label+'</span><span class="mw-title">'+E(x.issue)+'</span><span class="mw-src">Tracker</span></div><div class="mw-meta"><span>👤 '+E(x.owner||'-')+'</span><span>📅 '+E(x.due||'ยังไม่มี Due Date')+'</span><span>🟠 '+E(x.status)+'</span></div><div class="mw-next"><b>Next action:</b> '+E(x.cm||'ยังไม่ได้ระบุ Countermeasure / Next action')+'</div></div><div class="mw-act"><button type="button" class="btn-g" data-mw-go="'+E(x.id)+'" title="เปิดรายการต้นทาง">↗ เปิด</button></div></article>'}
+function render(){const R=rows(),late=R.filter(x=>x.level==='late').length,tdy=R.filter(x=>x.level==='today').length,soon=R.filter(x=>x.level==='soon').length,nodue=R.filter(x=>!x.due).length,urgent=late+tdy;const badge=g('mwTabBadge');if(badge){badge.textContent=urgent;badge.style.display=urgent?'inline-block':'none'};view.innerHTML='<div class="mw-wrap"><div class="mw-head"><div><h1>📥 งานของฉัน</h1><div class="mw-sub">รวมงานที่ยังไม่เสร็จของผู้ใช้ที่ Login · เรียงตามความเร่งด่วนจาก Tracker</div></div><div class="mw-user">👤 '+E(user()||'ยังไม่ได้ Login')+'</div></div><div class="mw-kpis"><button class="mw-kpi" data-f="late"><b>'+late+'</b><span>เลยกำหนด</span></button><button class="mw-kpi" data-f="today"><b>'+tdy+'</b><span>ครบกำหนดวันนี้</span></button><button class="mw-kpi" data-f="soon"><b>'+soon+'</b><span>ภายใน 3 วัน</span></button><button class="mw-kpi" data-f="nodue"><b>'+nodue+'</b><span>ยังไม่มี Due Date</span></button><button class="mw-kpi on" data-f="all"><b>'+R.length+'</b><span>งานที่ยังเปิดอยู่</span></button></div><div class="mw-tools"><input id="mwQ" placeholder="🔎 ค้นหา Issue หรือ Countermeasure"><select id="mwSort"><option value="priority">เรียงตามความเร่งด่วน</option><option value="due">เรียงตาม Due Date</option></select><button type="button" class="btn-g" id="mwReset">↻ ล้างตัวกรอง</button><span class="mw-count" id="mwCount"></span></div><div class="mw-list" id="mwList"></div><div class="mw-empty" id="mwEmpty">ไม่พบงานตามตัวกรอง</div><div class="mw-note">รุ่นแรกดึงงานจาก Tracker ก่อน โดยไม่สร้างข้อมูลซ้ำ ส่วน Meeting Action และ Checklist สามารถเชื่อมเพิ่มภายหลังได้</div></div>';bind(R);apply(R)}
+function bind(R){view.querySelectorAll('[data-f]').forEach(b=>b.addEventListener('click',()=>{filter=b.dataset.f;view.querySelectorAll('[data-f]').forEach(x=>x.classList.toggle('on',x===b));apply(R)}));g('mwQ').addEventListener('input',()=>apply(R));g('mwSort').addEventListener('change',()=>apply(R));g('mwReset').addEventListener('click',()=>{filter='all';g('mwQ').value='';g('mwSort').value='priority';view.querySelectorAll('[data-f]').forEach(x=>x.classList.toggle('on',x.dataset.f==='all'));apply(R)});g('mwList').addEventListener('click',e=>{const b=e.target.closest('[data-mw-go]');if(!b)return;g('tabT').click();setTimeout(()=>{try{goToItem(+b.dataset.mwGo)}catch(err){}},100)})}
+function apply(R){const q=String(g('mwQ')?.value||'').trim().toLowerCase(),sort=g('mwSort')?.value||'priority';let A=R.filter(x=>(filter==='all'||(filter==='nodue'?!x.due:x.level===filter))&&(!q||(x.issue+' '+x.cm+' '+x.owner).toLowerCase().includes(q)));const rank={late:0,today:1,soon:2,normal:3};A.sort((a,b)=>sort==='due'?((a.due||'9999').localeCompare(b.due||'9999')):((rank[a.level]||9)-(rank[b.level]||9)||((a.due||'9999').localeCompare(b.due||'9999'))));g('mwList').innerHTML=A.map(card).join('');g('mwCount').textContent='แสดง '+A.length+' รายการ';g('mwEmpty').style.display=A.length?'none':'block'}
+tab.addEventListener('click',show);
+['tabD','tabT','tabS','tabM','tabH','tabJ'].forEach(id=>{const b=g(id);if(b)b.addEventListener('click',()=>{view.style.display='none';tab.classList.remove('on')},true)});
+// ประชุมยังคงอยู่ในหน้า “วันนี้” ผ่านการ์ด mgToday; ซ่อนเฉพาะแท็บหลัก
+const mt=g('tabG');if(mt){mt.style.display='none';mt.setAttribute('aria-hidden','true')}
+setInterval(()=>{if(view.style.display==='block')render();else{const R=rows(),n=R.filter(x=>x.level==='late'||x.level==='today').length,b=g('mwTabBadge');if(b){b.textContent=n;b.style.display=n?'inline-block':'none'}}},30000);
+render();
+window.__MY_WORK={open:show,refresh:render};
+return true;
+}
+let tries=0;
+const timer=setInterval(()=>{tries++;if(bootMyWork()||tries>=80)clearInterval(timer);},250);
+if(document.readyState!=='loading')bootMyWork();
+else document.addEventListener('DOMContentLoaded',bootMyWork,{once:true});
+})();
+</script>
+<!-- ===== end My Work + compact navigation add-on ===== -->
+
 </body></html>
