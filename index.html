@@ -8220,7 +8220,105 @@ if(document.readyState==='complete') boot(); else window.addEventListener('load'
    - ปุ่ม 📤 ส่งเข้า Tracker หน้าแรก
    - v9: Customer เพิ่มลูกค้าหลายราย / หลาย Part No. ได้ · แก้ Scroll เด้งกลับขึ้นบนเอง
    - v8: ＋ เพิ่ม Supplier หลายเจ้า / ＋ เพิ่มไลน์ (หลาย Part No.) พร้อมชื่อบนแถบ — แต่ละชุดมีตารางแผน + Timeline ของตัวเอง
-   วางไว้ท้ายไฟล์ ก่อน </body> (หลังสคริปต์ Main QE Jobs) */
+   วางไว้ท้ายไฟล์ ก่อน <!-- ===== QE AI Assistant add-on v1 ===== -->
+<style id="qeAiStyle">
+.qeai-fab{position:fixed;right:18px;bottom:72px;z-index:245;border:0;border-radius:999px;padding:11px 16px;background:linear-gradient(135deg,var(--pri),var(--vio));color:#fff;font-weight:800;box-shadow:0 8px 24px var(--shp);cursor:pointer}
+.qeai-fab:hover{filter:brightness(1.08)}
+.qeai-ov{position:fixed;inset:0;z-index:246;background:rgba(0,0,0,.58);display:none;align-items:center;justify-content:center;padding:14px}
+.qeai-ov.on{display:flex}
+.qeai-md{width:min(760px,100%);max-height:92vh;overflow:auto;background:var(--pop);color:var(--txt);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+.qeai-hd{display:flex;gap:10px;align-items:flex-start}.qeai-hd>div{flex:1}.qeai-hd h3{margin:0 0 3px;font-size:19px}.qeai-sub{font-size:12px;color:var(--mut);line-height:1.55}
+.qeai-x{border:1px solid var(--line);background:transparent;color:var(--txt);border-radius:9px;padding:5px 9px;cursor:pointer}
+.qeai-actions{display:flex;flex-wrap:wrap;gap:7px;margin:14px 0 10px}.qeai-chip{border:1px solid var(--line);background:var(--soft);color:var(--txt);border-radius:999px;padding:7px 11px;font-size:12px;font-weight:700;cursor:pointer}.qeai-chip:hover{border-color:var(--pri)}
+.qeai-label{display:block;font-size:12px;font-weight:800;margin:8px 0 4px}.qeai-ta{width:100%;min-height:88px;resize:vertical;background:var(--inp);color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:10px;line-height:1.5}
+.qeai-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}.qeai-run{background:var(--pri);color:var(--on-pri);border:0;border-radius:10px;padding:9px 15px;font-weight:800;cursor:pointer}.qeai-run:disabled{opacity:.5;cursor:not-allowed}.qeai-copy{background:transparent;color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:8px 12px;cursor:pointer}.qeai-stat{flex:1;min-width:180px;font-size:12px;color:var(--mut)}
+.qeai-out{white-space:pre-wrap;word-break:break-word;min-height:120px;max-height:42vh;overflow:auto;background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:12px;line-height:1.65;font:13px/1.65 "Segoe UI",Tahoma,sans-serif;margin-top:10px}
+.qeai-note{font-size:11px;color:var(--mut);margin-top:8px;line-height:1.5}
+@media(max-width:600px){.qeai-fab{right:10px;bottom:66px;padding:10px 13px}.qeai-md{padding:14px}.qeai-out{max-height:38vh}}
+</style>
+<button type="button" id="qeAiFab" class="qeai-fab" title="เปิด QE AI Assistant">✨ AI Assistant</button>
+<div id="qeAiOv" class="qeai-ov" aria-hidden="true">
+  <section class="qeai-md" role="dialog" aria-modal="true" aria-labelledby="qeAiTitle">
+    <div class="qeai-hd"><div><h3 id="qeAiTitle">✨ QE AI Assistant</h3><div class="qeai-sub">สรุปข้อมูลจากหน้าจอปัจจุบัน โดยยังไม่แก้ไขหรือบันทึกข้อมูลให้อัตโนมัติ</div></div><button type="button" id="qeAiClose" class="qeai-x" aria-label="ปิด">✕</button></div>
+    <div class="qeai-actions">
+      <button type="button" class="qeai-chip" data-qeai="สรุปงานวันนี้ แยกงานเสร็จ งานค้าง ความเสี่ยง และสิ่งที่ต้องติดตาม">สรุปงานวันนี้</button>
+      <button type="button" class="qeai-chip" data-qeai="วิเคราะห์ตารางประชุมวันนี้ ระบุเวลาซ้อน รายการที่ยังไม่มอบหมาย และข้อเสนอแนะ">วิเคราะห์ Meeting</button>
+      <button type="button" class="qeai-chip" data-qeai="จัดทำข้อความสรุปสำหรับส่งใน Microsoft Teams แบบกระชับและอ่านง่าย">ร่างข้อความ Teams</button>
+      <button type="button" class="qeai-chip" data-qeai="สรุปปัญหาเป็น Problem, Current condition, Possible cause, Correction และ Permanent countermeasure โดยห้ามสร้างข้อเท็จจริงเพิ่ม">Problem / Cause / CM</button>
+    </div>
+    <label class="qeai-label" for="qeAiQuestion">คำถามหรือคำสั่ง</label>
+    <textarea id="qeAiQuestion" class="qeai-ta" placeholder="ตัวอย่าง: สรุปงานวันนี้และบอก 3 เรื่องที่ต้องติดตาม"></textarea>
+    <div class="qeai-bar"><button type="button" id="qeAiRun" class="qeai-run">วิเคราะห์ด้วย AI</button><button type="button" id="qeAiCopy" class="qeai-copy">คัดลอกคำตอบ</button><span id="qeAiStatus" class="qeai-stat" aria-live="polite">พร้อมใช้งาน</span></div>
+    <div id="qeAiAnswer" class="qeai-out">คำตอบจะแสดงที่นี่</div>
+    <div class="qeai-note">AI อาจตอบผิดได้ โปรดตรวจสอบก่อนนำไปบันทึกหรือส่งต่อ ระบบจะไม่ส่ง PIN, Microsoft Graph token หรือข้อมูลการตั้งค่า Cloud ไปยัง AI</div>
+  </section>
+</div>
+<script id="qeAiAddon">
+(function(){
+'use strict';
+if(window.__QE_AI_ADDON) return; window.__QE_AI_ADDON=true;
+const g=id=>document.getElementById(id);
+const CFG=window.COUNTERMEASURE_CLOUD_DEFAULTS||{};
+const FUNCTION_NAME='qe-ai-assistant';
+const FUNCTION_URL=String(CFG.supabaseUrl||'').replace(/\/$/,'')+'/functions/v1/'+FUNCTION_NAME;
+const MAX_CONTEXT_CHARS=45000;
+function clean(value,depth){
+  if(depth>7) return '[depth limited]';
+  if(value==null||typeof value==='string'||typeof value==='number'||typeof value==='boolean') return value;
+  if(Array.isArray(value)) return value.slice(0,250).map(v=>clean(v,depth+1));
+  if(typeof value==='object'){
+    const out={};
+    Object.keys(value).slice(0,250).forEach(k=>{
+      if(/pin|password|secret|token|apikey|authorization|supabasekey/i.test(k)) return;
+      const v=value[k]; if(typeof v!=='function') out[k]=clean(v,depth+1);
+    });
+    return out;
+  }
+  return String(value);
+}
+function isoToday(){ const d=new Date(),p=n=>String(n).padStart(2,'0'); return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()); }
+function collectContext(){
+  const ctx={generatedAt:new Date().toISOString(),date:isoToday(),source:'QE Elec. Daily Job Tracker'};
+  try{ if(window.__TODAY&&typeof window.__TODAY.collect==='function') ctx.today=clean(window.__TODAY.collect(),0); }catch(e){ ctx.todayError=String(e.message||e); }
+  try{
+    if(window.__MTG&&typeof window.__MTG.getDay==='function') ctx.meetings=clean(window.__MTG.getDay(ctx.date),0);
+    if(window.__MTG&&typeof window.__MTG.analyze==='function') ctx.meetingAnalysis=clean(window.__MTG.analyze(ctx.date),0);
+  }catch(e){ ctx.meetingError=String(e.message||e); }
+  try{ if(window.__TODAY&&typeof window.__TODAY.text==='function') ctx.todayText=String(window.__TODAY.text()||'').slice(0,12000); }catch(e){}
+  let text=JSON.stringify(ctx); if(text.length>MAX_CONTEXT_CHARS){ ctx.contextTrimmed=true; delete ctx.todayText; text=JSON.stringify(ctx); }
+  return ctx;
+}
+async function ask(question){
+  if(!CFG.supabaseUrl||!CFG.supabaseKey) throw new Error('ยังไม่ได้ตั้งค่า Supabase URL หรือ Publishable key');
+  const controller=new AbortController(); const timer=setTimeout(()=>controller.abort(),60000);
+  try{
+    const res=await fetch(FUNCTION_URL,{method:'POST',signal:controller.signal,headers:{'Content-Type':'application/json','apikey':CFG.supabaseKey,'Authorization':'Bearer '+CFG.supabaseKey},body:JSON.stringify({action:'qe_tracker_assistant',question:String(question).slice(0,4000),context:collectContext()})});
+    const raw=await res.text(); let data={}; try{ data=JSON.parse(raw); }catch(e){ data={answer:raw}; }
+    if(!res.ok) throw new Error(data.error||data.message||('Edge Function ตอบกลับ '+res.status));
+    return String(data.answer||data.result||data.reply||'AI ไม่ได้ส่งคำตอบกลับมา');
+  }catch(e){ if(e.name==='AbortError') throw new Error('หมดเวลารอคำตอบจาก AI'); throw e; } finally{ clearTimeout(timer); }
+}
+function open(){ g('qeAiOv').classList.add('on'); g('qeAiOv').setAttribute('aria-hidden','false'); setTimeout(()=>g('qeAiQuestion').focus(),30); }
+function close(){ g('qeAiOv').classList.remove('on'); g('qeAiOv').setAttribute('aria-hidden','true'); }
+async function run(){
+  const q=g('qeAiQuestion').value.trim(); if(!q){ g('qeAiStatus').textContent='กรุณาพิมพ์คำถาม'; g('qeAiQuestion').focus(); return; }
+  const b=g('qeAiRun'); b.disabled=true; g('qeAiStatus').textContent='กำลังวิเคราะห์…'; g('qeAiAnswer').textContent='';
+  try{ g('qeAiAnswer').textContent=await ask(q); g('qeAiStatus').textContent='วิเคราะห์เสร็จแล้ว'; }
+  catch(e){ g('qeAiAnswer').textContent='เกิดข้อผิดพลาด: '+String(e.message||e)+'\n\nตรวจสอบว่า Supabase Edge Function ชื่อ qe-ai-assistant ถูก Deploy และตั้งค่า AI secret แล้ว'; g('qeAiStatus').textContent='เชื่อมต่อ AI ไม่สำเร็จ'; }
+  finally{ b.disabled=false; }
+}
+g('qeAiFab').addEventListener('click',open); g('qeAiClose').addEventListener('click',close);
+g('qeAiOv').addEventListener('click',e=>{if(e.target===g('qeAiOv')) close();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&g('qeAiOv').classList.contains('on')) close();});
+document.querySelectorAll('[data-qeai]').forEach(b=>b.addEventListener('click',()=>{g('qeAiQuestion').value=b.dataset.qeai||'';g('qeAiQuestion').focus();}));
+g('qeAiRun').addEventListener('click',run); g('qeAiQuestion').addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();run();}});
+g('qeAiCopy').addEventListener('click',async()=>{const t=g('qeAiAnswer').textContent.trim();if(!t||t==='คำตอบจะแสดงที่นี่')return;try{await navigator.clipboard.writeText(t);g('qeAiStatus').textContent='คัดลอกคำตอบแล้ว';}catch(e){g('qeAiStatus').textContent='คัดลอกไม่สำเร็จ';}});
+window.__QE_AI={ask:ask,collectContext:collectContext,open:open};
+})();
+</script>
+<!-- ===== end QE AI Assistant add-on ===== -->
+
+</body> (หลังสคริปต์ Main QE Jobs) */
 (function(){
 'use strict';
 if(window.__NF_ADDON) return; window.__NF_ADDON=true;
