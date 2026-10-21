@@ -12194,7 +12194,8 @@ if(!bar||!g('tabD')||!g('viewToday'))return false;
 window.__MY_WORK_NAV_ADDON=true;
 const E=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const day=s=>{if(!s)return'';if(/^\d{4}-\d{2}-\d{2}$/.test(s))return s;try{const d=new Date(s);return isNaN(d)?'':d.toISOString().slice(0,10)}catch(e){return''}};
-const today=day(new Date()), add=(ds,n)=>{const d=new Date(ds+'T00:00:00');d.setDate(d.getDate()+n);return day(d)};
+const localDay=(d=new Date())=>{const p=n=>String(n).padStart(2,'0');return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())};
+const today=localDay(), add=(ds,n)=>{const a=String(ds).split('-').map(Number),d=new Date(a[0],a[1]-1,a[2]);d.setDate(d.getDate()+n);return localDay(d)};
 const user=()=>String(localStorage.getItem('ux_me')||g('cbWn')?.textContent||'').trim();
 const field=(o,keys,def='')=>{for(const k of keys)if(o&&o[k]!=null&&o[k]!=='')return o[k];return def};
 function trackerData(){try{return Array.isArray(data)?data:[]}catch(e){return[]}}
