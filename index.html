@@ -8908,7 +8908,8 @@ const say=(m,c)=>{ try{ toast(m,c); }catch(e){} };
 const E=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const clone=o=>JSON.parse(JSON.stringify(o));
 const norm=s=>String(s||'').toLowerCase().replace(/\s+/g,' ').trim();
-const PRI={urgent:{n:'Urgent',c:'#dc2626'},trial:{n:'Trial',c:'#7c3aed'},transfer:{n:'Transfer',c:'#0ea5e9'},prod:{n:'Production',c:'#16a34a'},other:{n:'อื่นๆ',c:'#64748b'}};
+/* qe-category-fix-v2 */
+  const PRI={urgent:{n:'Urgent',c:'#e11d48'},newjob:{n:'New',c:'#7c3aed'},pcr:{n:'PCR',c:'#0ea5e9'},claim:{n:'Claim',c:'#f97316'},inhouse:{n:'In-house',c:'#10b981'},activity:{n:'Activity',c:'#64748b'}};
 const LS='ux_prefs_v1', LO='ux_lastowner', LM='ux_me';
 let P={q:'',fStatus:'',fDate:'',fOwner:'',fFlag:'',pri:'',view:'',hideDone:true,kpi:true,kpiDays:0,mine:false};
 try{ Object.assign(P,JSON.parse(localStorage.getItem(LS)||'{}')||{}); }catch(e){}
@@ -8972,7 +8973,7 @@ const form=g('f');
 (function(){
   if(!g('uxPri')){ const grids=form.querySelectorAll('.grid'), last=grids[grids.length-1];
     if(last){ const box=document.createElement('div'); box.className='grid'; box.style.marginTop='12px';
-      box.innerHTML='<div><label>ประเภท / ความเร่งด่วน</label><select id="uxPri"><option value="">— ไม่ระบุ —</option>'+Object.keys(PRI).map(k=>'<option value="'+k+'">'+PRI[k].n+'</option>').join('')+'</select></div>';
+      box.innerHTML='<div><label>ประเภทงาน</label><select id="uxPri"><option value="">— ไม่ระบุ —</option>'+Object.keys(PRI).map(k=>'<option value="'+k+'">'+PRI[k].n+'</option>').join('')+'</select></div>';
       last.parentNode.insertBefore(box,last.nextSibling); } }
   if(!g('uxQd')){ const dd2=g('dd2'), holder=dd2&&dd2.closest('.dsel');
     if(holder){ const bar=document.createElement('div'); bar.className='ux-qd'; bar.id='uxQd';
