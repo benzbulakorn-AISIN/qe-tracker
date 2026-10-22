@@ -3,6 +3,7 @@
 
 <meta name="referrer" content="no-referrer">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'; form-action 'self'">
 <title>QE Elec. Daily Job Tracker</title>
 <!--
   CENTRAL DATABASE CONFIGURATION
@@ -345,7 +346,7 @@ window.COUNTERMEASURE_CLOUD_DEFAULTS = Object.freeze({
 .ck-pend{background:rgba(245,158,11,.25);color:#b45309}
 .ck-note{background:rgba(139,92,246,.20);color:#6d28d9}
 </style>
-<link rel="preconnect" href="https://fonts.googleapis.com/"><link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- v34: เอา Google Fonts ออก (ไม่ส่งข้อมูลการเข้าชมออกนอกองค์กร) — ใช้ฟอนต์ระบบแทน -->
 <style id="neoTheme">
 /* ===== NEO THEME: control-room / HUD look (สลับกลับธีมเดิมได้ด้วยปุ่ม 🌗) ===== */
 body.neo{
@@ -1061,6 +1062,7 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none!importa
     <div class="card"><div class="n" id="cTotal">23</div><div class="l">All Items</div></div>
     <div class="card"><div class="n" style="color:var(--ok)" id="cDone">8</div><div class="l">Completed</div></div>
     <div class="card"><div class="n" style="color:var(--warn)" id="cRemain">15</div><div class="l">Remaining</div></div>
+    <div class="card" id="cBlkCard" role="button" tabindex="0" aria-pressed="false" style="cursor:pointer" title="คลิกเพื่อกรองเฉพาะงานที่ติดปัญหา"><div class="n" style="color:var(--t-dang)" id="cBlocked">0</div><div class="l">⛔ ติดปัญหา (Blocked)</div></div>
     <div class="card"><div class="n" style="color:var(--dang)" id="cLate">0</div><div class="l">Overdue</div></div>
     <div class="card"><div class="n" id="cPct">35%</div><div class="l">Progress</div>
       <div class="bar"><i id="cBar" style="width: 35%;"></i></div></div>
@@ -1093,7 +1095,7 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none!importa
   <div class="card" id="ownBox" style="margin-bottom:22px">
     <div class="own-head">
       <div style="font-weight:700;font-size:14px">👥 สรุปตามผู้แจ้ง</div>
-      <span class="own-hint">คลิกที่ชื่อเพื่อกรองตารางด้านล่าง (คลิกซ้ำเพื่อยกเลิก)</span>
+      <span class="own-hint">คลิกที่ชื่อเพื่อกรองตารางด้านล่าง (คลิกซ้ำเพื่อยกเลิก) · เรียงตามชื่อ — ใช้เพื่อกระจายงานและขอความช่วยเหลือ ไม่ใช่การประเมินผลรายบุคคล</span>
       <button class="btn-g" id="ownToggle">▲ ซ่อน</button>
     </div>
     <div id="ownBody"><div id="ownList"></div></div>
@@ -1107,7 +1109,7 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none!importa
       <div><label>Due Date (กำหนดเสร็จ)</label>
         <div class="dsel"><select id="dd2"><option value="">— วัน —</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option><option value="26">26</option><option value="27">27</option><option value="28">28</option><option value="29">29</option><option value="30">30</option><option value="31">31</option></select><select id="mm2"><option value="">— เดือน —</option><option value="1">มกราคม</option><option value="2">กุมภาพันธ์</option><option value="3">มีนาคม</option><option value="4">เมษายน</option><option value="5">พฤษภาคม</option><option value="6">มิถุนายน</option><option value="7">กรกฎาคม</option><option value="8">สิงหาคม</option><option value="9">กันยายน</option><option value="10">ตุลาคม</option><option value="11">พฤศจิกายน</option><option value="12">ธันวาคม</option></select><select id="yy2"><option value="">— ปี —</option><option value="2023">2566</option><option value="2024">2567</option><option value="2025">2568</option><option value="2026">2569</option><option value="2027">2570</option><option value="2028">2571</option><option value="2029">2572</option><option value="2030">2573</option><option value="2031">2574</option><option value="2032">2575</option></select></div>
       </div>
-      <div><label>ผู้แจ้ง</label><input id="owner" placeholder="ชื่อเพื่อน" required="" list="ownerList" autocomplete="off"></div>
+      <div><label for="owner">ผู้แจ้ง / ผู้รับผิดชอบ</label><input id="owner" placeholder="ชื่อผู้รับผิดชอบงาน" required="" list="ownerList" autocomplete="off"></div>
       <div><label>สถานะ</label><select id="status">
         <option value="In Progress">In Progress</option>
         <option value="Done">Done</option></select></div>
@@ -1115,6 +1117,13 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none!importa
     <div class="grid" style="margin-top:12px">
       <div><label>ปัญหา (Issue)</label><textarea id="issue" required="" placeholder="อธิบายปัญหาที่เจอ..."></textarea></div>
       <div><label>มาตรการแก้ไข (Countermeasure)</label><textarea id="cm" placeholder="แนวทาง/วิธีแก้..."></textarea></div>
+    </div>
+    <div class="qe-grid" id="qeBlkGrid">
+      <div><label for="qeProg">ความคืบหน้า</label><select id="qeProg"><option value="">— ไม่ระบุ —</option><option value="0">0%</option><option value="25">25%</option><option value="50">50%</option><option value="75">75%</option><option value="100">100%</option></select></div>
+      <div><label for="qeHelper">ผู้ที่ต้องช่วย / ต้องประสาน (ถ้ามี)</label><input id="qeHelper" list="ownerList" autocomplete="off" placeholder="ชื่อผู้ช่วย หรือแผนกที่ต้องประสาน" maxlength="200"></div>
+      <div><label class="qe-chk" for="qeBlocked"><input type="checkbox" id="qeBlocked"> ⛔ ติดปัญหา (Blocked) — ต้องการความช่วยเหลือ</label>
+        <textarea id="qeBlocker" rows="2" maxlength="500" placeholder="อุปสรรค: รออะไร / ติดเรื่องอะไร (บังคับกรอกเมื่อติ๊ก “ติดปัญหา”)" aria-describedby="qeBlkHint"></textarea>
+        <div class="qe-hint" id="qeBlkHint">งานที่ติดปัญหาจะแสดงเด่นในตารางและตัวนับด้านบน เพื่อให้ทีมช่วยปลดล็อกได้เร็ว</div></div>
     </div>
     <div style="margin-top:14px;display:flex;gap:10px">
       <button type="submit" class="btn-p" id="submitBtn">+ เพิ่มรายการ</button>
@@ -1128,7 +1137,7 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none!importa
     <select id="fStatus"><option value="">ทุกสถานะ</option><option>In Progress</option><option>Done</option></select>
     <select id="fDate"><option value="">ทุกวันที่</option><option value="2026-10-15">15 ต.ค. 2569</option><option value="2026-10-14">14 ต.ค. 2569</option><option value="2026-10-09">9 ต.ค. 2569</option><option value="2026-10-08">8 ต.ค. 2569</option><option value="2026-10-07">7 ต.ค. 2569</option><option value="2026-10-06">6 ต.ค. 2569</option></select>
     <select id="fOwner"><option value="">ทุกผู้แจ้ง</option><option value="Benz">Benz</option><option value="Earn">Earn</option><option value="Mana">Mana</option><option value="Natcha">Natcha</option><option value="QE All">QE All</option></select>
-    <select id="fFlag"><option value="">ทุกรายการ</option><option value="late">เฉพาะเลยกำหนด</option><option value="rev">เฉพาะที่มี Rev.</option></select>
+    <select id="fFlag"><option value="">ทุกรายการ</option><option value="late">เฉพาะเลยกำหนด</option><option value="rev">เฉพาะที่มี Rev.</option><option value="blocked">เฉพาะที่ติดปัญหา</option></select>
     <button class="btn-g" id="clearBtn">ล้างตัวกรอง</button>
     <button class="btn-g" id="csvBtn">⬇ Export CSV</button>
     <button class="btn-g" id="bkBtn" style="color:var(--t-ok)">💾 Backup</button>
@@ -1497,6 +1506,144 @@ window.__SEED_V12={"version":12,"source":"snapshot v9 (16 ต.ค. 2569)","track
   set(FLAG,st);
 })();
 </script>
+<script id="qeSanitize">
+/* ===== v34 · Data hardening (โหลดก่อนสคริปต์อื่นทั้งหมด) =====
+   - __qeSan.items(): ตรวจ/ซ่อมรายการ Tracker ที่มาจาก localStorage, ไฟล์ Restore, Cloud DB
+       id ต้องเป็นตัวเลข · status อยู่ใน whitelist · วันที่เป็น YYYY-MM-DD · ฟิลด์ข้อความตัดความยาว
+   - qeCleanHtml(): sanitizer แบบ allow-list สำหรับกล่องบันทึก (contenteditable)
+   - qeCsvCell(): กัน CSV/Formula injection
+   - qeBlk: อ่าน/เติมฟิลด์ใหม่ (ติดปัญหา · อุปสรรค · ผู้ช่วย · ความคืบหน้า) */
+(function(){
+'use strict';
+var STATUS=['In Progress','Done'];
+var DATE_RE=/^\d{4}-\d{2}-\d{2}$/;
+var seq=0;
+function str(v,n){ return v==null?'':String(v).slice(0,n||5000); }
+function dt(v){ v=v==null?'':String(v); return DATE_RE.test(v)?v:''; }
+function newId(used){ var id; do{ id=Date.now()+(seq++); }while(used&&used[id]); return id; }
+function prog(v){ if(v===''||v==null) return ''; var n=Math.round(+v); return isFinite(n)?Math.max(0,Math.min(100,n)):''; }
+
+function item(x,used,isTrash){
+  if(!x||typeof x!=='object'||Array.isArray(x)) return null;
+  var o=x, before=JSON.stringify(x);
+  var id=o.id;
+  if(typeof id==='string'&&/^\d{1,16}$/.test(id)) id=+id;
+  if(typeof id!=='number'||!isFinite(id)||id<=0||Math.floor(id)!==id) id=newId(used);
+  o.id=id;
+  o.date=dt(o.date); o.due=dt(o.due);
+  if(o.doneDate!=null){ o.doneDate=dt(o.doneDate); if(!o.doneDate) delete o.doneDate; }
+  o.owner=str(o.owner,200); o.issue=str(o.issue,5000); o.cm=str(o.cm,5000);
+  o.status=STATUS.indexOf(o.status)>=0?o.status:'In Progress';
+  o.revs=(Array.isArray(o.revs)?o.revs:[]).filter(function(v){ return v&&typeof v==='object'; })
+    .map(function(v){ return {date:dt(v.date),reason:str(v.reason,1000),at:dt(v.at)}; });
+  if(o.steps!=null){
+    o.steps=(Array.isArray(o.steps)?o.steps:[]).filter(function(v){ return v&&typeof v==='object'; })
+      .map(function(v){ return {text:str(v.text,5000),date:dt(v.date),at:dt(v.at)}; });
+  }
+  if('blocked' in o) o.blocked=o.blocked===true||o.blocked==='true';
+  if('blocker' in o) o.blocker=str(o.blocker,500);
+  if('helper' in o) o.helper=str(o.helper,200);
+  if('progress' in o) o.progress=prog(o.progress);
+  if('pri' in o && typeof o.pri!=='string') delete o.pri;
+  if('updAt' in o) o.updAt=str(o.updAt,40);
+  if('updBy' in o) o.updBy=str(o.updBy,100);
+  if(isTrash){ var t=Date.parse(o.deletedAt); o.deletedAt=isFinite(t)?new Date(t).toISOString():new Date().toISOString(); }
+  if(JSON.stringify(o)!==before) o.__fx=1;
+  return o;
+}
+/* คืน {list, fixed}; list=null เมื่อ input ไม่ใช่ array */
+function items(arr,isTrash){
+  if(!Array.isArray(arr)) return {list:null,fixed:0};
+  var used={}, out=[], fixed=0;
+  arr.forEach(function(x){ if(x&&typeof x==='object'&&typeof x.id==='number') used[x.id]=1; });
+  arr.forEach(function(x){
+    var o=item(x,used,isTrash);
+    if(!o){ fixed++; return; }
+    used[o.id]=1;
+    if(o.__fx){ delete o.__fx; fixed++; }
+    out.push(o);
+  });
+  return {list:out,fixed:fixed};
+}
+window.__qeSan={items:items,item:item,STATUS:STATUS};
+
+/* id ใหม่ที่ไม่ซ้ำกับรายการที่มีอยู่ (ทั้ง data และถังขยะ) */
+window.qeNewId=function(){
+  var m=0;
+  try{ data.forEach(function(x){ if(+x.id>m) m=+x.id; }); }catch(e){}
+  try{ trash.forEach(function(x){ if(+x.id>m) m=+x.id; }); }catch(e){}
+  return Math.max(Date.now(),m+1);
+};
+
+/* ---------- CSV: กัน formula injection (= + - @ นำหน้า) ---------- */
+window.qeCsvCell=function(v){
+  v=String(v==null?'':v);
+  if(/^[=+\-@\t\r]/.test(v)) v="'"+v;
+  return '"'+v.replace(/"/g,'""')+'"';
+};
+
+/* ---------- HTML sanitizer (allow-list) สำหรับกล่องบันทึก ---------- */
+var OK={B:1,STRONG:1,I:1,EM:1,U:1,S:1,STRIKE:1,DEL:1,BR:1,HR:1,P:1,DIV:1,SPAN:1,UL:1,OL:1,LI:1,FONT:1,SUB:1,SUP:1,BLOCKQUOTE:1,H1:1,H2:1,H3:1,H4:1,A:1};
+var DROP={SCRIPT:1,STYLE:1,IFRAME:1,OBJECT:1,EMBED:1,LINK:1,META:1,FORM:1,BASE:1,SVG:1,MATH:1,TEMPLATE:1,NOSCRIPT:1,TEXTAREA:1,INPUT:1,BUTTON:1,SELECT:1,IMG:1,VIDEO:1,AUDIO:1,SOURCE:1,CANVAS:1,TITLE:1,FRAME:1,FRAMESET:1,APPLET:1};
+var CSS_OK={'color':1,'background-color':1,'background':1,'font-size':1,'font-weight':1,'font-style':1,'text-decoration':1,'text-decoration-line':1,'text-align':1,'margin-left':1,'padding-left':1,'list-style-type':1};
+function cleanStyle(s){
+  var out=[];
+  String(s||'').split(';').forEach(function(d){
+    var i=d.indexOf(':'); if(i<1) return;
+    var p=d.slice(0,i).trim().toLowerCase(), v=d.slice(i+1).trim();
+    if(!CSS_OK[p]) return;
+    if(!/^[#a-z0-9\s.,%()\-]+$/i.test(v)||/url|expression|javascript|var\(/i.test(v)) return;
+    out.push(p+':'+v);
+  });
+  return out.join(';');
+}
+function build(src,dst,doc){
+  Array.prototype.forEach.call(src.childNodes,function(n){
+    if(n.nodeType===3){ dst.appendChild(doc.createTextNode(n.nodeValue)); return; }
+    if(n.nodeType!==1) return;
+    var t=n.tagName.toUpperCase();
+    if(DROP[t]) return;
+    if(!OK[t]){ build(n,dst,doc); return; }          /* แท็กที่ไม่รู้จัก: เก็บเฉพาะข้อความข้างใน */
+    var e=doc.createElement(t.toLowerCase());
+    if(t==='FONT'){
+      var c=n.getAttribute('color'), z=n.getAttribute('size');
+      if(c&&/^[#a-z0-9(),\s]+$/i.test(c)) e.setAttribute('color',c);
+      if(z&&/^[1-7]$/.test(z)) e.setAttribute('size',z);
+    }
+    var st=n.getAttribute('style'); if(st){ var cs=cleanStyle(st); if(cs) e.setAttribute('style',cs); }
+    if(t==='A'){
+      var h=String(n.getAttribute('href')||'').replace(/[\u0000-\u0020\u007f-\u009f]+/g,'');
+      if(/^(https?:\/\/|mailto:)/i.test(h)){ e.setAttribute('href',h); e.setAttribute('rel','noopener noreferrer'); e.setAttribute('target','_blank'); }
+    }
+    if(t!=='BR'&&t!=='HR') build(n,e,doc);
+    dst.appendChild(e);
+  });
+}
+window.qeCleanHtml=function(html){
+  var t=document.createElement('template'); t.innerHTML=String(html||'');   /* template = inert: ไม่รันสคริปต์/ไม่โหลดรูป */
+  var doc=t.content.ownerDocument, box=doc.createElement('div');
+  build(t.content,box,doc);
+  return box.innerHTML;
+};
+
+/* ---------- ฟิลด์ใหม่ในฟอร์ม: ติดปัญหา · อุปสรรค · ผู้ช่วย · ความคืบหน้า ---------- */
+function el(id){ return document.getElementById(id); }
+window.qeBlk={
+  read:function(){
+    var b=el('qeBlocked'), k=el('qeBlocker'), h=el('qeHelper'), p=el('qeProg');
+    var blocked=!!(b&&b.checked);
+    return {blocked:blocked, blocker:blocked&&k?k.value.trim().slice(0,500):'', helper:h?h.value.trim().slice(0,200):'', progress:p?prog(p.value):''};
+  },
+  fill:function(d){
+    d=d||{};
+    if(el('qeBlocked')) el('qeBlocked').checked=!!d.blocked;
+    if(el('qeBlocker')) el('qeBlocker').value=d.blocker||'';
+    if(el('qeHelper')) el('qeHelper').value=d.helper||'';
+    if(el('qeProg')) el('qeProg').value=(d.progress===''||d.progress==null)?'':String(d.progress);
+  }
+};
+})();
+</script>
 <script>
 /* ===== External central database adapter: Supabase REST (no build step) ===== */
 (function(){
@@ -1799,8 +1946,8 @@ window.__SEED_V12={"version":12,"source":"snapshot v9 (16 ต.ค. 2569)","track
       Object.entries(remoteLocal).forEach(([k,v])=>{if(v===null||v===undefined)localStorage.removeItem(k);else localStorage.setItem(k,String(v));});
     }finally{}
     if(m.mj){ try{ const cur=readMJ(); if(!cur||mjCanon(cur)!==mjCanon(m.mj)){ m.mj.updated=(cur&&cur.updated)||new Date().toISOString(); localStorage.setItem(MJKEY,JSON.stringify(m.mj)); } }catch(e){} }
-    if(typeof data!=='undefined'){data=m.tracker;localStorage.setItem('issue_tracker_v2',JSON.stringify(data));}
-    if(typeof trash!=='undefined'){trash=m.trash;localStorage.setItem('issue_tracker_trash',JSON.stringify(trash));}
+    if(typeof data!=='undefined'){data=window.__qeSan.items(m.tracker).list||[];localStorage.setItem('issue_tracker_v2',JSON.stringify(data));}
+    if(typeof trash!=='undefined'){trash=window.__qeSan.items(m.trash,true).list||[];localStorage.setItem('issue_tracker_trash',JSON.stringify(trash));}
     if(m.title&&m.title.title)localStorage.setItem('issue_tracker_title',JSON.stringify(m.title));
     if(window.__checklist&&window.__checklist.loadCentral)window.__checklist.loadCentral(m.checklist);
     if(window.MS&&window.MS.loadRemote)window.MS.loadRemote(m.missionRows||[]);
@@ -2277,7 +2424,7 @@ window.__SEED_V12={"version":12,"source":"snapshot v9 (16 ต.ค. 2569)","track
 <script>
 const KEY='issue_tracker_v2';
 const TRK='issue_tracker_trash';
-let trash=[]; try{ trash=JSON.parse(localStorage.getItem(TRK)||'[]'); if(!Array.isArray(trash)) trash=[]; }catch(e){ trash=[]; }
+let trash=[]; try{ trash=JSON.parse(localStorage.getItem(TRK)||'[]'); if(!Array.isArray(trash)) trash=[]; trash=window.__qeSan.items(trash,true).list||[]; }catch(e){ trash=[]; }
 let sortCfg=JSON.parse(localStorage.getItem('issue_tracker_sort2')||'null')||{k:'date',d:localStorage.getItem('issue_tracker_sort')==='asc'?'asc':'desc'};
 const BK='issue_tracker_lastbackup';
 const ABK='issue_tracker_autocfg';
@@ -2285,6 +2432,7 @@ const TKEY='issue_tracker_title';
 const DEF_TITLE='🛠️ Daily Issue & Countermeasure Tracker';
 const DEF_SUB='ลงปัญหาประจำวัน • มาตรการแก้ไข • กำหนดเสร็จ & การเลื่อนกำหนด • สำรองข้อมูลในเครื่อง';
 let data=JSON.parse(localStorage.getItem(KEY)||'[]');
+(function(){ const r=window.__qeSan.items(data); data=r.list||[]; if(r.fixed){ try{ localStorage.setItem(KEY,JSON.stringify(data)); }catch(e){} window.__qeSanFixed=(window.__qeSanFixed||0)+r.fixed; } })();
 if(data.some(x=>x.status==='Open')){ data.forEach(x=>{ if(x.status==='Open') x.status='In Progress'; }); localStorage.setItem(KEY,JSON.stringify(data)); }
 let editId=null, revId=null, dirty=0, dirHandle=null;
 let ab=Object.assign({on:false,every:10,dirName:''},JSON.parse(localStorage.getItem(ABK)||'{}'));
@@ -2394,7 +2542,7 @@ function setD(d,m,y,s,blank){
   if(!s){ $(y).value=''; $(m).value=''; fillDays(d,m,y,blank); $(d).value=''; return; }
   const[a,b,c]=s.split('-'); $(y).value=+a; $(m).value=+b; fillDays(d,m,y,blank); $(d).value=+c;
 }
-function fmt(s){ if(!s) return '—'; const[a,b,c]=s.split('-');
+function fmt(s){ if(!s||!/^\d{4}-\d{1,2}-\d{1,2}/.test(String(s))) return '—'; s=String(s); const[a,b,c]=s.split('-');
   return `${+c}-${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+b-1]}-${String(a).slice(2)}`; }
 
 buildSel('dd','mm','yy',false);
@@ -2413,9 +2561,10 @@ $('f').addEventListener('submit',e=>{
   e.preventDefault();
   const o={date:getD('dd','mm','yy'),due:getD('dd2','mm2','yy2'),owner:$('owner').value.trim(),
            issue:$('issue').value.trim(),cm:$('cm').value.trim(),status:$('status').value};
+  Object.assign(o,window.qeBlk.read());
   if(editId){ const cur=data.find(x=>x.id===editId), was=cur.status; Object.assign(cur,o);
     if(was!=='Done'&&cur.status==='Done') setTimeout(()=>{ if(window.onItemDone) window.onItemDone(cur); },0); }
-  else { o.id=Date.now(); o.revs=[]; data.unshift(o);
+  else { o.id=window.qeNewId(); o.revs=[]; data.unshift(o);
          if(window.__pendingTk&&window.__pendingTk.issue===o.issue){ window.__checklist.markSent(window.__pendingTk.r,o.id); } window.__pendingTk=null;
          setTimeout(()=>{ if(window.onItemAdded) window.onItemAdded(o); },0); }
   save(); resetForm(); render();
@@ -2431,7 +2580,7 @@ $('formClearBtn').onclick=()=>{ window.__pendingTk=null; resetForm(); };
 function edit(id){
   const d=data.find(x=>x.id===id); editId=id;
   setD('dd','mm','yy',d.date,false); setD('dd2','mm2','yy2',d.due||'',true);
-  $('owner').value=d.owner; $('issue').value=d.issue; $('cm').value=d.cm; $('status').value=d.status;
+  $('owner').value=d.owner; $('issue').value=d.issue; $('cm').value=d.cm; $('status').value=d.status; window.qeBlk.fill(d);
   $('submitBtn').textContent='💾 บันทึกการแก้ไข'; $('cancelBtn').style.display='inline-block';
   $('f').scrollIntoView({behavior:'smooth',block:'center'});
 }
@@ -2565,7 +2714,7 @@ $('rsFile').onchange=e=>{
   fr.onload=()=>{
     try{
       const p=JSON.parse(fr.result);
-      const items=Array.isArray(p)?p:p.items;
+      const rs=window.__qeSan.items(Array.isArray(p)?p:p.items); const items=rs.list;
       if(!Array.isArray(items)) throw 0;
       const merge=confirm(
         `ไฟล์นี้มี ${items.length} รายการ (ในเครื่องตอนนี้มี ${data.length})\n\n`+
@@ -2582,6 +2731,7 @@ $('rsFile').onchange=e=>{
       if(p.title&&p.title.title&&confirm('ไฟล์นี้มีชื่อหัวข้อ:\n"'+p.title.title+'"\n\nใช้ชื่อนี้ด้วยไหม?')){
         localStorage.setItem(TKEY,JSON.stringify(p.title)); loadTitle();
       }
+      if(Array.isArray(p.trash)) p.trash=window.__qeSan.items(p.trash,true).list;
       if(Array.isArray(p.trash)){
         if(merge){ const ids=new Set([...data,...trash].map(x=>x.id)); p.trash.forEach(x=>{ if(!ids.has(x.id)) trash.push(x); }); }
         else trash=p.trash.slice();
@@ -2593,6 +2743,7 @@ $('rsFile').onchange=e=>{
       if(p.mainjobs&&window.MJ&&window.MJ.setData&&confirm('ไฟล์นี้มีข้อมูล Main QE Jobs (PCR / Claim / New project / Follow-up)\n\n[ OK ] = แทนที่ข้อมูล Main QE Jobs ปัจจุบันด้วยข้อมูลในไฟล์ (กด ↩ ย้อนกลับ ในหน้า Main QE Jobs ได้)\n[ Cancel ] = ไม่แตะข้อมูล Main QE Jobs')){ if(window.MJ.setData(p.mainjobs)) toast('✅ กู้คืนข้อมูล Main QE Jobs แล้ว'); }
       data.forEach(x=>{ x.revs=x.revs||[]; if(x.status==='Open') x.status='In Progress'; });
       data.sort((a,b)=>b.id-a.id);
+      if(rs.fixed) alert('ปรับค่าที่ผิดรูปแบบใน '+rs.fixed+' รายการให้ปลอดภัยแล้ว — โปรดตรวจสอบรายการหลังกู้คืน');
       save(); render();
     }catch(err){ alert('❌ ไฟล์ไม่ถูกต้อง — ต้องเป็นไฟล์ .json ที่ได้จากปุ่ม Backup'); }
     finally{ e.target.value=''; }
@@ -2897,8 +3048,8 @@ function renderTrash(){
     ? `<div class="tr-row h"><div>ลบเมื่อ</div><div>ผู้แจ้ง</div><div>ปัญหา</div><div>Due</div><div>สถานะ</div><div></div></div>`+
       trash.map(d=>`<div class="tr-row"><div>${fmt(ymdLocal(new Date(d.deletedAt)))}</div><div class="tx">${esc(d.owner)||'-'}</div>`+
         `<div class="tx"><b>${esc(clip(d.issue,120))}</b>${d.cm?`<div style="color:var(--mut);font-size:12px">🛠 ${esc(clip(d.cm,100))}</div>`:''}</div>`+
-        `<div>${fmt(curDue(d))}</div><div>${d.status}</div>`+
-        `<div class="ac"><button class="btn-g" onclick="trashRestore(${d.id})">↩ กู้คืน</button><button class="btn-d" onclick="trashPurge(${d.id})">ลบถาวร</button></div></div>`).join('')
+        `<div>${fmt(curDue(d))}</div><div>${esc(d.status)}</div>`+
+        `<div class="ac"><button class="btn-g" onclick="trashRestore(${Number(d.id)})">↩ กู้คืน</button><button class="btn-d" onclick="trashPurge(${Number(d.id)})">ลบถาวร</button></div></div>`).join('')
     : '<div class="tr-empty">ถังขยะว่างเปล่า 🎉</div>';
 }
 function trashRestore(id){
@@ -2928,7 +3079,7 @@ function drawOwners(){
   $('ownBody').style.display=ownOpen?'':'none';
   const m={};
   data.forEach(d=>{ const k=ownKey(d), o=m[k]||(m[k]={n:k,done:0,prog:0,late:0}), c=jobCls(d); o[c==='done'?'done':c==='late'?'late':'prog']++; });
-  const rows=Object.values(m).sort((a,b)=>b.late-a.late||b.prog-a.prog||a.n.localeCompare(b.n,'th'));
+  const rows=Object.values(m).sort((a,b)=>a.n.localeCompare(b.n,'th'));
   const sel=$('fOwner').value;
   $('ownList').innerHTML=rows.length
     ? `<div class="own-row h"><div>ผู้แจ้ง</div><div class="on">ทั้งหมด</div><div class="on">Done</div><div class="on">In Progress</div><div class="on">Delay</div><div class="bc">สัดส่วน</div></div>`+
@@ -2947,6 +3098,23 @@ $('ownList').addEventListener('click',e=>{
 });
 $('ownToggle').onclick=()=>{ ownOpen=!ownOpen; localStorage.setItem('issue_tracker_own',ownOpen?'open':'closed'); drawOwners(); };
 
+/* ===== v34: ป้ายติดปัญหา / ความคืบหน้า ในตาราง ===== */
+function qeBlkHtml(d){
+  if(d.status==='Done') return '';
+  let h='';
+  if(d.blocked) h+=`<div class="qe-bl"><b>⛔ ติดปัญหา:</b> ${hlq(d.blocker)||'<i>(ยังไม่ระบุอุปสรรค)</i>'}</div>`;
+  if(d.helper) h+=`<div class="qe-bl2">🤝 ผู้ช่วย/ผู้ประสาน: ${hlq(d.helper)}</div>`;
+  return h;
+}
+function qeStatusExtra(d){
+  if(d.status==='Done') return '';
+  const pv=(d.progress===''||d.progress==null)?'':String(d.progress), opts=['','0','25','50','75','100'];
+  if(pv!==''&&opts.indexOf(pv)<0) opts.push(pv);
+  const sel=`<select class="qe-pg" data-id="${Number(d.id)}" aria-label="ความคืบหน้า" title="ความคืบหน้า — เปลี่ยนได้ทันที">${opts.map(v=>`<option value="${v}"${v===pv?' selected':''}>${v===''?'– %':v+'%'}</option>`).join('')}</select>`;
+  const bar=pv!==''?`<div class="qe-pbar" aria-hidden="true"><i style="width:${Math.max(0,Math.min(100,+pv))}%"></i></div>`:'';
+  return `<div class="qe-pgbox">${sel}${bar}</div>${d.blocked?'<div style="margin-top:4px"><span class="tag t-blk">⛔ ติดปัญหา</span></div>':''}`;
+}
+
 function render(){
   const cur=$('fDate').value;
   const ds=[...new Set(data.map(d=>d.date))].sort().reverse();
@@ -2960,8 +3128,8 @@ function render(){
   const q=$('q').value.toLowerCase(), fs=$('fStatus').value, fd=$('fDate').value, ff=$('fFlag').value, fo=$('fOwner').value;
   const list=data.filter(d=>
     (!fs||d.status===fs)&&(!fd||d.date===fd)&&(!fo||ownKey(d)===fo)&&
-    (!ff||(ff==='late'?isLate(d):(d.revs&&d.revs.length>0)))&&
-    (!q||(d.issue+d.cm+d.owner+(d.steps||[]).map(x=>x.text).join(' ')).toLowerCase().includes(q)));
+    (!ff||(ff==='late'?isLate(d):ff==='blocked'?(!!d.blocked&&d.status!=='Done'):(d.revs&&d.revs.length>0)))&&
+    (!q||(d.issue+d.cm+d.owner+(d.blocker||'')+(d.helper||'')+(d.steps||[]).map(x=>x.text).join(' ')+(d.revs||[]).map(x=>x.reason||'').join(' ')).toLowerCase().includes(q)));
   // เรียงตามคอลัมน์ที่เลือก (วันที่แจ้ง / Due Date) — เสมอกันให้ดูวันที่แจ้ง แล้วลำดับที่บันทึก
   const sg=sortCfg.d==='desc'?-1:1;
   const byDate=(a,b)=> a.date===b.date ? (a.id-b.id)*sg : (a.date<b.date?-1:1)*sg;
@@ -2994,29 +3162,29 @@ function render(){
           <div>${fmt(curDue(d))} <span class="tag t-rev">Rev.${n}</span></div>`
         :`<div>${fmt(d.due)}</div>`)
       + dueTag(ds);
-    const tip=n?` title="${(d.revs.map((v,i)=>`Rev.${i+1}: ${fmt(v.date)}${v.reason?' ('+v.reason+')':''}`).join(' | ')).replace(/"/g,'')}"`:'';
-    return `<tr data-id="${d.id}" class="${d.status==='Done'?'done':''}${ds?(ds.k==='late'?' od-blink':' od-soon'):''}">
-      <td>${fmt(d.date)}</td><td>${hlq(d.owner)}</td><td>${hlq(d.issue)}</td>
-      <td>${(d.steps||[]).map((x,k)=>`<div class="stp">✔ ${fmt(x.date)} · ${hlq(x.text)} <span class="stx" onclick="delStep(${d.id},${k})" title="ลบประวัติขั้นนี้">×</span></div>`).join('')}${(d.steps&&d.steps.length&&d.status!=='Done')?`<div class="stnow">▶ Action ปัจจุบัน <span class="stx" onclick="undoStep(${d.id})" title="ย้อนกลับ: เอา Action ขั้นก่อนหน้ากลับมาเป็นปัจจุบัน">↶ ย้อน</span>${d.cm?`<span class="stx" onclick="clearCur(${d.id})" title="ลบ Action ปัจจุบัน">× ลบ</span>`:''}</div>`:''}${hlq(d.cm)||'<span style="color:var(--mut)">—</span>'}${(d.status==='Done'&&d.doneDate)?`<div class="stp" style="margin-top:4px">✔ เสร็จเมื่อ ${fmt(d.doneDate)}</div>`:''}</td>
+    const tip=n?` title="${esc(d.revs.map((v,i)=>`Rev.${i+1}: ${fmt(v.date)}${v.reason?' ('+v.reason+')':''}`).join(' | '))}"`:'';
+    return `<tr data-id="${Number(d.id)}" class="${d.status==='Done'?'done':''}${ds?(ds.k==='late'?' od-blink':' od-soon'):''}${(d.blocked&&d.status!=='Done')?' qe-blocked':''}">
+      <td>${fmt(d.date)}</td><td>${hlq(d.owner)}</td><td>${hlq(d.issue)}${qeBlkHtml(d)}</td>
+      <td>${(d.steps||[]).map((x,k)=>`<div class="stp">✔ ${fmt(x.date)} · ${hlq(x.text)} <span class="stx" onclick="delStep(${Number(d.id)},${k})" title="ลบประวัติขั้นนี้">×</span></div>`).join('')}${(d.steps&&d.steps.length&&d.status!=='Done')?`<div class="stnow">▶ Action ปัจจุบัน <span class="stx" onclick="undoStep(${Number(d.id)})" title="ย้อนกลับ: เอา Action ขั้นก่อนหน้ากลับมาเป็นปัจจุบัน">↶ ย้อน</span>${d.cm?`<span class="stx" onclick="clearCur(${Number(d.id)})" title="ลบ Action ปัจจุบัน">× ลบ</span>`:''}</div>`:''}${hlq(d.cm)||'<span style="color:var(--mut)">—</span>'}${(d.status==='Done'&&d.doneDate)?`<div class="stp" style="margin-top:4px">✔ เสร็จเมื่อ ${fmt(d.doneDate)}</div>`:''}</td>
       <td${tip}>${dueCell}</td>
-      <td><span class="tag ${cls}">${d.status}</span></td>
+      <td><span class="tag ${cls}">${esc(d.status)}</span>${qeStatusExtra(d)}</td>
       <td class="act"><div class="act-row">
-        <button class="btn-g" onclick="toggle(${d.id})" title="${d.status==='Done'?'กลับเป็น In Progress':'ทำเสร็จแล้ว'}">${d.status==='Done'?'↩':'✓'}</button>
-        <button class="btn-g" onclick="openRev(${d.id})" style="color:var(--t-vio)" title="เลื่อนกำหนดเสร็จ (Rev.)">📅</button>
-        <button class="btn-g" onclick="edit(${d.id})" title="แก้ไข">✎</button>
-        <button class="btn-g" onclick="del(${d.id})" style="color:var(--t-dang)" title="ลบ">🗑</button>
+        <button class="btn-g" onclick="toggle(${Number(d.id)})" title="${d.status==='Done'?'กลับเป็น In Progress':'ทำเสร็จแล้ว'}">${d.status==='Done'?'↩':'✓'}</button>
+        <button class="btn-g" onclick="openRev(${Number(d.id)})" style="color:var(--t-vio)" title="เลื่อนกำหนดเสร็จ (Rev.)">📅</button>
+        <button class="btn-g" onclick="edit(${Number(d.id)})" title="แก้ไข">✎</button>
+        <button class="btn-g" onclick="del(${Number(d.id)})" style="color:var(--t-dang)" title="ลบ">🗑</button>
       </div></td></tr>`;}).join('')
     :'<tr><td colspan="7" class="empty">ยังไม่มีรายการ — เพิ่มปัญหาแรกได้เลย 🙂</td></tr>';
 }
 
 $('clearBtn').onclick=()=>{['q','fStatus','fDate','fOwner','fFlag'].forEach(i=>$(i).value='');render();};
 $('csvBtn').onclick=()=>{
-  const rows=[['วันที่แจ้ง','ผู้แจ้ง','ปัญหา','Countermeasure','Due เดิม','Due ปัจจุบัน','Rev.','ประวัติการเลื่อน','สถานะ'],
+  const rows=[['วันที่แจ้ง','ผู้แจ้ง','ปัญหา','Countermeasure','Due เดิม','Due ปัจจุบัน','Rev.','ประวัติการเลื่อน','สถานะ','ติดปัญหา','อุปสรรค','ผู้ช่วย','ความคืบหน้า %','เสร็จเมื่อ','แก้ไขล่าสุดโดย'],
     ...data.map(d=>[fmt(d.date),d.owner,d.issue,d.cm,fmt(d.due),fmt(curDue(d)),
       d.revs?d.revs.length:0,
       (d.revs||[]).map((v,i)=>`Rev.${i+1}: ${fmt(v.date)}${v.reason?' ('+v.reason+')':''}`).join(' | '),
-      d.status])];
-  const csv='\uFEFF'+rows.map(r=>r.map(c=>`"${String(c==null?'':c).replace(/"/g,'""')}"`).join(',')).join('\n');
+      d.status,(d.blocked&&d.status!=='Done')?'Y':'',d.blocker||'',d.helper||'',(d.progress===''||d.progress==null)?'':d.progress,d.doneDate||'',d.updBy||'']) ];
+  const csv='\uFEFF'+rows.map(r=>r.map(c=>window.qeCsvCell(c)).join(',')).join('\n');
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
   a.download='issues_'+today+'.csv'; a.click();
@@ -3028,7 +3196,8 @@ loadTitle(); render(); checkBackup();
 </script>
 <style>
 @keyframes blinkRow{0%,100%{background:rgba(239,68,68,.10)}50%{background:rgba(239,68,68,.32)}}
-tr.od-blink{animation:blinkRow 1s ease-in-out infinite}
+tr.od-blink{background:rgba(239,68,68,.14)}
+tr.od-blink>td:first-child{box-shadow:inset 4px 0 0 var(--dang)}
 tr.od-soon{background:rgba(245,158,11,.15)}
 </style>
 <script>
@@ -5674,13 +5843,7 @@ window.HS={show:()=>{ ensureYear(); render(); },get:()=>store,records:records,lo
 
   /* ---- Notes box (Word-like) ---- */
   const ed=g('ntEd');
-  function clean(html){
-    const t=document.createElement('template'); t.innerHTML=String(html||'');
-    t.content.querySelectorAll('script,style,iframe,object,embed,link,meta,form,base,svg,math').forEach(n=>n.remove());
-    t.content.querySelectorAll('*').forEach(n=>{ [...n.attributes].forEach(a=>{ const nm=a.name.toLowerCase();
-      if(nm.startsWith('on')||((nm==='href'||nm==='src'||nm==='xlink:href')&&/^\s*(javascript|data|vbscript):/i.test(a.value))) n.removeAttribute(a.name); }); });
-    return t.innerHTML;
-  }
+  function clean(html){ return window.qeCleanHtml(html); }
   const noteEmpty=()=>!ed.textContent.trim() && !ed.querySelector('hr,img');
   function loadNote(force){
     if(!force && noteShown===cur) return;
@@ -5797,7 +5960,7 @@ window.HS={show:()=>{ ensureYear(); render(); },get:()=>store,records:records,lo
     else if(act==='out'){ r.lv=Math.max(0,r.lv-1); redraw(); }
     else if(act==='up'&&i>0){ [a[i-1],a[i]]=[a[i],a[i-1]]; redraw(i-1); }
     else if(act==='dn'&&i<a.length-1){ [a[i+1],a[i]]=[a[i],a[i+1]]; redraw(i+1); }
-    else if(act==='del'){ a.splice(i,1); redraw(Math.max(0,i-1)); }
+    else if(act==='del'){ const rm=a.splice(i,1)[0]; redraw(Math.max(0,i-1)); if(rm&&(String(rm.t||'').trim()||String(rm.n||'').trim())&&window.qeUndoRow){ const day=cur; window.qeUndoRow(()=>{ a.splice(Math.min(i,a.length),0,rm); if(day===cur) redraw(i); else persist(); }); } }
   });
   body.addEventListener('keydown',e=>{
     const el=e.target, row=el.closest('.sh-row'); if(!row) return;
@@ -9000,7 +9163,7 @@ const anyFilter=()=>!!(g('q').value.trim()||g('fStatus').value||g('fDate').value
 const doneAge=d=>{ const ref=d.doneDate||curDue(d); return ref?dayNum(today)-dayNum(ref):0; };
 const open=d=>d.status!=='Done';
 const inDays=(d,n)=>{ const c=curDue(d); if(!c||!open(d)) return false; const k=dayNum(c)-dayNum(today); return k>=0&&k<=n; };
-const mineOf=d=>ME()&&norm(d.owner)===norm(ME());
+const mineOf=d=>ME()&&String(d.owner||'').split(/\s*[,/&+]\s*|\s+และ\s+/).map(norm).indexOf(norm(ME()))>=0;
 const pct=(n,m)=>m?Math.round(n/m*100)+'%':'–';
 function kpiHtml(){
   if(!P.kpi) return '<div class="ux-kh"><b>📊 ตัวชี้วัด</b><button type="button" class="ux-chip" data-uxk="open">แสดง</button></div>';
@@ -11973,7 +12136,7 @@ function rows(){
     if(!done&&due&&due<now){ level='late';label='เลยกำหนด';ac='#dc2626'; }
     else if(!done&&due===now){ level='today';label='ครบกำหนดวันนี้';ac='#ea580c'; }
     else if(!done&&due&&due>now&&due<=in3){ level='soon';label='ภายใน 3 วัน';ac='#2563eb'; }
-    return {id:field(d,['id'],i),owner,status,due,issue,cm,done,level,label,ac,mine:!!me&&owner.toLowerCase()===me,raw:d};
+    return {id:field(d,['id'],i),owner,status,due,issue,cm,done,level,label,ac,mine:!!me&&String(owner).toLowerCase().split(/\s*[,/&+]\s*|\s+และ\s+/).map(x=>x.trim()).indexOf(me.trim())>=0,raw:d};
   }).filter(x=>!x.done&&x.mine);
 }
 const tab=document.createElement('button');tab.type='button';tab.className='tabbtn';tab.id='tabW';tab.innerHTML='📥 งานของฉัน <span id="mwTabBadge" style="display:none;margin-left:4px;padding:1px 6px;border-radius:99px;background:var(--dang);color:#fff;font-size:10px"></span>';
@@ -12138,6 +12301,207 @@ function boot(){
   topBtn();
 }
 if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot); else boot();
+})();
+</script>
+
+<style id="qeFix34">
+/* v34: ฟิลด์ใหม่ + ป้ายสถานะ */
+.qe-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-top:12px}
+.qe-chk{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--txt);cursor:pointer}
+.qe-chk input{width:auto;margin:0}
+.qe-grid textarea{min-height:52px}
+.qe-hint{font-size:12px;color:var(--mut);margin-top:4px}
+.qe-bl{margin-top:6px;padding:4px 8px;border-radius:6px;background:rgba(220,38,38,.10);color:var(--t-dang);font-size:13px}
+.qe-bl2{margin-top:4px;font-size:12px;color:var(--mut)}
+.tag.t-blk{background:rgba(220,38,38,.12);color:var(--t-dang);border:1px solid var(--dang)}
+tr.qe-blocked>td:first-child{box-shadow:inset 7px 0 0 #7f1d1d}
+tr.qe-blocked{background:rgba(127,29,29,.10)}
+.qe-pgbox{margin-top:6px;min-width:78px}
+select.qe-pg{width:auto;min-width:68px;padding:3px 6px;font-size:12px;border-radius:6px}
+.qe-pbar{height:6px;background:var(--line);border-radius:99px;overflow:hidden;margin-top:4px}
+.qe-pbar i{display:block;height:100%;background:var(--ok)}
+#cBlkCard:focus-visible{outline:2px solid var(--pri);outline-offset:2px}
+/* v34: ปุ่มจัดการกดง่ายขึ้น (WCAG 2.5.8 ≥ 24px) */
+.act-row{gap:6px}
+.act-row button{min-width:30px;min-height:30px}
+/* v34: ย้อนกลับหลังลบแถว Checklist */
+#qeUndo{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);z-index:760;display:none;align-items:center;gap:12px;padding:10px 14px;border-radius:12px;background:var(--pop,#fff);color:var(--txt);border:1px solid var(--line);box-shadow:0 8px 28px rgba(0,0,0,.22);font-size:14px}
+#qeUndo.on{display:flex}
+/* v34: สี/คอนทราสต์ (ธีม Calm) */
+body.calm{--ok:#15803d;--warn:#b45309}
+body.calm input:not([type=checkbox]):not([type=radio]):not([type=color]):not([type=file]),body.calm select,body.calm textarea{border-color:#7a8496}
+</style>
+<script id="qeFix34Js">
+/* ===== v34 add-on · Blocked/Progress · Accessibility · Undo Checklist ===== */
+(function(){
+'use strict';
+if(window.__QE34) return; window.__QE34=true;
+const g=id=>document.getElementById(id);
+const say=(m,c)=>{ try{ toast(m,c); }catch(e){} };
+
+/* ---------- 1) ฟิลด์ใหม่: บังคับกรอก "อุปสรรค" เมื่อติ๊ก ติดปัญหา ---------- */
+const form=g('f');
+if(form){
+  form.addEventListener('submit',function(e){
+    const b=g('qeBlocked'), k=g('qeBlocker');
+    if(b&&b.checked&&k&&!k.value.trim()){
+      e.preventDefault(); e.stopImmediatePropagation();
+      say('⚠️ ติ๊ก “ติดปัญหา” แล้ว กรุณาระบุอุปสรรค (รออะไร / ติดเรื่องอะไร)','var(--t-dang)');
+      k.setAttribute('aria-invalid','true'); k.focus();
+    }
+  },true);
+  const k=g('qeBlocker'); if(k) k.addEventListener('input',()=>k.removeAttribute('aria-invalid'));
+}
+
+/* ---------- 2) ความคืบหน้า: เปลี่ยนจากแถวได้ทันที ---------- */
+const tb=g('tb');
+if(tb){
+  tb.addEventListener('change',function(e){
+    const s=e.target.closest&&e.target.closest('.qe-pg'); if(!s) return;
+    const id=+s.dataset.id, d=data.find(x=>x.id===id); if(!d) return;
+    const v=s.value;
+    d.progress=v===''?'':Math.max(0,Math.min(100,+v));
+    save(); render();
+    say('✅ อัปเดตความคืบหน้า: '+(v===''?'ไม่ระบุ':v+'%'));
+    const again=document.querySelector('#tb .qe-pg[data-id="'+id+'"]'); if(again) again.focus();
+    if(v==='100'&&typeof openDone==='function') openDone(id);      /* ใช้ flow เดิม: ถามว่ามี Action plan ต่อหรือไม่ */
+  });
+}
+
+/* ---------- 3) ตัวนับ/ปุ่มกรอง "ติดปัญหา" ---------- */
+const blockedN=()=>data.filter(d=>d.blocked&&d.status!=='Done').length;
+function toggleBlockedFilter(){
+  const f=g('fFlag'); if(!f) return;
+  f.value=(f.value==='blocked')?'':'blocked'; render();
+  const t=document.querySelector('#viewTracker .tw'); if(t&&f.value) t.scrollIntoView({behavior:'smooth',block:'start'});
+}
+function ensureChip(){
+  const strip=g('ux33Strip'), late=g('u3L'); if(!strip||!late) return !!g('qeBlkChip');
+  if(g('qeBlkChip')) return true;
+  const b=document.createElement('button'); b.type='button'; b.id='qeBlkChip'; b.className='u3-s u3-stat u3-late';
+  b.title='กดเพื่อกรองเฉพาะงานที่ติดปัญหา แล้วเลื่อนไปที่ตาราง';
+  b.innerHTML='⛔ ติดปัญหา <b id="qeBlkN">0</b>';
+  late.insertAdjacentElement('afterend',b);
+  b.addEventListener('click',toggleBlockedFilter);
+  return true;
+}
+function paintBlocked(){
+  const n=blockedN(), f=g('fFlag'), on=!!f&&f.value==='blocked';
+  const c=g('cBlocked'); if(c) c.textContent=n;
+  const card=g('cBlkCard'); if(card) card.setAttribute('aria-pressed',on?'true':'false');
+  const bn=g('qeBlkN'); if(bn) bn.textContent=n;
+  const chip=g('qeBlkChip'); if(chip){ chip.style.opacity=n>0||on?'1':'.55'; chip.setAttribute('aria-pressed',on?'true':'false'); }
+}
+{ const card=g('cBlkCard');
+  if(card){
+    card.addEventListener('click',toggleBlockedFilter);
+    card.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); toggleBlockedFilter(); } });
+  } }
+{ const _r=render; render=function(){ const r=_r.apply(this,arguments); try{ ensureChip(); paintBlocked(); sortAria(); }catch(e){ console.error('[v34]',e); } return r; }; }
+{ let n=0; (function retry(){ if(!ensureChip()&&++n<40) setTimeout(retry,250); else paintBlocked(); })(); }
+
+/* ---------- 4) Accessibility: label / ชื่อปุ่ม / หัวตารางเรียงได้ / modal ---------- */
+let aid=0;
+const ensureId=el=>{ if(!el.id) el.id='qe-a11y-'+(++aid); return el.id; };
+const CTRL='input,select,textarea';
+/* ชื่อที่ระบุเองสำหรับตัวควบคุมที่ไม่มี label/ข้อความ (ตามแท็บ Checklist, Mission, แชท, ปุ่มเลือกไฟล์) */
+const NAME_BY_ID={shDate:'วันที่ของ Checklist',qeChatClose:'ปิดหน้าต่างแชท',rsFile:'เลือกไฟล์ Backup (.json) เพื่อกู้คืน',shFile:'เลือกไฟล์ Checklist (.json) เพื่อกู้คืน',msFile:'เลือกไฟล์ 7 Mission (.json) เพื่อกู้คืน',hsFile:'เลือกไฟล์ Hoshin (.json) เพื่อกู้คืน'};
+const NAME_BY_CLASS={'sh-note':'หมายเหตุ (Remark)','sh-txt':'รายการที่ต้องทำ','ai':'ไอคอน','an':'ชื่อรายการ','ac':'สี'};
+function givenName(el){
+  if(NAME_BY_ID[el.id]) return NAME_BY_ID[el.id];
+  const c=[...el.classList].find(x=>NAME_BY_CLASS[x]); return c?NAME_BY_CLASS[c]:'';
+}
+const nameOf=el=>String(el.getAttribute('aria-label')||'').trim();
+function fix(root){
+  if(!root||root.nodeType!==1) return;
+  const all=[root].concat(Array.prototype.slice.call(root.querySelectorAll('label,button,input,select,textarea,.sh-st,.mod,[contenteditable="true"]')));
+  all.forEach(el=>{
+    const t=el.tagName;
+    if(t!=='LABEL'&&!nameOf(el)&&!el.getAttribute('aria-labelledby')){
+      const gn=givenName(el); if(gn&&!(el.labels&&el.labels.length)){ el.setAttribute('aria-label',gn); return; }
+    }
+    if(t==='LABEL'){
+      if(el.hasAttribute('for')||el.querySelector(CTRL)) return;
+      let c=el.nextElementSibling; if(!c) return;
+      if(!c.matches(CTRL)) c=c.querySelector(CTRL);
+      if(c) el.setAttribute('for',ensureId(c));
+    }else if(t==='BUTTON'){
+      if(nameOf(el)||el.getAttribute('aria-labelledby')) return;
+      const title=el.getAttribute('title');
+      if(title&&!/[A-Za-z\u0E00-\u0E7F]/.test(el.textContent||'')) el.setAttribute('aria-label',title);
+    }else if(t==='INPUT'||t==='SELECT'||t==='TEXTAREA'){
+      if(el.type==='hidden'||nameOf(el)||el.getAttribute('aria-labelledby')) return;
+      if(el.labels&&el.labels.length) return;
+      const dsel=el.closest('.dsel');
+      if(dsel){
+        const lab=dsel.previousElementSibling&&dsel.previousElementSibling.tagName==='LABEL'?dsel.previousElementSibling.textContent.trim():'วันที่';
+        const part=['วัน','เดือน','ปี'][Array.prototype.indexOf.call(dsel.querySelectorAll('select'),el)]||'';
+        el.setAttribute('aria-label',(lab+' '+part).trim()); return;
+      }
+      const nm=el.getAttribute('placeholder')||el.getAttribute('title');
+      if(nm) el.setAttribute('aria-label',nm.replace(/^[^\p{L}\p{N}]+/u,'').trim()||nm);
+    }else if(el.classList&&el.classList.contains('sh-st')){
+      if(!el.hasAttribute('tabindex')){ el.setAttribute('tabindex','0'); el.setAttribute('role','button'); el.setAttribute('aria-label','สลับสถานะรายการ (ว่าง → เสร็จ → ยกเลิก)'); }
+    }else if(el.classList&&el.classList.contains('mod')){
+      if(!el.hasAttribute('role')){
+        el.setAttribute('role','dialog'); el.setAttribute('aria-modal','true');
+        const h=el.querySelector('h3'); if(h) el.setAttribute('aria-labelledby',ensureId(h));
+      }
+    }else if(el.isContentEditable&&el.id==='ntEd'&&!nameOf(el)){
+      el.setAttribute('role','textbox'); el.setAttribute('aria-multiline','true'); el.setAttribute('aria-label','บันทึกเพิ่มเติมของวันนี้');
+    }
+  });
+}
+{ const pending=new Set(); let tm=0;
+  new MutationObserver(ms=>{
+    ms.forEach(m=>m.addedNodes.forEach(n=>{ if(n.nodeType===1) pending.add(n); }));
+    if(!pending.size) return; clearTimeout(tm);
+    tm=setTimeout(()=>{ const list=[...pending]; pending.clear(); list.forEach(n=>{ if(n.isConnected) fix(n); }); },120);
+  }).observe(document.body,{childList:true,subtree:true});
+  fix(document.body); }
+
+/* หัวตารางที่เรียงได้: โฟกัสด้วยคีย์บอร์ด + aria-sort */
+function sortAria(){
+  const th1=g('thDate'), th2=g('thDue'); if(!th1||!th2||typeof sortCfg==='undefined') return;
+  [[th1,'date'],[th2,'due']].forEach(([th,k])=>{
+    th.setAttribute('aria-sort',sortCfg.k===k?(sortCfg.d==='desc'?'descending':'ascending'):'none');
+    if(!th.hasAttribute('tabindex')) th.setAttribute('tabindex','0');
+  });
+}
+document.addEventListener('keydown',function(e){
+  const t=e.target; if(!t||!t.classList) return;
+  if((e.key==='Enter'||e.key===' ')&&(t.id==='thDate'||t.id==='thDue')){ e.preventDefault(); t.click(); setTimeout(sortAria,0); return; }
+  if((e.key==='Enter'||e.key===' ')&&t.classList.contains('sh-st')){       /* ช่องสถานะ Checklist */
+    e.preventDefault(); e.stopPropagation();
+    const row=t.closest('.sh-row'), i=row?row.dataset.i:null; t.click();
+    if(i!=null) setTimeout(()=>{ const n=document.querySelector('.sh-row[data-i="'+i+'"] .sh-st'); if(n) n.focus(); },30);
+    return;
+  }
+  if(e.key==='Escape'){                                                     /* Esc ปิดกล่องโต้ตอบบนสุด */
+    const open=[...document.querySelectorAll('.ov.on')]; if(!open.length) return;
+    const top=open[open.length-1];
+    const b=[...top.querySelectorAll('button')].find(x=>/^(ปิด|ยกเลิก)/.test((x.textContent||'').trim()));
+    e.preventDefault(); if(b) b.click(); else top.classList.remove('on');
+  }
+},true);
+document.addEventListener('click',e=>{ if(e.target&&(e.target.id==='thDate'||e.target.id==='thDue')) setTimeout(sortAria,0); },true);
+sortAria();
+
+/* ---------- 5) Checklist: ย้อนกลับหลังลบแถวที่มีข้อความ ---------- */
+let ubTimer=0;
+window.qeUndoRow=function(restore){
+  let bar=g('qeUndo');
+  if(!bar){
+    bar=document.createElement('div'); bar.id='qeUndo'; bar.setAttribute('role','status'); bar.setAttribute('aria-live','polite');
+    bar.innerHTML='<span>ลบแถวแล้ว</span><button type="button" class="btn-g" id="qeUndoBtn">↩ ย้อนกลับ</button>';
+    document.body.appendChild(bar);
+  }
+  const btn=g('qeUndoBtn'); btn.onclick=()=>{ clearTimeout(ubTimer); bar.classList.remove('on'); try{ restore(); }catch(e){ console.error(e); } };
+  bar.classList.add('on'); clearTimeout(ubTimer); ubTimer=setTimeout(()=>bar.classList.remove('on'),8000);
+};
+
+/* ---------- 6) แจ้งเมื่อระบบซ่อมข้อมูลที่ผิดรูปแบบตอนโหลด ---------- */
+if(window.__qeSanFixed) setTimeout(()=>say('⚠️ พบข้อมูลผิดรูปแบบ '+window.__qeSanFixed+' รายการ — ระบบปรับให้ปลอดภัยแล้ว (ควรตรวจสอบรายการที่เกี่ยวข้อง)','var(--t-warn)'),1800);
 })();
 </script>
 
