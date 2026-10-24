@@ -13611,6 +13611,7 @@ const css=document.createElement('style'); css.id='xrCss'; css.textContent=
  '#xrMod .xr-row .xr-nx{flex:1 0 100%;font-size:12px;color:var(--mut,#64748b)}#xrMod .xr-row .xr-del{margin-left:auto;border:1px solid var(--line,#cbd5e1);background:var(--card,#fff);border-radius:8px;padding:5px 9px;cursor:pointer;color:inherit}'+
  '#xrMod .xr-add{margin-top:8px;border:1px dashed var(--pri,#db2777);background:none;color:var(--pri,#db2777);border-radius:10px;padding:8px 12px;font-weight:800;cursor:pointer;width:100%}'+
  '#xrMod .xr-ok{color:var(--t-ok,#15803d);font-weight:700}#xrMod .xr-bad{color:var(--t-dang,#b91c1c);font-weight:700}#xrMod .xr-warn{color:var(--t-warn,#b45309);font-weight:700}'+
+ '#xrMod .xr-tst{margin-top:14px;padding:10px 12px;border:1px dashed var(--line,#cbd5e1);border-radius:12px;background:var(--soft,#f8fafc)}#xrMod .xr-tst>b{font-size:13.5px;margin-right:8px}#xrMod .xr-tst>span{font-size:12px;color:var(--mut,#64748b)}#xrMod .xr-a button:disabled{opacity:.5;cursor:not-allowed}'+
  '#xrMod .xr-setProg{margin-top:10px;font-size:13px;min-height:1.2em}#xrMod .xr-log{font-size:12px;margin-top:6px;max-height:120px;overflow:auto;line-height:1.6}'+
  '#xrMod ol.xr-steps{margin:8px 0 0 18px;padding:0;font-size:12.5px;line-height:1.65}#xrMod code{background:var(--soft,#f1f5f9);padding:1px 5px;border-radius:5px}'+
  '#nvNav .nv-tools #nvSearch{grid-column:auto!important}#nvNav .nv-tools #nvSearch kbd{display:none}#nvNav.nv-c .nv-tools{grid-template-columns:repeat(4,34px)!important}#nvXr{font-weight:700}'+
@@ -13633,7 +13634,10 @@ mod.innerHTML='<div class="xr-b"><button type="button" class="xr-x" data-xr="clo
    '<label class="xr-l" for="xrTo">ส่งถึง (To) — คั่นด้วย , หรือขึ้นบรรทัดใหม่</label><textarea id="xrTo" rows="2" placeholder="gm@company.com, manager@company.com"></textarea>'+
    '<label class="xr-l" for="xrCc">สำเนา (CC)</label><input id="xrCc" type="text" placeholder="ไม่บังคับ">'+
    '<label class="xr-l" for="xrTestTo">อีเมลสำหรับส่งทดสอบ</label><input id="xrTestTo" type="email" placeholder="อีเมลของคุณเอง">'+
-   '<div class="xr-a"><button type="button" data-xr="test">🧪 ส่งทดสอบ<small>อีเมลทดสอบ + LINE ขึ้นต้น [ทดสอบ]</small></button><button type="button" class="p" data-xr="send">📤 ส่งตอนนี้<small>ส่งถึงรายชื่อ To / CC + LINE</small></button></div>'+
+   '<div class="xr-tst"><b>🧪 ส่งทดสอบ</b><span>เลือกช่องทางที่จะทดสอบ — ไม่ส่งถึงผู้บริหาร</span>'+
+    '<div class="xr-a" style="margin-top:6px"><button type="button" data-xr="test" data-ch="line">💬 ทดสอบ LINE<small id="xrTLs">ข้อความขึ้นต้น [ทดสอบ] เข้ากลุ่ม LINE</small></button>'+
+    '<button type="button" data-xr="test" data-ch="email">✉️ ทดสอบ E-mail<small id="xrTMs">ส่งถึงอีเมลทดสอบเท่านั้น</small></button></div></div>'+
+   '<div class="xr-a"><button type="button" class="p" data-xr="send" style="grid-column:1/-1">📤 ส่งตอนนี้ (จริง)<small id="xrSendSub">ส่งถึงรายชื่อ To / CC + LINE</small></button></div>'+
    '<div class="xr-setProg" id="xrProg" aria-live="polite"></div>'+
    '<div class="xr-n">ส่งเป็น: ข้อความสรุป + ภาพสไลด์ภาพรวม / แผนงาน (LINE) · อีเมลสรุป + แนบ PDF และ PowerPoint ฉบับเต็ม (E-mail)</div></div>'+
   '<div class="xr-sec"><h4>⏰ ตั้งเวลาส่งอัตโนมัติ</h4><div id="xrSch"></div><button type="button" class="xr-add" data-xr="addsch">＋ เพิ่มรอบส่ง</button>'+
@@ -13691,7 +13695,14 @@ function paintSend(){ const c=cfgGet(), ln=lineOK(), sv=srvOK(c);
   g('xrLnSt').innerHTML=ln?'<span class="xr-ok">✓ ตั้งค่าแล้ว</span>':'<span class="xr-bad">ยังไม่ได้ตั้งค่า 🔔 LINE</span>';
   g('xrMlSt').innerHTML=sv?'<span class="xr-ok">✓ พร้อม</span>':'<span class="xr-warn">ต้องติดตั้งเซิร์ฟเวอร์ก่อน</span>';
   g('xrSch').innerHTML=c.schedules.length?c.schedules.map(rowHTML).join(''):'<div class="xr-n">ยังไม่มีรอบส่ง — กด ＋ เพิ่มรอบส่ง</div>';
-  paintNext(); paintSrv(); if(!sv) g('xrSrvBox').open=true; }
+  paintNext(); paintSrv(); paintBtns(); if(!sv) g('xrSrvBox').open=true; }
+/* v42.2: ปุ่มส่งทดสอบแยก LINE / E-mail · ข้อความใต้ปุ่มเปลี่ยนตามช่องทางที่ติ๊ก */
+function paintBtns(){ const ln=lineOK(), sv=srvOK(readForm()), tm=emails(g('xrTestTo').value)[0];
+  const bl=mod.querySelector('[data-xr="test"][data-ch="line"]'), bm=mod.querySelector('[data-xr="test"][data-ch="email"]');
+  if(bl){ bl.disabled=busy||!ln; g('xrTLs').textContent=ln?'ข้อความขึ้นต้น [ทดสอบ] เข้ากลุ่ม LINE':'ยังไม่ได้ตั้งค่า 🔔 LINE'; }
+  if(bm){ bm.disabled=busy||!sv; g('xrTMs').textContent=!sv?'ต้องติดตั้งเซิร์ฟเวอร์ก่อน':tm?'ส่งถึง '+tm+' เท่านั้น':'ใส่อีเมลสำหรับส่งทดสอบก่อน'; }
+  const L=g('xrChLine').checked, Mm=g('xrChMail').checked, to=emails(g('xrTo').value), cc=emails(g('xrCc').value);
+  g('xrSendSub').textContent=(!L&&!Mm)?'เลือกช่องทาง LINE / E-mail ด้านบนก่อน':[Mm?'E-mail → '+(to.length?to.length+' คน':'ยังไม่มีผู้รับ')+(cc.length?' + CC '+cc.length+' คน':''):'',L?'LINE กลุ่มที่ตั้งค่าไว้':''].filter(Boolean).join(' · '); }
 function paintSrv(){ const c=cfgGet(), el=g('xrSrvSt'), si=g('xrSnapInfo'), lg=g('xrLog');
   if(!srvOK(c)){ el.innerHTML='<span class="xr-warn">· ยังไม่ได้ตั้งค่า</span>'; si.innerHTML='⚠ การส่ง E-mail และการส่งตามเวลา ต้องติดตั้งเซิร์ฟเวอร์ส่งรายงานก่อน (ดู ⚙ ด้านล่าง) · LINE ส่งด้วยมือได้เลย'; lg.innerHTML=''; return; }
   if(!srvInfo){ el.innerHTML='<span class="xr-n">· ยังไม่ได้ตรวจ</span>'; si.textContent=''; return; }
@@ -13704,9 +13715,9 @@ async function ping(quiet){ const c=readForm(); if(!srvOK(c)){ if(!quiet) say('�
   try{ const j=await srv({action:'ping'},c); srvInfo=j; paintSrv(); if(!quiet) say('✅ เชื่อมต่อเซิร์ฟเวอร์ส่งรายงานแล้ว'); return true; }
   catch(e){ srvInfo={err:e.message}; paintSrv(); if(!quiet) say('❌ '+e.message); return false; } }
 function setProg(t,cls){ g('xrProg').innerHTML=cls?'<span class="'+cls+'">'+E(t)+'</span>':E(t); }
-function lockBtns(on){ busy=on; mod.querySelectorAll('[data-xr="test"],[data-xr="send"],[data-xr="snap"],[data-xr="savecfg"]').forEach(b=>b.disabled=on); }
-async function doSend(test){
-  if(busy) return; const c=readForm(); cfgSet(c); const ch={line:c.chLine,email:c.chMail}, sv=srvOK(c);
+function lockBtns(on){ busy=on; mod.querySelectorAll('[data-xr="send"],[data-xr="snap"],[data-xr="savecfg"]').forEach(b=>b.disabled=on); paintBtns(); }
+async function doSend(test,only){
+  if(busy) return; const c=readForm(); cfgSet(c); const ch=only?{line:only==='line',email:only==='email'}:{line:c.chLine,email:c.chMail}, sv=srvOK(c);
   if(!ch.line&&!ch.email){ setProg('⚠ เลือกช่องทางอย่างน้อย 1 ช่อง (LINE / E-mail)','xr-bad'); return; }
   if(ch.line&&!lineOK()){ setProg('⚠ ยังไม่ได้ตั้งค่า LINE — ไปที่ ⚙ เครื่องมือ › 🔔 LINE ก่อน','xr-bad'); return; }
   if(ch.email&&!sv){ setProg('⚠ การส่ง E-mail ต้องติดตั้งเซิร์ฟเวอร์ส่งรายงานก่อน (ดู ⚙ ด้านล่าง) — หรือติ๊กออกแล้วส่งเฉพาะ LINE','xr-bad'); g('xrSrvBox').open=true; return; }
@@ -13749,7 +13760,8 @@ function openMod(){
   lastFocus=document.activeElement; mod.hidden=false; setTimeout(()=>{ const b=mod.querySelector('.xr-tabs .on'); if(b) b.focus(); },30);
 }
 function closeMod(){ mod.hidden=true; try{ lastFocus&&lastFocus.focus(); }catch(e){} }
-mod.addEventListener('change',e=>{ const t=e.target;
+mod.addEventListener('input',e=>{ if(e.target&&/^xr(To|Cc|TestTo)$/.test(e.target.id)) paintBtns(); });
+mod.addEventListener('change',e=>{ const t=e.target; if(t&&/^xr(ChLine|ChMail|Url|Sec)$/.test(t.id)) paintBtns();
   if(t.dataset&&t.dataset.sec){ try{ localStorage.setItem(KSEC,JSON.stringify(getOpt().secs)); }catch(err){} countSlides(); }
   if(t.closest&&t.closest('#xrSch')) paintNext(); });
 mod.addEventListener('input',e=>{ if(e.target.closest&&e.target.closest('#xrSch')) paintNext(); });
@@ -13757,7 +13769,7 @@ mod.addEventListener('click',async e=>{
   if(e.target===mod){ closeMod(); return; }
   const tb=e.target.closest('[data-xrt]'); if(tb){ tab(tb.dataset.xrt); return; }
   const b=e.target.closest('[data-xr]'); if(!b) return; const a=b.dataset.xr; if(a==='close'){ closeMod(); return; }
-  if(a==='test'){ doSend(true); return; } if(a==='send'){ doSend(false); return; }
+  if(a==='test'){ doSend(true,b.dataset.ch); return; } if(a==='send'){ doSend(false); return; }
   if(a==='addsch'){ const c=readForm(); c.schedules.push(DEF_SCH()); cfgSet(c); paintSend(); return; }
   if(a==='delsch'){ const id=b.closest('.xr-row').dataset.id; const c=readForm(); c.schedules=c.schedules.filter(s=>s.id!==id); cfgSet(c); paintSend(); setProg('🗑 ลบรอบแล้ว — กด 💾 บันทึกการตั้งค่า เพื่ออัปเดตเซิร์ฟเวอร์','xr-warn'); return; }
   if(a==='savecfg'){ saveCfg(); return; }
