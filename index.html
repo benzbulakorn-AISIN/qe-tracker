@@ -3441,7 +3441,9 @@ try{ Object.assign(ui,JSON.parse(localStorage.getItem(UIK)||'{}')||{}); }catch(e
 if(ui.view!=='plan'&&ui.view!=='ot'&&ui.view!=='lv') ui.view='sum'; if(ui.lvm==null) ui.lvm='S'; if(ui.lvb==null) ui.lvb=''; delete ui.dsel; if(ui.otm==null) ui.otm='Y';
 const saveUI=()=>{ try{ localStorage.setItem(UIK,JSON.stringify(ui)); }catch(e){} };
 const years=()=>Object.keys(store.years).sort((a,b)=>+a-+b);
-const Y=()=>store.years[ui.year];
+/* v42: เกณฑ์คนไม่อยู่ต่อวัน ค่าเดิม 1 → 2 คน (ปรับครั้งเดียว · ยังแก้เองได้ที่ ⚙ ตั้งค่าแผนลา) */
+const lvMig=y=>{ if(y&&y.lv&&y.lv.set&&!y.lv.set.mx2){ if(+y.lv.set.max===1||y.lv.set.max==null) y.lv.set.max=2; y.lv.set.mx2=1; } return y; };
+const Y=()=>lvMig(store.years[ui.year]);
 function ensureYear(){ const ys=years(); if(!ys.length){ ui.year=''; return; } if(!store.years[ui.year]) ui.year=ys[0]; }
 const cj=o=>JSON.stringify(o,(k,v)=>(v&&typeof v==='object'&&!Array.isArray(v))?Object.keys(v).sort().reduce((a,x)=>{a[x]=v[x];return a;},{}):v);
 
@@ -4628,8 +4630,10 @@ function lvSan(o){
   o=clone(o||{}); const used=new Set();
   o.people=(Array.isArray(o.people)?o.people:[]).map((p,i)=>{ let id=String((p&&p.id)||('e'+(i+1))); while(used.has(id)) id+='x'; used.add(id);
     return {id:id,code:String((p&&p.code)||''),name:String(p&&p.name!=null?p.name:('Member '+(i+1))),color:(p&&p.color)||OT_COL[i%OT_COL.length]}; });
-  const s=o.set||{}; const hpd=num(s.hpd)>0?num(s.hpd):8, mx=isFinite(parseFloat(s.max))&&parseFloat(s.max)>=0?parseFloat(s.max):1;
-  o.set={hpd:hpd,max:mx};
+  const s=o.set||{}; const hpd=num(s.hpd)>0?num(s.hpd):8;
+  let mx=isFinite(parseFloat(s.max))&&parseFloat(s.max)>=0?parseFloat(s.max):2;
+  if(!s.mx2&&mx===1) mx=2;   /* v42: เกณฑ์ใหม่ — ไม่ควรมีคนไม่อยู่เกิน 2 คน/วัน (ปรับค่าเดิม 1 → 2 อัตโนมัติครั้งเดียว) */
+  o.set={hpd:hpd,max:mx,mx2:1};
   const bal={}; o.people.forEach(p=>{ const b=(o.bal&&o.bal[p.id])||{}, out={};
     LV_CAT.forEach(c=>{ const x=b[c[0]]||{}, e=lvTm(x.e)||lvT0(), u=lvTm(x.u)||lvT0(); let r=lvTm(x.r); if(!r) r=lvFromMin(lvMin(e,hpd)-lvMin(u,hpd),hpd); out[c[0]]={e:e,u:u,r:r}; });
     out.out=lvTm(b.out); bal[p.id]=out; });
@@ -4670,7 +4674,7 @@ function lvMonth(y,m){
   return {m:m,dim:dim,days:days,persons:persons,tot:tot,conf:conf,hpd:hpd,any:persons.some(s=>s.any>0)};
 }
 function lvYear(y){
-  const lv=y.lv, ms=[]; for(let m=1;m<=12;m++) ms.push(lvMonth(y,m));
+  lvMig(y); const lv=y.lv, ms=[]; for(let m=1;m<=12;m++) ms.push(lvMonth(y,m));
   const per=lv.people.map((p,i)=>{ const s={p:p,Lh:0,Th:0,W:0,H:0,O:0}; ms.forEach(x=>{ const q=x.persons[i]; s.Lh+=q.Lh; s.Th+=q.Th; s.W+=q.W; s.H+=q.H; s.O+=q.O; }); return s; });
   const hpd=lv.set.hpd; let eV=0,uV=0,rV=0,uS=0,uP=0,out=0;
   lv.people.forEach(p=>{ const b=lv.bal[p.id]; eV+=lvDays(b.vac.e,hpd); uV+=lvDays(b.vac.u,hpd); rV+=lvDays(b.vac.r,hpd); uS+=lvDays(b.sick.u,hpd); uP+=lvDays(b.pers.u,hpd); out+=lvDays(b.out,hpd); });
@@ -4890,14 +4894,14 @@ function lvSetMod(){
 }
 function lvReadSetForm(){
   const y=Y(), lv=y.lv; if(!g('lsH')) return;
-  lv.set.hpd=num(g('lsH').value)>0?num(g('lsH').value):8; const mx=parseFloat(g('lsM').value); lv.set.max=isFinite(mx)&&mx>=0?mx:1;
+  lv.set.hpd=num(g('lsH').value)>0?num(g('lsH').value):8; const mx=parseFloat(g('lsM').value); lv.set.max=isFinite(mx)&&mx>=0?mx:2; lv.set.mx2=1;
   document.querySelectorAll('#lsP .lv-mr').forEach(r=>{ const p=lv.people.find(x=>x.id===r.dataset.id); if(!p) return; p.code=r.querySelector('.lcode').value.trim(); p.name=r.querySelector('.lname').value.trim()||p.name; p.color=r.querySelector('.lcol').value||p.color; });
 }
 function lvModal(a,t){
   const y=Y(), lv=y.lv;
   if(ctx.t==='lvstart'&&a==='lvgo'){
     const names=String(g('lsNames').value||'').split('\n').map(s=>s.trim()).filter(Boolean); if(!names.length){ alert('กรุณาใส่ชื่ออย่างน้อย 1 คน'); return; }
-    y.lv=lvSan({people:names.map((n,i)=>({id:'e'+(i+1),code:'',name:n,color:OT_COL[i%OT_COL.length]})),set:{hpd:8,max:1},months:{}}); ui.view='lv'; ui.lvm='S'; closeMsMod(); touch(); render(); toastMsg('✅ สร้างแผนแล้ว — เลือกเดือนแล้วเริ่มลงแผนได้เลย'); return;
+    y.lv=lvSan({people:names.map((n,i)=>({id:'e'+(i+1),code:'',name:n,color:OT_COL[i%OT_COL.length]})),set:{hpd:8,max:2,mx2:1},months:{}}); ui.view='lv'; ui.lvm='S'; closeMsMod(); touch(); render(); toastMsg('✅ สร้างแผนแล้ว — เลือกเดือนแล้วเริ่มลงแผนได้เลย'); return;
   }
   if(ctx.t==='lvcell'){
     if(a==='lvtype'){ lvReadCellForm(); ctx.type=t.dataset.v; lvCellModHtml(); return; }
@@ -12826,7 +12830,7 @@ function collect(){
     } else M.gaps.push('OT Control ยังไม่ได้ตั้งค่า'); }catch(e){ console.warn('xr ot',e); M.ot=null; M.gaps.push('OT Control อ่านข้อมูลไม่ได้'); }
     try{ if(y.lv&&y.lv.people&&y.lv.people.length){ const v=X.lvYear(y), hpd=y.lv.set.hpd, yr=+X.ui().year;
       const up=X.lvUpcoming(y).filter(e=>e.ds>=T).slice(0,9).map(e=>({ds:e.ds,name:e.p.name,k:e.c.k==='L'?'ลา':e.c.k==='T'?'อบรม/ไปข้างนอก':e.c.k==='P'?'ลา/อบรมบางช่วง':e.c.k==='W'?'W (มาทำงานวันหยุด)':e.c.k==='H'?'H (หยุดชดเชย)':e.c.k==='O'?'OT วันหยุด':e.c.k}));
-      M.lv={year:yr,hpd:hpd,eV:v.eV,uV:v.uV,rV:v.rV,uS:v.uS,uP:v.uP,out:v.out,Ld:v.Lh/hpd,Td:v.Th/hpd,conf:v.conf,people:y.lv.people.length,
+      M.lv={year:yr,hpd:hpd,max:+y.lv.set.max||2,eV:v.eV,uV:v.uV,rV:v.rV,uS:v.uS,uP:v.uP,out:v.out,Ld:v.Lh/hpd,Td:v.Th/hpd,conf:v.conf,people:y.lv.people.length,
         months:v.ms.map((x,i)=>({l:THM[i],L:x.tot.Lh/hpd,T:x.tot.Th/hpd,conf:x.conf.length})),per:v.per.map(p=>({name:p.p.name,L:p.Lh/hpd,T:p.Th/hpd})),up:up};
       if(!(v.Lh||v.Th||v.eV)) M.gaps.push('แผนลายังไม่มีข้อมูล');
     } else M.gaps.push('แผนลายังไม่ได้ตั้งค่า'); }catch(e){ console.warn('xr lv',e); M.lv=null; M.gaps.push('แผนลาอ่านข้อมูลไม่ได้'); }
@@ -13078,7 +13082,7 @@ function build(M0,opt){
       ['📊 Tracker',M.tr.open.length+'/'+M.tr.total,'งานที่ยังเปิด (Open)','เลยกำหนด '+M.tr.overdue.length+' · ปิดแล้ว '+M.tr.closure+'%',M.tr.overdue.length?(M.maxLate>7?'R':'Y'):'G'],
       ['🎯 7 Mission',M.ms&&M.ms.pct!=null?M.ms.pct+'%':'–','ผลผ่านเป้า (O)',M.ms&&M.ms.ev?M.ms.ok+' O / '+M.ms.ng+' X':NA,M.ms&&M.ms.pct!=null?(M.ms.pct>=80?'G':M.ms.pct>=50?'Y':'R'):'N'],
       ['⏱ OT Control',M.ot&&M.ot.overall!=null?f2(M.ot.overall):'–','ชม./คน/วัน (เฉลี่ย)',M.ot&&M.ot.overall!=null?'เป้า ≤ '+f2(M.ot.set.tgtDay)+' ชม.':NA,M.ot&&M.ot.overall!=null?(M.ot.j==='X'?'R':'G'):'N'],
-      ['🌴 วันลา',M.lv&&M.lv.eV?pct(M.lv.uV,M.lv.eV)+'%':'–','ใช้พักร้อนแล้ว',M.lv&&M.lv.eV?f1(M.lv.uV)+' / '+f1(M.lv.eV)+' วัน · ซ้อนกัน '+M.lv.conf+' วัน':NA,M.lv&&M.lv.eV?(M.lv.conf?'Y':'G'):'N'],
+      ['🌴 วันลา',M.lv&&M.lv.eV?pct(M.lv.uV,M.lv.eV)+'%':'–','ใช้พักร้อนแล้ว',M.lv&&M.lv.eV?f1(M.lv.uV)+' / '+f1(M.lv.eV)+' วัน · ไม่อยู่เกิน '+M.lv.max+' คน '+M.lv.conf+' วัน':NA,M.lv&&M.lv.eV?(M.lv.conf?'Y':'G'):'N'],
       ['🧰 PCR',M.pcr?String(M.pcr.delay):'–','PCR Delay',M.pcr?'จาก '+M.pcr.total+' รายการ · Done '+M.pcr.done:NA,M.pcr?(M.pcr.delay?'R':'G'):'N'],
       ['🧰 Q-patrol',M.qp?String(M.qp.delay+M.qp.late.length):'–','Delay / เลยแผน',M.qp?M.qp.items.length+' หัวข้อ'+(M.qp.next[0]?' · ถัดไป '+dmS(M.qp.next[0].pd):''):NA,M.qp?((M.qp.delay||M.qp.late.length)?'R':'G'):'N'],
       ['🧭 Hoshin',M.hs?M.hs.pct+'%':'–','ไลน์ที่ OK',M.hs?M.hs.ok+' / '+M.hs.total+' ไลน์ · เลยกำหนด '+M.hs.late.length:NA,M.hs?(M.hs.late.length?'Y':M.hs.pct>=80?'G':'Y'):'N']];
@@ -13096,7 +13100,7 @@ function build(M0,opt){
     if(M.conflicts.length) pts.push('ข้อมูลขัดกัน: '+M.conflicts.join('; '));
     if(M.ms&&M.ms.ev){ const bad=[]; M.ms.list.forEach(m=>m.bad.forEach(b=>bad.push(b))); if(bad.length) pts.push('7 Mission ไม่ผ่านเป้า '+bad.length+' KPI: '+bad.slice(0,2).map(b=>b.m+' › '+clip(b.name,30)).join(', ')); }
     if(M.ot&&M.ot.overall!=null&&M.ot.j==='X') pts.push('OT เฉลี่ย '+f2(M.ot.overall)+' ชม./คน/วัน เกินเป้า ≤ '+f2(M.ot.set.tgtDay));
-    if(M.lv&&M.lv.conf) pts.push('มีวันที่คนไม่อยู่ซ้อนกัน '+M.lv.conf+' วัน');
+    if(M.lv&&M.lv.conf) pts.push('มีวันที่คนไม่อยู่เกิน '+M.lv.max+' คน/วัน รวม '+M.lv.conf+' วัน');
     if(M.td&&!on('tracker')&&!on('hoshin')&&!on('mj')&&M.td.rows.length) pts.push('งานวันนี้: '+M.td.rows.length+' รายการ');
     card(D,s,.45,by0,7.9,bh,'📌 ประเด็นสำคัญ'); ftag(D,s,8.2,by0+.1,'Fact'); bullets(D,s,.65,by0+.38,7.55,bh-.48,pts.length?pts.slice(0,rowsN===2?4:6):['ไม่พบประเด็นเร่งด่วนในหมวดที่เลือก'],{fs:11});
     card(D,s,8.5,by0,4.38,bh,'🧩 ข้อมูลที่ยังขาด (Data gaps)'); ftag(D,s,12.73,by0+.1,'Fact'); bullets(D,s,8.7,by0+.38,4.05,bh-.48,(M.gaps.length?M.gaps.slice(0,5):['ข้อมูลครบทุกหมวดที่เลือก']).concat(SCOPE?['ℹ️ '+SCOPE]:[]),{fs:10,c:P.mut});
@@ -13195,15 +13199,15 @@ function build(M0,opt){
 
   /* ---------- 🌴 วันลา ---------- */
   if(on('leave')){ const lv=M.lv, has=lv&&(lv.eV||lv.Ld||lv.Td);
-    const s=D.slide('leave','🌴 แผนลา / อบรม'+(lv?' · ปี '+lv.year:''),has?'ใช้พักร้อนแล้ว '+f1(lv.uV)+' จาก '+f1(lv.eV)+' วัน ('+pct(lv.uV,lv.eV)+'%) · คนไม่อยู่ซ้อนกัน '+lv.conf+' วัน':'แผนลายังไม่มีข้อมูล');
+    const s=D.slide('leave','🌴 แผนลา / อบรม'+(lv?' · ปี '+lv.year:''),has?'ใช้พักร้อนแล้ว '+f1(lv.uV)+' จาก '+f1(lv.eV)+' วัน ('+pct(lv.uV,lv.eV)+'%) · วันที่คนไม่อยู่เกิน '+lv.max+' คน: '+lv.conf+' วัน':'แผนลายังไม่มีข้อมูล');
     if(!has) empty(D,s,.45,1.75,12.43,5.2,lv?'ตั้งค่าสมาชิกแล้ว '+lv.people+' คน แต่ยังไม่มีสิทธิ์ลา / แผนลา':'ยังไม่ได้ตั้งค่าแผนลาในแท็บ 🎯 7 Mission › 🌴 แผนลา');
     else{
-      const k=[[f1(lv.eV),'สิทธิ์พักร้อนรวม (วัน)',P.B],[f1(lv.uV),'ใช้พักร้อนแล้ว (วัน)',P.pri],[f1(lv.rV),'พักร้อนคงเหลือ (วัน)',lv.rV<=0?P.R:P.G],[f1(lv.uS)+' / '+f1(lv.uP),'ลาป่วย / ลากิจ (วัน)',P.Y],[lv.conf,'วันที่คนไม่อยู่ซ้อนกัน',lv.conf?P.R:P.G]];
+      const k=[[f1(lv.eV),'สิทธิ์พักร้อนรวม (วัน)',P.B],[f1(lv.uV),'ใช้พักร้อนแล้ว (วัน)',P.pri],[f1(lv.rV),'พักร้อนคงเหลือ (วัน)',lv.rV<=0?P.R:P.G],[f1(lv.uS)+' / '+f1(lv.uP),'ลาป่วย / ลากิจ (วัน)',P.Y],[lv.conf,'วันที่คนไม่อยู่เกิน '+lv.max+' คน',lv.conf?P.R:P.G]];
       k.forEach((x,i)=>kpi(D,s,.45+i*2.5,1.72,2.38,1.1,x[0],x[1],null,x[2]));
       card(D,s,.45,3.0,7.6,3.97,'วันที่ไม่อยู่ (ลา + อบรม) รายเดือน');
       vstack(D,s,.7,3.5,7.1,3.05,lv.months.map(x=>({l:x.l,vals:[+x.L.toFixed(1),+x.T.toFixed(1)]})),[P.R,P.B],{fmt:v=>f1(v)});
       lv.months.forEach((x,i)=>{ if(x.conf){ const slot=7.1/12; O(s,.7+i*slot+slot/2-.06,3.32,.12,.12,{fill:P.Y}); } });
-      legend(D,s,.7,6.62,[['ลา',P.R],['อบรม/ไปข้างนอก',P.B],['เดือนที่มีคนไม่อยู่ซ้อนกัน',P.Y]]);
+      legend(D,s,.7,6.62,[['ลา',P.R],['อบรม/ไปข้างนอก',P.B],['เดือนที่มีคนไม่อยู่เกิน '+lv.max+' คน/วัน',P.Y]]);
       card(D,s,8.2,3.0,4.68,3.97,'📅 กำหนดการถัดไป');
       if(lv.up.length) table(D,s,8.35,3.45,4.38,[1.05,1.6,1.73],['วันที่','ชื่อ','ประเภท'],lv.up.slice(0,8).map(e=>[dm(e.ds),e.name,e.k]),{fs:9,rh:.36});
       else T(s,8.35,3.6,4.38,.5,'ไม่มีแผนลา/อบรมหลังวันนี้',{fs:11,c:P.mut,al:'center'});
@@ -13254,7 +13258,7 @@ function build(M0,opt){
         card(D,s,.45,1.75,12.43,3.35,'ตาราง PV Schedule (Model × PV stage)');
         const cw=[1.5].concat(pv.codes.map(()=>10.6/pv.codes.length));
         table(D,s,.62,2.2,12.1,cw,['Model'].concat(pv.codes),pv.models.slice(0,6).map(m=>[{s:m.name,b:true}].concat(pv.codes.map((c,i)=>{ const x=m.cells[i]||{v:'',k:'na'};
-          return {s:(x.k==='warn'?'▲ ':x.k==='done'?'✓ ':x.k==='delay'?'Delay ':'')+(x.v||(x.k==='done'?'Done':'–')),fill:kc[x.k]||P.card,c:x.k==='done'||x.k==='delay'?P.W:P.txt,al:'center',b:x.k!=='plan'}; }))),{fs:9,rh:.4});
+          return {s:(x.k==='warn'?'▲ ':x.k==='done'?'✓ ':x.k==='delay'?'Delay ':'')+((v=>{ const seg=String(v).split(',').map(z=>z.trim()).filter(Boolean); return seg.length>1?seg[seg.length-1]+' (+'+(seg.length-1)+')':v; })(x.v)||(x.k==='done'?'Done':'–')),fill:kc[x.k]||P.card,c:x.k==='done'||x.k==='delay'?P.W:P.txt,al:'center',b:x.k!=='plan'}; }))),{fs:9,rh:.4});
         legend(D,s,.62,4.75,[['Done',P.G],['Plan',P.soft],['▲ ตามไฟล์ Excel (ความหมาย: '+NA+')',P.Y],['Delay',P.R]]);
         card(D,s,.45,5.25,6.15,1.72,'🏭 '+(M.sched&&M.sched.lf&&M.sched.lf.title||'Line fill'));
         if(M.sched&&M.sched.models.length) bullets(D,s,.65,5.62,5.8,1.3,M.sched.models.map(m=>{ const ns=M.sched.stages.length, lf=M.sched.lf; return m.name+' → '+(m.col<ns?M.sched.stages[m.col]:(lf&&lf.months&&lf.months[m.col-ns]?'Line fill '+lf.months[m.col-ns]:NA)); })
@@ -13303,21 +13307,24 @@ function build(M0,opt){
       T(s,.45,1.6,12.4,.3,clip('Activity: '+(t.act||'–')+(t.full&&t.act&&t.act.indexOf(t.full.slice(0,20))<0?'  ·  '+t.full:''),150),{fs:10,c:P.mut});
       card(D,s,.45,1.98,7.6,4.99,'สถานะรายไลน์ (Line status)');
       const stc={ok:P.G,part:P.Y,chk:P.B,ng:P.R}, stn={ok:'OK',part:'บางส่วน',chk:'ตรวจสอบ',ng:'NG'};
-      const L=t.lines.slice(0,24), cols=L.length>16?4:L.length>8?4:Math.max(2,Math.min(4,L.length)), cw=(7.2-(cols-1)*.12)/cols, rh=L.length>16?.6:.78;
+      const L=t.lines.slice(0,24), cols=Math.max(2,Math.min(4,L.length)), nR=Math.ceil(L.length/cols), cw=(7.2-(cols-1)*.12)/cols, rh=Math.min(.86,(4.12-(nR-1)*.08)/Math.max(1,nR));
       L.forEach((l,i)=>{ const x=.65+(i%cols)*(cw+.12), y=2.42+Math.floor(i/cols)*(rh+.08), c=stc[l.st]||P.R;
         R(s,x,y,cw,rh,{fill:P.card,line:c,lw:1.5,r:.08}); R(s,x,y,.1,rh,{fill:c});
-        T(s,x+.18,y+.02,cw-1.0,rh*.5,l.line,{fs:11,b:true,c:P.txt,va:'middle'}); pill(D,s,x+cw-.85,y+.08,.77,.24,stn[l.st]||l.st,c,8);
-        T(s,x+.18,y+rh*.5,cw-.25,rh*.46,'QE '+(l.qe||'–')+' · PE '+(l.pe||'–')+(l.st!=='ok'&&l.due&&l.due!==t.due?' · '+dmS(l.due):''),{fs:8.5,c:P.mut,va:'middle'}); });
+        T(s,x+.18,y+.04,cw-1.05,.3,l.line,{fs:11,b:true,c:P.txt,va:'middle'}); pill(D,s,x+cw-.88,y+.07,.8,.25,stn[l.st]||l.st,c,8.5);
+        T(s,x+.18,y+.36,cw-.26,Math.max(.22,rh-.4),clip((l.qe||'–')+' / '+(l.pe||'–'),Math.floor(cw*12)),{fs:8.5,c:P.mut,va:'middle'}); });
+      T(s,.65,6.64,7.2,.24,'รูปแบบในช่อง: QE / PE · ดูกำหนดรายไลน์ในตารางด้านขวา',{fs:8.5,c:P.mut});
       if(t.lines.length>24) T(s,.65,6.65,7,.28,'+ อีก '+(t.lines.length-24)+' ไลน์',{fs:9,c:P.mut});
       card(D,s,8.2,1.98,4.68,1.55,'ความคืบหน้า');
       T(s,8.4,2.35,1.6,.6,t.pct+'%',{fs:28,b:true,c:t.pct===100?P.G:t.pct<50?P.R:P.Y,va:'middle'});
       T(s,10.0,2.35,2.75,.6,'OK '+t.ok+' · บางส่วน '+t.part+'\nตรวจสอบ '+t.chk+' · NG '+t.ng,{fs:10,c:P.txt,va:'middle'});
       prog(D,s,8.4,3.05,4.28,.2,t.pct,t.pct===100?P.G:t.pct<50?P.R:P.Y);
       card(D,s,8.2,3.65,4.68,3.32,t.nok.length?'⏳ ไลน์ที่ยังไม่ OK ('+t.nok.length+')':'✅ ครบทุกไลน์');
-      if(t.nok.length) table(D,s,8.35,4.05,4.38,[.95,1.05,1.05,1.33],['Line','QE','PE','กำหนด'],t.nok.slice(0,6).map(l=>[{s:l.line,b:true},l.qe||'–',l.pe||'–',l.due?{s:dm(l.due),c:l.due<T0?P.R:P.txt,b:l.due<T0}:'–']),{fs:9,rh:.32});
-      if(t.nok.length>6) T(s,8.35,4.05+.32*7+.02,4.38,.25,'+ อีก '+(t.nok.length-6)+' ไลน์',{fs:8.5,c:P.mut});
-      const ex=[], pf=t.plan.filter(p=>p.d>=T0); if(pf.length) ex.push('แผนถัดไป: '+pf.slice(0,3).map(p=>dmS(p.d)+' '+clip(p.l,28)).join(' · ')); if(t.concl) ex.push('สรุป: '+t.concl);
-      if(ex.length) T(s,8.35,t.nok.length?(t.nok.length>6?6.62:6.3):4.1,4.4,t.nok.length?.65:2.8,ex.join('\n'),{fs:8.5,c:P.mut,va:'top'});
+      const NR=t.concl||t.plan.some(p=>p.d>=T0)?5:7;
+      if(t.nok.length) table(D,s,8.35,4.05,4.38,[.95,1.05,1.05,1.33],['Line','QE','PE','กำหนด'],t.nok.slice(0,NR).map(l=>[{s:l.line,b:true},l.qe||'–',l.pe||'–',l.due?{s:dm(l.due),c:l.due<T0?P.R:P.txt,b:l.due<T0}:'–']),{fs:9,rh:.32});
+      const tEnd=4.05+.34*(Math.min(NR,t.nok.length)+1);
+      if(t.nok.length>NR) T(s,8.35,tEnd+.02,4.38,.24,'+ อีก '+(t.nok.length-NR)+' ไลน์',{fs:8.5,c:P.mut});
+      const ex=[], pf=t.plan.filter(p=>p.d>=T0); if(pf.length) ex.push('แผนถัดไป: '+pf.slice(0,3).map(p=>dmS(p.d)+' '+clip(p.l,28)).join(' · ')); if(t.concl) ex.push('สรุป: '+clip(t.concl,t.nok.length?110:400));
+      if(ex.length){ const ey=t.nok.length?tEnd+(t.nok.length>NR?.3:.08):4.1; T(s,8.35,ey,4.4,Math.max(.3,6.9-ey),ex.join('\n'),{fs:8.5,c:P.mut,va:'top'}); }
       s.notes='ข้อความหลัก: '+t.name+' — '+t.ok+'/'+t.total+' ไลน์ OK'+(t.due?' · กำหนด '+dm(t.due):'')+(late.length?'\n• เลยกำหนด: '+late.map(l=>l.line).join(', '):'')+'\n• Activity: '+(t.act||'–');
     });
   }
@@ -13335,7 +13342,7 @@ function build(M0,opt){
       M.tr.open.forEach(x=>put(L,x.due,clip(x.issue,30)+' ('+x.owner+')',x.late>0)); }
     if(on('mission')){ const m=M.ms; lane('mission','🎯 7 Mission',m&&m.ev?'ผ่านเป้า '+m.pct+'% ('+m.ok+' O / '+m.ng+' X)'+(m.latest?' · ข้อมูลถึง '+m.latest:''):NA); }
     if(on('ot')){ const o=M.ot; lane('ot','⏱ OT',o&&o.overall!=null?'เฉลี่ย '+f2(o.overall)+' ชม./คน/วัน · เป้า ≤ '+f2(o.set.tgtDay):NA); }
-    if(on('leave')){ const v=M.lv, L=lane('leave','🌴 วันลา / อบรม',v&&v.eV?'ใช้พักร้อน '+f1(v.uV)+'/'+f1(v.eV)+' วัน · ซ้อนกัน '+v.conf+' วัน':NA);
+    if(on('leave')){ const v=M.lv, L=lane('leave','🌴 วันลา / อบรม',v&&v.eV?'ใช้พักร้อน '+f1(v.uV)+'/'+f1(v.eV)+' วัน · ไม่อยู่เกิน '+v.max+' คน '+v.conf+' วัน':NA);
       if(v) v.up.forEach(e=>put(L,e.ds,e.name+' · '+e.k)); }
     if(on('mj')){ const L=lane('mj','🧰 Main QE Jobs',[M.pcr?'PCR Delay '+M.pcr.delay+' (Done '+M.pcr.done+'/'+M.pcr.total+')':'',M.qp?'Q-patrol '+M.qp.items.length+' หัวข้อ':''].filter(Boolean).join(' · ')||NA);
       if(M.qp){ M.qp.late.forEach(e=>put(L,e.pd,e.t+' '+e.line,true)); M.qp.next.forEach(e=>put(L,e.pd,e.t+' '+e.line)); }
@@ -13397,7 +13404,7 @@ function htmlOf(D){
     return ''; };
   const css='@page{size:13.333in 7.5in;margin:0}*{box-sizing:border-box;margin:0;padding:0}body{font-family:'+font+';background:#94a3b8;-webkit-print-color-adjust:exact;print-color-adjust:exact}'+
     '.bar{position:sticky;top:0;z-index:9;background:#1f2937;color:#fff;padding:10px 16px;display:flex;gap:12px;align-items:center;font-size:14px;flex-wrap:wrap}.bar button{font:inherit;font-weight:700;padding:8px 14px;border-radius:8px;border:0;cursor:pointer;background:#'+P.pri+';color:#fff}'+
-    '.pg{width:13.333in;height:7.5in;margin:16px auto;position:relative;overflow:hidden;page-break-after:always;break-after:page}.r{position:absolute}.t{position:absolute;display:flex;flex-direction:column;overflow:hidden;line-height:1.25;white-space:normal}'+
+    '.pg{width:13.333in;height:7.5in;margin:16px auto;position:relative;overflow:hidden;page-break-after:always;break-after:page}.r{position:absolute}.t{position:absolute;display:flex;flex-direction:column;overflow:hidden;line-height:1.32;white-space:normal}'+
     '.t ul{padding-left:1.2em}.t li{margin:0 0 .25em}table{width:100%;border-collapse:collapse;table-layout:fixed}td{padding:2px 6px;vertical-align:middle;line-height:1.2;overflow:hidden}'+
     '@media print{body{background:none}.bar{display:none}.pg{margin:0}}';
   return '<!DOCTYPE html><html lang="th"><head><meta charset="utf-8"><title>QE Executive Report '+E(dm(D.M.T))+'</title><style>'+css+'</style></head><body>'+
@@ -13424,7 +13431,7 @@ async function makePptx(D,mode){
         if(el.t==='oval') s.addShape(pres.shapes.OVAL,o); else if(el.r) s.addShape(pres.shapes.ROUNDED_RECTANGLE,Object.assign(o,{rectRadius:Math.min(.5,el.r/Math.min(el.w,el.h))})); else s.addShape(pres.shapes.RECTANGLE,o); }
       else if(el.t==='img') s.addImage({data:el.src,x:el.x,y:el.y,w:el.w,h:el.h});
       else if(el.t==='line') s.addShape(pres.shapes.LINE,{x:el.x,y:el.y,w:Math.max(el.w,.001),h:el.h||0,line:{color:el.c||P.line,width:el.lw||1,dashType:el.dash?'dash':'solid'}});
-      else if(el.t==='text'){ const o={x:el.x,y:el.y,w:el.w,h:el.h,fontFace:F,fontSize:el.fs||11,color:el.c||P.txt,bold:!!el.b,italic:!!el.it,align:el.al||'left',valign:el.va||'top',margin:0};
+      else if(el.t==='text'){ const o={x:el.x,y:el.y,w:el.w,h:el.h,fontFace:F,fontSize:el.fs||11,color:el.c||P.txt,bold:!!el.b,italic:!!el.it,align:el.al||'left',valign:el.va||'top',margin:0,lineSpacingMultiple:1.1};
         if(el.bul) s.addText((el.s||[]).map((t,i,a)=>({text:t,options:{bullet:true,breakLine:i<a.length-1}})),Object.assign(o,{paraSpaceAfter:3}));
         else s.addText(String(el.s==null?'':el.s),o); }
       else if(el.t==='table'){ const rows=el.rows.map((r,ri)=>r.map(c=>{ c=typeof c==='object'&&c?c:{s:c}; const rf=(el.zf&&ri%2===0&&ri>0)?el.zf:(el.fill||P.card); return {text:String(c.s==null?'':c.s),options:{bold:!!c.b,italic:!!c.it,color:c.c||el.c||P.txt,fill:{color:c.fill||rf},align:c.al||'left'}}; }));
@@ -13438,7 +13445,7 @@ async function makePptx(D,mode){
 
 /* ======================= 7) ภาพสไลด์ (JPEG) + PDF ในเบราว์เซอร์ — ใช้สำหรับส่ง LINE / E-mail ======================= */
 function slideCSS(){ return '*{box-sizing:border-box;margin:0;padding:0}.xr-sl{width:1280px;height:720px;position:relative;overflow:hidden;font-family:"Leelawadee UI","Segoe UI","Segoe UI Emoji",Tahoma,sans-serif}'+
-  '.r{position:absolute}.t{position:absolute;display:flex;flex-direction:column;overflow:hidden;line-height:1.25;white-space:normal}.t ul{padding-left:1.2em}.t li{margin:0 0 .25em}'+
+  '.r{position:absolute}.t{position:absolute;display:flex;flex-direction:column;overflow:hidden;line-height:1.32;white-space:normal}.t ul{padding-left:1.2em}.t li{margin:0 0 .25em}'+
   'table{width:100%;border-collapse:collapse;table-layout:fixed}td{padding:2px 6px;vertical-align:middle;line-height:1.2;overflow:hidden}'; }
 function sectionHTML(D,i){ const h=htmlOf(D); const parts=h.split('<section class="pg"'); return '<section class="pg"'+parts[i+1].split('</section>')[0]+'</section>'; }
 function slideJpeg(D,i,W){
@@ -13490,7 +13497,7 @@ function lineText(D,opt){ const M=D.M, s=sumOf(D);
   if(M.on&&M.on.tracker) L.push('📊 Tracker เปิด '+s.trOpen+'/'+s.trTotal+' · ปิดแล้ว '+M.tr.closure+'%');
   if(M.ms&&M.ms.pct!=null) L.push('🎯 7 Mission ผ่านเป้า '+M.ms.pct+'%');
   if(M.ot&&M.ot.overall!=null) L.push('⏱ OT เฉลี่ย '+f2(M.ot.overall)+' ชม./คน/วัน (เป้า ≤ '+f2(M.ot.set.tgtDay)+')');
-  if(M.lv&&M.lv.eV) L.push('🌴 ใช้พักร้อนแล้ว '+f1(M.lv.uV)+'/'+f1(M.lv.eV)+' วัน');
+  if(M.lv&&M.lv.eV) L.push('🌴 ใช้พักร้อนแล้ว '+f1(M.lv.uV)+'/'+f1(M.lv.eV)+' วัน'+(M.lv.conf?' · คนไม่อยู่เกิน '+M.lv.max+' คน/วัน '+M.lv.conf+' วัน':''));
   if(s.pcr) L.push('🧰 PCR: Done '+s.pcr.done+' · On-plan '+s.pcr.plan+' · Delay '+s.pcr.delay+' (จาก '+s.pcr.total+')');
   if(s.hs) L.push('🧭 Hoshin: OK '+s.hs.ok+'/'+s.hs.total+' ไลน์ ('+s.hs.pct+'%)');
   if(s.pts.length){ L.push('','📌 ประเด็นสำคัญ'); s.pts.slice(0,4).forEach(x=>L.push('• '+x)); }
