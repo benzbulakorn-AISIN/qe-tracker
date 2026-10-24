@@ -11088,7 +11088,7 @@ function openGuide(focusId){
       '<div><span>📊 <b>รายงาน</b> — ออก PDF / PowerPoint · ส่ง LINE / E-mail · ตั้งเวลาส่ง</span><span class="nv-kbd">Alt+R</span></div>'+
       '<div><span>❓ <b>คู่มือ</b> — หน้านี้ (แผนที่เมนู)</span><span class="nv-kbd">—</span></div>'+
       '<div><span>⚙ <b>เครื่องมือ</b> — Backup / Restore · Cloud DB · 🔔 LINE · ธีมสี (จุดสีบอกสถานะการซิงก์)</span><span class="nv-kbd">—</span></div>'+
-      '<div><span>💬 <b>Team Chat</b> (มุมขวาล่าง) — คุยกับทีม ห้อง QE Team เชื่อมกลุ่ม LINE</span><span class="nv-kbd">—</span></div>'+
+      '<div><span>💬 <b>Line Chat</b> (มุมขวาล่าง) — คุยกับทีม ห้อง QE Team เชื่อมกลุ่ม LINE</span><span class="nv-kbd">—</span></div>'+
       '<div><span>✨ <b>AI Assistant</b> (มุมขวาล่าง) — ถามข้อมูล / ให้ช่วยสรุปจากข้อมูลในระบบ</span><span class="nv-kbd">—</span></div></div>'+
     '<div class="nv-sec" style="margin-top:18px">⌨ คีย์ลัด</div><div class="nv-keys">'+
       '<div><span>ค้นหาเมนู / คำสั่งทั้งหมด</span><span class="nv-kbd">'+(isMac?'⌘K':'Ctrl+K')+' หรือ /</span></div>'+
@@ -11443,7 +11443,7 @@ function showLock(reason){
       clearInterval(tick); lsDel(FK); window.__QE_RO=true;
       const VV=VIEWERS.find(x=>x.n===picked)||{}; lsSet(SK,JSON.stringify({n:picked,full:(VV.full||picked)+' ('+picked+')',role:'viewer',exp:Date.now()+12*3600000,at:Date.now()})); lsSet('ux_me',picked);
       locked=!!g('cbVerLock'); if(!locked) setInert(false); document.body.style.overflow=g('cbVerLock')?'hidden':''; ov.remove();
-      try{ window.__QE_ROapply&&window.__QE_ROapply(picked); }catch(ex){} say('👁 เข้าดูในชื่อ '+picked+' (ดูอย่างเดียว)'); paint(); return;
+      try{ window.__QE_ROapply&&window.__QE_ROapply(picked); }catch(ex){} try{ C().audit('view',{target:picked,full:VV.full||picked,role:VV.role||''}); }catch(ex){} say('👁 เข้าดูในชื่อ '+picked+' (ดูอย่างเดียว)'); paint(); return;
     }
     if(a==='login'){
       if(guardLock()) return; const pin=g('cbPin').value; if(pin.length!==PINLEN){ err('PIN ต้องเป็นตัวเลข '+PINLEN+' หลัก'); return; }
@@ -11521,6 +11521,7 @@ function histLine(h){
   if(k==='snap-restore') return {t:w+' กู้จากจุดสำรอง '+E(h.day||'')+' '+(h.n||0)+' รายการ ('+(h.mode==='all'?'ทับทั้งหมด':'เฉพาะที่หาย')+')',s:''};
   if(k==='discard') return {t:w+' ทิ้งการแก้ไขที่ยังไม่บันทึกและดึงจาก Cloud',s:''};
   if(k==='login') return {t:w+' เข้าสู่ระบบ',s:''};
+  if(k==='view') return {t:'👁 <b>'+E(h.full||h.who||'?')+'</b> ('+E(h.target||h.who||'')+') เข้าดู Dashboard',s:(h.role?h.role+' · ':'')+'โหมดดูอย่างเดียว'};
   if(k==='pin-set') return {t:w+' ตั้ง PIN ครั้งแรก',s:'เครื่อง '+E(h.dev||'')};
   if(k==='pin-recover') return {t:w+' ตั้ง PIN ใหม่ด้วยรหัสกู้คืน',s:''};
   if(k==='pin-reset') return {t:w+' รีเซ็ต PIN ของ <b>'+E(h.target||'?')+'</b>',s:''};
@@ -11552,6 +11553,8 @@ function renderPanel(){
   if(confl.length){
     h+='<h4>⚠ รายการที่ถูกแก้ซ้ำพร้อมกัน ('+confl.length+')</h4>'+confl.slice(-6).reverse().map(c=>'<div class="cb-r"><div><b>'+E(lblOf({type:c.type,payload:c.payload}))+'</b>'+(c.fields&&c.fields.length?'<small>ฟิลด์ที่ชนกัน: '+E(c.fields.join(', '))+'</small>':'<small>ทั้งรายการถูกแก้ต่างกัน — ใช้ของเครื่องที่บันทึกทีหลัง เก็บของอีกฝั่งไว้ให้ดู</small>')+'</div><span class="t">'+fmt(c.at)+'</span></div>').join('')+'<div class="cb-act"><button class="cb-btn" data-a="cfcopy">📋 คัดลอกเป็น JSON</button><button class="cb-btn d" data-a="cfclear">ล้างรายการ</button></div><div class="cb-note">ตรวจค่าของอีกฝั่งให้ครบก่อนล้าง (ปุ่มคัดลอกเก็บไว้ได้)</div>';
   }
+  if(!window.__QE_RO&&Array.isArray(HIST)){ const V=HIST.filter(x=>x.k==='view');
+    h+='<h4>👁 ผู้บริหารเข้าดู (DM / GM) ('+V.length+')</h4>'+(V.length?V.slice(0,8).map(x=>'<div class="cb-r"><span class="cb-dot" style="margin-top:6px;background:#2563eb"></span><div><b>'+E(x.full||x.who||'?')+'</b> <small style="display:inline">'+E(x.target||x.who||'')+'</small><small>'+E(x.role||'')+(x.dev?' · เครื่อง '+E(String(x.dev).slice(0,6)):'')+'</small></div><span class="t">'+fmt(x.at||x.u)+'</span></div>').join(''):'<div class="cb-note">ยังไม่มีผู้บริหารเข้าดู (นับจากการเข้าระบบครั้งถัดไป)</div>'); }
   h+='<h4>🕘 ประวัติการบันทึกล่าสุด <span class="grow"></span><button class="cb-x" data-a="hist">↻</button></h4>';
   if(HIST===null) h+='<div class="cb-note">กำลังโหลด…</div>';
   else if(HIST===false) h+='<div class="cb-note">โหลดประวัติไม่ได้ (Cloud ไม่ตอบ หรือเซิร์ฟเวอร์ไม่อนุญาต)</div>';
@@ -11948,13 +11951,13 @@ window.__QE_AI={ask:ask,collectContext:collectContext,open:open};
 <!-- ===== end QE AI Assistant add-on ===== -->
 <!-- ===== QE Team Chat add-on v1 ===== -->
 <style id="qeChatStyle">
-.qec-fab{position:fixed;right:18px;bottom:126px;z-index:244;border:0;border-radius:999px;padding:11px 16px;background:linear-gradient(135deg,#0284c7,#2563eb);color:#fff;font-weight:800;box-shadow:0 8px 24px rgba(37,99,235,.32);cursor:pointer}.qec-fab:hover{filter:brightness(1.08)}.qec-badge{display:none;min-width:20px;height:20px;padding:0 6px;margin-left:5px;border-radius:99px;background:#ef4444;color:#fff;font-size:11px;align-items:center;justify-content:center}.qec-badge.on{display:inline-flex}
+.qec-fab{position:fixed;right:18px;bottom:126px;z-index:244;border:0;border-radius:999px;padding:11px 16px;background:linear-gradient(135deg,#06C755,#00B900);color:#fff;font-weight:800;box-shadow:0 8px 24px rgba(6,199,85,.35);cursor:pointer}.qec-fab:hover{filter:brightness(1.08)}.qec-badge{display:none;min-width:20px;height:20px;padding:0 6px;margin-left:5px;border-radius:99px;background:#ef4444;color:#fff;font-size:11px;align-items:center;justify-content:center}.qec-badge.on{display:inline-flex}
 .qec-panel{position:fixed;right:18px;bottom:180px;z-index:245;width:min(390px,calc(100vw - 24px));height:min(610px,calc(100vh - 210px));display:none;flex-direction:column;background:var(--pop,#fff);color:var(--txt,#222);border:1px solid var(--line,#ddd);border-radius:18px;box-shadow:0 18px 60px rgba(0,0,0,.35);overflow:hidden}.qec-panel.on{display:flex}.qec-head{display:flex;align-items:center;gap:10px;padding:12px 14px;background:linear-gradient(135deg,#0284c7,#2563eb);color:#fff}.qec-head b{flex:1}.qec-online{font-size:11px;opacity:.9}.qec-close{border:0;background:rgba(255,255,255,.18);color:#fff;border-radius:8px;padding:5px 9px;cursor:pointer}.qec-rooms{display:flex;gap:6px;padding:8px;overflow-x:auto;border-bottom:1px solid var(--line)}.qec-room{white-space:nowrap;border:1px solid var(--line);background:var(--soft);color:var(--txt);border-radius:99px;padding:6px 10px;font-size:12px;font-weight:700;cursor:pointer}.qec-room.on{background:#2563eb;color:#fff;border-color:#2563eb}.qec-msgs{flex:1;overflow:auto;padding:12px;background:color-mix(in srgb,var(--soft) 60%,var(--card));display:flex;flex-direction:column;gap:8px}.qec-empty{text-align:center;color:var(--mut);padding:30px 10px;font-size:13px}.qec-row{display:flex;flex-direction:column;align-items:flex-start}.qec-row.me{align-items:flex-end}.qec-meta{font-size:10px;color:var(--mut);margin:0 5px 2px}.qec-bubble{max-width:84%;padding:8px 11px;border-radius:14px 14px 14px 4px;background:var(--card);border:1px solid var(--line);white-space:pre-wrap;word-break:break-word;font-size:13px;line-height:1.45}.qec-row.me .qec-bubble{background:#2563eb;color:#fff;border-color:#2563eb;border-radius:14px 14px 4px 14px}.qec-compose{padding:9px;border-top:1px solid var(--line);background:var(--card)}.qec-compose-row{display:flex;gap:7px}.qec-input{flex:1;min-width:0;min-height:40px;max-height:100px;resize:none;border:1px solid var(--line);background:var(--inp);color:var(--txt);border-radius:12px;padding:9px}.qec-send{border:0;border-radius:12px;background:#2563eb;color:#fff;padding:8px 14px;font-weight:800;cursor:pointer}.qec-send:disabled{opacity:.5}.qec-status{font-size:10px;color:var(--mut);margin-top:5px;min-height:14px}
 @media(max-width:600px){.qec-fab{right:10px;bottom:116px}.qec-panel{right:6px;bottom:168px;width:calc(100vw - 12px);height:min(620px,calc(100vh - 180px));border-radius:14px}}
 </style>
-<button type="button" id="qeChatFab" class="qec-fab">💬 Team Chat <span id="qeChatBadge" class="qec-badge">0</span></button>
-<section id="qeChatPanel" class="qec-panel" aria-label="QE Team Chat">
-  <div class="qec-head"><b>💬 QE Team Chat</b><span id="qeChatWho" class="qec-online"></span><button type="button" id="qeChatClose" class="qec-close" aria-label="ปิดหน้าต่างแชท">✕</button></div>
+<button type="button" id="qeChatFab" class="qec-fab">💬 Line Chat <span id="qeChatBadge" class="qec-badge">0</span></button>
+<section id="qeChatPanel" class="qec-panel" aria-label="QE Line Chat">
+  <div class="qec-head"><b>💬 QE Line Chat</b><span id="qeChatWho" class="qec-online"></span><button type="button" id="qeChatClose" class="qec-close" aria-label="ปิดหน้าต่างแชท">✕</button></div>
   <nav id="qeChatRooms" class="qec-rooms" aria-label="ห้องแชท"></nav>
   <div id="qeChatMessages" class="qec-msgs" role="region" aria-label="ข้อความแชท" tabindex="0"><div class="qec-empty">กำลังโหลดข้อความ…</div></div>
   <div class="qec-compose"><div class="qec-compose-row"><textarea id="qeChatInput" class="qec-input" maxlength="2000" placeholder="พิมพ์ข้อความ…"></textarea><button type="button" id="qeChatSend" class="qec-send">ส่ง</button></div><div id="qeChatStatus" class="qec-status" aria-live="polite"></div></div>
@@ -11967,6 +11970,9 @@ const g=id=>document.getElementById(id),cfg=window.COUNTERMEASURE_CLOUD_DEFAULTS
 const base=String(cfg.supabaseUrl||'').replace(/\/$/,''),key=String(cfg.supabaseKey||'');
 const rooms=[['qe-team','ทีมทั้งหมด'],['pcr','PCR'],['audit','Audit'],['meeting','Meeting']];
 let room='qe-team',lastIds={},unread=0,timer=0,busy=false;
+const SEENK='qe_chat_seen_v1'; let seen={}; try{ seen=JSON.parse(localStorage.getItem(SEENK)||'{}')||{}; }catch(e){ seen={}; }
+const saveSeen=()=>{ try{ localStorage.setItem(SEENK,JSON.stringify(seen)); }catch(e){} };
+function badge(){ const b=g('qeChatBadge'); b.textContent=String(unread); b.classList.toggle('on',unread>0); }
 const E=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const me=()=>String(localStorage.getItem('ux_me')||document.getElementById('cbWn')?.textContent||'Guest').trim()||'Guest';
 const headers=(extra={})=>Object.assign({'apikey':key,'Authorization':'Bearer '+key},extra);
@@ -11974,7 +11980,7 @@ function stamp(v){try{return new Intl.DateTimeFormat('th-TH',{hour:'2-digit',min
 function setStatus(s){g('qeChatStatus').textContent=s||'';}
 function drawRooms(){g('qeChatRooms').innerHTML=rooms.map(r=>'<button type="button" class="qec-room '+(r[0]===room?'on':'')+'" data-r="'+r[0]+'">'+r[1]+'</button>').join('');}
 function draw(list){const box=g('qeChatMessages'),who=me();if(!list.length){box.innerHTML='<div class="qec-empty">ยังไม่มีข้อความในห้องนี้</div>';return;}box.innerHTML=list.map(m=>'<div class="qec-row '+(m.sender_name===who?'me':'')+'"><div class="qec-meta">'+E(m.sender_name)+' · '+E(stamp(m.created_at))+'</div><div class="qec-bubble">'+E(m.message)+'</div></div>').join('');box.scrollTop=box.scrollHeight;}
-async function load(silent){if(!base||!key){setStatus('ไม่พบการตั้งค่า Supabase');return;}if(busy)return;busy=true;try{const url=base+'/rest/v1/chat_messages?select=id,room_key,sender_name,message,created_at&room_key=eq.'+encodeURIComponent(room)+'&deleted_at=is.null&order=created_at.asc&limit=100';const res=await fetch(url,{headers:headers()});const data=await res.json();if(!res.ok)throw new Error(data.message||'โหลดข้อความไม่สำเร็จ');const latest=data.length?Number(data[data.length-1].id):0;if(silent&&latest>(lastIds[room]||0)&&!g('qeChatPanel').classList.contains('on')){unread++;g('qeChatBadge').textContent=String(unread);g('qeChatBadge').classList.add('on');}lastIds[room]=latest;draw(data);if(!silent)setStatus('เชื่อมต่อแล้ว · '+data.length+' ข้อความ');}catch(e){setStatus('ผิดพลาด: '+(e.message||e));}finally{busy=false;}}
+async function load(silent){if(!base||!key){setStatus('ไม่พบการตั้งค่า Supabase');return;}if(busy)return;busy=true;try{const url=base+'/rest/v1/chat_messages?select=id,room_key,sender_name,message,created_at&room_key=eq.'+encodeURIComponent(room)+'&deleted_at=is.null&order=created_at.asc&limit=100';const res=await fetch(url,{headers:headers()});const data=await res.json();if(!res.ok)throw new Error(data.message||'โหลดข้อความไม่สำเร็จ');const latest=data.length?Number(data[data.length-1].id):0;const isOpen=g('qeChatPanel').classList.contains('on');if(seen[room]==null){seen[room]=latest;saveSeen();}if(isOpen){seen[room]=Math.max(+seen[room]||0,latest);saveSeen();unread=0;}else{const who=me();unread=data.filter(m=>Number(m.id)>(+seen[room]||0)&&m.sender_name!==who).length;}badge();lastIds[room]=latest;draw(data);if(!silent)setStatus('เชื่อมต่อแล้ว · '+data.length+' ข้อความ');}catch(e){setStatus('ผิดพลาด: '+(e.message||e));}finally{busy=false;}}
 async function send() {
   const input = g("qeChatInput");
   const text = input.value.trim();
@@ -12139,12 +12145,13 @@ async function send() {
     input.focus();
   }
 }
-function open(){g('qeChatPanel').classList.add('on');unread=0;g('qeChatBadge').classList.remove('on');g('qeChatWho').textContent='ผู้ใช้: '+me();drawRooms();load(false);setTimeout(()=>g('qeChatInput').focus(),30);}
-function close(){g('qeChatPanel').classList.remove('on');}
+function open(){g('qeChatPanel').classList.add('on');unread=0;badge();if(lastIds[room]){seen[room]=Math.max(+seen[room]||0,lastIds[room]);saveSeen();}g('qeChatWho').textContent='ผู้ใช้: '+me();drawRooms();load(false);setTimeout(()=>g('qeChatInput').focus(),30);}
+function close(){g('qeChatPanel').classList.remove('on');if(lastIds[room]){seen[room]=Math.max(+seen[room]||0,lastIds[room]);saveSeen();}unread=0;badge();}
 g('qeChatFab').addEventListener('click',open);g('qeChatClose').addEventListener('click',close);g('qeChatSend').addEventListener('click',send);g('qeChatInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}});g('qeChatRooms').addEventListener('click',e=>{const b=e.target.closest('[data-r]');if(!b)return;room=b.dataset.r;drawRooms();load(false);});
+/* ตัวนับนับเฉพาะห้อง “ทีมทั้งหมด” (ห้องที่เชื่อม LINE) */
 document.addEventListener('keydown',e=>{if(e.key==='Escape')close();});
 timer=setInterval(()=>{ if(!document.hidden) load(true); },4000);document.addEventListener('visibilitychange',()=>{ if(!document.hidden) load(true); });window.addEventListener('beforeunload',()=>clearInterval(timer));drawRooms();load(true);
-window.__QE_CHAT={open,load,send};
+window.__QE_CHAT={open,load,send,close};
 })();
 </script>
 <!-- ===== end QE Team Chat add-on ===== -->
@@ -12326,11 +12333,11 @@ function wrapLabel(btn,label){
 }
 function fabs(){
   wrapLabel(g('qeAiFab'),'เปิด QE AI Assistant');
-  wrapLabel(g('qeChatFab'),'เปิด/ปิด Team Chat');
+  wrapLabel(g('qeChatFab'),'เปิด/ปิด Line Chat');
   /* กดปุ่มแชทซ้ำ = ปิดหน้าต่าง (เดิมกดแล้วเปิดอย่างเดียว) */
   const cf=g('qeChatFab'), cp=g('qeChatPanel');
   if(cf&&cp&&!cf.dataset.u3t){ cf.dataset.u3t='1';
-    cf.addEventListener('click',e=>{ if(cp.classList.contains('on')){ e.stopImmediatePropagation(); e.preventDefault(); cp.classList.remove('on'); } },true);
+    cf.addEventListener('click',e=>{ if(cp.classList.contains('on')){ e.stopImmediatePropagation(); e.preventDefault(); if(window.__QE_CHAT&&window.__QE_CHAT.close) window.__QE_CHAT.close(); else cp.classList.remove('on'); } },true);
   }
 }
 function topBtn(){
@@ -13849,7 +13856,7 @@ window.fetch=function(input,init){
       const url=String(input&&input.url||input||''), m=String((init&&init.method)||(input&&input.method)||'GET').toUpperCase();
       const write=m!=='GET'&&m!=='HEAD'&&m!=='OPTIONS';
       const ours=/supabase\.co|script\.google(usercontent)?\.com|\/functions\/v1\//i.test(url);
-      if(write&&ours&&!/\/rest\/v1\/rpc\//i.test(url)){
+      const body=String((init&&init.body)||''); if(write&&ours&&!/\/rest\/v1\/rpc\//i.test(url)&&body.indexOf('countermeasure-audit:')<0){
         window.__QE_ROblock();
         if(/supabase\.co\/rest\/v1\//i.test(url)) return Promise.resolve(new Response('[]',{status:200,headers:{'Content-Type':'application/json'}}));
         return Promise.resolve(new Response(JSON.stringify({ok:false,error:'โหมดดูอย่างเดียว (DM/GM) — ส่งข้อมูลไม่ได้'}),{status:200,headers:{'Content-Type':'application/json'}}));
