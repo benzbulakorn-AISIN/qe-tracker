@@ -12918,7 +12918,7 @@ const RAGTH={G:'🟢 On Track',Y:'🟡 Attention',R:'🔴 Critical',N:'⚪ No da
 /* ======================= 3) โมเดลสไลด์ (DSL) ======================= */
 const SW=13.333, SH=7.5;
 
-const SECS=[['home','🏠 ภาพรวม'],['today','☀️ วันนี้'],['tracker','📊 Tracker'],['mission','🎯 7 Mission'],['ot','⏱ OT'],['leave','🌴 วันลา'],['mj','🧰 Main QE Jobs'],['hoshin','🧭 Hoshin'],['mgmt','⚠️ ผู้บริหาร']];
+const SECS=[['home','🏠 ภาพรวม'],['today','☀️ วันนี้'],['tracker','📊 Tracker'],['mission','🎯 7 Mission'],['ot','⏱ OT'],['leave','🌴 วันลา'],['mj','🧰 Main QE Jobs'],['hoshin','🧭 Hoshin'],['plan','📅 แผนงาน']];
 function Deck(P,M){
   const D={P:P,M:M,slides:[]};
   D.slide=(sec,kicker,title,notes)=>{ const s={sec:sec,els:[],notes:notes||''}; D.slides.push(s); if(sec!=='cover') chrome(s,sec,kicker,title); return s; };
@@ -12926,7 +12926,7 @@ function Deck(P,M){
     s.bg=P.bg;
     /* แถบเมนู (เหมือนแท็บด้านบนของเว็บ) */
     R(s,0,0,SW,.62,{fill:P.nav});
-    const NAV=SECS.filter(x=>x[0]==='home'||x[0]==='mgmt'||!M.on||M.on[x[0]]);   /* แถบเมนูแสดงเฉพาะหมวดที่เลือก */
+    const NAV=SECS.filter(x=>x[0]==='home'||x[0]==='plan'||!M.on||M.on[x[0]]);   /* แถบเมนูแสดงเฉพาะหมวดที่เลือก */
     const w=Math.min(1.6,(SW-.8)/NAV.length);
     NAV.forEach((x,i)=>{ const on=x[0]===sec; if(on) R(s,.4+i*w+.03,.12,w-.06,.38,{fill:P.W,r:.08});
       T(s,.4+i*w,.12,w,.38,x[1],{fs:10,b:on,c:on?P.nav:'C9D6E6',al:'center',va:'middle'}); });
@@ -13015,7 +13015,11 @@ function scopeM(M,secs){
   const gs=[[/วันนี้/,'today'],[/Tracker/,'tracker'],[/7 Mission/,'mission'],[/^OT/,'ot'],[/แผนลา/,'leave'],[/PCR/,'mj'],[/Hoshin/,'hoshin']];
   X.gaps=M.gaps.filter(t=>{ const h=gs.find(x=>x[0].test(t)); return !h||on(h[1]); });
   X.odOn=on('tracker')||on('hoshin')||on('mj');
-  return recalc(X);
+  recalc(X);
+  if(!X.odOn){ let r='N'; if(X.ms&&X.ms.pct!=null) r=X.ms.pct>=80?'G':X.ms.pct>=50?'Y':'R';
+    if(X.ot&&X.ot.overall!=null) r=X.ot.j==='X'?(r==='R'?'R':'Y'):(r==='N'?'G':r);
+    if(X.lv&&X.lv.eV&&r==='N') r='G'; if(X.td&&X.td.late) r=r==='R'?'R':'Y'; X.rag=r; }
+  return X;
 }
 const SEC_TH={today:'☀️ วันนี้',tracker:'📊 Tracker',mission:'🎯 7 Mission',ot:'⏱ OT',leave:'🌴 วันลา',mj:'🧰 Main QE Jobs',hoshin:'🧭 Hoshin'};
 function build(M0,opt){
@@ -13062,7 +13066,7 @@ function build(M0,opt){
     if(M.ms&&M.ms.fy) rp.push(['ปีงบประมาณ (FY)',M.ms.fy]); if(M.hs) rp.push(['Hoshin '+M.hs.year,'อัปเดตล่าสุด '+(M.hs.upd?dm(M.hs.upd):NA)]); if(opt.by) rp.push(['จัดทำโดย (Prepared by)',opt.by]);
     rp.forEach((r,i)=>{ T(s,1.1,4.25+i*.34,3.2,.32,r[0],{fs:11,b:true,c:P.txt}); T(s,4.3,4.25+i*.34,4.6,.32,r[1],{fs:11,c:P.mut}); });
     T(s,1.1,6.05,3,.28,'หัวข้อในรายงาน',{fs:10,b:true,c:P.mut});
-    const ag=SECS.filter(x=>x[0]==='home'||x[0]==='mgmt'||on(x[0])); ag.forEach((x,i)=>{ R(s,1.1+i*1.27,6.36,1.19,.36,{fill:P.soft,line:P.line,r:.08}); T(s,1.1+i*1.27,6.36,1.19,.36,x[1],{fs:9,c:P.txt,al:'center',va:'middle'}); });
+    const ag=SECS.filter(x=>x[0]==='home'||x[0]==='plan'||on(x[0])); ag.forEach((x,i)=>{ R(s,1.1+i*1.27,6.36,1.19,.36,{fill:P.soft,line:P.line,r:.08}); T(s,1.1+i*1.27,6.36,1.19,.36,x[1],{fs:9,c:P.txt,al:'center',va:'middle'}); });
     T(s,.75,7.1,11.2,.26,'ที่มา: QE Elec. Daily Job Tracker · ข้อมูล ณ '+dm(T0)+(M.cloudOk?'':' · ข้อมูลในเครื่อง (Cloud DB ไม่ได้เชื่อมต่อ)'),{fs:8.5,c:P.mut});
     s.notes='ข้อความหลัก: '+KEY+'\n• สถานะรวม = '+RAGT[M.rag]+' ('+M.ragRule+')'+(M.gaps.length?'\n• ข้อจำกัดข้อมูล: '+M.gaps.join(' · '):'')+(SCOPE?'\n• '+SCOPE:'')+'\n[Source] QE Elec. Daily Job Tracker';
   }
@@ -13080,7 +13084,7 @@ function build(M0,opt){
       ['🧭 Hoshin',M.hs?M.hs.pct+'%':'–','ไลน์ที่ OK',M.hs?M.hs.ok+' / '+M.hs.total+' ไลน์ · เลยกำหนด '+M.hs.late.length:NA,M.hs?(M.hs.late.length?'Y':M.hs.pct>=80?'G':'Y'):'N']];
     const CK=['today','tracker','mission','ot','leave','mj','mj','hoshin'];
     const cards=cardsAll.filter((c,i)=>on(CK[i]));
-    const nC=cards.length, cols=nC<=4?Math.max(1,nC):Math.ceil(nC/2), rowsN=nC?(nC<=4?1:2):0, cw=(12.43-(cols-1)*.14)/cols;
+    const nC=cards.length, cols=nC<=4?Math.max(1,nC):Math.ceil(nC/2), rowsN=nC?(nC<=4?1:2):0, cw=Math.min(nC<=2?4.2:9,(12.43-(cols-1)*.14)/cols);
     cards.forEach((c,i)=>{ const x=.45+(i%cols)*(cw+.14), y=1.72+Math.floor(i/cols)*1.6; card(D,s,x,y,cw,1.45,null,P[c[4]]);
       T(s,x+.22,y+.08,cw-1.3,.28,c[0],{fs:10.5,b:true,c:P.mut}); pill(D,s,x+cw-1.05,y+.1,.95,.24,RAGT[c[4]],P[c[4]],8);
       T(s,x+.22,y+.36,cw-.3,.55,c[1],{fs:26,b:true,c:P[c[4]],va:'middle'}); T(s,x+.22,y+.9,cw-.3,.25,c[2],{fs:10,b:true,c:P.txt}); T(s,x+.22,y+1.13,cw-.25,.26,c[3],{fs:9,c:P.mut}); });
@@ -13318,49 +13322,47 @@ function build(M0,opt){
     });
   }
 
-  /* ---------- ⚠️ ผู้บริหาร ---------- */
-  { const info=[]; if(M.pcr) info.push('PCR: Delay '+M.pcr.delay+' · Done '+M.pcr.done+'/'+M.pcr.total);
-    if(M.hs) M.hs.topics.filter(t=>t.total&&t.ok===t.total).forEach(t=>info.push('Hoshin '+t.name+' ครบทุกไลน์ ('+t.total+')'));
-    if(M.qp&&M.qp.next[0]) info.push('Q-patrol ถัดไป: '+M.qp.next[0].line+' '+M.qp.next[0].t+' '+dmS(M.qp.next[0].pd));
-    if(M.pv){ const n=M.pv.next.filter(x=>x.d&&x.d>=T0).sort((a,b)=>a.d<b.d?-1:1)[0]; if(n) info.push('New project ถัดไป: '+n.model+' '+n.code+' '+dmS(n.d)); }
-    M.conflicts.forEach(c=>info.push('ข้อมูลขัดกัน – '+c));
-    /* v37.3: แต่ละเรื่องอยู่กล่องเดียว ตามลำดับ Approval → Escalate → Decision (ไม่ซ้ำกัน) */
-    const used=new Set();
-    const apprX=M.tr.open.filter(x=>/รอ\s*\S*\s*(approv|อนุมัติ)|(GM|QCR|ผู้บริหาร|manager)\s*approv|wait\w*\s+(for\s+)?\S*\s*approv/i.test(x.cm)&&isD(x.due)&&days(x.due,T0)<=7);
-    apprX.forEach(x=>used.add(x));
-    const appr=apprX.map(x=>clip(x.issue,45)+' – รออนุมัติ'+(x.late>0?' (เลยกำหนด '+x.late+' วัน)':' (กำหนด '+dmS(x.due)+')'));
-    const esc=[]; M.tr.open.filter(x=>!used.has(x)&&(x.blocked||x.revs>=2||(x.late||0)>3)).forEach(x=>{ used.add(x); esc.push(clip(x.issue,45)+': '+(x.blocked?'ติดปัญหา – '+(x.blocker||'–'):x.revs>=2?'เลื่อน '+x.revs+' ครั้ง'+(x.why.length?' (ล่าสุด: '+x.why[x.why.length-1]+')':''):'เลย '+x.late+' วัน')); });
-    const hsEsc=new Set(); if(M.hs) M.hs.late.filter(l=>l.late>=2).forEach(l=>{ hsEsc.add(l); esc.push('Hoshin '+l.line+' '+l.topic+' เลย '+l.late+' วัน (PE: '+(l.pe||'–')+')'); });
-    const dec=[]; M.tr.overdue.filter(x=>!used.has(x)).slice(0,3).forEach(x=>dec.push('ยืนยันกำหนดเสร็จใหม่: '+clip(x.issue,50)+' (เลย '+x.late+' วัน)'));
-    if(M.hs) M.hs.late.filter(l=>!hsEsc.has(l)).slice(0,2).forEach(l=>dec.push('ยืนยันกำหนดเสร็จใหม่: Hoshin '+l.line+' '+l.topic+' (เลย '+l.late+' วัน)'));
-    const nm=new Date(T0+'T00:00:00'); nm.setMonth(nm.getMonth()+1); const nb=M.tr.byMonth.find(b=>b.k===ymd(nm).slice(0,7)); if(nb&&nb.ok>=5) dec.push('จัดลำดับความสำคัญงานเดือน '+nb.l+' ('+nb.ok+' รายการใน Tracker)');
-    D.sum.info=info; D.sum.dec=dec; D.sum.appr=appr; D.sum.esc=esc;
-    const s=D.slide('mgmt','⚠️ เรื่องที่ต้องการให้ผู้บริหารพิจารณา (Management Attention) · คัดตามกฎจากข้อมูล','ต้องอนุมัติ '+appr.length+' · ต้อง Escalate '+esc.length+' · ต้องตัดสินใจ '+dec.length+' เรื่อง');
-    const Q=[['ℹ️ เพื่อทราบ (For Information)',P.B,info],['🧭 ต้องตัดสินใจ (Decision Required)',P.Y,dec],['✅ ต้องอนุมัติ (Approval Required)',P.G,appr],['🚨 ต้อง Escalate (Escalation Required)',P.R,esc]];
-    Q.forEach((q,i)=>{ const x=.45+(i%2)*6.29, y=1.72+Math.floor(i/2)*2.67; card(D,s,x,y,6.14,2.55,null,q[1]); T(s,x+.25,y+.1,5.7,.32,q[0],{fs:12.5,b:true,c:q[1]===P.Y?'B45309':q[1]});
-      bullets(D,s,x+.25,y+.48,5.7,2.0,q[2].length?q[2].slice(0,5):['ไม่พบในหมวดที่เลือก'],{fs:10,c:q[2].length?P.txt:P.mut}); });
-    ftag(D,s,12.88,.72,'Recommendation');
-    s.notes='ข้อความหลัก: สิ่งที่ต้องการจากผู้บริหาร\n• คัดเลือกด้วยกฎตายตัวจากข้อมูล: Approval = มาตรการระบุว่า “รอ … Approve” (เช่น รอ GM / QCR Approve) และครบกำหนดใน 7 วัน · Escalation = ติดปัญหา / เลื่อน ≥2 ครั้ง / เลยกำหนด >3 วัน · Decision = งานเลยกำหนดที่เหลือ · แต่ละเรื่องอยู่กล่องเดียว';
-
-    /* Next steps */
-    const ev=[]; const add=(d,t,r)=>{ if(isD(d)&&d>=T0) ev.push({d:d,t:t,r:r}); };
-    M.tr.open.forEach(x=>add(x.due,clip(x.issue,34),'Y'));
-    if(M.hs) M.hs.topics.forEach(t=>{ const n=t.nok.filter(l=>l.due===t.due).length; if(n) add(t.due,'Hoshin '+t.name+' ('+n+' ไลน์)',days(t.due,T0)<=7?'R':'Y'); t.plan.forEach(p=>add(p.d,t.name+' – '+clip(p.l,22),'G')); });
-    if(M.qp) M.qp.next.forEach(e=>add(e.pd,e.t+' '+e.line,'G')); if(M.pv) M.pv.next.forEach(p=>add(p.d,p.code+' '+p.model,'G'));
-    ev.sort((a,b)=>a.d<b.d?-1:1); const by={}; ev.forEach(e=>{ (by[e.d]=by[e.d]||[]).push(e); });
-    const nodes=Object.keys(by).sort().slice(0,7).map(d=>({d:d,t:by[d].map(e=>e.t),r:by[d].some(e=>e.r==='R')?'R':by[d].some(e=>e.r==='Y')?'Y':'G'}));
-    const s2=D.slide('mgmt','➡️ ขั้นตอนถัดไป (Next Steps)',hsN?'ปิดงาน '+dmS(hsN.due)+' ให้ทัน แล้วเตรียมงานช่วงถัดไป':'กำหนดการสำคัญที่จะถึง');
-    card(D,s2,.45,1.72,12.43,2.75,'📅 Milestone ที่จะถึง');
-    if(nodes.length){ const ly=2.55, st=nodes.length>1?11.2/(nodes.length-1):0; Ln(s2,.9,ly,11.6,0,{c:P.line,lw:2});
-      nodes.forEach((n,i)=>{ const cx=nodes.length>1?1.05+i*st:6.66; O(s2,cx-.12,ly-.12,.24,.24,{fill:P[n.r],line:P.W,lw:1.5});
-        T(s2,cx-.8,ly-.45,1.6,.28,dmS(n.d),{fs:11,b:true,c:P.txt,al:'center'}); T(s2,cx-.85,ly+.2,1.7,1.6,n.t.slice(0,3).join('\n')+(n.t.length>3?'\n+'+(n.t.length-3)+' รายการ':''),{fs:8.5,c:P.mut,al:'center',va:'top'}); }); }
-    else T(s2,.65,2.4,12,.4,NA,{fs:12,c:P.mut});
-    const nx=[['สัปดาห์นี้',(!M.odOn?'ติดตามผลตามหมวดที่เลือก':M.overdueAll?'เคลียร์งานเลยกำหนด '+M.overdueAll+' รายการ':'ไม่มีงานเลยกำหนด')+(appr.length?' · ขออนุมัติ '+appr.length+' เรื่อง':'')+(esc.length?' · Escalate '+esc.length+' เรื่อง':'')],
-      [hsN?'ภายใน '+dmS(hsN.due):'ภายใน 30 วัน',hsN?'ปิด Hoshin อีก '+hsNTxt+' ('+M.hs.next.filter(t=>t.due===hsN.due).map(t=>t.name).join(', ')+')':'ติดตามงานที่ครบกำหนดใน 30 วัน'],
-      ['ก่อนรายงานครั้งถัดไป',M.gaps.length||M.conflicts.length?'เติมข้อมูลที่ขาด: '+M.gaps.concat(M.conflicts.length?['แก้ข้อมูลขัดกัน '+M.conflicts.length+' จุด']:[]).slice(0,4).join(' · '):'อัปเดตข้อมูลใน Dashboard ให้เป็นปัจจุบัน']];
-    ftag(D,s2,12.73,4.74,'Recommendation');
-    nx.forEach((c,i)=>{ const x=.45+i*4.19; card(D,s2,x,4.62,4.05,2.35,null,P.pri); T(s2,x+.25,4.75,3.7,.36,c[0],{fs:14,b:true,c:P.pri}); T(s2,x+.25,5.15,3.65,1.75,c[1],{fs:10.5,c:P.txt,va:'top'}); });
-    s2.notes='ข้อความหลัก: กำหนดการที่จะถึงและสิ่งที่ต้องทำต่อ\n• Timeline = วันที่จริงจาก Tracker / Hoshin / Q-patrol / PV\n• การ์ดด้านล่าง = สรุปตามกฎ (ข้อเสนอแนะ)';
+  /* ---------- 📅 แผนงาน (FYI) : ภาพรวมกิจกรรมของทุกหมวดที่ติ๊ก ---------- */
+  { const wk0=monday(T0), addD=(s,n)=>{ const d=new Date(s+'T00:00:00'); d.setDate(d.getDate()+n); return ymd(d); };
+    const WK=[0,1,2,3].map(i=>({a:i?addD(wk0,7*i):T0,b:addD(wk0,7*i+6)})), END=WK[3].b;
+    const col=d=>{ if(!isD(d)) return -1; if(d<T0) return 0; for(let i=0;i<4;i++) if(d>=WK[i].a&&d<=WK[i].b) return i+1; return 5; };
+    const lanes=[];
+    const lane=(k,label,status)=>{ const L={k:k,label:label,status:status,c:[[],[],[],[],[],[]]}; lanes.push(L); return L; };
+    const put=(L,d,t,late)=>{ const i=col(d); if(i<0) return; L.c[i].push({d:d,t:t,late:late}); };
+    if(on('today')&&M.td){ const L=lane('today','☀️ วันนี้','เลยกำหนด '+M.td.late+' · ครบวันนี้ '+M.td.today+' · ภายใน 3 วัน '+M.td.soon);
+      if(!on('tracker')&&!on('mj')&&!on('hoshin')) M.td.rows.forEach(r=>put(L,r.d,clip(r.t,30))); }
+    if(on('tracker')){ const L=lane('tracker','📊 Tracker','เปิด '+M.tr.open.length+'/'+M.tr.total+' · ปิดแล้ว '+M.tr.closure+'% · เลยกำหนด '+M.tr.overdue.length);
+      M.tr.open.forEach(x=>put(L,x.due,clip(x.issue,30)+' ('+x.owner+')',x.late>0)); }
+    if(on('mission')){ const m=M.ms; lane('mission','🎯 7 Mission',m&&m.ev?'ผ่านเป้า '+m.pct+'% ('+m.ok+' O / '+m.ng+' X)'+(m.latest?' · ข้อมูลถึง '+m.latest:''):NA); }
+    if(on('ot')){ const o=M.ot; lane('ot','⏱ OT',o&&o.overall!=null?'เฉลี่ย '+f2(o.overall)+' ชม./คน/วัน · เป้า ≤ '+f2(o.set.tgtDay):NA); }
+    if(on('leave')){ const v=M.lv, L=lane('leave','🌴 วันลา / อบรม',v&&v.eV?'ใช้พักร้อน '+f1(v.uV)+'/'+f1(v.eV)+' วัน · ซ้อนกัน '+v.conf+' วัน':NA);
+      if(v) v.up.forEach(e=>put(L,e.ds,e.name+' · '+e.k)); }
+    if(on('mj')){ const L=lane('mj','🧰 Main QE Jobs',[M.pcr?'PCR Delay '+M.pcr.delay+' (Done '+M.pcr.done+'/'+M.pcr.total+')':'',M.qp?'Q-patrol '+M.qp.items.length+' หัวข้อ':''].filter(Boolean).join(' · ')||NA);
+      if(M.qp){ M.qp.late.forEach(e=>put(L,e.pd,e.t+' '+e.line,true)); M.qp.next.forEach(e=>put(L,e.pd,e.t+' '+e.line)); }
+      if(M.pv) M.pv.next.filter(p=>p.d&&p.d>=T0).forEach(p=>put(L,p.d,p.code+' '+p.model)); }
+    if(on('hoshin')&&M.hs){ const L=lane('hoshin','🧭 Hoshin','OK '+M.hs.ok+'/'+M.hs.total+' ไลน์ ('+M.hs.pct+'%)');
+      M.hs.topics.forEach(t=>{ const g={}; t.nok.forEach(l=>{ if(l.due){ (g[l.due]=g[l.due]||[]).push(l.line); } });
+        Object.keys(g).forEach(d=>put(L,d,t.name+': '+g[d].length+' ไลน์',d<T0)); t.plan.filter(p=>p.d>=T0).forEach(p=>put(L,p.d,t.name+' – '+clip(p.l,22))); }); }
+    const anyLate=lanes.some(L=>L.c[0].length);
+    let MAXI=3, CL=30;
+    const cell=(a,late)=>{ if(!a.length) return {s:'–',c:P.N,al:'center'}; a.sort((x,y)=>x.d<y.d?-1:1);
+      const t=a.slice(0,MAXI).map(x=>dmS(x.d)+' '+clip(x.t,CL)).join('\n')+(a.length>MAXI?'\n+ อีก '+(a.length-MAXI):''); return late?{s:t,c:P.R,b:true}:{s:t}; };
+    const head=['หมวด','สถานะปัจจุบัน'].concat(anyLate?['🔴 เลยกำหนด']:[]).concat(WK.map((w,i)=>(i===0?'สัปดาห์นี้':'สัปดาห์ '+(i+1))+'\n'+dmS(w.a)+' – '+dmS(w.b))).concat(['หลังจากนั้น']);
+    const cw=anyLate?[1.35,2.0,1.5,1.5,1.5,1.5,1.5,1.58]:[1.45,2.4,1.65,1.65,1.65,1.65,1.98];
+    const mkRows=()=>lanes.map(L=>[{s:L.label,b:true},{s:L.status,c:L.status===NA?P.mut:P.txt}].concat(anyLate?[cell(L.c[0],true)]:[]).concat([1,2,3,4].map(i=>cell(L.c[i]))).concat([L.c[5].length?{s:L.c[5].length+' รายการ\n(ถึง '+dmS(L.c[5].map(x=>x.d).sort().slice(-1)[0])+')',al:'center'}:{s:'–',c:P.N,al:'center'}]));
+    /* ปรับความแน่นให้พอดีหน้า: ลดจำนวนรายการต่อช่อง / ความยาวข้อความ */
+    const estH=(rows,fs)=>rows.reduce((h,r)=>h+Math.max(.42,Math.max(...r.map((c,j)=>{ const t=String(c&&c.s!=null?c.s:c), cpl=Math.max(4,Math.floor((cw[j]*72-10)/(fs*.45)));
+      return t.split('\n').reduce((n,x)=>n+Math.max(1,Math.ceil(x.length/cpl)),0); }))*fs*1.2/72+.07),0)+.6;
+    let rows=mkRows(), FS=9.5;
+    [[3,30,9.5],[2,28,9.5],[2,22,9.5],[1,26,9.5],[1,18,9.5]].some(o=>{ MAXI=o[0]; CL=o[1]; FS=o[2]; rows=mkRows(); return estH(rows,FS)<=4.6; });
+    const nUp=lanes.reduce((a,L)=>a+[1,2,3,4].reduce((b,i)=>b+L.c[i].length,0),0);
+    D.sum.plan=[]; lanes.forEach(L=>[1,2].forEach(i=>L.c[i].forEach(x=>D.sum.plan.push(dmS(x.d)+' · '+L.label.replace(/^\S+\s/,'')+' · '+x.t)))); D.sum.plan.sort();
+    const s=D.slide('plan','📅 แผนงาน & กิจกรรม (FYI) · '+dmS(WK[0].a)+' – '+dmS(END),lanes.length?'กิจกรรมใน 4 สัปดาห์ข้างหน้า '+nUp+' รายการ จาก '+lanes.length+' หมวดที่เลือก':'ไม่มีหมวดที่เลือก');
+    if(lanes.length){
+      table(D,s,.45,1.72,12.43,cw,head,rows,{fs:FS,rh:.42});
+      T(s,.45,6.68,12.43,.28,'ข้อมูลเพื่อทราบ (FYI) · แสดงเฉพาะหมวดที่เลือก · วันที่จาก Due date ล่าสุด (รวม Rev.) / แผน Hoshin / Q-patrol / PV / แผนลา'+(anyLate?' · 🔴 = เลยกำหนดแล้ว':''),{fs:8.5,c:P.mut}); }
+    else empty(D,s,.45,1.75,12.43,5.2,'เลือกหมวดอย่างน้อย 1 หมวด');
+    s.notes='ข้อความหลัก: ภาพรวมกิจกรรมของหมวดที่เลือก (เพื่อทราบ)\n• แต่ละแถว = หมวด · คอลัมน์ = สัปดาห์\n• ไม่มีข้อเรียกร้องให้ผู้บริหารดำเนินการ';
   }
   /* v38: มาตรฐานรูปแบบทั้งไฟล์ */
   const EMO=/[\u{1F000}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{2712}\u{2714}-\u{2716}\u{2718}-\u{27BF}\u{2B00}-\u{2BFF}\u{23E9}-\u{23FA}\u{231A}\u{231B}\u{FE0F}\u{200D}\u{2139}]/gu;
@@ -13482,7 +13484,7 @@ const RAGI={G:'🟢',Y:'🟡',R:'🔴',N:'⚪'};
 function sumOf(D){ const M=D.M, S=D.sum||{};
   return {key:S.key||'',rag:M.rag,od:M.overdueAll,trOpen:M.tr.open.length,trTotal:M.tr.total,pcr:M.pcr,hs:M.hs,pts:S.pts||[],info:S.info||[],dec:S.dec||[],appr:S.appr||[],esc:S.esc||[]}; }
 function lineText(D,opt){ const M=D.M, s=sumOf(D);
-  const L=['📊 QE Electronics · Executive Report','📅 ข้อมูล ณ '+dm(M.T)+(opt.period?' · ช่วง '+opt.period:''),RAGI[M.rag]+' สถานะรวม: '+RAGT[M.rag],'',
+  const L=['📊 QE Electronics · Weekly Report (FYI)','📅 ข้อมูล ณ '+dm(M.T)+(opt.period?' · ช่วง '+opt.period:''),RAGI[M.rag]+' สถานะรวม: '+RAGT[M.rag],'',
     ];
   if(M.odOn) L.push('🔴 งานเลยกำหนด (หมวดที่เลือก): '+s.od);
   if(M.on&&M.on.tracker) L.push('📊 Tracker เปิด '+s.trOpen+'/'+s.trTotal+' · ปิดแล้ว '+M.tr.closure+'%');
@@ -13492,8 +13494,7 @@ function lineText(D,opt){ const M=D.M, s=sumOf(D);
   if(s.pcr) L.push('🧰 PCR: Done '+s.pcr.done+' · On-plan '+s.pcr.plan+' · Delay '+s.pcr.delay+' (จาก '+s.pcr.total+')');
   if(s.hs) L.push('🧭 Hoshin: OK '+s.hs.ok+'/'+s.hs.total+' ไลน์ ('+s.hs.pct+'%)');
   if(s.pts.length){ L.push('','📌 ประเด็นสำคัญ'); s.pts.slice(0,4).forEach(x=>L.push('• '+x)); }
-  const box=(t,a)=>{ if(a.length){ L.push('',t); a.slice(0,3).forEach(x=>L.push('• '+x)); } };
-  box('✅ ต้องอนุมัติ',s.appr); box('🚨 ต้อง Escalate',s.esc); box('🧭 ต้องตัดสินใจ',s.dec);
+  const pl=(D.sum&&D.sum.plan)||[]; if(pl.length){ L.push('','📅 กิจกรรม 2 สัปดาห์ข้างหน้า'); pl.slice(0,8).forEach(x=>L.push('• '+x)); if(pl.length>8) L.push('• + อีก '+(pl.length-8)+' รายการ'); }
   if(M.gaps.length){ L.push('','🧩 ข้อมูลที่ยังขาด: '+M.gaps.join(' · ')); }
   L.push('','📎 ไฟล์ PDF / PowerPoint ฉบับเต็มส่งทางอีเมล'+(opt.by?' · จัดทำโดย '+opt.by:''));
   return L.join('\n').slice(0,4800);
@@ -13511,8 +13512,7 @@ function mailHTML(D,opt){ const M=D.M, s=sumOf(D), P=D.P;
       (s.pcr?kp(s.pcr.delay,'PCR Delay',s.pcr.delay?'R':'G'):'')+(s.hs?kp(s.hs.pct+'%','Hoshin ไลน์ที่ OK',s.hs.pct>=80?'G':'Y'):'')+
       (M.ms&&M.ms.pct!=null?kp(M.ms.pct+'%','7 Mission ผ่านเป้า',M.ms.pct>=80?'G':M.ms.pct>=50?'Y':'R'):'')+(M.ot&&M.ot.overall!=null?kp(f2(M.ot.overall),'OT ชม./คน/วัน',M.ot.j==='X'?'R':'G'):'')+'</tr></table>'+
     '<h3 style="font-size:15px;margin:16px 0 4px;color:#16365C">📌 ประเด็นสำคัญ</h3>'+li(s.pts)+
-    '<h3 style="font-size:15px;margin:16px 0 6px;color:#16365C">⚠️ เรื่องที่ต้องการให้ผู้บริหารพิจารณา</h3>'+
-    '<table cellspacing="6" cellpadding="0" style="width:100%"><tr>'+box('ℹ️ เพื่อทราบ','#2E75B6',s.info)+box('🧭 ต้องตัดสินใจ','#B45309',s.dec)+'</tr><tr>'+box('✅ ต้องอนุมัติ','#2E8B57',s.appr)+box('🚨 ต้อง Escalate','#C0392B',s.esc)+'</tr></table>'+
+    '<h3 style="font-size:15px;margin:16px 0 4px;color:#16365C">📅 กิจกรรม 2 สัปดาห์ข้างหน้า (FYI)</h3>'+li(((D.sum&&D.sum.plan)||[]).slice(0,10))+
     '<h3 style="font-size:15px;margin:16px 0 6px;color:#16365C">🏠 ภาพรวม</h3><img src="cid:ov" alt="ภาพรวม" style="width:100%;max-width:760px;border:1px solid #D3DCE6;border-radius:6px">'+
     (M.gaps.length?'<p style="font-size:12px;color:#B45309;margin-top:10px">🧩 ข้อมูลที่ยังขาด: '+E(M.gaps.join(' · '))+'</p>':'')+
     '<p style="font-size:12px;color:#5F6B7A;margin-top:12px">📎 แนบไฟล์ PDF และ PowerPoint ฉบับเต็ม · ที่มา: QE Elec. Daily Job Tracker'+(opt.by?' · จัดทำโดย '+E(opt.by):'')+'</p></div></div>';
@@ -13523,16 +13523,16 @@ function defPeriod(T){ const n=new Date(); return dm(ymd(new Date(n.getFullYear(
 async function produce(opt,setProg,full){
   setProg=setProg||(()=>{}); const M=collect(); opt=Object.assign({},opt); if(!opt.period) opt.period=defPeriod(M.T);
   const D=build(M,opt);
-  const iOv=Math.max(0,D.slides.findIndex(s=>s.sec==='home')), iMg=D.slides.findIndex((s,i)=>s.sec==='mgmt');
+  const iOv=Math.max(0,D.slides.findIndex(s=>s.sec==='home')), iMg=D.slides.findIndex((s,i)=>s.sec==='plan');
   const imgs=[];
   for(let i=0;i<D.slides.length;i++){ setProg('🖼 กำลังสร้างภาพสไลด์ '+(i+1)+'/'+D.slides.length); imgs.push(await slideJpeg(D,i,1600)); await new Promise(r=>setTimeout(r,0)); }
   setProg('📄 กำลังรวมเป็น PDF…');
   const pdf=b64u8(jpegPdf(imgs.map(x=>({bytes:u8of(x.url),w:x.w,h:x.h}))));
   setProg('📊 กำลังสร้าง PowerPoint…');
   const pptx=await makePptx(D,'base64');
-  const pick=[[iOv,'overview','🏠 ภาพรวม'],[iMg,'management','⚠️ เรื่องที่ต้องการให้ผู้บริหารพิจารณา']].filter(x=>x[0]>=0);
+  const pick=[[iOv,'overview','🏠 ภาพรวม'],[iMg,'plan','📅 แผนงาน & กิจกรรม (FYI)']].filter(x=>x[0]>=0);
   return {D:D,M:D.M,report:{at:new Date().toISOString(),dataDate:M.T,period:opt.period,by:opt.by||'',cloudOk:!!M.cloudOk,
-    subject:'QE Electronics · Executive Report '+dm(M.T)+' · '+RAGT[D.M.rag],text:lineText(D,opt),html:mailHTML(D,opt),pdf:pdf,pptx:pptx,
+    subject:'QE Electronics · Weekly Report (FYI) '+dm(M.T)+' · '+RAGT[D.M.rag],text:lineText(D,opt),html:mailHTML(D,opt),pdf:pdf,pptx:pptx,
     images:pick.map(x=>({name:x[1],b64:b64of(imgs[x[0]].url),preview:b64of(imgs[x[0]].preview),caption:x[2]+' · '+dm(M.T)}))}};
 }
 
@@ -13606,7 +13606,7 @@ mod.innerHTML='<div class="xr-b"><button type="button" class="xr-x" data-xr="clo
  '<div class="xr-s">สรุปสถานะทุกแท็บเป็นสไลด์ · ออกไฟล์ หรือส่งเข้า LINE / E-mail และตั้งเวลาส่งอัตโนมัติ</div><div class="xr-st" id="xrSt" aria-live="polite"></div>'+
  '<div class="xr-tabs" role="tablist"><button type="button" role="tab" data-xrt="make" class="on" aria-selected="true">📄 ออกรายงาน</button><button type="button" role="tab" data-xrt="send" aria-selected="false">📤 ส่ง &amp; ตั้งเวลา</button></div>'+
  '<div data-xrp="make" role="tabpanel">'+
-  '<label class="xr-l">หมวดที่ต้องการ — ภาพรวมและหน้าผู้บริหารจะสรุปเฉพาะหมวดที่ติ๊ก</label><div class="xr-c" id="xrSecs">'+SEC_OPT.map(x=>'<label><input type="checkbox" data-sec="'+x[0]+'" checked><span>'+x[1]+'</span></label>').join('')+'</div>'+
+  '<label class="xr-l">หมวดที่ต้องการ — ภาพรวม แผนงาน LINE และอีเมล สรุปเฉพาะหมวดที่ติ๊ก</label><div class="xr-c" id="xrSecs">'+SEC_OPT.map(x=>'<label><input type="checkbox" data-sec="'+x[0]+'" checked><span>'+x[1]+'</span></label>').join('')+'</div>'+
   '<label class="xr-l" for="xrPer">ช่วงรายงาน (Reporting period)</label><input id="xrPer" type="text" maxlength="80">'+
   '<label class="xr-l" for="xrBy">จัดทำโดย (ไม่บังคับ)</label><input id="xrBy" type="text" maxlength="60" placeholder="เช่น QE/Bulakorn K.">'+
   '<div class="xr-a"><button type="button" class="p" data-xr="pdf">📄 PDF<small>เปิดรายงาน → Save as PDF</small></button><button type="button" data-xr="pptx">📊 PowerPoint<small>ดาวน์โหลด .pptx + Speaker notes</small></button></div>'+
@@ -13620,7 +13620,7 @@ mod.innerHTML='<div class="xr-b"><button type="button" class="xr-x" data-xr="clo
    '<label class="xr-l" for="xrTestTo">อีเมลสำหรับส่งทดสอบ</label><input id="xrTestTo" type="email" placeholder="อีเมลของคุณเอง">'+
    '<div class="xr-a"><button type="button" data-xr="test">🧪 ส่งทดสอบ<small>อีเมลทดสอบ + LINE ขึ้นต้น [ทดสอบ]</small></button><button type="button" class="p" data-xr="send">📤 ส่งตอนนี้<small>ส่งถึงรายชื่อ To / CC + LINE</small></button></div>'+
    '<div class="xr-setProg" id="xrProg" aria-live="polite"></div>'+
-   '<div class="xr-n">ส่งเป็น: ข้อความสรุป + ภาพสไลด์ภาพรวม / ผู้บริหาร (LINE) · อีเมลสรุป + แนบ PDF และ PowerPoint ฉบับเต็ม (E-mail)</div></div>'+
+   '<div class="xr-n">ส่งเป็น: ข้อความสรุป + ภาพสไลด์ภาพรวม / แผนงาน (LINE) · อีเมลสรุป + แนบ PDF และ PowerPoint ฉบับเต็ม (E-mail)</div></div>'+
   '<div class="xr-sec"><h4>⏰ ตั้งเวลาส่งอัตโนมัติ</h4><div id="xrSch"></div><button type="button" class="xr-add" data-xr="addsch">＋ เพิ่มรอบส่ง</button>'+
    '<label class="xr-tg" style="margin-top:10px;white-space:normal;border-radius:10px"><input type="checkbox" id="xrAuto"><span>อัปโหลดข้อมูลล่าสุดอัตโนมัติเมื่อเปิด Dashboard (ทุก 1 ชม. · เฉพาะตอน Cloud DB เชื่อมต่อ)</span></label>'+
    '<div class="xr-n" id="xrSnapInfo"></div>'+
@@ -13651,7 +13651,7 @@ function countSlides(){ try{ const D=build(collect(),getOpt()), M=D.M, C={G:'#16
       [M.odOn?'เลยกำหนด <b>'+M.overdueAll+'</b>':'',M.on.tracker?'Tracker เปิด <b>'+M.tr.open.length+'</b>/'+M.tr.total:'',M.pcr?'PCR Delay <b>'+M.pcr.delay+'</b>':'',M.hs?'Hoshin <b>'+M.hs.pct+'%</b>':'',
        M.ms&&M.ms.pct!=null?'7 Mission <b>'+M.ms.pct+'%</b>':'',M.ot&&M.ot.overall!=null?'OT <b>'+f2(M.ot.overall)+'</b>':''].filter(Boolean).join(' · ')+'</span>'+
       (off?'<span style="font-size:12px;color:var(--mut,#64748b)">· คำนวณเฉพาะหมวดที่เลือก</span>':'');
-    g('xrCount').textContent='รายงานนี้มี '+D.slides.length+' สไลด์ · ภาพรวม / สถานะรวม / เรื่องที่ต้องให้ผู้บริหารพิจารณา / LINE / E-mail ใช้เฉพาะหมวดที่ติ๊ก'; }catch(e){ console.warn(e); g('xrCount').textContent=''; } }
+    g('xrCount').textContent='รายงานนี้มี '+D.slides.length+' สไลด์ · ภาพรวม / สถานะรวม / แผนงาน / LINE / E-mail ใช้เฉพาะหมวดที่ติ๊ก'; }catch(e){ console.warn(e); g('xrCount').textContent=''; } }
 function tab(k){ mod.querySelectorAll('[data-xrt]').forEach(b=>{ const on=b.dataset.xrt===k; b.classList.toggle('on',on); b.setAttribute('aria-selected',on?'true':'false'); });
   mod.querySelectorAll('[data-xrp]').forEach(p=>p.hidden=p.dataset.xrp!==k); if(k==='send'){ paintSend(); if(srvOK()&&!srvInfo) ping(true); } }
 function readForm(){ const c=cfgGet(); c.chLine=g('xrChLine').checked; c.chMail=g('xrChMail').checked; c.to=g('xrTo').value; c.cc=g('xrCc').value; c.testTo=g('xrTestTo').value.trim();
