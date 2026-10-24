@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="th"><head><script id="qwBoot">try{if(localStorage.getItem('issue_tracker_cal')===null)localStorage.setItem('issue_tracker_cal','closed');if(localStorage.getItem('issue_tracker_own')===null)localStorage.setItem('issue_tracker_own','closed');}catch(e){}</script><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<html lang="th"><head><script id="qwBoot">try{var __s=JSON.parse(localStorage.getItem('ux_auth_sess')||'null');if(__s&&__s.role==='viewer'&&__s.exp>Date.now())window.__QE_RO=true;}catch(e){}try{if(localStorage.getItem('issue_tracker_cal')===null)localStorage.setItem('issue_tracker_cal','closed');if(localStorage.getItem('issue_tracker_own')===null)localStorage.setItem('issue_tracker_own','closed');}catch(e){}</script><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="referrer" content="no-referrer">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -2416,8 +2416,8 @@ window.qeBlk={
   /* Any edit made by any page is queued automatically, even if that module did not call SPDB.queue(). */
   try{
     const nativeSet=Storage.prototype.setItem,nativeRemove=Storage.prototype.removeItem,nativeClear=Storage.prototype.clear;
-    Storage.prototype.setItem=function(k,v){const r=nativeSet.call(this,k,v);if(this===localStorage&&!applyingRemote&&isSyncKey(k))queue();return r;};
-    Storage.prototype.removeItem=function(k){const shared=this===localStorage&&isSyncKey(k);const r=nativeRemove.call(this,k);if(shared&&!applyingRemote)queue();return r;};
+    Storage.prototype.setItem=function(k,v){if(window.__QE_RO&&this===localStorage&&!applyingRemote&&(isSyncKey(k)||/^(issue_tracker_(v2|trash|title)|daily_checklist_(v1|notes|conf)|qe_missions_v1|qe_hoshin_v1|qe_mainjobs_data_v2|qe_glossary_v1|qe_mtg_d_.*|qe_mtg_cfg)$/.test(String(k)))&&localStorage.getItem(k)!==null){try{window.__QE_ROblock&&window.__QE_ROblock(k);}catch(e){}return;}const r=nativeSet.call(this,k,v);if(this===localStorage&&!applyingRemote&&isSyncKey(k))queue();return r;};
+    Storage.prototype.removeItem=function(k){if(window.__QE_RO&&this===localStorage&&!applyingRemote&&(isSyncKey(k)||/^(issue_tracker_(v2|trash|title)|daily_checklist_(v1|notes|conf)|qe_missions_v1|qe_hoshin_v1|qe_mainjobs_data_v2|qe_glossary_v1|qe_mtg_d_.*|qe_mtg_cfg)$/.test(String(k)))&&localStorage.getItem(k)!==null){try{window.__QE_ROblock&&window.__QE_ROblock(k);}catch(e){}return;}const shared=this===localStorage&&isSyncKey(k);const r=nativeRemove.call(this,k);if(shared&&!applyingRemote)queue();return r;};
     Storage.prototype.clear=function(){const r=nativeClear.call(this);if(this===localStorage&&!applyingRemote)queue();return r;};
   }catch(e){}
 })();
@@ -11312,6 +11312,10 @@ const css=document.createElement('style'); css.id='cbStyle'; css.textContent=`
 .cb-names{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 4px}
 .cb-names button{padding:14px 10px;margin:0;border-radius:12px;border:1px solid var(--line);background:var(--soft);color:var(--txt);font-size:16px;font-weight:800;cursor:pointer}
 .cb-names button:hover{border-color:var(--pri);background:var(--soft2)}
+.cb-names button small{display:block;font-size:11.5px;font-weight:600;color:var(--mut);margin-top:3px}
+.cb-grp{margin:12px 0 0;font-size:12.5px;font-weight:800;color:var(--mut)}.cb-grp small{font-weight:600;margin-left:6px}.cb-grp.v{margin-top:16px;padding-top:12px;border-top:1px dashed var(--line)}
+.cb-names.v button{background:transparent;border-style:dashed}
+.cb-names button{font-size:14.5px!important}
 .cb-err{margin-top:8px;padding:7px 10px;border-radius:9px;border:1px solid var(--dang);background:rgba(220,60,60,.12);font-size:12.5px;line-height:1.5}
 .cb-err[hidden]{display:none}
 .cb-ov{position:fixed;inset:0;z-index:420;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px}
@@ -11333,7 +11337,12 @@ function applyZoom(){ const z=parseFloat(lsGet(ZK)||'1'); try{ document.body.sty
 applyZoom();
 
 /* ---------- เซสชัน ---------- */
-const sess=()=>{ const s=jget(SK,null); return (s&&names().indexOf(s.n)>=0&&s.exp>Date.now()&&lsGet('ux_me')===s.n)?s:null; };
+/* v43: ชื่อเต็ม + กลุ่มผู้บริหาร (ดูอย่างเดียว) */
+const FULL={Earn:'Chonlakarn Harikunsawad',Natcha:'Natcha Choomas',Mana:'Mana Kumkrai',Benz:'Bulakorn Kongnarong'};
+const VIEWERS=[{n:'DM',full:'Jumnean Chiwirach',role:'Dept. Manager (Represent)'},{n:'GM',full:'Charinya Udomsri',role:'General Manager'}];
+const VSALT='qe-view-2026', VHASH='c245b77a89aad116176c89cc479a2ec898828accf96b53e7f630aa9fd01a800c';
+const isViewerName=n=>VIEWERS.some(v=>v.n===n);
+const sess=()=>{ const s=jget(SK,null); if(s&&s.role==='viewer') return (isViewerName(s.n)&&s.exp>Date.now())?s:null; return (s&&names().indexOf(s.n)>=0&&s.exp>Date.now()&&lsGet('ux_me')===s.n)?s:null; };
 const me=()=>{ const s=sess(); return s?s.n:''; };
 const isAdmin=()=>admins().indexOf(me())>=0;
 function startSession(name){ lsSet(SK,JSON.stringify({n:name,exp:Date.now()+ttl(),at:Date.now()})); C().setWho(name); }
@@ -11370,7 +11379,10 @@ function showLock(reason){
   function done(name,kind){ clearInterval(tick); lsDel(FK); startSession(name); locked=!!g('cbVerLock'); if(!locked) setInert(false); document.body.style.overflow=g('cbVerLock')?'hidden':''; ov.remove(); say('เข้าสู่ระบบในชื่อ '+name+' แล้ว'); paint(); try{ C().audit(kind||'login',{target:name}); }catch(e){} }
   function stepName(msg){
     clearInterval(tick); picked='';
-    body('<h3>🔐 เข้าสู่ระบบ</h3><p>'+(msg?E(msg)+'<br>':'')+'เลือกชื่อของคุณ แล้วใส่ PIN '+PINLEN+' หลัก — ต้องเข้าสู่ระบบก่อนจึงใช้งานหน้านี้ได้</p><div class="cb-names">'+names().map(n=>'<button type="button" data-n="'+E(n)+'">'+E(n)+'</button>').join('')+'</div><div class="cb-err" id="cbErr" hidden></div>');
+    body('<h3>🔐 เข้าสู่ระบบ QE Tracker</h3><p>'+(msg?E(msg)+'<br>':'')+'เลือกชื่อของคุณ แล้วใส่ PIN '+PINLEN+' หลัก</p>'+
+      '<div class="cb-grp">🛠 Quality Engineer <small>แก้ไขข้อมูลได้</small></div><div class="cb-names">'+names().map(n=>'<button type="button" data-n="'+E(n)+'">'+E(FULL[n]||n)+(FULL[n]?'<small>'+E(n)+'</small>':'')+'</button>').join('')+'</div>'+
+      '<div class="cb-grp v">👁 ผู้บริหาร (DM / GM) <small>ดูอย่างเดียว · PIN ส่งทางอีเมลรายงาน</small></div><div class="cb-names v">'+VIEWERS.map(v=>'<button type="button" data-v="'+E(v.n)+'">'+E(v.full)+'<small>'+E(v.n)+' · '+E(v.role)+'</small></button>').join('')+'</div>'+
+      '<div class="cb-err" id="cbErr" hidden></div>');
     const f=ov.querySelector('.cb-names button'); if(f) f.focus();
   }
   async function stepPin(name){
@@ -11413,6 +11425,9 @@ function showLock(reason){
   const weak=p=>/^(\d)\1+$/.test(p)||p==='123456'||p==='654321';
   ov.addEventListener('click',async e=>{
     const n=e.target.closest('[data-n]'); if(n){ stepPin(n.dataset.n); return; }
+    const vb=e.target.closest('[data-v]'); if(vb){ const v=VIEWERS.find(x=>x.n===vb.dataset.v); picked=v.n;
+      body('<h3>👁 '+E(v.full)+'</h3><p>'+E(v.n)+' · '+E(v.role)+'<br>ใส่ PIN '+PINLEN+' หลัก (ดูในอีเมลรายงาน QE Tracker) — <b>โหมดดูอย่างเดียว</b></p><input class="cb-in pin" id="cbPin" type="password" inputmode="numeric" maxlength="'+PINLEN+'" autocomplete="off" aria-label="PIN"><div class="cb-err" id="cbErr" hidden></div><div class="cb-act"><button class="cb-btn p" data-a="vlogin">เข้าดู</button><button class="cb-btn" data-a="back">← เปลี่ยนชื่อ</button></div>');
+      const inp=g('cbPin'); digits(inp); inp.focus(); inp.addEventListener('keydown',ev=>{ if(ev.key==='Enter') ov.querySelector('[data-a="vlogin"]').click(); }); return; }
     const b=e.target.closest('[data-a]'); if(!b) return; const a=b.dataset.a;
     if(a==='back'){ stepName(); return; }
     if(a==='retry'){ stepPin(picked); return; }
@@ -11421,6 +11436,15 @@ function showLock(reason){
     if(a==='codeok'){ done(picked,ov._kind); return; }
     const guardLock=()=>{ const f=failState(); if(f.until>Date.now()){ err('ใส่ผิดหลายครั้ง — รอ '+Math.ceil((f.until-Date.now())/1000)+' วินาที แล้วลองใหม่'); return true; } return false; };
     const fail=(msg)=>{ const f=failState(), n2=(f.n||0)+1, until=n2>=MAXFAIL?Date.now()+LOCKMS:0; lsSet(FK,JSON.stringify({n:until?0:n2,until:until})); err(until?'ผิด '+MAXFAIL+' ครั้ง — ล็อก '+(LOCKMS/1000)+' วินาที':msg+' (เหลือโอกาสอีก '+(MAXFAIL-n2)+' ครั้ง)'); };
+    if(a==='vlogin'){
+      if(guardLock()) return; const pin=g('cbPin').value; if(pin.length!==PINLEN){ err('PIN ต้องเป็นตัวเลข '+PINLEN+' หลัก'); return; }
+      b.disabled=true; await new Promise(r=>setTimeout(r,20)); const ok=hashPin('VIEWER',pin,VSALT)===VHASH; b.disabled=false;
+      if(!ok){ fail('PIN ไม่ถูกต้อง'); g('cbPin').value=''; g('cbPin').focus(); return; }
+      clearInterval(tick); lsDel(FK); window.__QE_RO=true;
+      const VV=VIEWERS.find(x=>x.n===picked)||{}; lsSet(SK,JSON.stringify({n:picked,full:(VV.full||picked)+' ('+picked+')',role:'viewer',exp:Date.now()+12*3600000,at:Date.now()})); lsSet('ux_me',picked);
+      locked=!!g('cbVerLock'); if(!locked) setInert(false); document.body.style.overflow=g('cbVerLock')?'hidden':''; ov.remove();
+      try{ window.__QE_ROapply&&window.__QE_ROapply(picked); }catch(ex){} say('👁 เข้าดูในชื่อ '+picked+' (ดูอย่างเดียว)'); paint(); return;
+    }
     if(a==='login'){
       if(guardLock()) return; const pin=g('cbPin').value; if(pin.length!==PINLEN){ err('PIN ต้องเป็นตัวเลข '+PINLEN+' หลัก'); return; }
       b.disabled=true; await new Promise(r=>setTimeout(r,20)); const ok=hashPin(picked,pin,REC.salt)===REC.h; b.disabled=false;
@@ -11468,7 +11492,7 @@ function openGloss(){
 const lblOf=r=>{ const t=r.type, p=r.payload||{}; if(t==='TrackerItem') return 'Tracker'; if(t==='TrashItem') return 'ถังขยะ'; if(t==='ChecklistDay') return 'Checklist'; if(t==='MissionData'||t==='OTData'||t==='LVData') return '7 Mission'; if(t==='HoshinData') return 'Hoshin'; if(p.mjk) return 'Main QE Jobs'; if(String(p.storageKey||'').indexOf('qe_mtg_')===0) return 'ประชุม'; return 'อื่น ๆ'; };
 function paint(){
   const st=C().state(), d=st.dirty, n=d?d.n:0, a=st.anomaly, manual=st.mode==='manual', on=st.online, who=me();
-  pill.hidden=locked||!who||!(st.valid&&st.enabled);
+  pill.hidden=locked||!who||!(st.valid&&st.enabled)||!!window.__QE_RO;
   g('cbAv').textContent=(who||'?').charAt(0).toUpperCase(); g('cbWn').textContent=who; g('cbOnT').textContent=String(on.length);
   if(manual&&n>0&&!a){ if(!dirtySince) dirtySince=Date.now(); } else dirtySince=0;
   const mins=dirtySince?(Date.now()-dirtySince)/60000:0, old=mins>=10;
@@ -13802,6 +13826,92 @@ function boot(){ let n=0; const iv=setInterval(()=>{ if(addNavBtn()||++n>40) cle
   const v=g('viewToday'); if(v&&window.MutationObserver) new MutationObserver(addTodayBtn).observe(v,{childList:true,subtree:true}); }
 if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot); else boot();
 window.__XR_API={collect:collect,build:build,html:htmlOf,open:openMod,produce:produce,slideJpeg:slideJpeg,jpegPdf:jpegPdf,nextRun:nextRun,lineText:lineText,mailHTML:mailHTML};
+})();
+
+</script>
+<script id="qeRoAddon">
+/* ===== v43 · 👁 โหมดดูอย่างเดียว (DM / GM) =====
+   • บล็อกการบันทึกข้อมูลทุกช่องทาง: localStorage (คีย์ข้อมูลที่ซิงก์) · การเขียนขึ้น Supabase · Team Chat / LINE
+   • ซ่อนปุ่มเพิ่ม/แก้ไข/ลบ · ช่องกรอกเป็นแบบอ่านอย่างเดียว · ยังเปลี่ยนแท็บ / ดูรายงาน / ออก PDF-PowerPoint ได้
+   • หมายเหตุ: เป็นการป้องกันฝั่งหน้าเว็บ — ถ้าต้องการกันการแก้ไขระดับฐานข้อมูล ให้ตั้ง RLS ใน Supabase เพิ่ม */
+(function(){
+'use strict';
+const g=id=>document.getElementById(id);
+const say=m=>{ try{ toast(m); }catch(e){} };
+let lastWarn=0;
+window.__QE_ROblock=function(){ const n=Date.now(); if(n-lastWarn>2500){ lastWarn=n; say('👁 โหมดดูอย่างเดียว — การแก้ไขไม่ถูกบันทึก (กด F5 เพื่อแสดงข้อมูลจริง)'); } };
+
+/* ---- กันการเขียนขึ้นเซิร์ฟเวอร์ ---- */
+const nativeFetch=window.fetch.bind(window);
+window.fetch=function(input,init){
+  try{
+    if(window.__QE_RO){
+      const url=String(input&&input.url||input||''), m=String((init&&init.method)||(input&&input.method)||'GET').toUpperCase();
+      const write=m!=='GET'&&m!=='HEAD'&&m!=='OPTIONS';
+      const ours=/supabase\.co|script\.google(usercontent)?\.com|\/functions\/v1\//i.test(url);
+      if(write&&ours&&!/\/rest\/v1\/rpc\//i.test(url)){
+        window.__QE_ROblock();
+        if(/supabase\.co\/rest\/v1\//i.test(url)) return Promise.resolve(new Response('[]',{status:200,headers:{'Content-Type':'application/json'}}));
+        return Promise.resolve(new Response(JSON.stringify({ok:false,error:'โหมดดูอย่างเดียว (DM/GM) — ส่งข้อมูลไม่ได้'}),{status:200,headers:{'Content-Type':'application/json'}}));
+      }
+    }
+  }catch(e){}
+  return nativeFetch(input,init);
+};
+
+/* ---- ปุ่ม/การกระทำที่เป็นการแก้ไข ---- */
+const EDIT=/(เพิ่ม|แก้ไข|เปลี่ยนชื่อ|ลบ|บันทึก|ยืนยัน|confirm|restore|นำเข้า|import|backup|รีเซ็ต|reset|ตั้งค่า|ตั้ง pin|ปิดงาน|เลื่อน due|ย้อนกลับ|กู้ข้อมูล|ถังขยะ|ดึงงาน|→ tracker|ส่งรูป|ส่งตอนนี้|ส่งทดสอบ|ทดสอบ line|ทดสอบ e-mail|อัปโหลด|sync|ลงคน|เชื่อม outlook|ทำเครื่องหมาย|mark|^\s*[✎🗑➕＋⧉✓📅]\s*$|^\s*\+)/i;
+const SAFE='#nvNav, .tabbar, [role="tab"], .tabbtn, #cbLock, #cbVerLock, #qeRoBar, [data-xrt="make"], [data-xr="pdf"], [data-xr="pptx"], [data-xr="close"], [data-sec], #nvXr, [data-xr-open], #qeAiOv, #qeChatPanel .qe-close';
+function isEdit(el){
+  if(!el||el.closest(SAFE)) return false;
+  const t=((el.innerText||el.value||'')+' '+(el.title||'')+' '+(el.getAttribute('aria-label')||'')).trim();
+  return EDIT.test(t);
+}
+document.addEventListener('click',e=>{
+  if(!window.__QE_RO||!e.isTrusted) return;
+  const el=e.target.closest&&e.target.closest('button,a[href="#"],[role="button"],[data-a],[data-td],[data-mje],input[type="checkbox"],input[type="radio"],label');
+  if(el&&isEdit(el)){ e.preventDefault(); e.stopImmediatePropagation(); window.__QE_ROblock(); }
+},true);
+document.addEventListener('keydown',e=>{
+  if(!window.__QE_RO) return;
+  if((e.ctrlKey||e.metaKey)&&/^[szy]$/i.test(e.key)){ e.preventDefault(); e.stopImmediatePropagation(); window.__QE_ROblock(); }
+},true);
+
+/* ---- ช่องกรอกเป็นอ่านอย่างเดียว (ยกเว้นช่องค้นหา/ตัวกรอง/รายงาน) ---- */
+const FREE='#nvNav, #cbLock, #xrMod, #qeAiOv, #qeRoBar, .nv-pal, [data-ro-ok]';
+function isFilter(el){ return el.type==='search'||/^(f[A-Z]|q[A-Z]|search|flt|filter)/.test(el.id||'')||!!el.closest('.flt,.filters,.ux-chips,.td-tools'); }
+function lockInputs(root){
+  (root||document).querySelectorAll('button,[role="button"],a[href="#"]').forEach(el=>{ if(!el.classList.contains('qe-ro-x')&&isEdit(el)) el.classList.add('qe-ro-x'); });
+  (root||document).querySelectorAll('input,textarea,select,[contenteditable="true"],[contenteditable=""]').forEach(el=>{
+    if(el.closest(FREE)||el.dataset.roDone) return;
+    if(el.isContentEditable){ el.setAttribute('contenteditable','false'); el.dataset.roDone='1'; return; }
+    if(isFilter(el)) return;
+    if(el.tagName==='SELECT'||el.type==='checkbox'||el.type==='radio'||el.type==='file'||el.type==='color'||el.type==='range'||el.type==='date') el.disabled=true; else el.readOnly=true;
+    el.dataset.roDone='1';
+  });
+}
+
+/* ---- แถบแจ้ง + CSS ---- */
+const css=document.createElement('style'); css.id='qeRoCss'; css.textContent=
+ 'body.qe-ro{padding-top:46px!important}'+
+ '#qeRoBar{position:fixed;top:0;left:0;right:0;z-index:9990;display:flex;align-items:center;gap:12px;padding:8px 16px;background:#16365C;color:#fff;font:600 13.5px "Segoe UI",Tahoma,sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.2)}'+
+ '#qeRoBar b{font-weight:800}#qeRoBar .s{opacity:.8;font-weight:500}#qeRoBar button{margin-left:auto;border:1px solid rgba(255,255,255,.5);background:transparent;color:#fff;border-radius:8px;padding:5px 12px;font:inherit;cursor:pointer}'+
+ 'body.qe-ro #f, body.qe-ro [data-td="add"], body.qe-ro #bkBtn, body.qe-ro #rsBtn, body.qe-ro #abBtn, body.qe-ro #lnBtn, body.qe-ro #trBtn, body.qe-ro [data-xrt="send"], body.qe-ro #spBtn, body.qe-ro .nv-mw{display:none!important}'+
+ 'body.qe-ro .qe-ro-x{display:none!important}'+
+ 'body.qe-ro input[readonly], body.qe-ro textarea[readonly], body.qe-ro select:disabled{background:transparent!important;cursor:default}';
+document.head.appendChild(css);
+window.__QE_ROapply=function(name){
+  window.__QE_RO=true; document.body.classList.add('qe-ro');
+  let full=name; try{ const s=JSON.parse(localStorage.getItem('ux_auth_sess')||'null'); full=(s&&(s.full||s.n))||name; }catch(e){}
+  if(!g('qeRoBar')){ const b=document.createElement('div'); b.id='qeRoBar'; b.setAttribute('role','status');
+    b.innerHTML='<span>👁 <b>โหมดดูอย่างเดียว</b> · '+String(full).replace(/[<>&]/g,'')+'</span><span class="s">ดูข้อมูล / เปลี่ยนแท็บ / ออกรายงาน PDF-PowerPoint ได้ · แก้ไขข้อมูลไม่ได้</span><button type="button" id="qeRoOut">ออกจากระบบ</button>';
+    document.body.appendChild(b);
+    g('qeRoOut').addEventListener('click',()=>{ try{ localStorage.removeItem('ux_auth_sess'); localStorage.removeItem('ux_me'); }catch(e){} location.reload(); }); }
+  lockInputs(document);
+  if(!window.__qeRoObs&&window.MutationObserver){ window.__qeRoObs=new MutationObserver(ms=>{ if(!window.__QE_RO) return; ms.forEach(m=>m.addedNodes.forEach(n=>{ if(n.nodeType===1) lockInputs(n.parentNode||n); })); }); window.__qeRoObs.observe(document.body,{childList:true,subtree:true}); }
+};
+function boot(){ if(window.__QE_RO){ let n=''; try{ n=(JSON.parse(localStorage.getItem('ux_auth_sess')||'{}').n)||''; }catch(e){} window.__QE_ROapply(n); } }
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>setTimeout(boot,300)); else setTimeout(boot,300);
 })();
 
 </script>
