@@ -12905,6 +12905,7 @@ const RAGTH={G:'🟢 On Track',Y:'🟡 Attention',R:'🔴 Critical',N:'⚪ No da
 
 /* ======================= 3) โมเดลสไลด์ (DSL) ======================= */
 const SW=13.333, SH=7.5;
+
 const SECS=[['home','🏠 ภาพรวม'],['today','☀️ วันนี้'],['tracker','📊 Tracker'],['mission','🎯 7 Mission'],['ot','⏱ OT'],['leave','🌴 วันลา'],['mj','🧰 Main QE Jobs'],['hoshin','🧭 Hoshin'],['mgmt','⚠️ ผู้บริหาร']];
 function Deck(P,M){
   const D={P:P,M:M,slides:[]};
@@ -12918,7 +12919,8 @@ function Deck(P,M){
       T(s,.4+i*w,.12,w,.38,x[1],{fs:10,b:on,c:on?P.nav:'C9D6E6',al:'center',va:'middle'}); });
     R(s,.45,.74,.06,.24,{fill:P.pri2});
     T(s,.58,.7,9,.3,kicker,{fs:11,b:true,c:P.pri2});
-    T(s,.45,.98,12.4,.66,title,{fs:String(title).length>75?16:String(title).length>55?18:21,b:true,c:P.txt,va:'top'});
+    T(s,.45,.98,12.4,.66,title,{fs:String(title).length>80?16:String(title).length>60?18:21,b:true,c:P.nav,va:'top'});
+    Ln(s,.45,7.0,12.43,0,{c:P.line,lw:.75});
     T(s,.45,7.1,11.2,.26,'ที่มา: QE Elec. Daily Job Tracker · ข้อมูล ณ '+dm(M.T)+(M.cloudOk?'':' · ข้อมูลในเครื่อง (Cloud DB ไม่ได้เชื่อมต่อ)'),{fs:8.5,c:P.mut});
     T(s,SW-1.2,7.1,.8,.26,String(D.slides.length),{fs:9,c:P.mut,al:'right'});
   }
@@ -12931,13 +12933,13 @@ function Ln(s,x,y,w,h,o){ s.els.push(Object.assign({t:'line',x,y,w,h},o||{})); }
 function TB(s,x,y,w,cw,rows,o){ s.els.push(Object.assign({t:'table',x,y,w,cw,rows},o||{})); }
 
 /* ---------- ส่วนประกอบสำเร็จรูป ---------- */
-function card(D,s,x,y,w,h,title,acc){ const P=D.P; R(s,x,y,w,h,{fill:P.card,line:P.line,r:.1,sh:1}); if(acc) R(s,x,y+.12,.07,h-.24,{fill:acc}); if(title) T(s,x+.2,y+.1,w-.35,.32,title,{fs:12,b:true,c:P.txt}); }
+function card(D,s,x,y,w,h,title,acc){ const P=D.P; R(s,x,y,w,h,{fill:P.card,line:P.line,r:.1,sh:1}); if(acc) R(s,x,y+.12,.07,h-.24,{fill:acc}); if(title){ R(s,x+.2,y+.16,.05,.22,{fill:P.pri2}); T(s,x+.32,y+.1,w-.45,.32,title,{fs:12,b:true,c:P.nav}); } }
 function kpi(D,s,x,y,w,h,val,lab,sub,col){ const P=D.P; card(D,s,x,y,w,h,null,col);
-  T(s,x+.22,y+.1,w-.3,h*.5,String(val),{fs:h>1.2?30:26,b:true,c:col,va:'middle'});
+  T(s,x+.22,y+.08,w-.3,h*.52,String(val),{fs:h>1.2?32:28,b:true,c:col,va:'middle'});
   T(s,x+.22,y+h*.52,w-.3,.3,lab,{fs:11,b:true,c:P.txt}); if(sub) T(s,x+.22,y+h*.52+.28,w-.3,.28,sub,{fs:9.5,c:P.mut}); }
 function pill(D,s,x,y,w,h,txt,col,fs){ R(s,x,y,w,h,{fill:col,r:.08}); T(s,x,y,w,h,txt,{fs:fs||9.5,b:true,c:col===D.P.Y?'1F2937':D.P.W,al:'center',va:'middle'}); }
 function prog(D,s,x,y,w,h,p,col){ R(s,x,y,w,h,{fill:D.P.soft,line:D.P.line,r:.04}); if(p>0) R(s,x,y,Math.max(.04,w*Math.min(100,p)/100),h,{fill:col,r:.04}); }
-function empty(D,s,x,y,w,h,msg,sub){ const P=D.P; card(D,s,x,y,w,h); T(s,x,y+h*.28,w,.5,'📭 '+NA,{fs:20,b:true,c:P.mut,al:'center'}); T(s,x+.5,y+h*.28+.55,w-1,.9,msg+(sub?'\n'+sub:''),{fs:12,c:P.mut,al:'center',va:'top'}); }
+function empty(D,s,x,y,w,h,msg,sub){ const P=D.P; card(D,s,x,y,w,h); O(s,x+w/2-.45,y+h*.28-1.05,.9,.9,{fill:P.soft,line:P.line,lw:1.5}); T(s,x+w/2-.45,y+h*.28-1.05,.9,.9,'?',{fs:30,b:true,c:P.N,al:'center',va:'middle'}); T(s,x,y+h*.28,w,.5,NA,{fs:20,b:true,c:P.mut,al:'center'}); T(s,x+.5,y+h*.28+.55,w-1,.9,msg+(sub?'\n'+sub:''),{fs:12,c:P.mut,al:'center',va:'top'}); }
 /* แท่งแนวนอน: rows=[{l,v,c,t}] */
 function hbars(D,s,x,y,w,rows,o){ o=o||{}; const P=D.P, lw=o.lw||w*.34, vw=o.vw||.7, rh=o.rh||.42, bh=Math.min(.26,rh*.62), max=o.max||Math.max(1,...rows.map(r=>r.v));
   rows.forEach((r,i)=>{ const yy=y+i*rh; T(s,x,yy,lw-.08,rh,r.l,{fs:o.fs||10,c:P.txt,al:'right',va:'middle'});
@@ -12961,7 +12963,7 @@ function legend(D,s,x,y,items){ let cx=x; items.forEach(it=>{ R(s,cx,y+.07,.14,.
 function bullets(D,s,x,y,w,h,arr,o){ T(s,x,y,w,h,arr,Object.assign({fs:11,c:D.P.txt,bul:true,va:'top'},o||{})); }
 /* ตาราง: head = [..], rows=[[cell]] · cell = string | {s,b,c,fill,al} */
 function table(D,s,x,y,w,cw,head,rows,o){ const P=D.P; o=o||{};
-  const H=head.map(h=>({s:h,b:true,c:P.W,fill:P.pri})); TB(s,x,y,w,cw,[H].concat(rows),Object.assign({fs:9.5,rh:.34,bc:P.line,fill:P.card,c:P.txt},o)); }
+  const H=head.map(h=>({s:h,b:true,c:P.W,fill:P.pri})); TB(s,x,y,w,cw,[H].concat(rows),Object.assign({fs:9.5,rh:.34,bc:P.line,fill:P.card,zf:'F5F8FC',c:P.txt},o)); }
 const cpill=(D,k,t)=>({s:t||RAGT[k],b:true,c:k==='Y'?'1F2937':'FFFFFF',fill:D.P[k],al:'center'});
 const cna=(D,t)=>({s:t||NA,c:D.P.mut,it:true});
 
@@ -12984,13 +12986,19 @@ function build(M,opt){
     R(s,.7,.85,SW-1.4,6.2,{fill:P.card,line:P.line,r:.12,sh:1}); R(s,.7,.85,.12,6.2,{fill:P.pri});
     T(s,1.1,1.0,10,.35,'QE ELECTRONICS · EXECUTIVE STATUS REPORT',{fs:12,b:true,c:P.pri2});
     T(s,1.1,1.35,11.2,.7,'รายงานสถานะสำหรับผู้บริหาร',{fs:30,b:true,c:P.nav});
-    T(s,1.1,2.05,11.2,.9,KEY,{fs:16,c:P.txt,va:'top'});
+    T(s,1.1,2.05,7.7,1.0,KEY,{fs:16,c:P.txt,va:'top'});
+    /* สรุปตัวเลขหลักบนปก */
+    R(s,9.05,1.05,3.45,4.75,{fill:'F5F8FC',line:P.line,r:.12}); T(s,9.25,1.15,3.1,.3,'ตัวเลขสำคัญ (Key figures)',{fs:10.5,b:true,c:P.mut});
+    [[String(M.overdueAll),'งานเลยกำหนด (ทุกแท็บ)',M.overdueAll?P.R:P.G],[M.tr.open.length+'/'+M.tr.total,'Tracker งานที่ยังเปิด',P.pri],
+     [M.pcr?String(M.pcr.delay):'–','PCR Delay',M.pcr?(M.pcr.delay?P.R:P.G):P.N],[M.hs?M.hs.pct+'%':'–','Hoshin ไลน์ที่ OK',M.hs?(M.hs.pct>=80?P.G:P.Y):P.N]]
+    .forEach((k,i)=>{ const y=1.5+i*1.06; R(s,9.25,y,3.05,.95,{fill:P.W,line:P.line,r:.08}); R(s,9.25,y+.12,.06,.71,{fill:k[2]});
+      T(s,9.45,y+.04,2.8,.55,k[0],{fs:24,b:true,c:k[2],va:'middle'}); T(s,9.45,y+.58,2.8,.3,k[1],{fs:10,c:P.mut}); });
     T(s,1.1,3.05,3,.3,'สถานะรวม (Overall Status)',{fs:10.5,b:true,c:P.mut});
     pill(D,s,1.1,3.38,2.6,.6,RAGT[M.rag].toUpperCase(),P[M.rag],17);
-    T(s,3.95,3.3,8.4,.78,'เกณฑ์: '+M.ragRule,{fs:9.5,c:P.mut,va:'middle'});
+    T(s,3.95,3.15,4.9,1.0,'เกณฑ์: '+M.ragRule,{fs:8.5,c:P.mut,va:'middle'});
     const rp=[['วันที่ข้อมูล (Status date)',dm(T0)],['ช่วงรายงาน (Reporting period)',opt.period||NA]];
     if(M.ms&&M.ms.fy) rp.push(['ปีงบประมาณ (FY)',M.ms.fy]); if(M.hs) rp.push(['Hoshin '+M.hs.year,'อัปเดตล่าสุด '+(M.hs.upd?dm(M.hs.upd):NA)]); if(opt.by) rp.push(['จัดทำโดย (Prepared by)',opt.by]);
-    rp.forEach((r,i)=>{ T(s,1.1,4.25+i*.34,3.2,.32,r[0],{fs:11,b:true,c:P.txt}); T(s,4.3,4.25+i*.34,8,.32,r[1],{fs:11,c:P.mut}); });
+    rp.forEach((r,i)=>{ T(s,1.1,4.25+i*.34,3.2,.32,r[0],{fs:11,b:true,c:P.txt}); T(s,4.3,4.25+i*.34,4.6,.32,r[1],{fs:11,c:P.mut}); });
     T(s,1.1,6.05,3,.28,'หัวข้อในรายงาน',{fs:10,b:true,c:P.mut});
     const ag=SECS.filter(x=>x[0]==='home'||x[0]==='mgmt'||on(x[0])); ag.forEach((x,i)=>{ R(s,1.1+i*1.27,6.36,1.19,.36,{fill:P.soft,line:P.line,r:.08}); T(s,1.1+i*1.27,6.36,1.19,.36,x[1],{fs:9,c:P.txt,al:'center',va:'middle'}); });
     s.notes='ข้อความหลัก: '+KEY+'\n• สถานะรวม = '+RAGT[M.rag]+' ('+M.ragRule+')'+(M.gaps.length?'\n• ข้อจำกัดข้อมูล: '+M.gaps.join(' · '):'')+'\n[Source] QE Elec. Daily Job Tracker';
@@ -13015,7 +13023,7 @@ function build(M,opt){
     if(hsN) pts.push('Hoshin ครบกำหนด '+dm(hsN.due)+': ยังค้าง '+hsNTxt+' ('+M.hs.next.filter(t=>t.due===hsN.due).map(t=>t.name).join(', ')+')');
     const stuck=M.tr.open.filter(x=>x.blocked||x.revs>=2); if(stuck.length) pts.push('งานติดปัญหา / เลื่อนซ้ำ: '+stuck.map(x=>clip(x.issue,40)+(x.revs>=2?' (Rev.'+x.revs+')':' (Blocked)')).join('; '));
     if(M.conflicts.length) pts.push('ข้อมูลขัดกัน: '+M.conflicts.join('; '));
-    card(D,s,.45,4.98,7.9,1.98,'📌 ประเด็นสำคัญ (Fact)'); bullets(D,s,.65,5.36,7.55,1.55,pts.length?pts.slice(0,4):['ไม่พบประเด็นเร่งด่วนจากข้อมูล'],{fs:10.5});
+    card(D,s,.45,4.98,7.9,1.98,'📌 ประเด็นสำคัญ (Fact)'); bullets(D,s,.65,5.36,7.55,1.55,pts.length?pts.slice(0,4):['ไม่พบประเด็นเร่งด่วนจากข้อมูล'],{fs:11});
     card(D,s,8.5,4.98,4.38,1.98,'🧩 ข้อมูลที่ยังขาด (Data gaps)'); bullets(D,s,8.7,5.36,4.05,1.55,M.gaps.length?M.gaps.slice(0,5):['ข้อมูลครบทุกหมวด'],{fs:10,c:P.mut});
     s.notes='ข้อความหลัก: '+KEY+'\n• การ์ด 8 ใบ = ตัวเลขสรุปจากแต่ละแท็บ สีตามเกณฑ์ On Track / Attention / Critical\n• '+pts.join('\n• ');
   }
@@ -13244,17 +13252,21 @@ function build(M,opt){
     if(M.qp&&M.qp.next[0]) info.push('Q-patrol ถัดไป: '+M.qp.next[0].line+' '+M.qp.next[0].t+' '+dmS(M.qp.next[0].pd));
     if(M.pv){ const n=M.pv.next.filter(x=>x.d&&x.d>=T0).sort((a,b)=>a.d<b.d?-1:1)[0]; if(n) info.push('New project ถัดไป: '+n.model+' '+n.code+' '+dmS(n.d)); }
     M.conflicts.forEach(c=>info.push('ข้อมูลขัดกัน – '+c));
-    const dec=[]; M.tr.overdue.slice(0,3).forEach(x=>dec.push('ยืนยันกำหนดเสร็จใหม่: '+clip(x.issue,50)+' (เลย '+x.late+' วัน)'));
-    if(M.hs) M.hs.late.slice(0,2).forEach(l=>dec.push('ยืนยันกำหนดเสร็จใหม่: Hoshin '+l.line+' '+l.topic+' (เลย '+l.late+' วัน)'));
+    /* v37.3: แต่ละเรื่องอยู่กล่องเดียว ตามลำดับ Approval → Escalate → Decision (ไม่ซ้ำกัน) */
+    const used=new Set();
+    const apprX=M.tr.open.filter(x=>/รอ\s*\S*\s*(approv|อนุมัติ)|(GM|QCR|ผู้บริหาร|manager)\s*approv|wait\w*\s+(for\s+)?\S*\s*approv/i.test(x.cm)&&isD(x.due)&&days(x.due,T0)<=7);
+    apprX.forEach(x=>used.add(x));
+    const appr=apprX.map(x=>clip(x.issue,45)+' – รออนุมัติ'+(x.late>0?' (เลยกำหนด '+x.late+' วัน)':' (กำหนด '+dmS(x.due)+')'));
+    const esc=[]; M.tr.open.filter(x=>!used.has(x)&&(x.blocked||x.revs>=2||(x.late||0)>3)).forEach(x=>{ used.add(x); esc.push(clip(x.issue,45)+': '+(x.blocked?'ติดปัญหา – '+(x.blocker||'–'):x.revs>=2?'เลื่อน '+x.revs+' ครั้ง'+(x.why.length?' (ล่าสุด: '+x.why[x.why.length-1]+')':''):'เลย '+x.late+' วัน')); });
+    const hsEsc=new Set(); if(M.hs) M.hs.late.filter(l=>l.late>=2).forEach(l=>{ hsEsc.add(l); esc.push('Hoshin '+l.line+' '+l.topic+' เลย '+l.late+' วัน (PE: '+(l.pe||'–')+')'); });
+    const dec=[]; M.tr.overdue.filter(x=>!used.has(x)).slice(0,3).forEach(x=>dec.push('ยืนยันกำหนดเสร็จใหม่: '+clip(x.issue,50)+' (เลย '+x.late+' วัน)'));
+    if(M.hs) M.hs.late.filter(l=>!hsEsc.has(l)).slice(0,2).forEach(l=>dec.push('ยืนยันกำหนดเสร็จใหม่: Hoshin '+l.line+' '+l.topic+' (เลย '+l.late+' วัน)'));
     const nm=new Date(T0+'T00:00:00'); nm.setMonth(nm.getMonth()+1); const nb=M.tr.byMonth.find(b=>b.k===ymd(nm).slice(0,7)); if(nb&&nb.ok>=5) dec.push('จัดลำดับความสำคัญงานเดือน '+nb.l+' ('+nb.ok+' รายการใน Tracker)');
-    const appr=M.tr.open.filter(x=>/รอ\s*\S*\s*(approv|อนุมัติ)|(GM|QCR|ผู้บริหาร|manager)\s*approv|wait\w*\s+(for\s+)?\S*\s*approv/i.test(x.cm)&&isD(x.due)&&days(x.due,T0)<=7).map(x=>clip(x.issue,45)+' – '+clip(x.cm,55)+' (กำหนด '+dmS(x.due)+')');
-    const esc=[]; M.tr.open.filter(x=>x.blocked||x.revs>=2||(x.late||0)>3).forEach(x=>esc.push(clip(x.issue,45)+': '+(x.blocked?'ติดปัญหา – '+(x.blocker||'–'):x.revs>=2?'เลื่อน '+x.revs+' ครั้ง'+(x.why.length?' (ล่าสุด: '+x.why[x.why.length-1]+')':''):'เลย '+x.late+' วัน')));
-    if(M.hs) M.hs.late.filter(l=>l.late>=2).forEach(l=>esc.push('Hoshin '+l.line+' '+l.topic+' เลย '+l.late+' วัน (PE: '+(l.pe||'–')+')'));
     const s=D.slide('mgmt','⚠️ เรื่องที่ต้องการให้ผู้บริหารพิจารณา (Management Attention)','ต้องอนุมัติ '+appr.length+' · ต้อง Escalate '+esc.length+' · ต้องตัดสินใจ '+dec.length+' เรื่อง');
     const Q=[['ℹ️ เพื่อทราบ (For Information)',P.B,info],['🧭 ต้องตัดสินใจ (Decision Required)',P.Y,dec],['✅ ต้องอนุมัติ (Approval Required)',P.G,appr],['🚨 ต้อง Escalate (Escalation Required)',P.R,esc]];
     Q.forEach((q,i)=>{ const x=.45+(i%2)*6.29, y=1.72+Math.floor(i/2)*2.67; card(D,s,x,y,6.14,2.55,null,q[1]); T(s,x+.25,y+.1,5.7,.32,q[0],{fs:12.5,b:true,c:q[1]===P.Y?'B45309':q[1]});
       bullets(D,s,x+.25,y+.48,5.7,2.0,q[2].length?q[2].slice(0,5):['ไม่พบจากข้อมูลใน Dashboard'],{fs:10,c:q[2].length?P.txt:P.mut}); });
-    s.notes='ข้อความหลัก: สิ่งที่ต้องการจากผู้บริหาร\n• คัดเลือกด้วยกฎตายตัวจากข้อมูล: Approval = มาตรการระบุว่า “รอ … Approve” (เช่น รอ GM / QCR Approve) และครบกำหนดใน 7 วัน · Escalation = ติดปัญหา / เลื่อน ≥2 ครั้ง / เลยกำหนด >3 วัน';
+    s.notes='ข้อความหลัก: สิ่งที่ต้องการจากผู้บริหาร\n• คัดเลือกด้วยกฎตายตัวจากข้อมูล: Approval = มาตรการระบุว่า “รอ … Approve” (เช่น รอ GM / QCR Approve) และครบกำหนดใน 7 วัน · Escalation = ติดปัญหา / เลื่อน ≥2 ครั้ง / เลยกำหนด >3 วัน · Decision = งานเลยกำหนดที่เหลือ · แต่ละเรื่องอยู่กล่องเดียว';
 
     /* Next steps */
     const ev=[]; const add=(d,t,r)=>{ if(isD(d)&&d>=T0) ev.push({d:d,t:t,r:r}); };
@@ -13287,10 +13299,11 @@ function htmlOf(D){
     return '<div class="t" style="'+st+'"><div>'+E(el.s).replace(/\n/g,'<br>')+'</div></div>'; };
   const one=el=>{
     if(el.t==='rect'||el.t==='oval') return '<div class="r" style="left:'+px(el.x)+';top:'+px(el.y)+';width:'+px(el.w)+';height:'+px(el.h)+';background:'+(el.fill?col(el.fill):'transparent')+';'+(el.line?'border:'+(el.lw||.75)+'pt solid '+col(el.line)+';':'')+'border-radius:'+(el.t==='oval'?'50%':el.r?px(el.r):'0')+(el.sh?';box-shadow:0 1px 4px rgba(0,0,0,.08)':'')+'"></div>';
+    if(el.t==='img') return '<img class="r" alt="" src="'+el.src+'" style="left:'+px(el.x)+';top:'+px(el.y)+';width:'+px(el.w)+';height:'+px(el.h)+';object-fit:contain">';
     if(el.t==='line') return '<div class="r" style="left:'+px(el.x)+';top:'+px(el.y)+';width:'+px(Math.max(el.w,.01))+';height:0;border-top:'+(el.lw||1)+'pt '+(el.dash?'dashed':'solid')+' '+col(el.c||P.line)+'"></div>';
     if(el.t==='text') return txt(el);
     if(el.t==='table'){ let h='<div class="r" style="left:'+px(el.x)+';top:'+px(el.y)+';width:'+px(el.w)+'"><table style="font-size:'+(el.fs||9.5)+'pt"><colgroup>'+el.cw.map(w=>'<col style="width:'+px(w)+'">').join('')+'</colgroup>';
-      el.rows.forEach(r=>{ h+='<tr style="height:'+px(el.rh||.34)+'">'+r.map(c=>{ c=typeof c==='object'&&c?c:{s:c}; return '<td style="border:.5pt solid '+col(el.bc||P.line)+';background:'+col(c.fill||el.fill||P.card)+';color:'+col(c.c||el.c||P.txt)+';font-weight:'+(c.b?700:400)+';text-align:'+(c.al||'left')+(c.it?';font-style:italic':'')+'">'+E(c.s).replace(/\n/g,'<br>')+'</td>'; }).join('')+'</tr>'; });
+      el.rows.forEach((r,ri)=>{ const rf=(el.zf&&ri%2===0&&ri>0)?el.zf:(el.fill||P.card); h+='<tr style="height:'+px(el.rh||.34)+'">'+r.map(c=>{ c=typeof c==='object'&&c?c:{s:c}; return '<td style="border:.5pt solid '+col(el.bc||P.line)+';background:'+col(c.fill||rf)+';color:'+col(c.c||el.c||P.txt)+';font-weight:'+(c.b?700:400)+';text-align:'+(c.al||'left')+(c.it?';font-style:italic':'')+'">'+E(c.s).replace(/\n/g,'<br>')+'</td>'; }).join('')+'</tr>'; });
       return h+'</table></div>'; }
     return ''; };
   const css='@page{size:13.333in 7.5in;margin:0}*{box-sizing:border-box;margin:0;padding:0}body{font-family:'+font+';background:#94a3b8;-webkit-print-color-adjust:exact;print-color-adjust:exact}'+
@@ -13320,11 +13333,12 @@ async function makePptx(D){
     sd.els.forEach(el=>{
       if(el.t==='rect'||el.t==='oval'){ const o={x:el.x,y:el.y,w:el.w,h:el.h,fill:el.fill?{color:el.fill}:{type:'none'},line:el.line?{color:el.line,width:el.lw||.75}:{type:'none'}};
         if(el.t==='oval') s.addShape(pres.shapes.OVAL,o); else if(el.r) s.addShape(pres.shapes.ROUNDED_RECTANGLE,Object.assign(o,{rectRadius:Math.min(.5,el.r/Math.min(el.w,el.h))})); else s.addShape(pres.shapes.RECTANGLE,o); }
+      else if(el.t==='img') s.addImage({data:el.src,x:el.x,y:el.y,w:el.w,h:el.h});
       else if(el.t==='line') s.addShape(pres.shapes.LINE,{x:el.x,y:el.y,w:Math.max(el.w,.001),h:el.h||0,line:{color:el.c||P.line,width:el.lw||1,dashType:el.dash?'dash':'solid'}});
       else if(el.t==='text'){ const o={x:el.x,y:el.y,w:el.w,h:el.h,fontFace:F,fontSize:el.fs||11,color:el.c||P.txt,bold:!!el.b,italic:!!el.it,align:el.al||'left',valign:el.va||'top',margin:0};
         if(el.bul) s.addText((el.s||[]).map((t,i,a)=>({text:t,options:{bullet:true,breakLine:i<a.length-1}})),Object.assign(o,{paraSpaceAfter:3}));
         else s.addText(String(el.s==null?'':el.s),o); }
-      else if(el.t==='table'){ const rows=el.rows.map(r=>r.map(c=>{ c=typeof c==='object'&&c?c:{s:c}; return {text:String(c.s==null?'':c.s),options:{bold:!!c.b,italic:!!c.it,color:c.c||el.c||P.txt,fill:{color:c.fill||el.fill||P.card},align:c.al||'left'}}; }));
+      else if(el.t==='table'){ const rows=el.rows.map((r,ri)=>r.map(c=>{ c=typeof c==='object'&&c?c:{s:c}; const rf=(el.zf&&ri%2===0&&ri>0)?el.zf:(el.fill||P.card); return {text:String(c.s==null?'':c.s),options:{bold:!!c.b,italic:!!c.it,color:c.c||el.c||P.txt,fill:{color:c.fill||rf},align:c.al||'left'}}; }));
         s.addTable(rows,{x:el.x,y:el.y,w:el.w,colW:el.cw,rowH:el.rh||.34,fontFace:F,fontSize:el.fs||9.5,valign:'middle',border:{type:'solid',pt:.5,color:el.bc||P.line},margin:.04}); }
     });
     if(sd.notes) s.addNotes(sd.notes);
