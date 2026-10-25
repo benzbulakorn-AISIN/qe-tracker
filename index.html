@@ -2183,7 +2183,7 @@ window.qeBlk={
      • เครื่องใหม่: ไม่ส่งข้อมูลตั้งต้น/ของเก่าในเครื่องขึ้นไปทับ Cloud เงียบ ๆ
      • PIN เก็บเป็นแฮช ตรวจที่หน้าเว็บ — ไม่ใช่ความปลอดภัยระดับเซิร์ฟเวอร์ */
   const WHOK='ux_me', MODEK='ux_savemode', DEVK='ux_dev_id', RPL='ux_rp_list', PRUNEK='ux_prune_day', SNAPK='ux_snap_day', ACFGC='ux_cfg_cache';
-  const PRES='countermeasure-presence:', AUD='countermeasure-audit:', AUTHP='countermeasure-auth:', SNAP='countermeasure-snap:', ACFGK=AUTHP+'~cfg', APPVER='34';
+  const PRES='countermeasure-presence:', AUD='countermeasure-audit:', AUTHP='countermeasure-auth:', SNAP='countermeasure-snap:', ACFGK=AUTHP+'~cfg', APPVER='60';
   var clockOff=0, lastOK=0, newDev=null;
   const lsGet=k=>{ try{ return localStorage.getItem(k); }catch(e){ return null; } };
   const lsSet=(k,v)=>{ try{ localStorage.setItem(k,v); return true; }catch(e){ return false; } };
@@ -3444,7 +3444,9 @@ if(ui.view!=='plan'&&ui.view!=='ot'&&ui.view!=='lv') ui.view='sum'; if(ui.lvm==n
 const saveUI=()=>{ try{ localStorage.setItem(UIK,JSON.stringify(ui)); }catch(e){} };
 const years=()=>Object.keys(store.years).sort((a,b)=>+a-+b);
 /* v42: เกณฑ์คนไม่อยู่ต่อวัน ค่าเดิม 1 → 2 คน (ปรับครั้งเดียว · ยังแก้เองได้ที่ ⚙ ตั้งค่าแผนลา) */
-const lvMig=y=>{ if(y&&y.lv&&y.lv.set&&!y.lv.set.mx2){ if(+y.lv.set.max===1||y.lv.set.max==null) y.lv.set.max=2; y.lv.set.mx2=1; } return y; };
+/* v60: ไม่แก้ข้อมูลที่เก็บไว้ (เดิมแก้ค่าในหน่วยความจำ → ระบบเห็นว่า 7 Mission ถูกแก้ ทั้งที่ผู้ใช้ไม่ได้แก้) — ใช้ค่าเกณฑ์ที่มีผลแทน */
+const lvMax=lv=>{ const s=(lv&&lv.set)||{}; return (!s.mx2&&(s.max==null||+s.max===1))?2:+s.max; };
+const lvMig=y=>y;
 const Y=()=>lvMig(store.years[ui.year]);
 function ensureYear(){ const ys=years(); if(!ys.length){ ui.year=''; return; } if(!store.years[ui.year]) ui.year=ys[0]; }
 const cj=o=>JSON.stringify(o,(k,v)=>(v&&typeof v==='object'&&!Array.isArray(v))?Object.keys(v).sort().reduce((a,x)=>{a[x]=v[x];return a;},{}):v);
@@ -4634,8 +4636,7 @@ function lvSan(o){
     return {id:id,code:String((p&&p.code)||''),name:String(p&&p.name!=null?p.name:('Member '+(i+1))),color:(p&&p.color)||OT_COL[i%OT_COL.length]}; });
   const s=o.set||{}; const hpd=num(s.hpd)>0?num(s.hpd):8;
   let mx=isFinite(parseFloat(s.max))&&parseFloat(s.max)>=0?parseFloat(s.max):2;
-  if(!s.mx2&&mx===1) mx=2;   /* v42: เกณฑ์ใหม่ — ไม่ควรมีคนไม่อยู่เกิน 2 คน/วัน (ปรับค่าเดิม 1 → 2 อัตโนมัติครั้งเดียว) */
-  o.set={hpd:hpd,max:mx,mx2:1};
+  o.set={hpd:hpd,max:mx}; if(s.mx2) o.set.mx2=1;   /* v60: เก็บค่าตามเดิม — เกณฑ์ 2 คนใช้ผ่าน lvMax() */
   const bal={}; o.people.forEach(p=>{ const b=(o.bal&&o.bal[p.id])||{}, out={};
     LV_CAT.forEach(c=>{ const x=b[c[0]]||{}, e=lvTm(x.e)||lvT0(), u=lvTm(x.u)||lvT0(); let r=lvTm(x.r); if(!r) r=lvFromMin(lvMin(e,hpd)-lvMin(u,hpd),hpd); out[c[0]]={e:e,u:u,r:r}; });
     out.out=lvTm(b.out); bal[p.id]=out; });
@@ -4672,7 +4673,7 @@ function lvMonth(y,m){
       if(!x.off&&(c.k==='L'||c.k==='T'||c.k==='H')) x.away++;
       if(c.k==='P') x.part+=h.L+h.T; });
     tot.Lh+=s.Lh; tot.Th+=s.Th; tot.W+=s.W; tot.H+=s.H; tot.O+=s.O; return s; });
-  const conf=days.filter(x=>x.away>lv.set.max);
+  const conf=days.filter(x=>x.away>lvMax(lv));
   return {m:m,dim:dim,days:days,persons:persons,tot:tot,conf:conf,hpd:hpd,any:persons.some(s=>s.any>0)};
 }
 function lvYear(y){
@@ -4749,7 +4750,7 @@ function lvSummary(y,Ys){
   let h=`<div id="lvTop">${lvTop(y,Ys)}</div>`;
   // chart + upcoming
   const ev=lvUpcoming(y).filter(e=>`${ui.year}-${pad(e.m)}-${pad(e.d)}`>=today).slice(0,12);
-  h+=`<div class="lv-two"><div class="ms-card"><h3>📈 แผนลา / อบรม รายเดือน (วันทำงานที่ไม่อยู่)</h3><div class="ms-sub">แท่งซ้อน: <b style="color:#ef4444">ลา</b> + <b style="color:#2b7cd3">อบรม/ไปข้างนอก</b> (ชม. ÷ ${hpd} = วัน) · จุดแดง = เดือนที่มีคนไม่อยู่ซ้อนกันเกิน ${f2(lv.set.max)} คน/วัน</div>${lvBars(Ys,hpd)}</div>`+
+  h+=`<div class="lv-two"><div class="ms-card"><h3>📈 แผนลา / อบรม รายเดือน (วันทำงานที่ไม่อยู่)</h3><div class="ms-sub">แท่งซ้อน: <b style="color:#ef4444">ลา</b> + <b style="color:#2b7cd3">อบรม/ไปข้างนอก</b> (ชม. ÷ ${hpd} = วัน) · จุดแดง = เดือนที่มีคนไม่อยู่ซ้อนกันเกิน ${f2(lvMax(lv))} คน/วัน</div>${lvBars(Ys,hpd)}</div>`+
     `<div class="ms-card"><h3>📅 กำหนดการถัดไป</h3><div class="ms-sub">นับจากวันนี้ · คลิกเพื่อดู/แก้ไข</div><div class="lv-up">${ev.length?ev.map(lvEvRow).join(''):'<div class="ms-sub" style="padding:14px 4px">ไม่มีรายการลา/อบรมที่ลงแผนไว้หลังวันนี้</div>'}</div></div></div>`;
   // heatmap
   h+=`<div class="ms-card ot-card"><h3>🗓️ Heatmap: วันที่ไม่อยู่ (ลา + อบรม) คน × เดือน</h3><div class="ms-sub">หน่วย = วัน (ชม. ÷ ${hpd}) · ยิ่งเข้มยิ่งมาก · คลิกชื่อเดือนในแถบด้านบนเพื่อดูแผน</div><div class="ms-hm"><table><thead><tr><th>พนักงาน</th>`+LV_M.map(n=>`<th>${n}</th>`).join('')+`<th>รวม</th></tr></thead><tbody>`;
@@ -4822,7 +4823,7 @@ function lvMonthView(y,m){
   h+=`<div class="ms-kpis" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:14px">`+
     kpi('🌴',lvDay1(T.Lh/hpd),'ลา (วัน)','var(--t-dang)')+kpi('🎓',lvDay1(T.Th/hpd),'อบรม/ไปข้างนอก (วัน)','#2b7cd3')+
     kpi('🔁',`${T.W} / ${T.H}`,'W มาทำงาน / H หยุดชดเชย','var(--t-vio)')+kpi('🌙',T.O,'OT ในวันหยุด (ครั้ง)')+
-    kpi(X.conf.length?'⚠️':'✅',X.conf.length,X.conf.length?`วันที่คนไม่อยู่เกิน ${f2(lv.set.max)} คน`:'ไม่มีวันที่คนไม่อยู่ซ้อนกัน',X.conf.length?'var(--t-dang)':'var(--t-ok)')+`</div>`;
+    kpi(X.conf.length?'⚠️':'✅',X.conf.length,X.conf.length?`วันที่คนไม่อยู่เกิน ${f2(lvMax(lv))} คน`:'ไม่มีวันที่คนไม่อยู่ซ้อนกัน',X.conf.length?'var(--t-dang)':'var(--t-ok)')+`</div>`;
   h+=lvBrush();
   const cw=[150].concat(X.days.map(()=>0),[52,52]), tw=150+X.days.length*30+104, nw=new Date(), tdy=(+ui.year===nw.getFullYear()&&m===nw.getMonth()+1)?nw.getDate():0;
   h+=`<div class="lv-scroll"><table class="lv-tbl lv-fit" style="width:100%;min-width:${tw}px"><colgroup>${cw.map(x=>x?`<col style="width:${x}px">`:'<col>').join('')}</colgroup><thead><tr><th class="nm">พนักงาน</th>`+
@@ -4831,13 +4832,13 @@ function lvMonthView(y,m){
     h+=`<tr><td class="nm" title="${E(p.name)}">${lvAv(p)}<span class="lv-nmt">${E(p.name)}</span></td>`+X.days.map(x=>{ const c=(lv.months[m]&&lv.months[m].c[p.id+':'+x.d])||null, st=lvCellStyle(c);
       return `<td class="lc${x.hol?' hl':x.we?' off':''}${x.d===tdy?' tdy':''}${c&&c.k==='P'?' k':''}${c&&c.n?' hn':''}" data-act="lvc" data-p="${E(p.id)}" data-d="${x.d}" ${st?`style="${st}"`:''} title="${E(lvCellTitle(c,p,x.d,m))}">${E(lvLabel(c))}</td>`; }).join('')+
       `<td class="tt">${s.Lh?lvDay1(s.Lh/hpd):'–'}</td><td class="tt">${s.Th?lvDay1(s.Th/hpd):'–'}</td></tr>`; });
-  h+=`<tr class="sum"><td class="nm">ไม่อยู่ (คน/วัน)</td>`+X.days.map(x=>`<td class="${x.away>lv.set.max?'cf':''}${x.d===tdy?' tdy':''}" title="${x.away?'ลา/อบรม/หยุดชดเชยเต็มวัน '+x.away+' คน':''}${x.part?' · ไม่เต็มวันรวม '+f2(x.part)+' ชม.':''}">${x.away?x.away:(x.part?'½':'')}</td>`).join('')+`<td class="tt">${lvDay1(T.Lh/hpd)}</td><td class="tt">${lvDay1(T.Th/hpd)}</td></tr></tbody></table></div>`;
+  h+=`<tr class="sum"><td class="nm">ไม่อยู่ (คน/วัน)</td>`+X.days.map(x=>`<td class="${x.away>lvMax(lv)?'cf':''}${x.d===tdy?' tdy':''}" title="${x.away?'ลา/อบรม/หยุดชดเชยเต็มวัน '+x.away+' คน':''}${x.part?' · ไม่เต็มวันรวม '+f2(x.part)+' ชม.':''}">${x.away?x.away:(x.part?'½':'')}</td>`).join('')+`<td class="tt">${lvDay1(T.Lh/hpd)}</td><td class="tt">${lvDay1(T.Th/hpd)}</td></tr></tbody></table></div>`;
   h+=`<div class="lv-leg"><b style="color:var(--txt)">สัญลักษณ์:</b>`+
     `<span><i style="background:${LV_K.L.bg}">ลา</i>ลาเต็มวัน</span><span><i style="background:${LV_PL.bg};color:${LV_PL.fg}">3F</i>ลาไม่เต็มวัน (ชม. + F เช้า / S บ่าย)</span>`+
     `<span><i style="background:${LV_K.T.bg}">อบรม</i>อบรม/ไปข้างนอกเต็มวัน</span><span><i style="background:${LV_PT.bg}">2S</i>อบรมไม่เต็มวัน</span>`+
     `<span><i style="background:${LV_K.W.bg}">W</i>มาทำงานในวันหยุด</span><span><i style="background:${LV_K.H.bg}">H</i>หยุดชดเชย</span><span><i style="background:${LV_K.O.bg}">OT</i>ทำ OT ในวันหยุด</span>`+
     `<span><i style="background:#f97316"></i>เสาร์–อาทิตย์</span><span><i style="background:#16a34a"></i>นักขัตฤกษ์</span><span><i style="background:#facc15;width:9px;min-width:9px;height:9px;border-radius:0 2px 0 9px"></i>มีหมายเหตุ</span></div>`;
-  h+=`<div class="lv-cm">📌 ไม่ควรมีคนไม่อยู่เกิน ${f2(lv.set.max)} คนต่อวัน (ช่องสีแดงในแถวล่าง) เว้นแต่มีเหตุจำเป็น · วางแผนล่วงหน้าเพื่อบริหารคน/หน้างาน เปลี่ยนแปลงได้ตามสถานการณ์</div>`;
+  h+=`<div class="lv-cm">📌 ไม่ควรมีคนไม่อยู่เกิน ${f2(lvMax(lv))} คนต่อวัน (ช่องสีแดงในแถวล่าง) เว้นแต่มีเหตุจำเป็น · วางแผนล่วงหน้าเพื่อบริหารคน/หน้างาน เปลี่ยนแปลงได้ตามสถานการณ์</div>`;
   // per person cards
   h+=`<div class="ms-card ot-card" style="margin-top:16px"><h3>👥 สรุปรายคนของเดือน</h3><div class="lv-pm" style="margin:6px 0 0">`+
     X.persons.map(s=>{ const l=s.Lh/hpd, t=s.Th/hpd, tt=l+t, w1=tt?l/tt*100:0;
@@ -4888,7 +4889,7 @@ function lvSetMod(){
   const y=Y(), lv=y.lv; ctx={t:'lvset'};
   openMsMod(`<h3>⚙ ตั้งค่า แผนลา แลกวันหยุด อบรม · ปี ${E(ui.year)}</h3><div class="lv-fld">`+
     `<div><label>ชั่วโมงทำงานต่อ 1 วัน</label><input id="lsH" type="number" min="1" max="24" step="0.5" value="${lv.set.hpd}"></div>`+
-    `<div><label>จำนวนคนที่ไม่อยู่พร้อมกันได้สูงสุด / วัน</label><input id="lsM" type="number" min="0" max="20" step="1" value="${lv.set.max}"></div></div>`+
+    `<div><label>จำนวนคนที่ไม่อยู่พร้อมกันได้สูงสุด / วัน</label><input id="lsM" type="number" min="0" max="20" step="1" value="${lvMax(lv)}"></div></div>`+
     `<label>พนักงาน</label><div id="lsP">`+lv.people.map(p=>`<div class="lv-mr" data-id="${E(p.id)}"><input type="color" class="lcol" value="${E(p.color)}"><input class="lcode" value="${E(p.code)}" placeholder="รหัส"><input class="lname" value="${E(p.name)}" placeholder="ชื่อ - สกุล"><button type="button" class="btn-g" data-ma="lvdel" data-id="${E(p.id)}" style="color:var(--t-dang)" title="ลบ">🗑</button></div>`).join('')+`</div>`+
     `<div style="margin-top:6px"><button type="button" class="btn-g" data-ma="lvadd">+ เพิ่มพนักงาน</button></div>`+
     `<div class="ms-help">ชั่วโมงต่อวัน ใช้แปลงชั่วโมงเป็นวัน (ค่าเริ่มต้น 8) · การลบพนักงานจะลบแผนและสิทธิ์ของคนนั้นด้วย</div>`+
@@ -12863,7 +12864,7 @@ function collect(){
     } else M.gaps.push('OT Control ยังไม่ได้ตั้งค่า'); }catch(e){ console.warn('xr ot',e); M.ot=null; M.gaps.push('OT Control อ่านข้อมูลไม่ได้'); }
     try{ if(y.lv&&y.lv.people&&y.lv.people.length){ const v=X.lvYear(y), hpd=y.lv.set.hpd, yr=+X.ui().year;
       const up=X.lvUpcoming(y).filter(e=>e.ds>=T).slice(0,9).map(e=>({ds:e.ds,name:e.p.name,k:e.c.k==='L'?'ลา':e.c.k==='T'?'อบรม/ไปข้างนอก':e.c.k==='P'?'ลา/อบรมบางช่วง':e.c.k==='W'?'W (มาทำงานวันหยุด)':e.c.k==='H'?'H (หยุดชดเชย)':e.c.k==='O'?'OT วันหยุด':e.c.k}));
-      M.lv={year:yr,hpd:hpd,max:+y.lv.set.max||2,eV:v.eV,uV:v.uV,rV:v.rV,uS:v.uS,uP:v.uP,out:v.out,Ld:v.Lh/hpd,Td:v.Th/hpd,conf:v.conf,people:y.lv.people.length,
+      M.lv={year:yr,hpd:hpd,max:(s=>(!s.mx2&&(s.max==null||+s.max===1))?2:+s.max)(y.lv.set||{}),eV:v.eV,uV:v.uV,rV:v.rV,uS:v.uS,uP:v.uP,out:v.out,Ld:v.Lh/hpd,Td:v.Th/hpd,conf:v.conf,people:y.lv.people.length,
         months:v.ms.map((x,i)=>({l:THM[i],L:x.tot.Lh/hpd,T:x.tot.Th/hpd,conf:x.conf.length})),per:v.per.map(p=>({name:p.p.name,L:p.Lh/hpd,T:p.Th/hpd})),up:up};
       if(!(v.Lh||v.Th||v.eV)) M.gaps.push('แผนลายังไม่มีข้อมูล');
     } else M.gaps.push('แผนลายังไม่ได้ตั้งค่า'); }catch(e){ console.warn('xr lv',e); M.lv=null; M.gaps.push('แผนลาอ่านข้อมูลไม่ได้'); }
