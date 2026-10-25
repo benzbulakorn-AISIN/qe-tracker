@@ -6609,7 +6609,7 @@ const E=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','
 const uid=()=>'m'+Math.random().toString(36).slice(2,9);
 const KEY='qe_mainjobs_data_v2', KEYL='qe_mainjobs_log_v2', UIK='qe_mainjobs_ui_v1';
 const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-const KIND={done:{s:'O',n:'O · เสร็จแล้ว (Done)'},plan:{s:'On-plan',n:'On-plan · เป็นไปตามแผน'},warn:{s:'▲',n:'▲ · สัญลักษณ์ตามไฟล์ Excel'},delay:{s:'Delay',n:'Delay · ล่าช้า'},na:{s:'–',n:'– · ไม่เกี่ยวข้อง'}};
+const KIND={done:{s:'O',n:'O · เสร็จแล้ว (Done)'},plan:{s:'On-plan',n:'On-plan · เป็นไปตามแผน'},warn:{s:'▲',n:'▲ · ผ่านแบบมีเงื่อนไข'},delay:{s:'Delay',n:'Delay · ล่าช้า'},na:{s:'–',n:'– · ไม่เกี่ยวข้อง'}};
 
 /* ===================== CSS ===================== */
 const CSS=`
@@ -7237,7 +7237,7 @@ function pvTable(){
   PV.models.forEach((m,mi)=>{ h+=`<tr><td class="mn" data-mje="pv-model" data-id="${m.id}" title="คลิกเพื่อเปิด QE Follow-up"><span>${E(m.name)}</span><span class="npf-open">เปิด Follow-up</span></td>`+m.cells.map((c,ci)=>pvCellHtml(c,mi,ci)).join('')+`</tr>`; });
   const st=k=>`<span class="mj-st ${k}">${E(KIND[k].s)}</span>`;
   return h+`</tbody></table></div><div class="mje-addrow"><button type="button" class="btn-g" data-mje="pv-addmodel">＋ เพิ่มรุ่น</button><button type="button" class="btn-g" data-mje="pv-addcol">＋ เพิ่มคอลัมน์ PV</button></div>`+
-    `<div class="mj-leg"><span>${st('done')} เสร็จแล้ว</span><span>${st('plan')} เป็นไปตามแผน</span><span>${st('warn')} สัญลักษณ์ ▲ ตามไฟล์ Excel</span><span>${st('delay')} ล่าช้า</span><span>${st('na')} ไม่เกี่ยวข้อง</span><span>B / M / E = ต้น / กลาง / ปลายเดือน</span><span>Rev.N = จำนวนครั้งที่เลื่อนแผน (ตัวขีดฆ่า = วันที่เดิม)</span></div>`;
+    `<div class="mj-leg"><span>${st('done')} เสร็จแล้ว</span><span>${st('plan')} เป็นไปตามแผน</span><span>${st('warn')} ผ่านแบบมีเงื่อนไข</span><span>${st('delay')} ล่าช้า</span><span>${st('na')} ไม่เกี่ยวข้อง</span><span>B / M / E = ต้น / กลาง / ปลายเดือน</span><span>Rev.N = จำนวนครั้งที่เลื่อนแผน (ตัวขีดฆ่า = วันที่เดิม)</span></div>`;
 }
 function tabNew(){
   const N=S.newproj, COL='#0d9488';
@@ -13298,7 +13298,7 @@ function build(M0,opt){
         table(D,s,.62,2.2,12.1,[mw].concat(pv.codes.map(()=>ccw)),['Model'].concat(pv.codes),mods.map(m=>[{s:clip(m.name,mcpl),b:true}].concat(pv.codes.map((c,i)=>{ const x=m.cells[i]||{v:'',k:'na'};
           return {s:cellTxt(x),fill:kc[x.k]||P.card,c:x.k==='done'||x.k==='delay'?P.W:P.txt,al:'center',b:x.k!=='plan'}; }))),{fs:9.5,rh:RH});
         const ly=2.2+tH+.12;
-        legend(D,s,.62,ly,[['Done',P.G],['Plan',P.soft],['▲ ตามไฟล์ Excel (ความหมาย: '+NA+')',P.Y],['Delay',P.R]]);
+        legend(D,s,.62,ly,[['Done',P.G],['Plan',P.soft],['▲ ผ่านแบบมีเงื่อนไข',P.Y],['Delay',P.R]]);
         if(pv.models.length>MAXR) T(s,8.5,ly,4.2,.28,'+ อีก '+(pv.models.length-MAXR)+' Model ในหน้าเว็บ',{fs:9,c:P.mut,al:'right',va:'middle'});
         const by=1.75+cardH+.15, bh=Math.max(1.05,6.97-by);
         card(D,s,.45,by,6.15,bh,'🏭 '+(M.sched&&M.sched.lf&&M.sched.lf.title||'Line fill'));
@@ -13308,7 +13308,7 @@ function build(M0,opt){
         if(M.fu) bullets(D,s,6.95,by+.37,5.8,bh-.45,M.fu.slice(0,Math.max(1,Math.floor((bh-.45)/.27))).map(f=>f.name+': เสร็จ '+f.done+'/'+f.n+(f.late?' · เลยกำหนด '+f.late:'')),{fs:10});
         else T(s,6.95,by+.4,5.8,.4,NA,{fs:10,c:P.mut});
       }
-      s.notes='ข้อความหลัก: ความคืบหน้า New project (PV schedule)\n• ▲ = สัญลักษณ์ตามไฟล์ Excel (Dashboard ไม่ได้ระบุความหมาย)';
+      s.notes='ข้อความหลัก: ความคืบหน้า New project (PV schedule)\n• ▲ = ผ่านแบบมีเงื่อนไข (Conditional pass)';
     }
     /* Organization */
     if(M.org){ const o=M.org; const s=D.slide('mj','🧰 Main QE Jobs · 6 Organization','QE '+o.members.length+' คน ดูแล '+o.lines+' ไลน์ ('+Object.keys(o.grp).map(k=>k+' '+o.grp[k]).join(' · ')+')');
