@@ -13082,30 +13082,30 @@ function build(M0,opt){
     R(s,0,0,SW,SH,{fill:P.bg}); R(s,0,0,SW,.5,{fill:P.nav}); R(s,0,SH-.18,SW,.18,{fill:P.pri2});
     R(s,.7,.85,SW-1.4,6.2,{fill:P.card,line:P.line,r:.12,sh:1}); R(s,.7,.85,.12,6.2,{fill:P.pri});
     T(s,1.1,1.0,10,.35,'QE ELECTRONICS · EXECUTIVE STATUS REPORT',{fs:12,b:true,c:P.pri2});
-    T(s,1.1,1.35,11.2,.7,'รายงานสถานะสำหรับผู้บริหาร',{fs:30,b:true,c:P.nav});
+    T(s,1.1,1.35,7.8,.7,'Executive Status Report',{fs:30,b:true,c:P.nav});
     T(s,1.1,2.05,7.7,1.0,KEY,{fs:16,c:P.txt,va:'top'});
     /* สรุปตัวเลขหลักบนปก */
-    const KF=[]; if(M.odOn) KF.push([String(M.overdueAll),'งานเลยกำหนด (หมวดที่เลือก)',M.overdueAll?P.R:P.G]);
-    if(on('tracker')) KF.push([M.tr.open.length+'/'+M.tr.total,'Tracker งานที่ยังเปิด',P.pri]);
+    const KF=[]; if(M.odOn) KF.push([String(M.overdueAll),'Overdue items (selected scope)',M.overdueAll?P.R:P.G]);
+    if(on('tracker')) KF.push([M.tr.open.length+'/'+M.tr.total,'Tracker · open items',P.pri]);
     if(M.pcr) KF.push([String(M.pcr.delay),'PCR Delay',M.pcr.delay?P.R:P.G]);
-    if(M.hs) KF.push([M.hs.pct+'%','Hoshin ไลน์ที่ OK',M.hs.pct>=80?P.G:P.Y]);
-    if(KF.length<4&&M.td) KF.push([String(M.td.late),'งานวันนี้ที่เลยกำหนด',M.td.late?P.R:P.G]);
-    if(KF.length<4&&M.ms&&M.ms.pct!=null) KF.push([M.ms.pct+'%','7 Mission ผ่านเป้า',M.ms.pct>=80?P.G:M.ms.pct>=50?P.Y:P.R]);
-    if(KF.length<4&&M.ot&&M.ot.overall!=null) KF.push([f2(M.ot.overall),'OT ชม./คน/วัน',M.ot.j==='X'?P.R:P.G]);
-    if(KF.length<4&&M.lv&&M.lv.eV) KF.push([pct(M.lv.uV,M.lv.eV)+'%','ใช้พักร้อนแล้ว',P.B]);
-    if(!KF.length) KF.push(['–','ไม่มีตัวเลขในหมวดที่เลือก',P.N]);
-    R(s,9.05,1.05,3.45,.55+Math.min(4,KF.length)*1.06,{fill:'F5F8FC',line:P.line,r:.12}); T(s,9.25,1.15,3.1,.3,'ตัวเลขสำคัญ (Key figures)',{fs:10.5,b:true,c:P.mut});
+    if(M.hs) KF.push([M.hs.pct+'%','Hoshin · lines OK',M.hs.pct>=80?P.G:P.Y]);
+    if(KF.length<4&&M.td) KF.push([String(M.td.late),'Today · overdue',M.td.late?P.R:P.G]);
+    if(KF.length<4&&M.ms&&M.ms.pct!=null) KF.push([M.ms.pct+'%','7 Mission · on target',M.ms.pct>=80?P.G:M.ms.pct>=50?P.Y:P.R]);
+    if(KF.length<4&&M.ot&&M.ot.overall!=null) KF.push([f2(M.ot.overall),'OT hrs / person / day',M.ot.j==='X'?P.R:P.G]);
+    if(KF.length<4&&M.lv&&M.lv.eV) KF.push([pct(M.lv.uV,M.lv.eV)+'%','Annual leave used',P.B]);
+    if(!KF.length) KF.push(['–','No figures in selected scope',P.N]);
+    R(s,9.05,1.05,3.45,.55+Math.min(4,KF.length)*1.06,{fill:'F5F8FC',line:P.line,r:.12}); T(s,9.25,1.15,3.1,.3,'Key figures',{fs:10.5,b:true,c:P.mut});
     KF.slice(0,4).forEach((k,i)=>{ const y=1.5+i*1.06; R(s,9.25,y,3.05,.95,{fill:P.W,line:P.line,r:.08}); R(s,9.25,y+.12,.06,.71,{fill:k[2]});
       T(s,9.45,y+.04,2.8,.55,k[0],{fs:24,b:true,c:k[2],va:'middle'}); T(s,9.45,y+.58,2.8,.3,k[1],{fs:10,c:P.mut}); });
-    T(s,1.1,3.05,3,.3,'สถานะรวม (Overall Status)',{fs:10.5,b:true,c:P.mut});
+    T(s,1.1,3.05,3,.3,'Overall status',{fs:10.5,b:true,c:P.mut});
     pill(D,s,1.1,3.38,2.6,.6,RAGT[M.rag].toUpperCase(),P[M.rag],17);
-    T(s,3.95,3.15,4.9,1.0,'เกณฑ์: '+M.ragRule+(offTxt.length?' (คำนวณเฉพาะหมวดที่เลือก)':''),{fs:8.5,c:P.mut,va:'middle'});
-    const rp=[['วันที่ข้อมูล (Status date)',dm(T0)],['ช่วงรายงาน (Reporting period)',opt.period||NA]];
-    if(M.ms&&M.ms.fy) rp.push(['ปีงบประมาณ (FY)',M.ms.fy]); if(M.hs) rp.push(['Hoshin '+M.hs.year,'อัปเดตล่าสุด '+(M.hs.upd?dm(M.hs.upd):NA)]); if(opt.by) rp.push(['จัดทำโดย (Prepared by)',opt.by]);
+    T(s,3.95,3.15,4.9,1.0,'Criteria: 🔴 Critical = PCR / PV / Q-patrol delay or any item >7 days overdue · 🟡 Attention = overdue / blocked item, or Hoshin topic due within 7 days with open lines · 🟢 On Track = none of the above'+(offTxt.length?' (selected scope only)':''),{fs:8.5,c:P.mut,va:'middle'});
+    const rp=[['Status date',dm(T0)],['Reporting period',opt.period||NA]];
+    if(M.ms&&M.ms.fy) rp.push(['Fiscal year',M.ms.fy]); if(M.hs) rp.push(['Hoshin '+M.hs.year,'Last updated '+(M.hs.upd?dm(M.hs.upd):NA)]); if(opt.by) rp.push(['Prepared by',opt.by]);
     rp.forEach((r,i)=>{ T(s,1.1,4.25+i*.34,3.2,.32,r[0],{fs:11,b:true,c:P.txt}); T(s,4.3,4.25+i*.34,4.6,.32,r[1],{fs:11,c:P.mut}); });
-    T(s,1.1,6.05,3,.28,'หัวข้อในรายงาน',{fs:10,b:true,c:P.mut});
-    const ag=SECS.filter(x=>x[0]==='home'||x[0]==='plan'||on(x[0])); ag.forEach((x,i)=>{ R(s,1.1+i*1.27,6.36,1.19,.36,{fill:P.soft,line:P.line,r:.08}); T(s,1.1+i*1.27,6.36,1.19,.36,x[1],{fs:9,c:P.txt,al:'center',va:'middle'}); });
-    T(s,.75,7.1,11.2,.26,'ที่มา: QE Elec. Daily Job Tracker · ข้อมูล ณ '+dm(T0)+(M.cloudOk?'':' · ข้อมูลในเครื่อง (Cloud DB ไม่ได้เชื่อมต่อ)'),{fs:8.5,c:P.mut});
+    T(s,1.1,6.05,3,.28,'Report contents',{fs:10,b:true,c:P.mut});
+    const ag=SECS.filter(x=>x[0]==='home'||x[0]==='plan'||on(x[0])); ag.forEach((x,i)=>{ R(s,1.1+i*1.27,6.36,1.19,.36,{fill:P.soft,line:P.line,r:.08}); T(s,1.1+i*1.27,6.36,1.19,.36,(x[1].split(' ')[0]+' '+({home:'Overview',today:'Today',tracker:'Tracker',mission:'7 Mission',ot:'OT',leave:'Leave',mj:'Main QE Jobs',hoshin:'Hoshin',plan:'Plan'}[x[0]]||x[1])),{fs:9,c:P.txt,al:'center',va:'middle'}); });
+    T(s,.75,7.1,11.2,.26,'Source: QE Elec. Daily Job Tracker · data as of '+dm(T0)+(M.cloudOk?'':' · local data (Cloud DB not connected)'),{fs:8.5,c:P.mut});
     s.notes='ข้อความหลัก: '+KEY+'\n• สถานะรวม = '+RAGT[M.rag]+' ('+M.ragRule+')'+(M.gaps.length?'\n• ข้อจำกัดข้อมูล: '+M.gaps.join(' · '):'')+(SCOPE?'\n• '+SCOPE:'')+'\n[Source] QE Elec. Daily Job Tracker';
   }
 
@@ -13273,13 +13273,14 @@ function build(M0,opt){
       if(!q) empty(D,s,.45,1.75,12.43,5.2,'ไม่พบ Action plan: Q-patrol audit');
       else{
         table(D,s,.45,1.75,8.6,[.85,2.6,.9,1.1,1.0,2.15],['Line','หัวข้อ (Topic)','In-charge','Countermeasure','Q-patrol','กิจกรรมถัดไป'],
-          q.items.slice(0,10).map(i=>[{s:i.line,b:true},i.topic,i.inc,cpill(D,/done/i.test(i.stM)?'G':/delay/i.test(i.stM)?'R':'Y',i.stM),cpill(D,/delay/i.test(i.stQ)?'R':/done/i.test(i.stQ)?'G':'G',i.stQ),
+          q.items.slice(0,10).map(i=>[{s:i.line,b:true},i.topic,i.inc,cpill(D,/done/i.test(i.stM)?'G':/delay/i.test(i.stM)?'R':'Y',i.stM),(/delay/i.test(i.stQ)?cpill(D,'R',i.stQ):/done/i.test(i.stQ)?cpill(D,'G',i.stQ):{s:i.stQ,b:true,c:P.pri,fill:P.soft,al:'center'}),
             i.late.length?{s:'เลยแผน: '+i.late.map(e=>e.t+' '+dmS(e.pd)).join(', '),c:P.R,b:true}:i.next.length?i.next.slice(0,2).map(e=>e.t+' '+dmS(e.pd)).join(' → '):cna(D,'ไม่มีแผนถัดไป')]),{fs:9,rh:.45});
         card(D,s,9.2,1.75,3.68,5.22,'📅 ปฏิทิน Q-patrol ถัดไป');
         q.next.slice(0,8).forEach((e,i)=>{ const y=2.25+i*.56; R(s,9.38,y,.9,.46,{fill:P.soft,line:P.line,r:.06}); T(s,9.38,y,.9,.46,dmS(e.pd),{fs:10,b:true,c:P.pri,al:'center',va:'middle'});
           T(s,10.38,y-.02,2.4,.26,e.t+' · '+e.line,{fs:9.5,b:true,c:P.txt}); T(s,10.38,y+.22,2.4,.24,e.owner+' · '+clip(e.topic,26),{fs:8.5,c:P.mut}); });
         if(!q.next.length) T(s,9.38,2.4,3.3,.4,'ไม่มีกิจกรรมที่วางแผนไว้',{fs:11,c:P.mut});
         if(q.next.length>8) T(s,9.38,6.68,3.3,.25,'+ อีก '+(q.next.length-8)+' กิจกรรม (ถึง '+dm(q.next[q.next.length-1].pd)+')',{fs:8.5,c:P.mut});
+        legend(D,s,.45,6.4,[['Done = เสร็จแล้ว',P.G],['On-plan = เป็นไปตามแผน (ยังไม่ถึงกำหนด)',P.soft],['Delay = ล่าช้า',P.R]]);
         if(M.claims.length) T(s,.45,6.72,8.6,.28,'Claim log อื่น ๆ (มีเฉพาะ Link): '+M.claims.join(' · '),{fs:8.5,c:P.mut});
       }
       s.notes='ข้อความหลัก: ความคืบหน้า Q-patrol audit ของ Claim\n• Countermeasure = สถานะมาตรการ (MFG) · Q-patrol = สถานะการตรวจ';
@@ -13371,47 +13372,49 @@ function build(M0,opt){
     });
   }
 
-  /* ---------- 📅 แผนงาน (FYI) : ภาพรวมกิจกรรมของทุกหมวดที่ติ๊ก ---------- */
-  { const wk0=monday(T0), addD=(s,n)=>{ const d=new Date(s+'T00:00:00'); d.setDate(d.getDate()+n); return ymd(d); };
-    const WK=[0,1,2,3].map(i=>({a:i?addD(wk0,7*i):T0,b:addD(wk0,7*i+6)})), END=WK[3].b;
-    const col=d=>{ if(!isD(d)) return -1; if(d<T0) return 0; for(let i=0;i<4;i++) if(d>=WK[i].a&&d<=WK[i].b) return i+1; return 5; };
-    const lanes=[];
-    const lane=(k,label,status)=>{ const L={k:k,label:label,status:status,c:[[],[],[],[],[],[]]}; lanes.push(L); return L; };
-    const put=(L,d,t,late)=>{ const i=col(d); if(i<0) return; L.c[i].push({d:d,t:t,late:late}); };
-    if(on('today')&&M.td){ const L=lane('today','☀️ วันนี้','เลยกำหนด '+M.td.late+' · ครบวันนี้ '+M.td.today+' · ภายใน 3 วัน '+M.td.soon);
-      if(!on('tracker')&&!on('mj')&&!on('hoshin')) M.td.rows.forEach(r=>put(L,r.d,clip(r.t,30))); }
-    if(on('tracker')){ const L=lane('tracker','📊 Tracker','เปิด '+M.tr.open.length+'/'+M.tr.total+' · ปิดแล้ว '+M.tr.closure+'% · เลยกำหนด '+M.tr.overdue.length);
-      M.tr.open.forEach(x=>put(L,x.due,clip(x.issue,30)+' ('+x.owner+')',x.late>0)); }
-    if(on('mission')){ const m=M.ms; lane('mission','🎯 7 Mission',m&&m.ev?'ผ่านเป้า '+m.pct+'% ('+m.ok+' O / '+m.ng+' X)'+(m.latest?' · ข้อมูลถึง '+m.latest:''):NA); }
-    if(on('ot')){ const o=M.ot; lane('ot','⏱ OT',o&&o.overall!=null?'เฉลี่ย '+f2(o.overall)+' ชม./คน/วัน · เป้า ≤ '+f2(o.set.tgtDay):NA); }
-    if(on('leave')){ const v=M.lv, L=lane('leave','🌴 วันลา / อบรม',v&&v.eV?'ใช้พักร้อน '+f1(v.uV)+'/'+f1(v.eV)+' วัน · ไม่อยู่เกิน '+v.max+' คน '+v.conf+' วัน':NA);
-      if(v) v.up.forEach(e=>put(L,e.ds,e.name+' · '+e.k)); }
-    if(on('mj')){ const L=lane('mj','🧰 Main QE Jobs',[M.pcr?'PCR Delay '+M.pcr.delay+' (Done '+M.pcr.done+'/'+M.pcr.total+')':'',M.qp?'Q-patrol '+M.qp.items.length+' หัวข้อ':''].filter(Boolean).join(' · ')||NA);
-      if(M.qp){ M.qp.late.forEach(e=>put(L,e.pd,e.t+' '+e.line,true)); M.qp.next.forEach(e=>put(L,e.pd,e.t+' '+e.line)); }
-      if(M.pv) M.pv.next.filter(p=>p.d&&p.d>=T0).forEach(p=>put(L,p.d,p.code+' '+p.model)); }
-    if(on('hoshin')&&M.hs){ const L=lane('hoshin','🧭 Hoshin','OK '+M.hs.ok+'/'+M.hs.total+' ไลน์ ('+M.hs.pct+'%)');
-      M.hs.topics.forEach(t=>{ const g={}; t.nok.forEach(l=>{ if(l.due){ (g[l.due]=g[l.due]||[]).push(l.line); } });
-        Object.keys(g).forEach(d=>put(L,d,t.name+': '+g[d].length+' ไลน์',d<T0)); t.plan.filter(p=>p.d>=T0).forEach(p=>put(L,p.d,t.name+' – '+clip(p.l,22))); }); }
-    const anyLate=lanes.some(L=>L.c[0].length);
-    let MAXI=3, CL=30;
-    const cell=(a,late)=>{ if(!a.length) return {s:'–',c:P.N,al:'center'}; a.sort((x,y)=>x.d<y.d?-1:1);
-      const t=a.slice(0,MAXI).map(x=>dmS(x.d)+' '+clip(x.t,CL)).join('\n')+(a.length>MAXI?'\n+ อีก '+(a.length-MAXI):''); return late?{s:t,c:P.R,b:true}:{s:t}; };
-    const head=['หมวด','สถานะปัจจุบัน'].concat(anyLate?['🔴 เลยกำหนด']:[]).concat(WK.map((w,i)=>(i===0?'สัปดาห์นี้':'สัปดาห์ '+(i+1))+'\n'+dmS(w.a)+' – '+dmS(w.b))).concat(['หลังจากนั้น']);
-    const cw=anyLate?[1.35,2.0,1.5,1.5,1.5,1.5,1.5,1.58]:[1.45,2.4,1.65,1.65,1.65,1.65,1.98];
-    const mkRows=()=>lanes.map(L=>[{s:L.label,b:true},{s:L.status,c:L.status===NA?P.mut:P.txt}].concat(anyLate?[cell(L.c[0],true)]:[]).concat([1,2,3,4].map(i=>cell(L.c[i]))).concat([L.c[5].length?{s:L.c[5].length+' รายการ\n(ถึง '+dmS(L.c[5].map(x=>x.d).sort().slice(-1)[0])+')',al:'center'}:{s:'–',c:P.N,al:'center'}]));
-    /* ปรับความแน่นให้พอดีหน้า: ลดจำนวนรายการต่อช่อง / ความยาวข้อความ */
-    const estH=(rows,fs)=>rows.reduce((h,r)=>h+Math.max(.42,Math.max(...r.map((c,j)=>{ const t=String(c&&c.s!=null?c.s:c), cpl=Math.max(4,Math.floor((cw[j]*72-10)/(fs*.45)));
-      return t.split('\n').reduce((n,x)=>n+Math.max(1,Math.ceil(x.length/cpl)),0); }))*fs*1.2/72+.07),0)+.6;
-    let rows=mkRows(), FS=9.5;
-    [[3,30,9.5],[2,28,9.5],[2,22,9.5],[1,26,9.5],[1,18,9.5]].some(o=>{ MAXI=o[0]; CL=o[1]; FS=o[2]; rows=mkRows(); return estH(rows,FS)<=4.6; });
-    const nUp=lanes.reduce((a,L)=>a+[1,2,3,4].reduce((b,i)=>b+L.c[i].length,0),0);
-    D.sum.plan=[]; lanes.forEach(L=>[1,2].forEach(i=>L.c[i].forEach(x=>D.sum.plan.push(dmS(x.d)+' · '+L.label.replace(/^\S+\s/,'')+' · '+x.t)))); D.sum.plan.sort();
-    const s=D.slide('plan','📅 แผนงาน & กิจกรรม (FYI) · '+dmS(WK[0].a)+' – '+dmS(END),lanes.length?'กิจกรรมใน 4 สัปดาห์ข้างหน้า '+nUp+' รายการ จาก '+lanes.length+' หมวดที่เลือก':'ไม่มีหมวดที่เลือก');
-    if(lanes.length){
-      table(D,s,.45,1.72,12.43,cw,head,rows,{fs:FS,rh:.42});
-      T(s,.45,6.68,12.43,.28,'ข้อมูลเพื่อทราบ (FYI) · แสดงเฉพาะหมวดที่เลือก · วันที่จาก Due date ล่าสุด (รวม Rev.) / แผน Hoshin / Q-patrol / PV / แผนลา'+(anyLate?' · 🔴 = เลยกำหนดแล้ว':''),{fs:8.5,c:P.mut}); }
-    else empty(D,s,.45,1.75,12.43,5.2,'เลือกหมวดอย่างน้อย 1 หมวด');
-    s.notes='ข้อความหลัก: ภาพรวมกิจกรรมของหมวดที่เลือก (เพื่อทราบ)\n• แต่ละแถว = หมวด · คอลัมน์ = สัปดาห์\n• ไม่มีข้อเรียกร้องให้ผู้บริหารดำเนินการ';
+  /* ---------- 📅 แผนงาน (FYI) v60.1 : รายการกิจกรรมเรียงตามวัน อ่านง่าย ---------- */
+  { const addD=(s,n)=>{ const d=new Date(s+'T00:00:00'); d.setDate(d.getDate()+n); return ymd(d); };
+    const W1=addD(T0,6), W2=addD(T0,13), END=W2;
+    const CAT={today:['☀️','วันนี้'],tracker:['📊','Tracker'],mj:['🧰','Main QE Jobs'],hoshin:['🧭','Hoshin'],leave:['🌴','วันลา/อบรม'],mission:['🎯','7 Mission'],ot:['⏱','OT']};
+    const EV=[], add=(k,d,t,o,late)=>{ if(isD(d)) EV.push({k:k,d:d,t:t,o:o||'–',late:!!late||d<T0}); };
+    if(on('tracker')) M.tr.open.forEach(x=>add('tracker',x.due,x.issue,x.owner,x.late>0));
+    if(on('today')&&M.td&&!on('tracker')&&!on('mj')&&!on('hoshin')) M.td.rows.forEach(r=>add('today',r.d,r.t,r.o,r.n<0));
+    if(on('mj')){ if(M.qp){ M.qp.late.forEach(e=>add('mj',e.pd,e.t+' · '+e.line+' ('+e.topic+')',e.owner,true)); M.qp.next.forEach(e=>add('mj',e.pd,e.t+' · '+e.line+' ('+e.topic+')',e.owner)); }
+      if(M.pv) M.pv.next.filter(p=>p.d&&p.d>=T0).forEach(p=>add('mj',p.d,'New project · '+p.code+' '+p.model,'QE')); }
+    if(on('hoshin')&&M.hs) M.hs.topics.forEach(t=>{ const g={}; t.nok.forEach(l=>{ if(l.due) (g[l.due]=g[l.due]||[]).push(l); });
+      Object.keys(g).forEach(d=>add('hoshin',d,t.name+' – ปิดไลน์ '+g[d].map(l=>l.line).slice(0,4).join(', ')+(g[d].length>4?' +'+(g[d].length-4):''),uniq(g[d].map(l=>l.qe)).join(' / '),d<T0));
+      t.plan.filter(p=>p.d>=T0).forEach(p=>add('hoshin',p.d,t.name+' – '+p.l,'QE')); });
+    if(on('leave')&&M.lv) M.lv.up.forEach(e=>add('leave',e.ds,e.name+' · '+e.k,e.name));
+    EV.sort((a,b)=>a.late!==b.late?(a.late?-1:1):a.d<b.d?-1:a.d>b.d?1:0);
+    const late=EV.filter(e=>e.late), w1=EV.filter(e=>!e.late&&e.d<=W1), w2=EV.filter(e=>!e.late&&e.d>W1&&e.d<=W2), later=EV.filter(e=>!e.late&&e.d>W2);
+    D.sum.plan=w1.concat(w2).map(e=>dmS(e.d)+' · '+CAT[e.k][1]+' · '+clip(e.t,60));
+    const keys=Object.keys(CAT).filter(k=>on(k)&&(k!=='today'||(!on('tracker')&&!on('mj')&&!on('hoshin'))));
+    const s=D.slide('plan','📅 แผนงาน & กิจกรรม (FYI) · '+dmS(T0)+' – '+dmS(END),keys.length?(late.length?'เลยกำหนด '+late.length+' · ':'')+'สัปดาห์นี้ '+w1.length+' กิจกรรม · สัปดาห์หน้า '+w2.length+' กิจกรรม':'ไม่มีหมวดที่เลือก');
+    if(!keys.length) empty(D,s,.45,1.75,12.43,5.2,'เลือกหมวดอย่างน้อย 1 หมวด');
+    else{
+      /* แถวบน: การ์ดสรุปต่อหมวด */
+      const stat={mission:M.ms&&M.ms.ev?'ผ่านเป้า '+M.ms.pct+'%':'ไม่มีข้อมูล',ot:M.ot&&M.ot.overall!=null?f2(M.ot.overall)+' ชม./คน/วัน':'ไม่มีข้อมูล'};
+      const cwid=(12.43-(keys.length-1)*.12)/keys.length;
+      keys.forEach((k,i)=>{ const x=.45+i*(cwid+.12), n1=w1.filter(e=>e.k===k).length, n2=w2.filter(e=>e.k===k).length, nl=late.filter(e=>e.k===k).length;
+        card(D,s,x,1.68,cwid,.86,null,nl?P.R:P.pri);
+        T(s,x+.2,1.72,cwid-.25,.3,CAT[k][0]+' '+CAT[k][1],{fs:10.5,b:true,c:P.nav});
+        T(s,x+.2,2.02,cwid-.25,.46,stat[k]!=null?stat[k]:((nl?'🔴 เลย '+nl+' · ':'')+'2 สัปดาห์: '+(n1+n2)+' กิจกรรม'),{fs:9.5,c:nl?P.R:P.txt,b:!!nl,va:'middle'}); });
+      /* ตาราง: กิจกรรมเรียงตามวัน แบ่งเป็นช่วง */
+      const rows=[]; let shown=0;
+      const sec=(title,list,col,cap)=>{ if(!list.length) return; const more=list.length-cap;
+        rows.push([{s:title[0],b:true,c:P.W,fill:col},{s:'',fill:col},{s:title[1]+(more>0?'  (แสดง '+cap+' · อีก '+more+')':''),b:true,c:P.W,fill:col},{s:'',fill:col}]);
+        list.slice(0,cap).forEach(e=>{ shown++; rows.push([{s:(['อา','จ','อ','พ','พฤ','ศ','ส'][new Date(e.d+'T00:00:00').getDay()])+' '+dmS(e.d),b:true,c:e.late?P.R:P.txt},{s:CAT[e.k][0]+' '+CAT[e.k][1]},{s:clip(e.t,78),c:e.late?P.R:P.txt,b:e.late},{s:clip(e.o,22)}]); }); };
+      const nS=[late,w1,w2].filter(l=>l.length).length, budget=12-nS;
+      const cL=Math.min(late.length,3), c2=Math.min(w2.length,Math.max(2,Math.floor((budget-cL)/3))), c1=Math.min(w1.length,budget-cL-c2);
+      sec(['🔴 เลยกำหนด','เลยกำหนดแล้ว '+late.length+' รายการ'],late,P.R,cL);
+      sec(['📌 สัปดาห์นี้','7 วันข้างหน้า · '+dmS(T0)+' – '+dmS(W1)+' · '+w1.length+' กิจกรรม'],w1,P.nav,c1);
+      sec(['🗓 สัปดาห์หน้า',dmS(addD(W1,1))+' – '+dmS(W2)+' · '+w2.length+' กิจกรรม'],w2,P.pri2,Math.min(w2.length,budget-cL-c1));
+      const total=late.length+w1.length+w2.length;
+      if(rows.length) table(D,s,.45,2.7,12.43,[1.35,1.75,7.48,1.85],['วันที่','หมวด','กิจกรรม','ผู้รับผิดชอบ'],rows,{fs:9.5,rh:.29});
+      else T(s,.45,3.2,12.43,.5,'ไม่มีกิจกรรมใน 2 สัปดาห์ข้างหน้า 🎉',{fs:14,c:P.mut,al:'center'});
+      T(s,.45,6.68,12.43,.28,(total>shown?'ดูครบทุกกิจกรรมในหน้าเว็บ · ':'')+(later.length?'หลังจากนั้นอีก '+later.length+' กิจกรรม (ถึง '+dm(later[later.length-1].d)+')':'ไม่มีกิจกรรมหลังจากนั้น')+' · ข้อมูลเพื่อทราบ (FYI) · แสดงเฉพาะหมวดที่เลือก',{fs:8.5,c:P.mut});
+    }
+    s.notes='ข้อความหลัก: กิจกรรมที่จะเกิดขึ้นใน 2 สัปดาห์ (เพื่อทราบ)\n• การ์ดบน = สรุปต่อหมวด · ตาราง = เรียงตามวัน แบ่ง เลยกำหนด / สัปดาห์นี้ / สัปดาห์หน้า\n• ไม่มีข้อเรียกร้องให้ผู้บริหารดำเนินการ';
   }
   /* v38: มาตรฐานรูปแบบทั้งไฟล์ */
   const EMO=/[\u{1F000}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{2712}\u{2714}-\u{2716}\u{2718}-\u{27BF}\u{2B00}-\u{2BFF}\u{23E9}-\u{23FA}\u{231A}\u{231B}\u{FE0F}\u{200D}\u{2139}]/gu;
