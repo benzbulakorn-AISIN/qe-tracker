@@ -10568,6 +10568,50 @@ async function clipImport(){
 if(document.readyState==='complete') setTimeout(hashImport,900); else window.addEventListener('load',()=>setTimeout(hashImport,900));
 window.addEventListener('hashchange',()=>{ if(/[#&]mtg=/.test(location.hash)) hashImport(); });
 
+/* ================= v61 : ดึงอีเมล Schedule อัตโนมัติ (Power Automate → Gmail → Apps Script → Supabase: mail_schedule) ================= */
+const MS_KEY='qeMailSchedSync';
+const msSt=(()=>{ try{ return JSON.parse(localStorage.getItem(MS_KEY)||'{}')||{}; }catch(e){ return {}; } })();
+const msSave=()=>{ try{ localStorage.setItem(MS_KEY,JSON.stringify(msSt)); }catch(e){} };
+let msBusy=false;
+async function mailSchedSync(manual){
+  const C=window.COUNTERMEASURE_CLOUD_DEFAULTS||{};
+  if(msBusy||!C.supabaseUrl||!C.supabaseKey) return;
+  msBusy=true;
+  try{
+    const d=new Date(); d.setDate(d.getDate()-7);
+    const since=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    const url=C.supabaseUrl.replace(/\/+$/,'')+'/rest/v1/mail_schedule?select=id,mail_date,body&mail_date=gte.'+since+'&order=id.asc&limit=50';
+    const r=await fetch(url,{headers:{apikey:C.supabaseKey,Authorization:'Bearer '+C.supabaseKey}});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const rows=await r.json(); if(!Array.isArray(rows)) return;
+    const last=+msSt.lastId||0, newest={};
+    rows.forEach(x=>{ if(+x.id>last&&isoOK(x.mail_date)&&x.body) newest[x.mail_date]=x; });   // ใช้อีเมลล่าสุดของแต่ละวัน
+    const list=Object.keys(newest).sort().map(k=>newest[k]);
+    let add=0, upd=0, del=0, maxId=last;
+    rows.forEach(x=>{ if(+x.id>maxId) maxId=+x.id; });
+    if(list.length){
+      seedSkip();
+      list.forEach(x=>{
+        const p=parseText(x.body,x.mail_date); if(!p.items.length) return;
+        const items=p.items.map(it=>Object.assign({},it,{date:x.mail_date}));
+        const res=applyCands(items,{prune:true}); add+=res.add; upd+=res.upd; del+=res.del;
+      });
+    }
+    msSt.lastId=maxId; msSt.at=Date.now(); msSave();
+    if(list.length){
+      try{ refreshTodayCard(); }catch(e){}
+      try{ if(shown()) render(); }catch(e){}
+      if(add||upd||del) say('\uD83D\uDCE7 อัปเดตประชุมจากอีเมล Schedule อัตโนมัติ: เพิ่ม '+add+(upd?' · อัปเดต '+upd:'')+(del?' · เอาออก '+del:''));
+    }else if(manual) say('\uD83D\uDCE7 ไม่มีอีเมล Schedule ใหม่');
+  }catch(e){
+    if(manual) say('ดึงอีเมล Schedule ไม่สำเร็จ ('+(e&&e.message||e)+') — ตรวจตาราง mail_schedule ใน Supabase',true);
+  }finally{ msBusy=false; }
+}
+window.QE_MAIL_SYNC=()=>mailSchedSync(true);
+if(document.readyState==='complete') setTimeout(()=>mailSchedSync(false),1500); else window.addEventListener('load',()=>setTimeout(()=>mailSchedSync(false),1500));
+setInterval(()=>{ if(!document.hidden) mailSchedSync(false); },10*60000);
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden&&Date.now()-(msSt.at||0)>2*60000) mailSchedSync(false); });
+
 /* ---------- เหตุการณ์ในหน้า ---------- */
 view.addEventListener('click',async e=>{
   const b=e.target.closest('[data-mg]'); if(!b) return; const a=b.dataset.mg, id=b.dataset.m;
