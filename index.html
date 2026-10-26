@@ -1135,7 +1135,7 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none!importa
   </form>
 
   <div class="tools">
-    <input id="q" placeholder="🔍 ค้นหา...">
+    <input id="q" type="search" name="qe-tracker-q-nofill" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="🔍 ค้นหา...">
     <select id="fStatus"><option value="">ทุกสถานะ</option><option>In Progress</option><option>Done</option></select>
     <select id="fDate"><option value="">ทุกวันที่</option><option value="2026-10-15">15 ต.ค. 2569</option><option value="2026-10-14">14 ต.ค. 2569</option><option value="2026-10-09">9 ต.ค. 2569</option><option value="2026-10-08">8 ต.ค. 2569</option><option value="2026-10-07">7 ต.ค. 2569</option><option value="2026-10-06">6 ต.ค. 2569</option></select>
     <select id="fOwner"><option value="">ทุกผู้แจ้ง</option><option value="Benz">Benz</option><option value="Earn">Earn</option><option value="Mana">Mana</option><option value="Natcha">Natcha</option><option value="QE All">QE All</option></select>
@@ -9294,7 +9294,8 @@ let qT=null;
 document.addEventListener('input',e=>{ if(!e.target||e.target.id!=='q') return; e.stopImmediatePropagation(); P.q=e.target.value; savePrefs(); clearTimeout(qT); qT=setTimeout(()=>render(),250); },true);
 ['fStatus','fDate','fOwner','fFlag'].forEach(id=>{ const el=g(id); if(el) el.addEventListener('change',()=>{ P[id]=el.value; savePrefs(); }); });
 const clr=g('clearBtn'); if(clr) clr.addEventListener('click',()=>{ ['q','fStatus','fDate','fOwner','fFlag'].forEach(id=>{ P[id]=''; }); P.view=''; P.pri=''; P.mine=false; savePrefs(); uxAfter(); });
-['q','fStatus','fDate','fOwner','fFlag'].forEach(id=>{ const el=g(id); if(!el||!P[id]) return; if(el.tagName==='SELECT'){ if(Array.from(el.options).some(o=>o.value===P[id])) el.value=P[id]; } else el.value=P[id]; });
+P.q=''; try{ savePrefs(); }catch(e){}   /* v61.1: ไม่จำคำค้นข้ามการเปิดหน้า (กัน Chrome autofill ค้าง) */
+['fStatus','fDate','fOwner','fFlag'].forEach(id=>{ const el=g(id); if(!el||!P[id]) return; if(el.tagName==='SELECT'){ if(Array.from(el.options).some(o=>o.value===P[id])) el.value=P[id]; } else el.value=P[id]; });
 render();
 })();
 
@@ -13972,4 +13973,10 @@ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded'
 })();
 
 </script>
+<script>/* v61.1 ล้างช่องค้นหา Tracker ที่เบราว์เซอร์เติมเอง */
+(function(){const clr=()=>{const q=document.getElementById('q'); if(q&&q.value&&!q.dataset.typed){ q.value=''; q.dispatchEvent(new Event('input',{bubbles:true})); }};
+document.addEventListener('keydown',e=>{ if(e.target&&e.target.id==='q') e.target.dataset.typed='1'; },true);
+document.addEventListener('paste',e=>{ if(e.target&&e.target.id==='q') e.target.dataset.typed='1'; },true);
+window.addEventListener('load',()=>{ setTimeout(clr,300); setTimeout(clr,1500); });
+window.addEventListener('pageshow',e=>{ if(e.persisted) setTimeout(clr,100); });})();</script>
 </body></html>
