@@ -10016,6 +10016,20 @@ const st=document.createElement('style'); st.id='mgStyle'; st.textContent=`
 .mg-row.un{border-left-color:#f59e0b;background:linear-gradient(90deg,rgba(245,158,11,.10),transparent 40%),var(--card)}
 .mg-row.ok{border-left-color:var(--ok)}
 .mg-row.cf{border-left-color:var(--dang)}
+/* v61.5 เลือกหลายรายการ */
+#viewMeet .mg-list .mg-row{position:relative;padding-left:38px}
+#viewMeet.mg-cp .mg-list .mg-row{padding-left:34px}
+.mg-sel{position:absolute;left:8px;top:50%;transform:translateY(-50%);margin:0;display:flex;align-items:center;justify-content:center;width:22px;height:22px;cursor:pointer}
+.mg-sel input,.mg-selbar input{width:16px;height:16px;margin:0;cursor:pointer;accent-color:var(--pri)}
+.mg-sel input:focus-visible,.mg-selbar input:focus-visible{outline:2px solid var(--pri);outline-offset:2px}
+.mg-row.sel{box-shadow:0 0 0 2px var(--pri) inset;background:color-mix(in srgb,var(--pri) 9%,var(--card))}
+.mg-selbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 8px;padding:6px 10px 6px 12px;border:1px dashed var(--line);border-radius:10px;font-size:13px;color:var(--mut)}
+.mg-selbar.on{border-style:solid;border-color:var(--dang);background:color-mix(in srgb,var(--dang) 8%,var(--card));color:var(--txt)}
+.mg-selbar label{display:inline-flex;align-items:center;gap:6px;margin:0;cursor:pointer;color:var(--txt);font-weight:600}
+.mg-selc{flex:1;min-width:140px}
+.mg-seldel{padding:4px 12px;font-size:13px;border-radius:8px;border:1px solid var(--dang);background:var(--dang);color:#fff;cursor:pointer}
+.mg-seldel[disabled]{opacity:.4;cursor:not-allowed;background:transparent;color:var(--mut);border-color:var(--line)}
+.mg-selx{padding:4px 10px;font-size:13px}
 .mg-t{text-align:center;line-height:1.25}
 .mg-t b{display:block;font-size:17px;font-variant-numeric:tabular-nums}
 .mg-t span{display:block;color:var(--mut);font-size:12.5px;font-variant-numeric:tabular-nums}
@@ -10162,7 +10176,8 @@ function rowHtml(m,A,ds){
   if(cf.length) bad.push('<span class="mg-bad" title="คนที่มีประชุมซ้อนเวลา">⚠ ซ้อน: '+E(Array.from(new Set(cf)).map(id=>P(id)&&P(id).name).join(', '))+'</span>');
   whoIds(m).forEach(id=>{ const l=A.lv[id], p=P(id); if(l&&leaveFull(l)&&p) bad.push('<span class="mg-bad" title="จากแท็บแผนลา">🌴 '+E(p.name)+' '+E(l.t)+'</span>'); });
   const invOnly=m.inv.filter(id=>m.who.indexOf(id)<0&&m.who.indexOf('all')<0&&P(id)).map(id=>P(id).name);
-  return '<div class="mg-row'+(un?' un':(cf.length?' cf':' ok'))+'" data-m="'+E(m.id)+'">'+
+  return '<div class="mg-row'+(un?' un':(cf.length?' cf':' ok'))+(mgSel.has(m.id)?' sel':'')+'" data-m="'+E(m.id)+'">'+
+    '<label class="mg-sel" title="เลือกเพื่อลบหลายรายการ"><input type="checkbox" data-mgsel="'+E(m.id)+'"'+(mgSel.has(m.id)?' checked':'')+' aria-label="เลือกประชุม '+E(m.t||'')+'"></label>'+
     '<div class="mg-t" title="ระยะเวลา '+hrs(durOf(m))+' ชม."><b>'+E(m.s||'--:--')+'</b><span>'+E(m.e||'--:--')+'</span><small>'+hrs(durOf(m))+' ชม.</small></div>'+
     '<div class="mg-mid"><div class="mg-ti" data-mg="edit" data-m="'+E(m.id)+'" title="คลิกเพื่อแก้ไข">'+E(m.t||'(ไม่มีชื่อ)')+'</div>'+
       '<div class="mg-sub"><span>📍</span><input class="mg-room" data-mg="room" data-m="'+E(m.id)+'" value="'+E(m.room)+'" title="'+E(m.room)+'" placeholder="ห้องประชุม (ว่างไว้ได้)" autocomplete="off">'+
@@ -10172,6 +10187,32 @@ function rowHtml(m,A,ds){
     chips(m,A,ds)+
     '<div class="mg-ac"><button type="button" data-mg="edit" data-m="'+E(m.id)+'" title="แก้ไข">✎</button><button type="button" data-mg="dup" data-m="'+E(m.id)+'" title="ทำซ้ำ">⧉</button><button type="button" data-mg="del" data-m="'+E(m.id)+'" title="ลบ">🗑</button></div></div>';
 }
+/* v61.5: ติ๊กเลือกหลายประชุมแล้วลบทีเดียว */
+const mgSel=new Set();
+function selBarHtml(total){
+  const n=mgSel.size, all=n>0&&n===total;
+  return '<div class="mg-selbar'+(n?' on':'')+'" id="mgSelBar"><label><input type="checkbox" id="mgSelAll"'+(all?' checked':'')+' aria-label="เลือกทั้งหมด"> เลือกทั้งหมด</label>'+
+    '<span class="mg-selc" aria-live="polite">'+(n?'เลือกแล้ว <b>'+n+'</b> / '+total+' ประชุม':'ติ๊ก ☐ หน้าประชุมเพื่อเลือกหลายรายการ')+'</span>'+
+    '<button type="button" class="mg-seldel" data-mg="delsel"'+(n?'':' disabled')+'>\uD83D\uDDD1 ลบที่เลือก'+(n?' ('+n+')':'')+'</button>'+
+    (n?'<button type="button" class="btn-g mg-selx" data-mg="selclr">ยกเลิกเลือก</button>':'')+'</div>';
+}
+function syncSelUi(){
+  const bar=g('mgSelBar'); if(!bar) return; const list=getDay(ui.date);
+  const tmp=document.createElement('div'); tmp.innerHTML=selBarHtml(list.length); bar.replaceWith(tmp.firstChild);
+  view.querySelectorAll('.mg-row[data-m]').forEach(r=>r.classList.toggle('sel',mgSel.has(r.dataset.m)));
+}
+function delSelected(){
+  const L0=getDay(ui.date), pick=L0.filter(m=>mgSel.has(m.id)); if(!pick.length) return;
+  const g2=pick.filter(m=>m.src==='graph').length;
+  const names=pick.slice(0,8).map(m=>'• '+(m.s||'')+' '+(m.t||'(ไม่มีชื่อ)')).join('\n')+(pick.length>8?'\n…และอีก '+(pick.length-8)+' รายการ':'');
+  if(!window.confirm('ลบ '+pick.length+' ประชุมที่เลือก?\n\n'+names+(g2?'\n\n(ประชุมจาก Outlook '+g2+' รายการจะกลับมาอีกตอนซิงก์ ถ้ายังอยู่ในปฏิทิน — ใช้ “ข้ามเสมอ” ที่ \uD83D\uDC65 ตั้งค่าทีม ถ้าไม่ต้องการ)':''))) return;
+  const ds=ui.date, keep=JSON.parse(JSON.stringify(L0)), del=new Set(pick.map(m=>m.id));
+  pick.forEach(m=>{ if(m.src==='mail'&&m.uid) mailDelAdd(m.uid); });
+  mgSel.clear();
+  mutate(ds,L=>{ for(let i=L.length-1;i>=0;i--) if(del.has(L[i].id)) L.splice(i,1); });
+  say('\uD83D\uDDD1 ลบแล้ว '+pick.length+' ประชุม');
+  if(window.qeUndoRow){ window.qeUndoRow(()=>{ mgSel.clear(); setDay(ds,keep); render(); refreshTodayCard(); say('↩ กู้คืน '+pick.length+' ประชุมแล้ว'); }); const sp=document.querySelector('#qeUndo span'); if(sp) sp.textContent='ลบ '+pick.length+' ประชุมแล้ว'; }
+}
 function renderDay(){
   const ds=ui.date, list=getDay(ds).sort(bySt), A=analyze(list,ds);
   let h='<div class="mg-day">'+E(fmtTh(ds))+'<small>'+list.length+' ประชุม'+(A.un?' · <span class="mg-un">ยังไม่ระบุคน '+A.un+'</span>':'')+'</small></div>';
@@ -10180,7 +10221,10 @@ function renderDay(){
       (q.conf?'<span class="mg-flag d">⚠ เวลาซ้อน</span>':'')+(l?'<span class="mg-flag w">🌴 '+E(l.t)+'</span>':'')+(!q.n&&!l?'<span class="mg-flag i">ว่าง</span>':'')+'</div></div>'; }).join('')+'</div>';
   if(!list.length){
     h+='<div class="mg-empty">ยังไม่มีประชุมวันนี้<br>'+(connected()?'กด <b>🔄 ซิงก์ Outlook</b> เพื่อดึงล่าสุด':'กด <b>🔗 เชื่อม Outlook อัตโนมัติ</b> เพื่อให้ระบบดึงประชุมเอง')+' — หรือ <b>📥 นำเข้า</b> ไฟล์ .ics / ข้อความ Schedule, <b>➕ เพิ่มประชุม</b> พิมพ์เอง</div>';
-  }else h+='<div class="mg-list">'+list.map(m=>rowHtml(m,A,ds)).join('')+'</div>';
+  }else{
+    const ids=new Set(list.map(m=>m.id)); Array.from(mgSel).forEach(k=>{ if(!ids.has(k)) mgSel.delete(k); });
+    h+=selBarHtml(list.length)+'<div class="mg-list">'+list.map(m=>rowHtml(m,A,ds)).join('')+'</div>';
+  }
   h+='<div class="mg-hint">💡 คลิกชื่อ <b>Earn / Natcha / Mana / Benz</b> เพื่อลงคนเข้าร่วม (เลือกได้หลายคน) · <b>All</b> = ทุกคน · กรอบประ = ถูกเชิญใน Outlook แต่ยังไม่ได้ลงชื่อ · ที่คุณแก้เองจะไม่ถูกซิงก์ Outlook ทับ · <b>📋 คัดลอกข้อความ</b> ได้ข้อความ Schedule พร้อมวางใน Teams</div>';
   return h;
 }
@@ -10637,15 +10681,17 @@ document.addEventListener('visibilitychange',()=>{ if(!document.hidden&&Date.now
 /* ---------- เหตุการณ์ในหน้า ---------- */
 view.addEventListener('click',async e=>{
   const b=e.target.closest('[data-mg]'); if(!b) return; const a=b.dataset.mg, id=b.dataset.m;
-  if(a==='prev'||a==='next'){ const step=ui.view==='week'?7:1; ui.date=addD(ui.date,a==='prev'?-step:step); render(); }
-  else if(a==='today'){ ui.date=today; render(); }
+  if(a==='prev'||a==='next'){ const step=ui.view==='week'?7:1; ui.date=addD(ui.date,a==='prev'?-step:step); mgSel.clear(); render(); }
+  else if(a==='today'){ ui.date=today; mgSel.clear(); render(); }
+  else if(a==='delsel') delSelected();
+  else if(a==='selclr'){ mgSel.clear(); view.querySelectorAll('[data-mgsel]').forEach(c=>c.checked=false); syncSelUi(); }
   else if(a==='cpon'||a==='cpoff'){ ui.cp=(a==='cpon'); saveUI(); render(); }
   else if(a==='vday'||a==='vweek'){ ui.view=a==='vday'?'day':'week'; saveUI(); render(); }
   else if(a==='goday'){ ui.date=b.dataset.d; ui.view='day'; saveUI(); render(); window.scrollTo(0,0); }
   else if(a==='add') editModal(null);
   else if(a==='edit') editModal(id);
   else if(a==='dup'){ mutate(ui.date,L=>{ const m=L.find(x=>x.id===id); if(m) L.push(normM(Object.assign({},m,{id:uid(),uid:'',src:'',who:[],wa:''}))); }); say('⧉ ทำซ้ำแล้ว — ปรับเวลา/หัวข้อได้ที่ ✎'); }
-  else if(a==='del'){ const m=getDay(ui.date).find(x=>x.id===id); if(m&&window.confirm('ลบประชุม “'+m.t+'”?'+(m.src==='graph'?'\n(ประชุมจาก Outlook จะกลับมาอีกตอนซิงก์ ถ้ายังอยู่ในปฏิทิน — ใช้ “ข้ามเสมอ” ที่ 👥 ตั้งค่าทีม ถ้าไม่ต้องการ)':''))) { if(m.src==='mail'&&m.uid) mailDelAdd(m.uid); mutate(ui.date,L=>{ const i=L.findIndex(x=>x.id===id); if(i>=0) L.splice(i,1); }); } }
+  else if(a==='del'){ const m=getDay(ui.date).find(x=>x.id===id); if(m&&window.confirm('ลบประชุม “'+m.t+'”?'+(m.src==='graph'?'\n(ประชุมจาก Outlook จะกลับมาอีกตอนซิงก์ ถ้ายังอยู่ในปฏิทิน — ใช้ “ข้ามเสมอ” ที่ 👥 ตั้งค่าทีม ถ้าไม่ต้องการ)':''))) { if(m.src==='mail'&&m.uid) mailDelAdd(m.uid); mgSel.delete(id); mutate(ui.date,L=>{ const i=L.findIndex(x=>x.id===id); if(i>=0) L.splice(i,1); }); } }
   else if(a==='who') toggleWho(id,b.dataset.p);
   else if(a==='imp') importModal('ics');
   else if(a==='ol'){ if(connected()) gSync(true); else olModal(); }
@@ -10658,7 +10704,9 @@ view.addEventListener('click',async e=>{
 });
 view.addEventListener('change',e=>{
   const t=e.target;
-  if(t.id==='mgDate'){ if(isoOK(t.value)){ ui.date=t.value; render(); } }
+  if(t.id==='mgDate'){ if(isoOK(t.value)){ ui.date=t.value; mgSel.clear(); render(); } }
+  else if(t.dataset&&t.dataset.mgsel){ if(t.checked) mgSel.add(t.dataset.mgsel); else mgSel.delete(t.dataset.mgsel); syncSelUi(); }
+  else if(t.id==='mgSelAll'){ const on=t.checked; view.querySelectorAll('[data-mgsel]').forEach(c=>{ c.checked=on; if(on) mgSel.add(c.dataset.mgsel); else mgSel.delete(c.dataset.mgsel); }); syncSelUi(); }
   else if(t.id==='mgAt'){ ui.at=t.checked; saveUI(); }
   else if(t.id==='mgJson'){ if(t.files&&t.files[0]) importJson(t.files[0]); t.value=''; }
   else if(t.dataset&&t.dataset.mg==='room'){ const v=t.value.trim(), id=t.dataset.m; mutate(ui.date,L=>{ const m=L.find(x=>x.id===id); if(m) m.room=v; }); }
@@ -10725,7 +10773,7 @@ const MOBILE=()=>window.innerWidth<=900;
 /* ================= นิยามเมนู ================= */
 const ORDER=['tabD','tabG','tabS','tabT','tabJ','tabM','tabH'];          // Alt+1 … Alt+7
 const GROUPS=[
-  {id:'daily',n:'ประจำวัน',tabs:['tabD','tabG','tabS']},
+  {id:'daily',n:'ประจำวัน',tabs:['tabD','tabW','tabG','tabS']},
   {id:'track',n:'ติดตามงาน',tabs:['tabT','tabJ']},
   {id:'plan', n:'เป้าหมาย & แผน',tabs:['tabM','tabH']}
 ];
@@ -11046,6 +11094,7 @@ function refreshBadges(){
     if(H&&H.years){ const ys=Object.keys(H.years).sort(), y=H.years[ys.indexOf(t.slice(0,4))>=0?t.slice(0,4):ys[ys.length-1]];
       if(y) (y.topics||[]).forEach(tp=>(tp.lines||[]).forEach(l=>{ const d=l.due||tp.due; if(l.st!=='ok'&&d&&d<t) n++; })); }
     setBadge('tabH',n,'',n?('ไลน์ที่เลยกำหนด '+n):''); }catch(e){ setBadge('tabH',0); }
+  try{ if(window.__MY_WORK&&window.__MY_WORK.badge) window.__MY_WORK.badge(); }catch(e){}
   paintHealth(); syncBars();
 }
 let rbT=0; const soon=()=>{ clearTimeout(rbT); rbT=setTimeout(refreshBadges,700); };
@@ -12268,24 +12317,29 @@ function rows(){
     return {id:field(d,['id'],i),owner,status,due,issue,cm,done,level,label,ac,mine:!!me&&String(owner).toLowerCase().split(/\s*[,/&+]\s*|\s+และ\s+/).map(x=>x.trim()).indexOf(me.trim())>=0,raw:d};
   }).filter(x=>!x.done&&x.mine);
 }
-const tab=document.createElement('button');tab.type='button';tab.className='tabbtn';tab.id='tabW';tab.innerHTML='📥 งานของฉัน <span id="mwTabBadge" style="display:none;margin-left:4px;padding:1px 6px;border-radius:99px;background:var(--dang);color:#fff;font-size:10px"></span>';
+const tab=document.createElement('button');tab.type='button';tab.id='tabW';
+/* v61.5: ใช้โครงเดียวกับแท็บอื่นบนเมนู (ไอคอน + ชื่อ + คำอธิบาย + ป้ายตัวเลขมุมขวาบน .nv-bd) */
+if(document.querySelector('#nvNav .nv-gt')){tab.className='tabbtn nv-tab';tab.setAttribute('role','tab');tab.setAttribute('aria-controls','viewMyWork');tab.setAttribute('aria-label','งานของฉัน — งานที่ฉันรับผิดชอบ');tab.innerHTML='<span class="nv-ic" aria-hidden="true">\uD83D\uDCE5</span><span class="nv-tx"><b><span class="f">งานของฉัน</span><span class="s">งานของฉัน</span></b><small>งานที่ฉันรับผิดชอบ</small></span><i class="nv-bd" hidden></i>';}
+else{tab.className='tabbtn';tab.innerHTML='\uD83D\uDCE5 งานของฉัน <span id="mwTabBadge" style="display:none;margin-left:4px;padding:1px 6px;border-radius:99px;background:var(--dang);color:#fff;font-size:10px"></span>';}
 const td=g('tabD');td.parentNode.insertBefore(tab,td.nextSibling);
+function setWBadge(late,tdy){const n=late+tdy,tip=late?('เลยกำหนด '+late+' รายการ'+(tdy?' · ครบวันนี้ '+tdy:'')):(tdy?'ครบกำหนดวันนี้ '+tdy+' รายการ':'');const i=tab.querySelector('.nv-bd');if(i){if(n>0){i.hidden=false;i.textContent=n>99?'99+':String(n);i.className='nv-bd'+(late?'':' w')}else i.hidden=true}const b=g('mwTabBadge');if(b){b.textContent=n;b.style.display=n?'inline-block':'none'}tab.title='งานของฉัน — รวมงานที่ยังไม่เสร็จของคุณจาก Tracker'+(tip?'\n'+tip:'')}
+function badgeNow(){try{const R=rows();setWBadge(R.filter(x=>x.level==='late').length,R.filter(x=>x.level==='today').length)}catch(e){}}
 const view=document.createElement('div');view.id='viewMyWork';g('viewToday').parentNode.insertBefore(view,g('viewToday').nextSibling);
 let filter='all';
 function allViews(){return ['viewToday','viewTracker','viewSheet','viewMission','viewHoshin','viewMainJobs','viewMeet','viewMyWork']}
 function allTabs(){return ['tabD','tabW','tabT','tabS','tabM','tabH','tabJ','tabG']}
 function show(){allViews().forEach(id=>{const e=g(id);if(e)e.style.display=id==='viewMyWork'?'block':'none'});allTabs().forEach(id=>{const e=g(id);if(e)e.classList.toggle('on',id==='tabW')});render();window.scrollTo(0,0)}
 function card(x){return '<article class="mw-card" data-level="'+x.level+'" style="--ac:'+x.ac+'"><div class="mw-ac"></div><div class="mw-body"><div class="mw-topline"><span class="mw-badge">'+x.label+'</span><span class="mw-title">'+E(x.issue)+'</span><span class="mw-src">Tracker</span></div><div class="mw-meta"><span>👤 '+E(x.owner||'-')+'</span><span>📅 '+E(x.due||'ยังไม่มี Due Date')+'</span><span>🟠 '+E(x.status)+'</span></div><div class="mw-next"><b>Next action:</b> '+E(x.cm||'ยังไม่ได้ระบุ Countermeasure / Next action')+'</div></div><div class="mw-act"><button type="button" class="btn-g" data-mw-go="'+E(x.id)+'" title="เปิดรายการต้นทาง">↗ เปิด</button></div></article>'}
-function render(){const R=rows(),late=R.filter(x=>x.level==='late').length,tdy=R.filter(x=>x.level==='today').length,soon=R.filter(x=>x.level==='soon').length,nodue=R.filter(x=>!x.due).length,urgent=late+tdy;const badge=g('mwTabBadge');if(badge){badge.textContent=urgent;badge.style.display=urgent?'inline-block':'none'};view.innerHTML='<div class="mw-wrap"><div class="mw-head"><div><h1>📥 งานของฉัน</h1><div class="mw-sub">รวมงานที่ยังไม่เสร็จของผู้ใช้ที่ Login · เรียงตามความเร่งด่วนจาก Tracker</div></div><div class="mw-user">👤 '+E(user()||'ยังไม่ได้ Login')+'</div></div><div class="mw-kpis"><button class="mw-kpi '+(filter==='late'?'on':'')+'" data-f="late"><b>'+late+'</b><span>เลยกำหนด</span></button><button class="mw-kpi '+(filter==='today'?'on':'')+'" data-f="today"><b>'+tdy+'</b><span>ครบกำหนดวันนี้</span></button><button class="mw-kpi '+(filter==='soon'?'on':'')+'" data-f="soon"><b>'+soon+'</b><span>ภายใน 3 วัน</span></button><button class="mw-kpi '+(filter==='nodue'?'on':'')+'" data-f="nodue"><b>'+nodue+'</b><span>ยังไม่มี Due Date</span></button><button class="mw-kpi '+(filter==='all'?'on':'')+'" data-f="all"><b>'+R.length+'</b><span>งานที่ยังเปิดอยู่</span></button></div><div class="mw-tools"><input id="mwQ" placeholder="🔎 ค้นหา Issue หรือ Countermeasure"><select id="mwSort"><option value="priority">เรียงตามความเร่งด่วน</option><option value="due">เรียงตาม Due Date</option></select><button type="button" class="btn-g" id="mwReset">↻ ล้างตัวกรอง</button><span class="mw-count" id="mwCount"></span></div><div class="mw-list" id="mwList"></div><div class="mw-empty" id="mwEmpty">ไม่พบงานตามตัวกรอง</div><div class="mw-note">วันที่อ้างอิง: '+localDay()+' · ใช้ Due Date ล่าสุด (รวม Rev.) จาก Tracker · Meeting Action และ Checklist เชื่อมเพิ่มภายหลังได้</div></div>';bind(R);apply(R)}
+function render(){const R=rows(),late=R.filter(x=>x.level==='late').length,tdy=R.filter(x=>x.level==='today').length,soon=R.filter(x=>x.level==='soon').length,nodue=R.filter(x=>!x.due).length,urgent=late+tdy;setWBadge(late,tdy);view.innerHTML='<div class="mw-wrap"><div class="mw-head"><div><h1>📥 งานของฉัน</h1><div class="mw-sub">รวมงานที่ยังไม่เสร็จของผู้ใช้ที่ Login · เรียงตามความเร่งด่วนจาก Tracker</div></div><div class="mw-user">👤 '+E(user()||'ยังไม่ได้ Login')+'</div></div><div class="mw-kpis"><button class="mw-kpi '+(filter==='late'?'on':'')+'" data-f="late"><b>'+late+'</b><span>เลยกำหนด</span></button><button class="mw-kpi '+(filter==='today'?'on':'')+'" data-f="today"><b>'+tdy+'</b><span>ครบกำหนดวันนี้</span></button><button class="mw-kpi '+(filter==='soon'?'on':'')+'" data-f="soon"><b>'+soon+'</b><span>ภายใน 3 วัน</span></button><button class="mw-kpi '+(filter==='nodue'?'on':'')+'" data-f="nodue"><b>'+nodue+'</b><span>ยังไม่มี Due Date</span></button><button class="mw-kpi '+(filter==='all'?'on':'')+'" data-f="all"><b>'+R.length+'</b><span>งานที่ยังเปิดอยู่</span></button></div><div class="mw-tools"><input id="mwQ" placeholder="🔎 ค้นหา Issue หรือ Countermeasure"><select id="mwSort"><option value="priority">เรียงตามความเร่งด่วน</option><option value="due">เรียงตาม Due Date</option></select><button type="button" class="btn-g" id="mwReset">↻ ล้างตัวกรอง</button><span class="mw-count" id="mwCount"></span></div><div class="mw-list" id="mwList"></div><div class="mw-empty" id="mwEmpty">ไม่พบงานตามตัวกรอง</div><div class="mw-note">วันที่อ้างอิง: '+localDay()+' · ใช้ Due Date ล่าสุด (รวม Rev.) จาก Tracker · Meeting Action และ Checklist เชื่อมเพิ่มภายหลังได้</div></div>';bind(R);apply(R)}
 function bind(R){view.querySelectorAll('[data-f]').forEach(b=>b.addEventListener('click',()=>{filter=b.dataset.f;view.querySelectorAll('[data-f]').forEach(x=>x.classList.toggle('on',x===b));apply(R)}));g('mwQ').addEventListener('input',()=>apply(R));g('mwSort').addEventListener('change',()=>apply(R));g('mwReset').addEventListener('click',()=>{filter='all';g('mwQ').value='';g('mwSort').value='priority';view.querySelectorAll('[data-f]').forEach(x=>x.classList.toggle('on',x.dataset.f==='all'));apply(R)});g('mwList').addEventListener('click',e=>{const b=e.target.closest('[data-mw-go]');if(!b)return;g('tabT').click();setTimeout(()=>{try{goToItem(+b.dataset.mwGo)}catch(err){}},100)})}
 function apply(R){const q=String(g('mwQ')?.value||'').trim().toLowerCase(),sort=g('mwSort')?.value||'priority';let A=R.filter(x=>(filter==='all'||(filter==='nodue'?!x.due:x.level===filter))&&(!q||(x.issue+' '+x.cm+' '+x.owner).toLowerCase().includes(q)));const rank={late:0,today:1,soon:2,normal:3};A.sort((a,b)=>sort==='due'?((a.due||'9999').localeCompare(b.due||'9999')):((rank[a.level]??9)-(rank[b.level]??9)||((a.due||'9999').localeCompare(b.due||'9999'))));g('mwList').innerHTML=A.map(card).join('');g('mwCount').textContent='แสดง '+A.length+' รายการ';g('mwEmpty').style.display=A.length?'none':'block'}
 tab.addEventListener('click',show);
 ['tabD','tabT','tabS','tabM','tabH','tabJ'].forEach(id=>{const b=g(id);if(b)b.addEventListener('click',()=>{view.style.display='none';tab.classList.remove('on')},true)});
 // ประชุมยังคงอยู่ในหน้า “วันนี้” ผ่านการ์ด mgToday; ซ่อนเฉพาะแท็บหลัก
 const mt=g('tabG');if(mt){mt.style.display='none';mt.setAttribute('aria-hidden','true')}
-setInterval(()=>{if(view.style.display==='block')render();else{const R=rows(),n=R.filter(x=>x.level==='late'||x.level==='today').length,b=g('mwTabBadge');if(b){b.textContent=n;b.style.display=n?'inline-block':'none'}}},30000);
+setInterval(()=>{if(view.style.display==='block')render();else badgeNow()},30000);
 render();
-window.__MY_WORK={open:show,refresh:render};
+window.__MY_WORK={open:show,refresh:render,badge:badgeNow};
 return true;
 }
 let tries=0;
