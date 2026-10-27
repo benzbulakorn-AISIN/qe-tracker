@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'; form-action 'self'">
 <title>QE Elec. Daily Job Tracker</title>
-<!-- v62 (27-Oct-2026): Time-saving & Ergonomics layer — ดู Change log ในบล็อก qeV62Css ท้ายไฟล์ -->
+<!-- v63 (27-Oct-2026): ดู Change log ในบล็อก qeV62Css / qeV63Css ท้ายไฟล์ -->
 <!--
   CENTRAL DATABASE CONFIGURATION
   แก้ 3 ค่านี้ก่อนนำไฟล์ขึ้นเว็บไซต์ แล้วทุกคนที่เปิดลิงก์เดียวกันจะใช้ฐานข้อมูลกลางชุดเดียวกัน
@@ -14087,7 +14087,7 @@ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded'
      [7] Ctrl+Enter = บันทึกฟอร์ม Tracker (ผ่าน Validation เดิมทุกขั้น)
      หมายเหตุ: คีย์ร่างใช้ 'v62_trk_draft' — ห้ามขึ้นต้น qe_ / issue_tracker_ เพราะคีย์กลุ่มนั้นถูกซิงก์ขึ้น Cloud DB -->
 <style id="qeV62Css">
-/* [1] Desktop: ย่อปุ่มลอยเหลือไอคอน และเว้นขอบขวาให้เนื้อหา เพื่อไม่ให้บังปุ่ม ✎ / 🗑 ของแถว */
+/* [1] Desktop: ย่อปุ่มลอยเหลือไอคอน เพื่อไม่ให้บังปุ่ม ✎ / 🗑 ของแถว */
 @media (min-width:901px){
   .qeai-fab,.qec-fab{width:46px;height:46px;padding:0!important;border-radius:999px!important;display:inline-flex!important;align-items:center;justify-content:center;font-size:20px!important;right:12px!important}
   .qeai-fab .u3-lb,.qec-fab .u3-lb{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
@@ -14272,7 +14272,6 @@ function offerDraft(){
   bar.append(msg,ok,no); bar.hidden=false;
 }
 offerDraft();
-/* เปิดฟอร์มเมื่อมีร่าง (ไม่เปิดเองถ้าผู้ใช้ไม่ได้เปิดฟอร์ม — แค่โชว์เมื่อฟอร์มถูกเปิด) */
 const addBtn=g('uxAddBtn'); if(addBtn) addBtn.addEventListener('click',()=>setTimeout(offerDraft,0));
 
 /* ---------- [7] Ctrl+Enter (⌘+Enter) = บันทึก ---------- */
@@ -14290,4 +14289,139 @@ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded'
 })();
 </script>
 <!-- ===== end v62 ===== -->
+
+<!-- ===== v63 · Follow-up จาก UX Audit =====
+     [1] ฟอร์ม Tracker: พับช่องที่ใช้ไม่บ่อย (ความคืบหน้า · ผู้ช่วย · ติดปัญหา) — เปิดเองเมื่อมีค่า (แก้ไข / กู้ร่าง / ติ๊ก Blocked)
+     [2] งานของฉัน: ปุ่ม ✓ ปิดงาน · 📅 เลื่อน Due · ✎ แก้ไข ในการ์ด — ไม่ต้องสลับไป Tracker
+     [3] งานของฉัน: คำค้น / การเรียง / โฟกัส ไม่หายเมื่อหน้ารีเฟรชตัวเองทุก 30 วินาที (บั๊กเดิม)
+     [4] มือถือ (≤820px): การ์ด Tracker กระชับขึ้น — วันที่+ผู้แจ้งบรรทัดเดียว · Due+Status คู่กัน · ไม่มีคอลัมน์ป้ายกว้าง 112px
+     ไม่แก้ฟังก์ชันเดิม — เรียกผ่าน data-qe-fn (allow-list เดิมของ v35) และฟังก์ชัน global เดิม (edit) เท่านั้น -->
+<style id="qeV63Css">
+/* [1] ส่วนเพิ่มเติมของฟอร์ม */
+.v63-more{margin-top:12px;border:1px solid var(--line);border-radius:10px;background:var(--card)}
+.v63-more>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;min-height:40px;padding:6px 12px;font-size:13px;font-weight:600;color:var(--mut);border-radius:10px}
+.v63-more>summary::-webkit-details-marker{display:none}
+.v63-more>summary::before{content:'▸';transition:transform .15s}
+.v63-more[open]>summary::before{transform:rotate(90deg)}
+.v63-more>summary:hover{color:var(--txt)}
+.v63-more>summary:focus-visible{outline:2px solid var(--pri);outline-offset:2px}
+.v63-more .v63-cnt{padding:1px 8px;border-radius:999px;background:var(--pri);color:var(--on-pri,#fff);font-size:11.5px}
+.v63-more .v63-cnt[hidden]{display:none}
+.v63-more>#qeBlkGrid{margin:0;padding:4px 12px 12px}
+@media (prefers-reduced-motion:reduce){.v63-more>summary::before{transition:none}}
+/* [2] ปุ่มในการ์ดงานของฉัน */
+.mw-act .v63-mw{min-width:40px;min-height:36px}
+.mw-act{display:flex;flex-wrap:wrap;gap:6px;align-items:flex-start;justify-content:flex-end}
+/* [4] การ์ด Tracker บนมือถือ — ใช้กับกฎ :has() เดิมของ v35 */
+@supports selector(:has(*)){@media(max-width:820px){
+  #tb tr[data-id]{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:12px;padding:10px 12px}
+  #tb tr[data-id]>td{display:block;padding:4px 0;border-bottom:0}
+  #tb tr[data-id]>td::before{display:block;margin-bottom:2px;font-size:11.5px}
+  /* วันที่แจ้ง · ผู้แจ้ง → บรรทัดเล็กบนสุด */
+  #tb tr[data-id]>td:nth-child(1),#tb tr[data-id]>td:nth-child(2){font-size:12.5px;color:var(--mut);padding:0 0 2px}
+  #tb tr[data-id]>td:nth-child(1)::before{content:"📅";display:inline;margin:0 4px 0 0}
+  #tb tr[data-id]>td:nth-child(2)::before{content:"👤";display:inline;margin:0 4px 0 0}
+  /* ปัญหา / Countermeasure เต็มความกว้าง */
+  #tb tr[data-id]>td:nth-child(3),#tb tr[data-id]>td:nth-child(4){grid-column:1/-1}
+  #tb tr[data-id]>td:nth-child(3){font-weight:700;font-size:15px;padding-top:2px}
+  #tb tr[data-id]>td:nth-child(3)::before{content:none}
+  #tb tr[data-id]>td:nth-child(4){border-bottom:1px dashed var(--line);padding-bottom:8px}
+  /* Due + Status คู่กัน */
+  #tb tr[data-id]>td:nth-child(5),#tb tr[data-id]>td:nth-child(6){padding-top:8px}
+  /* ปุ่มจัดการ เต็มแถว */
+  #tb tr[data-id]>td:nth-child(7){grid-column:1/-1;padding-top:6px}
+  #tb tr[data-id]>td:nth-child(7)::before{content:none}
+  #tb tr[data-id]>td.act .act-row{justify-content:flex-start}
+}}
+</style>
+<script id="qeV63Js">
+(function(){
+'use strict';
+if(window.__QE_V63) return; window.__QE_V63=true;
+function main(){
+const g=id=>document.getElementById(id);
+
+/* ---------- [1] พับช่องเพิ่มเติมของฟอร์ม Tracker ---------- */
+(function(){
+  const form=g('f'), grid=g('qeBlkGrid'); if(!form||!grid||grid.closest('.v63-more')) return;
+  const det=document.createElement('details'); det.className='v63-more'; det.id='v63More';
+  const sum=document.createElement('summary');
+  sum.appendChild(document.createTextNode('รายละเอียดเพิ่มเติม — ความคืบหน้า · ผู้ช่วย · ติดปัญหา'));
+  const cnt=document.createElement('span'); cnt.className='v63-cnt'; cnt.hidden=true; sum.appendChild(cnt);
+  det.appendChild(sum);
+  grid.parentNode.insertBefore(det,grid); det.appendChild(grid);   // ย้าย Node เดิม — id / listener เดิมอยู่ครบ
+  let manual=false;
+  const filled=()=>{ let n=0;
+    const p=g('qeProg'), h=g('qeHelper'), b=g('qeBlocked'), t=g('qeBlocker');
+    if(p&&p.value!=='') n++; if(h&&h.value.trim()) n++; if((b&&b.checked)||(t&&t.value.trim())) n++;
+    return n; };
+  const sync=()=>{ const n=filled(); cnt.hidden=!n; cnt.textContent=n+' รายการ';
+    if(n&&!det.open) det.open=true; else if(!n&&det.open&&!manual) det.open=false; };
+  sum.addEventListener('click',()=>{ manual=!det.open; });          // ก่อน toggle: ถ้าปิดอยู่ = ผู้ใช้กำลังเปิดเอง
+  form.addEventListener('input',sync); form.addEventListener('change',sync);
+  form.addEventListener('reset',()=>{ manual=false; setTimeout(sync,0); });
+  form.addEventListener('submit',()=>setTimeout(()=>{ manual=false; sync(); },0));
+  /* ค่าที่ถูกเติมด้วยโค้ด (✎ แก้ไข / ทำซ้ำ / ยกเลิก / ล้าง) ไม่มี event → ตรวจหลังทุกคลิก */
+  document.addEventListener('click',()=>setTimeout(sync,60),true);
+  /* Validation เดิมโฟกัสช่องที่อยู่ในส่วนที่พับ → กางออกให้เห็น */
+  grid.addEventListener('focusin',()=>{ if(!det.open) det.open=true; });
+  form.addEventListener('invalid',e=>{ if(det.contains(e.target)) det.open=true; },true);
+  sync();
+})();
+
+/* ---------- [2] + [3] งานของฉัน ---------- */
+(function(){
+  let tries=0;
+  const iv=setInterval(()=>{ const v=g('viewMyWork'); if(v){ clearInterval(iv); init(v); } else if(++tries>80) clearInterval(iv); },250);
+  function init(view){
+    const st={q:'',sort:'',focus:false,caret:null};
+    /* จำสถานะที่ผู้ใช้ตั้งไว้ */
+    view.addEventListener('input',e=>{ if(e.target.id==='mwQ'){ st.q=e.target.value; st.caret=e.target.selectionStart; } });
+    view.addEventListener('change',e=>{ if(e.target.id==='mwSort') st.sort=e.target.value; });
+    view.addEventListener('focusin',e=>{ if(e.target.id==='mwQ') st.focus=true; });
+    view.addEventListener('focusout',e=>{ if(e.target.id==='mwQ') setTimeout(()=>{ const a=document.activeElement; if(a&&a!==document.body&&a.id!=='mwQ') st.focus=false; },0); });
+    view.addEventListener('click',e=>{ const b=e.target.closest('#mwReset'); if(b){ st.q=''; st.sort=''; } });
+    let busy=false;
+    function restore(){
+      const q=g('mwQ'), s=g('mwSort'); if(!q) return;
+      busy=true;
+      try{
+        if(st.sort&&s&&s.value!==st.sort){ s.value=st.sort; s.dispatchEvent(new Event('change',{bubbles:true})); }
+        if(st.q&&q.value!==st.q){ q.value=st.q; q.dispatchEvent(new Event('input',{bubbles:true})); }
+        if(st.focus&&(document.activeElement===document.body||!document.activeElement)){
+          q.focus({preventScroll:true}); const c=st.caret==null?q.value.length:Math.min(st.caret,q.value.length); try{ q.setSelectionRange(c,c); }catch(e){}
+        }
+      } finally{ busy=false; }
+    }
+    function addActs(){
+      view.querySelectorAll('.mw-act [data-mw-go]').forEach(go=>{
+        const box=go.parentNode; if(box.querySelector('.v63-mw')) return;
+        const id=Number(go.dataset.mwGo); if(!isFinite(id)) return;
+        const mk=(txt,label,attrs)=>{ const b=document.createElement('button'); b.type='button'; b.className='btn-g v63-mw'; b.textContent=txt; b.title=label; b.setAttribute('aria-label',label);
+          Object.keys(attrs).forEach(k=>b.setAttribute(k,attrs[k])); return b; };
+        box.insertBefore(mk('✓','ทำเสร็จแล้ว (ปิดงาน)',{'data-qe-fn':'toggle','data-qe-a':String(id)}),go);
+        box.insertBefore(mk('📅','เลื่อนกำหนดเสร็จ (Rev.)',{'data-qe-fn':'openRev','data-qe-a':String(id)}),go);
+        box.insertBefore(mk('✎','แก้ไขใน Tracker',{'data-v63-edit':String(id)}),go);
+      });
+    }
+    new MutationObserver(()=>{ if(busy) return; addActs(); restore(); }).observe(view,{childList:true,subtree:true});
+    addActs();
+    /* ✎ แก้ไข: ไป Tracker แล้วเปิดฟอร์มแก้ไขรายการนั้น */
+    view.addEventListener('click',e=>{
+      const b=e.target.closest('[data-v63-edit]'); if(!b) return;
+      const id=Number(b.dataset.v63Edit); if(!isFinite(id)) return;
+      const t=g('tabT'); if(t) t.click();
+      setTimeout(()=>{ try{ if(typeof edit==='function') edit(id); }catch(err){} },120);
+    });
+    /* หลังปิด Modal ปิดงาน / เลื่อน Due → อัปเดตรายการทันที (คงตำแหน่ง Scroll + ตัวกรองเดิม) */
+    const refresh=()=>{ if(view.style.display!=='block') return; const y=window.scrollY, t=g('tabW'); if(!t) return; t.click(); requestAnimationFrame(()=>window.scrollTo(0,y)); };
+    ['ovA','ov'].forEach(id=>{ const o=g(id); if(!o) return; let was=o.classList.contains('on');
+      new MutationObserver(()=>{ const now=o.classList.contains('on'); if(was&&!now) setTimeout(refresh,50); was=now; }).observe(o,{attributes:true,attributeFilter:['class']}); });
+  }
+})();
+}
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',main); else main();
+})();
+</script>
+<!-- ===== end v63 ===== -->
 </body></html>
