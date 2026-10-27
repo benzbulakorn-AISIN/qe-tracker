@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'; form-action 'self'">
 <title>QE Elec. Daily Job Tracker</title>
+<!-- v62 (27-Oct-2026): Time-saving & Ergonomics layer — ดู Change log ในบล็อก qeV62Css ท้ายไฟล์ -->
 <!--
   CENTRAL DATABASE CONFIGURATION
   แก้ 3 ค่านี้ก่อนนำไฟล์ขึ้นเว็บไซต์ แล้วทุกคนที่เปิดลิงก์เดียวกันจะใช้ฐานข้อมูลกลางชุดเดียวกัน
@@ -2466,9 +2467,9 @@ const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;'
 /* ไฮไลต์คำที่พิมพ์ในช่อง 🔍 ค้นหา (หน้า Tracker) */
 function hlq(s){
   s=String(s==null?'':s);
-  const q=($('q')?$('q').value:'').trim();
-  if(!q) return esc(s);
-  const re=new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi');
+  const qt=($('q')?$('q').value:'').trim().split(/\s+/).filter(Boolean);   /* v62: ไฮไลต์ทุกคำที่ค้น */
+  if(!qt.length) return esc(s);
+  const re=new RegExp(qt.map(t=>t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).sort((a,b)=>b.length-a.length).join('|'),'gi');
   let out='',last=0,m;
   while((m=re.exec(s))!==null){
     if(m[0]===''){ re.lastIndex++; continue; }
@@ -3145,11 +3146,11 @@ function render(){
   const curO=$('fOwner').value, os=[...new Set(data.map(ownKey))].sort((a,b)=>a.localeCompare(b,'th'));
   $('fOwner').innerHTML=''; $('fOwner').add(new Option('ทุกผู้แจ้ง','')); os.forEach(o=>$('fOwner').add(new Option(o,o)));
   if(os.includes(curO)) $('fOwner').value=curO;
-  const q=$('q').value.toLowerCase(), fs=$('fStatus').value, fd=$('fDate').value, ff=$('fFlag').value, fo=$('fOwner').value;
+  const q=$('q').value.toLowerCase().trim(), qt=q?q.split(/\s+/):[], fs=$('fStatus').value  /* v62: ค้นหาหลายคำ (AND) + ตัดช่องว่างหัวท้าย */, fd=$('fDate').value, ff=$('fFlag').value, fo=$('fOwner').value;
   const list=data.filter(d=>
     (!fs||d.status===fs)&&(!fd||d.date===fd)&&(!fo||ownKey(d)===fo)&&
     (!ff||(ff==='late'?isLate(d):ff==='blocked'?(!!d.blocked&&d.status!=='Done'):(d.revs&&d.revs.length>0)))&&
-    (!q||(d.issue+d.cm+d.owner+(d.blocker||'')+(d.helper||'')+(d.steps||[]).map(x=>x.text).join(' ')+(d.revs||[]).map(x=>x.reason||'').join(' ')).toLowerCase().includes(q)));
+    (!qt.length||(h=>qt.every(t=>h.includes(t)))([d.issue,d.cm,d.owner,d.blocker||'',d.helper||'',(d.steps||[]).map(x=>x.text).join(' '),(d.revs||[]).map(x=>x.reason||'').join(' ')].join(' ').toLowerCase())));
   // เรียงตามคอลัมน์ที่เลือก (วันที่แจ้ง / Due Date) — เสมอกันให้ดูวันที่แจ้ง แล้วลำดับที่บันทึก
   const sg=sortCfg.d==='desc'?-1:1;
   const byDate=(a,b)=> a.date===b.date ? (a.id-b.id)*sg : (a.date<b.date?-1:1)*sg;
@@ -11931,7 +11932,7 @@ small{font-size:max(11px,.85em)}
     const btn=bar.querySelector('button');
     const set=open=>{ f.classList.toggle('ux-hide',!open); btn.setAttribute('aria-expanded',String(open)); btn.textContent=open?'▲ ซ่อนฟอร์ม':'＋ เพิ่มงานใหม่'; bar.classList.toggle('open',open); if(open&&window.__uxName) setTimeout(window.__uxName,0); try{ localStorage.setItem(K,open?'open':'closed'); }catch(e){} };
     set((localStorage.getItem(K)||'closed')==='open');
-    btn.onclick=()=>{ const open=f.classList.contains('ux-hide'); set(open); if(open){ f.scrollIntoView({behavior:'smooth',block:'start'}); setTimeout(()=>{ const o=document.getElementById('owner'); if(o) o.focus({preventScroll:true}); },250); } };
+    btn.onclick=()=>{ const open=f.classList.contains('ux-hide'); set(open); if(open){ f.scrollIntoView({behavior:'smooth',block:'start'}); setTimeout(()=>{ const o=document.getElementById('owner'), i=document.getElementById('issue'); const t=(o&&o.value.trim()&&i)?i:o; if(t) t.focus({preventScroll:true}); },250);   /* v62: ผู้แจ้งเติมไว้แล้ว → ไปช่องปัญหาเลย */ } };
     const orig=HTMLElement.prototype.scrollIntoView;
     f.scrollIntoView=function(o){ if(f.classList.contains('ux-hide')) set(true); return orig.call(this,o); };
     f.addEventListener('focusin',()=>{ if(f.classList.contains('ux-hide')) set(true); });
@@ -12314,7 +12315,7 @@ function rows(){
     if(!done&&due&&due<now){ level='late';label='เลยกำหนด';ac='#dc2626'; }
     else if(!done&&due===now){ level='today';label='ครบกำหนดวันนี้';ac='#ea580c'; }
     else if(!done&&due&&due>now&&due<=in3){ level='soon';label='ภายใน 3 วัน';ac='#2563eb'; }
-    return {id:field(d,['id'],i),owner,status,due,issue,cm,done,level,label,ac,mine:!!me&&String(owner).toLowerCase().split(/\s*[,/&+]\s*|\s+และ\s+/).map(x=>x.trim()).indexOf(me.trim())>=0,raw:d};
+    return {id:field(d,['id'],i),owner,status,due,issue,cm,done,level,label,ac,mine:!!me&&String(owner).toLowerCase().split(/\s*[,/&+]\s*|\s+และ\s+/).map(x=>x.trim()).some(x=>x===me.trim()||x==='qe all'),raw:d};   /* v62: งานของ "QE All" = งานของทุกคนใน QE (Assumption — ลบ ||x==='qe all' ถ้าไม่ต้องการ) */
   }).filter(x=>!x.done&&x.mine);
 }
 const tab=document.createElement('button');tab.type='button';tab.id='tabW';
@@ -14074,4 +14075,219 @@ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded'
   const apply=()=>{ const c=calCompact(); document.body.classList.toggle('cal-cmp',c); b.textContent=c?'🔍 ขยาย':'🔎 ย่อ'; b.title=c?'แสดงปฏิทินแบบปกติ (3 งาน/วัน)':'แสดงปฏิทินแบบกะทัดรัด เห็นทั้งเดือน'; };
   b.addEventListener('click',()=>{ try{ localStorage.setItem('qeCalCompact',calCompact()?'0':'1'); }catch(e){} apply(); try{ drawCal(); }catch(e){ try{ render(); }catch(_){} } });
   apply();
-})();</script></body></html>
+})();</script>
+<!-- ===== v62 · Time-saving & Ergonomics layer =====
+     เพิ่มต่อท้าย ไม่แก้ Business logic เดิม · ใช้คลาส/ID ขึ้นต้น v62- เพื่อไม่ชนของเดิม
+     [1] ปุ่มลอย AI / Line Chat ไม่บังปุ่มจัดการในตาราง (Desktop)
+     [2] ปฏิทิน + สรุปตามผู้แจ้ง ที่ซ่อนอยู่ รวมเป็นแถวเดียว → ตารางขึ้นเร็วขึ้น
+     [3] หัวตาราง Tracker ติดด้านบนเมื่อเลื่อน (จอ ≥ 1200px)
+     [4] Due Date: เลือกจากปฏิทินได้ในคลิกเดียว (sync กับ dropdown เดิม)
+     [5] ช่องปัญหา (Issue): แนะนำหัวข้อที่เคยลงไว้ คลิกเดียวเติมให้
+     [6] ร่างฟอร์มอัตโนมัติ (เฉพาะเครื่องนี้) กันข้อความหายเมื่อรีเฟรช/ปิดแท็บ
+     [7] Ctrl+Enter = บันทึกฟอร์ม Tracker (ผ่าน Validation เดิมทุกขั้น)
+     หมายเหตุ: คีย์ร่างใช้ 'v62_trk_draft' — ห้ามขึ้นต้น qe_ / issue_tracker_ เพราะคีย์กลุ่มนั้นถูกซิงก์ขึ้น Cloud DB -->
+<style id="qeV62Css">
+/* [1] Desktop: ย่อปุ่มลอยเหลือไอคอน และเว้นขอบขวาให้เนื้อหา เพื่อไม่ให้บังปุ่ม ✎ / 🗑 ของแถว */
+@media (min-width:901px){
+  .qeai-fab,.qec-fab{width:46px;height:46px;padding:0!important;border-radius:999px!important;display:inline-flex!important;align-items:center;justify-content:center;font-size:20px!important;right:12px!important}
+  .qeai-fab .u3-lb,.qec-fab .u3-lb{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  .qeai-fab{bottom:66px!important}
+  .qec-fab{bottom:120px!important}
+  .qec-fab .qec-badge{position:absolute;top:-4px;right:-4px}
+  .ux33-top{right:13px!important;bottom:174px!important}
+}
+/* เว้นขอบขวาเฉพาะจอ ≥1200px (ตาราง Tracker กว้างขั้นต่ำ ~980px — จอเล็กกว่านี้ถ้าเว้นขอบจะเกิด scroll แนวนอน) */
+@media (min-width:1200px){ main.wrap{max-width:min(1280px,calc(100vw - 140px))} }
+/* [2] แถวรวมกล่องที่ซ่อนอยู่ */
+.v62-fold{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 14px}
+.v62-fold>#calBox,.v62-fold>#ownBox{flex:1 1 100%;min-width:0;margin:0!important}
+.v62-fold>#calBox.v62-closed,.v62-fold>#ownBox.v62-closed{flex:1 1 340px}
+#calBox.v62-closed .cal-nav,#calBox.v62-closed .cal-leg,#calBox.v62-closed #calSize,#ownBox.v62-closed .own-hint{display:none!important}
+/* [3] หัวตารางติดด้านบน */
+@media (min-width:1200px){
+  #viewTracker .tw,#viewTracker .tw>table{overflow:clip}   /* clip ไม่สร้าง scroll container → sticky อ้างอิงหน้าจอได้ */
+  #viewTracker .tw thead th{position:sticky;top:var(--v62-top,0px);z-index:3;background:var(--th,var(--card));box-shadow:0 1px 0 var(--line)}
+}
+/* [4] ตัวเลือกวันที่ */
+.v62-dp{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:12px;color:var(--mut)}
+.v62-dp input[type=date]{width:auto;min-height:32px;padding:3px 8px;font-size:13px;margin:0}
+/* [5] คำแนะนำหัวข้อ */
+.v62-sug{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;align-items:center}
+.v62-sug[hidden]{display:none}
+.v62-sug .v62-lb{font-size:12px;color:var(--mut)}
+.v62-sug button{max-width:100%;min-height:32px;padding:4px 10px;margin:0;border-radius:999px;border:1px solid var(--line);background:var(--soft);color:var(--txt);font-size:12.5px;cursor:pointer;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.v62-sug button:hover{border-color:var(--pri)}
+.v62-sug button:focus-visible,.v62-draft button:focus-visible,.v62-dp input:focus-visible{outline:2px solid var(--pri);outline-offset:2px}
+/* [6] แถบร่าง + [7] คำใบ้คีย์ลัด */
+.v62-draft{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 12px;padding:8px 12px;border:1px dashed var(--warn);border-radius:10px;font-size:13px;background:rgba(217,119,6,.08)}
+.v62-draft[hidden]{display:none}
+.v62-draft .v62-grow{flex:1 1 auto}
+.v62-kbd{font-size:12px;color:var(--mut);align-self:center}
+@media (max-width:600px){.v62-kbd{display:none}}
+</style>
+<script id="qeV62Js">
+(function(){
+'use strict';
+if(window.__QE_V62) return; window.__QE_V62=true;
+/* รันหลัง DOMContentLoaded เพื่อให้ add-on เดิม (เช่น ปุ่ม ＋ เพิ่มงานใหม่ / ปุ่มวันที่ด่วน) สร้างเสร็จก่อน */
+function main(){
+const g=id=>document.getElementById(id);
+const say=(m,c)=>{ try{ toast(m,c); }catch(e){} };
+const lsGet=k=>{ try{ return localStorage.getItem(k); }catch(e){ return null; } };
+const lsSet=(k,v)=>{ try{ localStorage.setItem(k,v); }catch(e){} };
+const lsDel=k=>{ try{ localStorage.removeItem(k); }catch(e){} };
+const isEditing=()=>{ try{ return editId!=null; }catch(e){ return false; } };
+const items=()=>{ try{ return Array.isArray(data)?data:[]; }catch(e){ return []; } };
+const form=g('f');
+if(!form||!g('issue')) return;
+
+/* ---------- [2] รวมกล่องปฏิทิน / สรุปตามผู้แจ้ง เมื่อซ่อน ---------- */
+(function(){
+  const cal=g('calBox'), own=g('ownBox'), cb=g('calBody'), ob=g('ownBody');
+  if(!cal||!own||!cb||!ob||cal.parentNode!==own.parentNode) return;
+  const wrap=document.createElement('div'); wrap.className='v62-fold';
+  cal.parentNode.insertBefore(wrap,cal);
+  wrap.appendChild(cal); wrap.appendChild(own);           // ย้าย Node เดิม — Event listener เดิมยังอยู่ครบ
+  const sync=()=>{ cal.classList.toggle('v62-closed',cb.style.display==='none'); own.classList.toggle('v62-closed',ob.style.display==='none'); };
+  sync();
+  const mo=new MutationObserver(sync);
+  mo.observe(cb,{attributes:true,attributeFilter:['style']});
+  mo.observe(ob,{attributes:true,attributeFilter:['style']});
+})();
+
+/* ---------- [3] ระยะหัวตารางติดด้านบน = ขอบล่างของแถบเมนูที่ติดด้านบน ---------- */
+(function(){
+  const nav=g('nvNav')||document.querySelector('.tabbar'); if(!nav) return;
+  let raf=0;
+  const upd=()=>{ raf=0; const r=nav.getBoundingClientRect(), sticky=getComputedStyle(nav).position==='sticky';
+    const top=sticky?Math.max(0,Math.round(r.bottom)):0;
+    document.documentElement.style.setProperty('--v62-top',top+'px'); };
+  const req=()=>{ if(!raf) raf=requestAnimationFrame(upd); };
+  window.addEventListener('scroll',req,{passive:true}); window.addEventListener('resize',req);
+  if(window.ResizeObserver) new ResizeObserver(req).observe(nav);
+  upd();
+})();
+
+/* ---------- [4] Due Date: เลือกจากปฏิทินในคลิกเดียว (ยังใช้ dropdown เดิมเป็นค่าจริง) ---------- */
+function addPicker(d,m,y,blank,label){
+  const sel=g(d); if(!sel||typeof setD!=='function'||typeof getD!=='function') return;
+  const holder=sel.closest('.dsel'); if(!holder||holder.parentNode.querySelector('[data-v62dp="'+d+'"]')) return;
+  const box=document.createElement('label'); box.className='v62-dp'; box.dataset.v62dp=d;
+  box.appendChild(document.createTextNode('📅 หรือเลือกจากปฏิทิน'));
+  const inp=document.createElement('input'); inp.type='date'; inp.setAttribute('aria-label',label);
+  try{ inp.min=(typeof Y_MIN!=='undefined'?Y_MIN:2023)+'-01-01'; inp.max=(typeof Y_MAX!=='undefined'?Y_MAX:2032)+'-12-31'; }catch(e){}
+  box.appendChild(inp);
+  /* วางหลังแถบปุ่มวันที่ด่วน (ถ้ามี) เพื่อให้อยู่กลุ่มเดียวกัน */
+  let after=holder; const nx=holder.nextElementSibling; if(nx&&!nx.matches('label,input,select,textarea,div.grid')&&nx.querySelector&&nx.querySelector('button')) after=nx;
+  after.parentNode.insertBefore(box,after.nextSibling);
+  const pull=()=>{ try{ inp.value=getD(d,m,y)||''; }catch(e){} };
+  inp.addEventListener('change',()=>{
+    const v=inp.value;
+    if(!v){ if(blank){ setD(d,m,y,'',true); [d,m,y].forEach(id=>g(id).dispatchEvent(new Event('change',{bubbles:true}))); } return; }
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(v)){ say('⚠️ รูปแบบวันที่ไม่ถูกต้อง','var(--t-dang)'); pull(); return; }
+    setD(d,m,y,v,blank);
+    if(getD(d,m,y)!==v){ say('⚠️ ปีที่เลือกอยู่นอกช่วงที่ระบบรองรับ','var(--t-dang)'); pull(); return; }
+    [d,m,y].forEach(id=>g(id).dispatchEvent(new Event('change',{bubbles:true})));
+  });
+  [d,m,y].forEach(id=>{ const s=g(id); if(s) s.addEventListener('change',pull); });
+  /* ค่าถูกเปลี่ยนด้วยโค้ด (ปุ่มวันที่ด่วน / แก้ไข / ล้าง) → อัปเดตตามเมื่อผู้ใช้กลับมาที่ฟอร์ม */
+  inp.addEventListener('focus',pull); holder.parentNode.addEventListener('click',()=>setTimeout(pull,0));
+  form.addEventListener('reset',()=>setTimeout(pull,0));
+  pull();
+  return pull;
+}
+const pullDue=addPicker('dd2','mm2','yy2',true,'เลือก Due Date จากปฏิทิน');
+addPicker('rd','rm','ry',false,'เลือกกำหนดใหม่ (Rev.) จากปฏิทิน');
+/* ปุ่ม 📅 ในแถวเปิด modal ด้วยค่าที่ตั้งด้วยโค้ด → ซิงก์ทุกครั้งที่ modal เปิด */
+(function(){ const ov=g('ov'); if(!ov) return; new MutationObserver(()=>{ const i=document.querySelector('[data-v62dp="rd"] input'); if(i&&ov.classList.contains('on')) try{ i.value=getD('rd','rm','ry')||''; }catch(e){} }).observe(ov,{attributes:true,attributeFilter:['class']}); })();
+
+/* ---------- [5] แนะนำหัวข้อปัญหาที่เคยลง (ลดการพิมพ์ซ้ำ / สะกดไม่ตรงกัน) ---------- */
+(function(){
+  const ta=g('issue');
+  const box=document.createElement('div'); box.className='v62-sug'; box.hidden=true; box.id='v62Sug';
+  box.setAttribute('role','group'); box.setAttribute('aria-label','หัวข้อที่เคยลงไว้');
+  ta.insertAdjacentElement('afterend',box);
+  ta.setAttribute('aria-describedby',((ta.getAttribute('aria-describedby')||'')+' v62Sug').trim());
+  let t=0, hideT=0;
+  const norm=s=>String(s||'').toLowerCase().replace(/\s+/g,' ').trim();
+  function titles(){
+    const seen=new Set(), out=[];
+    items().slice().sort((a,b)=>(+b.id||0)-(+a.id||0)).forEach(d=>{
+      const s=String(d.issue||'').trim(); if(!s) return; const k=norm(s); if(seen.has(k)) return; seen.add(k); out.push(s);
+    });
+    return out;
+  }
+  function show(){
+    const v=norm(ta.value); box.textContent='';
+    if(v.length<2||isEditing()){ box.hidden=true; return; }
+    const tk=v.split(' ');
+    const list=titles().filter(s=>{ const n=norm(s); return n!==v&&tk.every(x=>n.includes(x)); }).slice(0,5);
+    if(!list.length){ box.hidden=true; return; }
+    const lb=document.createElement('span'); lb.className='v62-lb'; lb.textContent='เคยลงไว้:'; box.appendChild(lb);
+    list.forEach(s=>{ const b=document.createElement('button'); b.type='button'; b.title=s; b.textContent=s.replace(/\s+/g,' ').slice(0,80)+(s.length>80?'…':'');
+      b.addEventListener('mousedown',e=>e.preventDefault());          // ไม่ให้ textarea เสียโฟกัสก่อนคลิก
+      b.addEventListener('click',()=>{ ta.value=s; ta.dispatchEvent(new Event('input',{bubbles:true})); box.hidden=true; const cm=g('cm'); if(cm) cm.focus(); });
+      box.appendChild(b); });
+    box.hidden=false;
+  }
+  ta.addEventListener('input',()=>{ clearTimeout(t); t=setTimeout(show,150); });
+  ta.addEventListener('focus',()=>{ clearTimeout(hideT); });
+  ta.addEventListener('blur',()=>{ hideT=setTimeout(()=>{ if(!box.contains(document.activeElement)) box.hidden=true; },200); });
+  box.addEventListener('focusout',()=>{ hideT=setTimeout(()=>{ if(!box.contains(document.activeElement)&&document.activeElement!==ta) box.hidden=true; },200); });
+  ta.addEventListener('keydown',e=>{ if(e.key==='Escape'&&!box.hidden){ e.stopPropagation(); box.hidden=true; } });
+  form.addEventListener('reset',()=>{ box.hidden=true; });
+})();
+
+/* ---------- [6] ร่างฟอร์มอัตโนมัติ (เฉพาะรายการใหม่ · เก็บในเครื่องนี้เท่านั้น) ---------- */
+const DK='v62_trk_draft', DRAFT_DAYS=7;
+const F=['owner','issue','cm','uxPri','qeHelper','qeBlocker'];
+function readDraft(){ try{ const o=JSON.parse(lsGet(DK)||'null'); return (o&&o.v===1&&Date.now()-o.at<DRAFT_DAYS*864e5)?o:null; }catch(e){ return null; } }
+function collect(){ const o={v:1,at:Date.now(),f:{}}; F.forEach(id=>{ const el=g(id); if(el) o.f[id]=el.value; }); try{ o.due=getD('dd2','mm2','yy2'); }catch(e){} return o; }
+function hasText(o){ return !!(o&&o.f&&(String(o.f.issue||'').trim()||String(o.f.cm||'').trim())); }
+let dT=0, restoring=false;
+const bar=document.createElement('div'); bar.className='v62-draft'; bar.hidden=true; bar.setAttribute('role','status');
+form.insertBefore(bar,form.firstChild);
+function saveDraft(){ if(restoring||isEditing()) return; const o=collect(); if(hasText(o)) lsSet(DK,JSON.stringify(o)); else lsDel(DK); }
+form.addEventListener('input',()=>{ clearTimeout(dT); dT=setTimeout(saveDraft,600); });
+form.addEventListener('change',()=>{ clearTimeout(dT); dT=setTimeout(saveDraft,600); });
+/* ล้างร่างเมื่อบันทึกสำเร็จ: Listener นี้ลงทะเบียนหลังสุด จึงทำงานเฉพาะเมื่อผ่าน Validation เดิมครบทุกตัว */
+form.addEventListener('submit',()=>{ const wasEdit=isEditing(); setTimeout(()=>{ if(!wasEdit&&!g('issue').value.trim()){ lsDel(DK); bar.hidden=true; } },0); });
+const clr=g('formClearBtn'); if(clr) clr.addEventListener('click',()=>{ clearTimeout(dT); lsDel(DK); bar.hidden=true; });
+function offerDraft(){
+  const o=readDraft(); if(!hasText(o)||isEditing()||g('issue').value.trim()){ bar.hidden=true; return; }
+  const when=new Date(o.at); let ts=''; try{ ts=when.toLocaleString('th-TH',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}); }catch(e){}
+  bar.textContent='';
+  const msg=document.createElement('span'); msg.className='v62-grow';
+  const b=document.createElement('b'); b.textContent='📝 มีร่างที่ยังไม่ได้บันทึก'; msg.appendChild(b);
+  msg.appendChild(document.createTextNode(' ('+ts+') — “'+String(o.f.issue||o.f.cm||'').replace(/\s+/g,' ').slice(0,50)+'”'));
+  const ok=document.createElement('button'); ok.type='button'; ok.className='btn-p'; ok.textContent='กู้คืนร่าง';
+  const no=document.createElement('button'); no.type='button'; no.className='btn-g'; no.textContent='ทิ้งร่าง';
+  ok.addEventListener('click',()=>{ restoring=true; try{
+      F.forEach(id=>{ const el=g(id); if(el&&o.f[id]!=null) el.value=o.f[id]; });
+      if(o.due&&typeof setD==='function') setD('dd2','mm2','yy2',o.due,true);
+      F.concat(['dd2']).forEach(id=>{ const el=g(id); if(el) el.dispatchEvent(new Event('change',{bubbles:true})); });
+    } finally{ restoring=false; }
+    if(pullDue) pullDue(); bar.hidden=true; g('issue').focus(); say('📝 กู้คืนร่างแล้ว — ตรวจสอบแล้วกดเพิ่มรายการ'); });
+  no.addEventListener('click',()=>{ lsDel(DK); bar.hidden=true; });
+  bar.append(msg,ok,no); bar.hidden=false;
+}
+offerDraft();
+/* เปิดฟอร์มเมื่อมีร่าง (ไม่เปิดเองถ้าผู้ใช้ไม่ได้เปิดฟอร์ม — แค่โชว์เมื่อฟอร์มถูกเปิด) */
+const addBtn=g('uxAddBtn'); if(addBtn) addBtn.addEventListener('click',()=>setTimeout(offerDraft,0));
+
+/* ---------- [7] Ctrl+Enter (⌘+Enter) = บันทึก ---------- */
+form.addEventListener('keydown',e=>{
+  if(e.key!=='Enter'||!(e.ctrlKey||e.metaKey)||e.altKey||e.shiftKey||e.isComposing) return;
+  e.preventDefault();
+  const sb=g('submitBtn'); if(sb&&sb.disabled) return;
+  if(typeof form.requestSubmit==='function') form.requestSubmit(sb||undefined); else if(sb) sb.click();
+});
+(function(){ const sb=g('submitBtn'); if(!sb||sb.parentNode.querySelector('.v62-kbd')) return;
+  const k=document.createElement('span'); k.className='v62-kbd'; k.textContent=(/Mac|iPhone|iPad/.test(navigator.platform||'')?'⌘':'Ctrl')+'+Enter = บันทึก';
+  sb.parentNode.appendChild(k); })();
+}
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',main); else main();
+})();
+</script>
+<!-- ===== end v62 ===== -->
+</body></html>
