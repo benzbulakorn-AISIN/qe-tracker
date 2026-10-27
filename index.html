@@ -202,6 +202,19 @@ window.COUNTERMEASURE_CLOUD_DEFAULTS = Object.freeze({
     .tr-row{display:flex;flex-wrap:wrap}.tr-row.h{display:none}
     .tr-row .tx{flex:1 1 100%}.tr-row .ac{flex:1 1 100%;justify-content:flex-start}
   }
+
+/* v61.3 ปฏิทินกะทัดรัด — เห็นทั้งเดือนในจอเดียว */
+body.cal-cmp .cal-grid{gap:4px}
+body.cal-cmp .cal-dow{font-size:11px;padding:0}
+body.cal-cmp .cal-cell{min-height:60px;padding:2px 4px;gap:2px;border-radius:6px}
+body.cal-cmp .cal-d{font-size:11px;line-height:14px}
+body.cal-cmp .cal-today .cal-d::after{font-size:10px;padding:0 5px;margin-left:4px}
+body.cal-cmp .pills{gap:2px}
+body.cal-cmp .pill{font-size:11px;line-height:1.25;padding:0 4px;border-left-width:2px}
+body.cal-cmp .cal-more{font-size:10.5px;line-height:13px}
+body.cal-cmp .cal-ck{font-size:10px;line-height:14px;padding:0 5px}
+body.cal-cmp .cal-head{margin-bottom:6px}
+body.cal-cmp .cal-hint{margin:-2px 0 4px;font-size:11px}
 </style>
 <script>
 /* ===== ระบบธีมสี: ตั้งค่าตัวแปร CSS ตามที่ผู้ใช้เลือก (จำใน localStorage) ===== */
@@ -1088,7 +1101,7 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none!importa
       </div>
       <div class="cal-sum" id="calSum"></div>
       <div class="cal-leg"><span><i style="background:#16a34a"></i>Done</span><span><i style="background:#d97706"></i>In Progress</span><span><i style="background:#dc2626"></i>Delay</span></div>
-      <button class="btn-g" id="calToggle">▲ ซ่อนปฏิทิน</button>
+      <button class="btn-g" id="calSize" type="button" title="สลับขนาดปฏิทิน">🔍 ขยาย</button><button class="btn-g" id="calToggle">▲ ซ่อนปฏิทิน</button>
     </div>
     <div id="calBody"><div class="cal-hint" style="margin-bottom:2px">📝 ป้ายที่มุมขวาของวัน = มี Checklist/บันทึกของวันนั้น (<b style="color:var(--t-ok)">เขียว</b> เสร็จครบ · <b style="color:var(--t-warn)">ส้ม</b> ยังค้าง · <b style="color:var(--t-vio)">ม่วง</b> มีแต่บันทึก) — คลิกป้ายเพื่อเปิดวันนั้น</div><div class="cal-hint">💡 คลิก (มือถือ: แตะ) ที่วันใดก็ได้ เพื่อเพิ่มรายการ — ฟอร์มจะตั้ง “Due Date” เป็นวันนั้นให้ (วันที่แจ้งเป็นวันนี้)</div><div class="cal-grid" id="calGrid"></div></div>
   </div>
@@ -2894,6 +2907,9 @@ function ckBadge(ds){
   const txt=(i.total?'📝 '+i.done+'/'+i.total:'')+(i.note?(i.total?' ':'')+'📄':'');
   return `<span class="cal-ck ${cls}" data-ck="${ds}" title="${esc(i.tip)}">${txt}</span>`;
 }
+/* v61.3 ปฏิทินกะทัดรัด: แสดง 2 งาน/วัน (ปกติ 3) */
+function calCompact(){ try{ return localStorage.getItem('qeCalCompact')!=='0'; }catch(e){ return true; } }
+function calMaxPills(){ return calCompact()?2:3; }
 function drawCal(){
   // dropdown เดือน/ปี (ปีรวมช่วง ±3 ปีจากวันนี้ และปีที่มีงานอยู่)
   const ty=+today.slice(0,4), ys=new Set([ty-3,ty-2,ty-1,ty,ty+1,ty+2,ty+3,calY]);
@@ -2914,8 +2930,8 @@ function drawCal(){
     const ds=`${ym}-${pad(d)}`, list=(byDay[ds]||[]).sort((a,b)=>JOB_ORD[jobCls(a)]-JOB_ORD[jobCls(b)]||a.id-b.id);
     const dow=(first+d-1)%7;
     h+=`<div class="cal-cell cal-day${(dow===0||dow===6)?' we':''}${ds===today?' cal-today':''}${list.length?' cal-has':''}" data-d="${ds}"><div class="cal-d">${d}${ckBadge(ds)}</div>`+
-       (list.length?`<div class="pills">`+list.slice(0,3).map(r=>`<div class="pill p-${jobCls(r)}" data-id="${r.id}" title="คลิกเพื่อไปที่รายการนี้">${esc(clip(r.issue,40))}</div>`).join('')+`</div>`:'')+
-       (list.length>3?`<div class="cal-more" title="คลิกเพื่อดูงานทั้งหมดของวันนี้">+${list.length-3} งาน</div>`:'')+`</div>`;
+       (list.length?`<div class="pills">`+list.slice(0,calMaxPills()).map(r=>`<div class="pill p-${jobCls(r)}" data-id="${r.id}" title="คลิกเพื่อไปที่รายการนี้">${esc(clip(r.issue,40))}</div>`).join('')+`</div>`:'')+
+       (list.length>calMaxPills()?`<div class="cal-more" title="คลิกเพื่อดูงานทั้งหมดของวันนี้">+${list.length-calMaxPills()} งาน</div>`:'')+`</div>`;
   }
   const rest=(7-(first+days)%7)%7; for(let i=0;i<rest;i++) h+='<div class="cal-cell cal-empty"></div>';
   $('calGrid').innerHTML=h;
@@ -13973,10 +13989,30 @@ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded'
 })();
 
 </script>
-<script>/* v61.1 ล้างช่องค้นหา Tracker ที่เบราว์เซอร์เติมเอง */
-(function(){const clr=()=>{const q=document.getElementById('q'); if(q&&q.value&&!q.dataset.typed){ q.value=''; q.dispatchEvent(new Event('input',{bubbles:true})); }};
-document.addEventListener('keydown',e=>{ if(e.target&&e.target.id==='q') e.target.dataset.typed='1'; },true);
-document.addEventListener('paste',e=>{ if(e.target&&e.target.id==='q') e.target.dataset.typed='1'; },true);
-window.addEventListener('load',()=>{ setTimeout(clr,300); setTimeout(clr,1500); });
-window.addEventListener('pageshow',e=>{ if(e.persisted) setTimeout(clr,100); });})();</script>
-</body></html>
+<script>/* v61.2 กันเบราว์เซอร์/Password manager เติมข้อความลงช่องค้นหา Tracker เอง */
+(function(){
+  const q=document.getElementById('q'); if(!q) return;
+  let mine='';                                   // ค่าที่ผู้ใช้พิมพ์เองเท่านั้น
+  q.setAttribute('autocomplete','new-password'); // Chrome ไม่เติมช่องที่ระบุแบบนี้
+  q.setAttribute('data-lpignore','true'); q.setAttribute('data-1p-ignore','true'); q.setAttribute('data-form-type','other');
+  q.readOnly=true;                               // ล็อกไว้จนกว่าผู้ใช้จะคลิกเอง → autofill เติมไม่ได้
+  const unlock=()=>{ q.readOnly=false; };
+  q.addEventListener('pointerdown',unlock); q.addEventListener('focus',unlock); q.addEventListener('touchstart',unlock,{passive:true});
+  q.addEventListener('blur',()=>{ q.readOnly=true; });
+  const userEdit=()=>{ mine=q.value; };
+  q.addEventListener('keyup',userEdit); q.addEventListener('paste',()=>setTimeout(userEdit,0)); q.addEventListener('cut',()=>setTimeout(userEdit,0));
+  q.addEventListener('search',userEdit);         // ปุ่ม ✕ ในช่อง
+  const clrBtn=document.getElementById('clearBtn'); if(clrBtn) clrBtn.addEventListener('click',()=>{ mine=''; q.value=''; });
+  const fix=()=>{ if(document.activeElement===q) return; if(q.value!==mine){ q.value=mine; q.dispatchEvent(new Event('input',{bubbles:true})); } };
+  if(q.value){ q.value=''; q.dispatchEvent(new Event('input',{bubbles:true})); }
+  window.addEventListener('load',()=>{ setTimeout(fix,300); setTimeout(fix,1500); setTimeout(fix,4000); });
+  window.addEventListener('pageshow',()=>setTimeout(fix,100));
+  setInterval(fix,1500);
+})();</script>
+<script>/* v61.3 ปุ่มสลับขนาดปฏิทิน */
+(function(){
+  const b=document.getElementById('calSize'); if(!b) return;
+  const apply=()=>{ const c=calCompact(); document.body.classList.toggle('cal-cmp',c); b.textContent=c?'🔍 ขยาย':'🔎 ย่อ'; b.title=c?'แสดงปฏิทินแบบปกติ (3 งาน/วัน)':'แสดงปฏิทินแบบกะทัดรัด เห็นทั้งเดือน'; };
+  b.addEventListener('click',()=>{ try{ localStorage.setItem('qeCalCompact',calCompact()?'0':'1'); }catch(e){} apply(); try{ drawCal(); }catch(e){ try{ render(); }catch(_){} } });
+  apply();
+})();</script></body></html>
