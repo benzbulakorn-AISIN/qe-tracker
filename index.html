@@ -10587,6 +10587,11 @@ window.addEventListener('hashchange',()=>{ if(/[#&]mtg=/.test(location.hash)) ha
 
 /* ================= v61 : ดึงอีเมล Schedule อัตโนมัติ (Power Automate → Gmail → Apps Script → Supabase: mail_schedule) ================= */
 const MS_KEY='qeMailSchedSync';
+/* v61.4 จำประชุมจากอีเมลที่ผู้ใช้ลบเอง → อีเมลฉบับใหม่ของวันเดียวกันจะไม่ใส่กลับมา */
+const MS_DEL='qeMailDeleted';
+function mailDelSet(){ try{ return new Set(JSON.parse(localStorage.getItem(MS_DEL)||'[]')); }catch(e){ return new Set(); } }
+function mailDelAdd(k){ try{ const a=JSON.parse(localStorage.getItem(MS_DEL)||'[]').filter(x=>x!==k); a.push(k); localStorage.setItem(MS_DEL,JSON.stringify(a.slice(-500))); }catch(e){} }
+
 const msSt=(()=>{ try{ return JSON.parse(localStorage.getItem(MS_KEY)||'{}')||{}; }catch(e){ return {}; } })();
 const msSave=()=>{ try{ localStorage.setItem(MS_KEY,JSON.stringify(msSt)); }catch(e){} };
 let msBusy=false;
@@ -10610,7 +10615,7 @@ async function mailSchedSync(manual){
       seedSkip();
       list.forEach(x=>{
         const p=parseText(x.body,x.mail_date); if(!p.items.length) return;
-        const items=p.items.map(it=>Object.assign({},it,{date:x.mail_date}));
+        const dl=mailDelSet(); const items=p.items.map(it=>Object.assign({},it,{date:x.mail_date})).filter(it=>!dl.has('ml:'+it.date+'|'+it.s+'|'+it.e+'|'+nkey(it.t)));
         const res=applyCands(items,{prune:true}); add+=res.add; upd+=res.upd; del+=res.del;
       });
     }
@@ -10640,7 +10645,7 @@ view.addEventListener('click',async e=>{
   else if(a==='add') editModal(null);
   else if(a==='edit') editModal(id);
   else if(a==='dup'){ mutate(ui.date,L=>{ const m=L.find(x=>x.id===id); if(m) L.push(normM(Object.assign({},m,{id:uid(),uid:'',src:'',who:[],wa:''}))); }); say('⧉ ทำซ้ำแล้ว — ปรับเวลา/หัวข้อได้ที่ ✎'); }
-  else if(a==='del'){ const m=getDay(ui.date).find(x=>x.id===id); if(m&&window.confirm('ลบประชุม “'+m.t+'”?'+(m.src==='graph'?'\n(ประชุมจาก Outlook จะกลับมาอีกตอนซิงก์ ถ้ายังอยู่ในปฏิทิน — ใช้ “ข้ามเสมอ” ที่ 👥 ตั้งค่าทีม ถ้าไม่ต้องการ)':''))) mutate(ui.date,L=>{ const i=L.findIndex(x=>x.id===id); if(i>=0) L.splice(i,1); }); }
+  else if(a==='del'){ const m=getDay(ui.date).find(x=>x.id===id); if(m&&window.confirm('ลบประชุม “'+m.t+'”?'+(m.src==='graph'?'\n(ประชุมจาก Outlook จะกลับมาอีกตอนซิงก์ ถ้ายังอยู่ในปฏิทิน — ใช้ “ข้ามเสมอ” ที่ 👥 ตั้งค่าทีม ถ้าไม่ต้องการ)':''))) { if(m.src==='mail'&&m.uid) mailDelAdd(m.uid); mutate(ui.date,L=>{ const i=L.findIndex(x=>x.id===id); if(i>=0) L.splice(i,1); }); } }
   else if(a==='who') toggleWho(id,b.dataset.p);
   else if(a==='imp') importModal('ics');
   else if(a==='ol'){ if(connected()) gSync(true); else olModal(); }
