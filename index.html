@@ -6,6 +6,7 @@
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'; form-action 'self'">
 <title>QE Elec. Daily Job Tracker</title>
 <!-- v62 (27-Oct-2026): Time-saving & Ergonomics layer — ดู Change log ในบล็อก qeV62Css ท้ายไฟล์ -->
+<!-- v63 (28-Oct-2026): Smart Import · Month/Year filter · Share to LINE/Teams · AI General+QE — ดู Change log ในบล็อก qeV63Js ท้ายไฟล์ -->
 <!--
   CENTRAL DATABASE CONFIGURATION
   แก้ 3 ค่านี้ก่อนนำไฟล์ขึ้นเว็บไซต์ แล้วทุกคนที่เปิดลิงก์เดียวกันจะใช้ฐานข้อมูลกลางชุดเดียวกัน
@@ -1141,6 +1142,13 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none!importa
         <textarea id="qeBlocker" rows="2" maxlength="500" placeholder="อุปสรรค: รออะไร / ติดเรื่องอะไร (บังคับกรอกเมื่อติ๊ก “ติดปัญหา”)" aria-describedby="qeBlkHint"></textarea>
         <div class="qe-hint" id="qeBlkHint">งานที่ติดปัญหาจะแสดงเด่นในตารางและตัวนับด้านบน เพื่อให้ทีมช่วยปลดล็อกได้เร็ว</div></div>
     </div>
+    <details class="v63-more" id="qiMore"><summary title="ช่องเสริม (ไม่บังคับ) — ใช้เก็บข้อมูลที่มาจาก Smart Import ได้ครบ">➕ ข้อมูลเพิ่มเติม (Customer / Model / Remark)</summary>
+      <div class="v63-g3">
+        <div><label for="qiCust">Customer</label><input id="qiCust" maxlength="200" autocomplete="off" placeholder="เช่น TOYOTA"></div>
+        <div><label for="qiModel">Model / Part</label><input id="qiModel" maxlength="200" autocomplete="off" placeholder="เช่น AS-288"></div>
+        <div><label for="qiRemark">Remark</label><input id="qiRemark" maxlength="1000" autocomplete="off" placeholder="หมายเหตุ"></div>
+      </div>
+    </details>
     <div style="margin-top:14px;display:flex;gap:10px">
       <button type="submit" class="btn-p" id="submitBtn">+ เพิ่มรายการ</button>
       <button type="button" class="btn-g" id="cancelBtn" style="display:none">ยกเลิก</button>
@@ -1151,7 +1159,8 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none!importa
   <div class="tools">
     <input id="q" type="search" name="qe-tracker-q-nofill" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="🔍 ค้นหา...">
     <select id="fStatus"><option value="">ทุกสถานะ</option><option>In Progress</option><option>Done</option></select>
-    <select id="fDate"><option value="">ทุกวันที่</option><option value="2026-10-15">15 ต.ค. 2569</option><option value="2026-10-14">14 ต.ค. 2569</option><option value="2026-10-09">9 ต.ค. 2569</option><option value="2026-10-08">8 ต.ค. 2569</option><option value="2026-10-07">7 ต.ค. 2569</option><option value="2026-10-06">6 ต.ค. 2569</option></select>
+    <select id="fDate"><option value="">ทุกวันที่</option></select>
+    <span class="v63-mf" id="mfBox" role="group" aria-label="กรองตามเดือนและปี"><button type="button" class="btn-g v63-ib" id="mfPrev" title="เดือนก่อน" aria-label="เดือนก่อน">◀</button><select id="fMonth" title="กรองตามเดือน (ทุกเดือน = ไม่กรอง)" aria-label="เดือน"><option value="">ทุกเดือน</option></select><select id="fYear" title="กรองตามปี (แสดงเป็น พ.ศ.)" aria-label="ปี (พ.ศ.)"><option value="">ทุกปี</option></select><button type="button" class="btn-g v63-ib" id="mfNext" title="เดือนถัดไป" aria-label="เดือนถัดไป">▶</button><button type="button" class="btn-g v63-ib" id="mfNow" title="แสดงเฉพาะเดือนนี้">เดือนนี้</button><select id="fMBasis" title="ใช้วันที่ใดในการกรองเดือน" aria-label="ฐานวันที่ของตัวกรองเดือน"><option value="date">ตามวันที่แจ้ง</option><option value="due">ตาม Due Date</option></select><span class="v63-mfi" id="mfInfo" aria-live="polite"></span></span>
     <select id="fOwner"><option value="">ทุกผู้แจ้ง</option><option value="Benz">Benz</option><option value="Earn">Earn</option><option value="Mana">Mana</option><option value="Natcha">Natcha</option><option value="QE All">QE All</option></select>
     <select id="fFlag"><option value="">ทุกรายการ</option><option value="late">เฉพาะเลยกำหนด</option><option value="rev">เฉพาะที่มี Rev.</option><option value="blocked">เฉพาะที่ติดปัญหา</option></select>
     <button class="btn-g" id="clearBtn">ล้างตัวกรอง</button>
@@ -1159,6 +1168,8 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none!importa
     <button class="btn-g" id="bkBtn" style="color:var(--t-ok)">💾 Backup</button>
     <button class="btn-g" id="rsBtn" style="color:var(--t-vio)">📂 Restore</button>
     <button class="btn-g" id="abBtn">⚙️ Auto-backup</button>
+    <button type="button" class="btn-g" id="qiBtn" style="color:var(--t-vio)" title="Smart Import: นำข้อมูลจาก Excel / CSV / ข้อความ เข้า Tracker (ตรวจ Preview ก่อนบันทึก)">📥 Import</button>
+    <button type="button" class="btn-g" id="tmBtn" style="color:#5b5fc7" title="แชร์สรุปรายการที่กรองอยู่ไป Microsoft Teams / ตั้งค่า Teams">🟪 Teams</button>
     <button class="btn-g" id="lnBtn" style="color:var(--t-ok)">🔔 LINE</button>
     <button class="btn-g" id="trBtn">🗑 ถังขยะ <span id="trCnt"></span></button>
     <button class="btn-g" id="thBtn">🎨 ธีมสี</button>
@@ -3024,8 +3035,8 @@ $('calNext').onclick=()=>{ calM++; if(calM>11){ calM=0; calY++; } tipHide(); dra
 $('calToday').onclick=()=>{ calY=+today.slice(0,4); calM=+today.slice(5,7)-1; tipHide(); drawCal(); };
 $('calToggle').onclick=()=>{ calOpen=!calOpen; localStorage.setItem('issue_tracker_cal',calOpen?'open':'closed'); drawCal(); };
 
-function drawChart(total,done){
-  const late=data.filter(isLate).length, prog=total-done-late;   // Delay = ยังไม่ Done และเลย Due ปัจจุบัน
+function drawChart(total,done,lateN){
+  const late=(lateN!=null)?lateN:data.filter(isLate).length, prog=total-done-late;   // Delay = ยังไม่ Done และเลย Due ปัจจุบัน
   const C=2*Math.PI*48;
   const segs=[
     {k:'Done',th:'สำเร็จ',n:done,c:'var(--ok)'},
@@ -3099,7 +3110,7 @@ function drawOwners(){
   $('ownToggle').textContent=ownOpen?'▲ ซ่อน':'▼ แสดง';
   $('ownBody').style.display=ownOpen?'':'none';
   const m={};
-  data.forEach(d=>{ const k=ownKey(d), o=m[k]||(m[k]={n:k,done:0,prog:0,late:0}), c=jobCls(d); o[c==='done'?'done':c==='late'?'late':'prog']++; });
+  ((window.qeMF&&window.qeMF.active())?data.filter(window.qeMF.ok):data).forEach(d=>{ const k=ownKey(d), o=m[k]||(m[k]={n:k,done:0,prog:0,late:0}), c=jobCls(d); o[c==='done'?'done':c==='late'?'late':'prog']++; });
   const rows=Object.values(m).sort((a,b)=>a.n.localeCompare(b.n,'th'));
   const sel=$('fOwner').value;
   $('ownList').innerHTML=rows.length
@@ -3138,7 +3149,9 @@ function qeStatusExtra(d){
 
 function render(){
   const cur=$('fDate').value;
-  const ds=[...new Set(data.map(d=>d.date))].sort().reverse();
+  /* v63: ขอบเขตตัวกรองเดือน/ปี — ใช้กับตาราง ตัวนับ กราฟ และสรุปตามผู้แจ้ง */
+  const MSC=(window.qeMF&&window.qeMF.active())?data.filter(window.qeMF.ok):data;
+  const ds=[...new Set(MSC.map(d=>d.date))].sort().reverse();
   $('fDate').innerHTML='<option value="">ทุกวันที่</option>'+
     ds.map(d=>`<option value="${d}">${fmt(d)}</option>`).join('');
   if(ds.includes(cur)) $('fDate').value=cur;
@@ -3147,10 +3160,10 @@ function render(){
   $('fOwner').innerHTML=''; $('fOwner').add(new Option('ทุกผู้แจ้ง','')); os.forEach(o=>$('fOwner').add(new Option(o,o)));
   if(os.includes(curO)) $('fOwner').value=curO;
   const q=$('q').value.toLowerCase().trim(), qt=q?q.split(/\s+/):[], fs=$('fStatus').value  /* v62: ค้นหาหลายคำ (AND) + ตัดช่องว่างหัวท้าย */, fd=$('fDate').value, ff=$('fFlag').value, fo=$('fOwner').value;
-  const list=data.filter(d=>
+  const list=MSC.filter(d=>
     (!fs||d.status===fs)&&(!fd||d.date===fd)&&(!fo||ownKey(d)===fo)&&
     (!ff||(ff==='late'?isLate(d):ff==='blocked'?(!!d.blocked&&d.status!=='Done'):(d.revs&&d.revs.length>0)))&&
-    (!qt.length||(h=>qt.every(t=>h.includes(t)))([d.issue,d.cm,d.owner,d.blocker||'',d.helper||'',(d.steps||[]).map(x=>x.text).join(' '),(d.revs||[]).map(x=>x.reason||'').join(' ')].join(' ').toLowerCase())));
+    (!qt.length||(h=>qt.every(t=>h.includes(t)))([d.issue,d.cm,d.owner,d.customer||'',d.model||'',d.remark||'',d.blocker||'',d.helper||'',(d.steps||[]).map(x=>x.text).join(' '),(d.revs||[]).map(x=>x.reason||'').join(' ')].join(' ').toLowerCase())));
   // เรียงตามคอลัมน์ที่เลือก (วันที่แจ้ง / Due Date) — เสมอกันให้ดูวันที่แจ้ง แล้วลำดับที่บันทึก
   const sg=sortCfg.d==='desc'?-1:1;
   const byDate=(a,b)=> a.date===b.date ? (a.id-b.id)*sg : (a.date<b.date?-1:1)*sg;
@@ -3165,13 +3178,13 @@ function render(){
   const arrow=k=>sortCfg.k!==k?'↕':(sortCfg.d==='desc'?'↓':'↑');
   $('sortArrow').textContent=arrow('date'); $('sortArrow2').textContent=arrow('due');
 
-  const total=data.length, done=data.filter(d=>d.status==='Done').length;
+  const total=MSC.length, done=MSC.filter(d=>d.status==='Done').length, lateN=MSC.filter(isLate).length;
   $('cTotal').textContent=total; $('cDone').textContent=done;
   $('cRemain').textContent=total-done;
-  $('cLate').textContent=data.filter(isLate).length;
+  $('cLate').textContent=lateN;
   const p=total?Math.round(done/total*100):0;
   $('cPct').textContent=p+'%'; $('cBar').style.width=p+'%';
-  drawChart(total,done);
+  drawChart(total,done,lateN);
   drawCal(); drawOwners(); renderTrash();
 
   $('tb').innerHTML=list.length?list.map(d=>{
@@ -3200,11 +3213,11 @@ function render(){
 
 $('clearBtn').onclick=()=>{['q','fStatus','fDate','fOwner','fFlag'].forEach(i=>$(i).value='');render();};
 $('csvBtn').onclick=()=>{
-  const rows=[['วันที่แจ้ง','ผู้แจ้ง','ปัญหา','Countermeasure','Due เดิม','Due ปัจจุบัน','Rev.','ประวัติการเลื่อน','สถานะ','ติดปัญหา','อุปสรรค','ผู้ช่วย','ความคืบหน้า %','เสร็จเมื่อ','แก้ไขล่าสุดโดย'],
+  const rows=[['วันที่แจ้ง','ผู้แจ้ง','ปัญหา','Countermeasure','Due เดิม','Due ปัจจุบัน','Rev.','ประวัติการเลื่อน','สถานะ','ติดปัญหา','อุปสรรค','ผู้ช่วย','ความคืบหน้า %','เสร็จเมื่อ','แก้ไขล่าสุดโดย','Category','Customer','Model / Part','Remark'],
     ...data.map(d=>[fmt(d.date),d.owner,d.issue,d.cm,fmt(d.due),fmt(curDue(d)),
       d.revs?d.revs.length:0,
       (d.revs||[]).map((v,i)=>`Rev.${i+1}: ${fmt(v.date)}${v.reason?' ('+v.reason+')':''}`).join(' | '),
-      d.status,(d.blocked&&d.status!=='Done')?'Y':'',d.blocker||'',d.helper||'',(d.progress===''||d.progress==null)?'':d.progress,d.doneDate||'',d.updBy||'']) ];
+      d.status,(d.blocked&&d.status!=='Done')?'Y':'',d.blocker||'',d.helper||'',(d.progress===''||d.progress==null)?'':d.progress,d.doneDate||'',d.updBy||'',d.pri||'',d.customer||'',d.model||'',d.remark||'']) ];
   const csv='\uFEFF'+rows.map(r=>r.map(c=>window.qeCsvCell(c)).join(',')).join('\n');
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
@@ -3435,6 +3448,8 @@ tr.od-soon{background:rgba(245,158,11,.15)}
 /* ================= 🎯 7 Mission QE Electronics (แยกตามปี · แก้ไขได้ · สรุป % ต่อ Mission) ================= */
 (function(){
 'use strict';
+/* v63: เปิดให้ Smart Import ใช้ตัวอ่าน .xlsx / ข้อความเดิม (otXlsxRows / otTextRows) ซ้ำ — ไม่เพิ่มไลบรารีภายนอก */
+try{ window.__qeXlsxRows=otXlsxRows; window.__qeTextRows=otTextRows; }catch(e){}
 const KEY='qe_missions_v1', UIK='qe_missions_ui_v1';
 const g=id=>document.getElementById(id);
 const E=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -9213,7 +9228,7 @@ kpiBox.addEventListener('click',e=>{
   const k=e.target.closest('[data-uxk]'); if(k){ P.kpi=k.dataset.uxk==='open'; savePrefs(); uxAfter(); } });
 kpiBox.addEventListener('change',e=>{ if(e.target.id==='uxKd'){ P.kpiDays=+e.target.value||0; savePrefs(); uxAfter(); } });
 
-const anyFilter=()=>!!(g('q').value.trim()||g('fStatus').value||g('fDate').value||g('fOwner').value||g('fFlag').value);
+const anyFilter=()=>!!(g('q').value.trim()||g('fStatus').value||g('fDate').value||g('fOwner').value||g('fFlag').value||(window.qeMF&&window.qeMF.active()));
 const doneAge=d=>{ const ref=d.doneDate||curDue(d); return ref?dayNum(today)-dayNum(ref):0; };
 const open=d=>d.status!=='Done';
 const inDays=(d,n)=>{ const c=curDue(d); if(!c||!open(d)) return false; const k=dayNum(c)-dayNum(today); return k>=0&&k<=n; };
@@ -12053,22 +12068,38 @@ body{padding-bottom:64px}
 </style>
 <button type="button" id="qeAiFab" class="qeai-fab" title="เปิด QE AI Assistant">✨ AI Assistant</button>
 <div id="qeAiOv" class="qeai-ov" aria-hidden="true">
-  <section class="qeai-md" role="dialog" aria-modal="true" aria-labelledby="qeAiTitle">
-    <div class="qeai-hd"><div><h3 id="qeAiTitle">✨ QE AI Assistant</h3><div class="qeai-sub">สรุปข้อมูลจากหน้าจอปัจจุบัน โดยยังไม่แก้ไขหรือบันทึกข้อมูลให้อัตโนมัติ</div></div><button type="button" id="qeAiClose" class="qeai-x" aria-label="ปิด">✕</button></div>
-    <div class="qeai-actions">
-      <button type="button" class="qeai-chip" data-qeai="สรุปงานวันนี้ แยกงานเสร็จ งานค้าง ความเสี่ยง และสิ่งที่ต้องติดตาม">สรุปงานวันนี้</button>
-      <button type="button" class="qeai-chip" data-qeai="วิเคราะห์ตารางประชุมวันนี้ ระบุเวลาซ้อน รายการที่ยังไม่มอบหมาย และข้อเสนอแนะ">วิเคราะห์ Meeting</button>
-      <button type="button" class="qeai-chip" data-qeai="จัดทำข้อความสรุปสำหรับส่งใน Microsoft Teams แบบกระชับและอ่านง่าย">ร่างข้อความ Teams</button>
-      <button type="button" class="qeai-chip" data-qeai="สรุปปัญหาเป็น Problem, Current condition, Possible cause, Correction และ Permanent countermeasure โดยห้ามสร้างข้อเท็จจริงเพิ่ม">Problem / Cause / CM</button>
+  <section class="qeai-md qeai2" role="dialog" aria-modal="true" aria-labelledby="qeAiTitle">
+    <div class="qeai-hd">
+      <div><h3 id="qeAiTitle">✨ QE AI Assistant</h3><div class="qeai-sub" id="qeAiSub">ถามได้ทั้งเรื่องงานในระบบ (QE Context) และคำถามทั่วไป (General) · ถามต่อเนื่องได้ · ไม่แก้ไขหรือบันทึกข้อมูล Tracker ให้อัตโนมัติ</div></div>
+      <button type="button" id="qeAiClear" class="qeai-x" title="ล้างบทสนทนาทั้งหมด (เก็บไว้เฉพาะเครื่องนี้)" aria-label="ล้างบทสนทนา">🧹</button>
+      <button type="button" id="qeAiClose" class="qeai-x" title="ปิด (Esc)" aria-label="ปิด">✕</button>
     </div>
-    <label class="qeai-label" for="qeAiQuestion">คำถามหรือคำสั่ง</label>
-    <textarea id="qeAiQuestion" class="qeai-ta" placeholder="ตัวอย่าง: สรุปงานวันนี้และบอก 3 เรื่องที่ต้องติดตาม"></textarea>
-    <div class="qeai-bar"><button type="button" id="qeAiRun" class="qeai-run">วิเคราะห์ด้วย AI</button><button type="button" id="qeAiCopy" class="qeai-copy">คัดลอกคำตอบ</button><span id="qeAiStatus" class="qeai-stat" aria-live="polite">พร้อมใช้งาน</span></div>
-    <div id="qeAiAnswer" class="qeai-out">คำตอบจะแสดงที่นี่</div>
-    <div class="qeai-note">AI อาจตอบผิดได้ โปรดตรวจสอบก่อนนำไปบันทึกหรือส่งต่อ ระบบจะไม่ส่ง PIN, Microsoft Graph token หรือข้อมูลการตั้งค่า Cloud ไปยัง AI</div>
+    <div class="qeai-mode" role="radiogroup" aria-label="โหมดของ AI">
+      <button type="button" role="radio" data-mode="qe" aria-checked="true" title="ตอบจากข้อมูล Tracker / Main QE Jobs / Checklist / ประชุมวันนี้ ที่อยู่ในระบบ — ส่งข้อมูลที่เกี่ยวข้องไปให้ AI">🔎 QE Context</button>
+      <button type="button" role="radio" data-mode="general" aria-checked="false" title="คำถามทั่วไป เช่น เขียน Email แปลภาษา 5 Why Excel — ไม่ส่งข้อมูลภายในให้ AI">💬 General</button>
+      <span class="qeai-modehint" id="qeAiModeHint"></span>
+    </div>
+    <div class="qeai-actions" id="qeAiQuick" aria-label="คำสั่งด่วน"></div>
+    <div class="qeai-log" id="qeAiLog" role="log" aria-live="polite" aria-label="บทสนทนา"></div>
+    <div class="qeai-in">
+      <label class="qeai-label" for="qeAiQuestion">คำถามหรือคำสั่ง <small>(Ctrl+Enter = ส่ง)</small></label>
+      <textarea id="qeAiQuestion" class="qeai-ta" rows="2" maxlength="4000" placeholder="ตัวอย่าง: งาน PCR ไหนยังไม่เสร็จ → แล้วพิมพ์ต่อว่า “เฉพาะเดือนนี้”"></textarea>
+      <div class="qeai-bar">
+        <button type="button" id="qeAiRun" class="qeai-run" title="ส่งคำถาม (Ctrl+Enter)">ส่ง ➤</button>
+        <button type="button" id="qeAiCopy" class="qeai-copy" title="คัดลอกคำตอบล่าสุดของ AI">📋 คัดลอกคำตอบล่าสุด</button>
+        <span id="qeAiStatus" class="qeai-stat" aria-live="polite">พร้อมใช้งาน</span>
+      </div>
+    </div>
+    <div class="qeai-note" id="qeAiNote">AI อาจตอบผิดได้ โปรดตรวจสอบก่อนนำไปใช้ · โหมด QE Context จะส่งเฉพาะข้อมูลที่เกี่ยวข้องกับคำถามไปยัง AI ผ่าน Supabase Edge Function (qe-ai-assistant) · โหมด General ไม่ส่งข้อมูลภายใน · ไม่ส่ง PIN, Token หรือค่าตั้งค่า Cloud · <button type="button" class="qeai-lnk" id="qeAiRevoke" title="ยกเลิกการยินยอมส่งข้อมูลในโหมด QE Context ของเครื่องนี้">ยกเลิกการยินยอม</button></div>
   </section>
 </div>
 <script id="qeAiAddon">
+/* ===== v63 · QE AI Assistant (General + QE Context) =====
+   • 2 โหมด: QE Context (ส่งเฉพาะข้อมูลที่เกี่ยวข้องกับคำถาม) / General (ไม่ส่งข้อมูลภายใน)
+   • ถามต่อเนื่อง: จำเงื่อนไขของคำถามก่อนหน้า (เช่น “งาน PCR ไหนยังไม่เสร็จ” → “เฉพาะเดือนนี้”) และส่ง Conversation history ให้ AI
+   • กัน AI แต่งข้อมูล: กรองรายการ Tracker ในเครื่องก่อน แล้วแนบ “ข้อมูลที่ระบบพบจริง” ใต้คำตอบทุกครั้ง (ตรวจสอบได้)
+   • ประวัติบทสนทนาเก็บเฉพาะเครื่องนี้ (localStorage: ux_ai_hist_v1 — ไม่ซิงก์ขึ้น Cloud DB)
+   • ใช้ Endpoint เดิม: Supabase Edge Function “qe-ai-assistant” (ไม่มี API key ของ AI ในไฟล์นี้) */
 (function(){
 'use strict';
 if(window.__QE_AI_ADDON) return; window.__QE_AI_ADDON=true;
@@ -12076,7 +12107,10 @@ const g=id=>document.getElementById(id);
 const CFG=window.COUNTERMEASURE_CLOUD_DEFAULTS||{};
 const FUNCTION_NAME='qe-ai-assistant';
 const FUNCTION_URL=String(CFG.supabaseUrl||'').replace(/\/$/,'')+'/functions/v1/'+FUNCTION_NAME;
-const MAX_CONTEXT_CHARS=45000;
+const MAX_CONTEXT_CHARS=60000, MAX_ITEMS=150, HK='ux_ai_hist_v1', CK='ux_ai_consent_v1', MK='ux_ai_mode_v1', MAX_HIST=40;
+const E=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const lsGet=k=>{ try{ return localStorage.getItem(k); }catch(e){ return null; } };
+const lsSet=(k,v)=>{ try{ localStorage.setItem(k,v); }catch(e){} };
 function clean(value,depth){
   if(depth>7) return '[depth limited]';
   if(value==null||typeof value==='string'||typeof value==='number'||typeof value==='boolean') return value;
@@ -12084,7 +12118,7 @@ function clean(value,depth){
   if(typeof value==='object'){
     const out={};
     Object.keys(value).slice(0,250).forEach(k=>{
-      if(/pin|password|secret|token|apikey|authorization|supabasekey/i.test(k)) return;
+      if(/pin|password|secret|token|apikey|authorization|supabasekey|webhook|url$/i.test(k)) return;
       const v=value[k]; if(typeof v!=='function') out[k]=clean(v,depth+1);
     });
     return out;
@@ -12092,43 +12126,275 @@ function clean(value,depth){
   return String(value);
 }
 function isoToday(){ const d=new Date(),p=n=>String(n).padStart(2,'0'); return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()); }
-function collectContext(){
-  const ctx={generatedAt:new Date().toISOString(),date:isoToday(),source:'QE Elec. Daily Job Tracker'};
+const TODAY=()=>{ try{ return today; }catch(e){ return isoToday(); } };
+const ITEMS=()=>{ try{ return Array.isArray(data)?data:[]; }catch(e){ return []; } };
+const DUE=r=>{ try{ return curDue(r)||''; }catch(e){ return r.due||''; } };
+const LATE=r=>{ try{ return !!isLate(r); }catch(e){ return false; } };
+const FMT=s=>{ try{ return fmt(s); }catch(e){ return s||'—'; } };
+const norm=s=>String(s||'').toLowerCase().replace(/\s+/g,' ').trim();
+const ME=()=>String(lsGet('ux_me')||'').trim();
+const CATS={pcr:/\bpcr\b/i,claim:/claim|complaint|เคลม|ร้องเรียน/i,urgent:/urgent|ด่วน/i,newjob:/new ?(job|project|model)|งานใหม่|โปรเจ[คก]ใหม่/i,inhouse:/in-?house|ภายใน(โรงงาน)?|internal/i,activity:/activity|กิจกรรม|kaizen|improvement/i};
+const CAT_N={urgent:'Urgent',newjob:'New',pcr:'PCR',claim:'Claim',inhouse:'In-house',activity:'Activity'};
+const TH_M=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+const TH_MS=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+const EN_M=['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+
+/* ---------- ตัวกรองในเครื่อง: แปลงคำถาม → เงื่อนไข (รองรับคำถามต่อเนื่อง) ---------- */
+function ymOf(y,m){ return {y:y,m:m}; }
+function shiftYM(o,k){ let y=o.y,m=o.m+k; while(m<0){ m+=12; y--; } while(m>11){ m-=12; y++; } return ymOf(y,m); }
+function addDays(ds,n){ const d=new Date(+ds.slice(0,4),+ds.slice(5,7)-1,+ds.slice(8,10)+n),p=x=>String(x).padStart(2,'0'); return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()); }
+function parseQ(q){
+  const s=String(q||''), l=s.toLowerCase(), f={};
+  if(/(ยังไม่(เสร็จ|ปิด|done|จบ)|ค้าง|pending|not done|open item|in progress|กำลังทำ|ยังเปิด)/i.test(s)) f.st='open';
+  if(/(delay|เลยกำหนด|ล่าช้า|overdue|เกินกำหนด|\blate\b)/i.test(s)) f.st='late';
+  if(!f.st&&/((?<!ยังไม่)เสร็จแล้ว|ปิดแล้ว|\bclosed\b|\bcompleted?\b|(?<!not )\bdone\b)/i.test(s)&&!/ยังไม่/.test(s)) f.st='done';
+  if(/(ติดปัญหา|blocked|ติดขัด)/i.test(s)) f.bl=1;
+  if(/(countermeasure|มาตรการ|\bcm\b).*(ยังไม่|ไม่ done|ค้าง)|(ยังไม่|ค้าง).*(countermeasure|มาตรการ|\bcm\b)/i.test(s)) f.st=f.st||'open';
+  Object.keys(CATS).forEach(k=>{ if(CATS[k].test(s)) f.cat=k; });
+  const t=TODAY(), now=ymOf(+t.slice(0,4),+t.slice(5,7)-1);
+  if(/(เดือนนี้|this month)/i.test(s)) f.ym=now;
+  else if(/(เดือนก่อน|เดือนที่แล้ว|เดือนที่ผ่านมา|last month|previous month)/i.test(s)) f.ym=shiftYM(now,-1);
+  else if(/(เดือนหน้า|เดือนถัดไป|next month)/i.test(s)) f.ym=shiftYM(now,1);
+  else{
+    let mi=-1;
+    TH_M.forEach((n,i)=>{ if(s.indexOf(n)>=0) mi=i; });
+    if(mi<0) TH_MS.forEach((n,i)=>{ if(s.indexOf(n)>=0) mi=i; });
+    if(mi<0){ const m=/\b(jan(uary)?|feb(ruary)?|mar(ch)?|apr(il)?|may|june?|july?|aug(ust)?|sep(t(ember)?)?|oct(ober)?|nov(ember)?|dec(ember)?)\b/i.exec(l); if(m) mi=EN_M.indexOf(m[1].slice(0,3).toLowerCase()); }
+    if(mi>=0){ const ym=/(25\d\d|20\d\d)/.exec(s); let y=ym?+ym[1]:now.y; if(y>2400) y-=543; f.ym=ymOf(y,mi); }
+  }
+  if(/(วันนี้|today)/i.test(s)) f.day=t;
+  else if(/(พรุ่งนี้|tomorrow)/i.test(s)) f.day=addDays(t,1);
+  if(/(สัปดาห์นี้|อาทิตย์นี้|this week)/i.test(s)){ const d=new Date(+t.slice(0,4),+t.slice(5,7)-1,+t.slice(8,10)), dow=(d.getDay()+6)%7; f.wk=[addDays(t,-dow),addDays(t,6-dow)]; }
+  /* ผู้รับผิดชอบที่มีอยู่จริงในข้อมูล */
+  const owners=[...new Set(ITEMS().map(d=>String(d.owner||'').trim()).filter(Boolean))].sort((a,b)=>b.length-a.length);
+  const hit=owners.find(o=>o.length>=2&&l.indexOf(o.toLowerCase())>=0);
+  if(hit) f.own=hit; else if(/(งานของฉัน|ของผม|ของฉัน|my (job|task|item)s?)/i.test(s)&&ME()) f.own=ME();
+  /* Customer / Model ที่มีอยู่จริงในข้อมูล */
+  const vals=k=>[...new Set(ITEMS().map(d=>String(d[k]||'').trim()).filter(x=>x.length>=2))];
+  const c=vals('customer').find(x=>l.indexOf(x.toLowerCase())>=0); if(c) f.cust=c;
+  const mo=vals('model').find(x=>l.indexOf(x.toLowerCase())>=0); if(mo) f.model=mo;
+  const qt=/["“”']([^"“”']{2,60})["“”']/.exec(s); if(qt) f.kw=qt[1];
+  return f;
+}
+const FOLLOW=/^(เฉพาะ|แล้ว|และ|เอา|แค่|only|just|what about|how about|ล่ะ|แล้วของ|ส่วน|กรอง|filter)/i;
+function mergeF(q,prev){
+  const f=parseQ(q), dims=Object.keys(f);
+  const short=String(q).trim().length<=30;
+  const subj=f.cat||f.own||f.kw||f.cust||f.model;
+  if(prev&&(FOLLOW.test(String(q).trim())||(short&&dims.length&&!subj)||(short&&/(ล่ะ|ละ|\?)$/.test(String(q).trim())))){
+    return {f:Object.assign({},prev,f),follow:true};
+  }
+  return {f:f,follow:false};
+}
+function inYM(s,ym){ return !!s&&+s.slice(0,4)===ym.y&&+s.slice(5,7)-1===ym.m; }
+function applyF(f){
+  const L=ITEMS().filter(d=>{
+    if(f.st==='open'&&d.status==='Done') return false;
+    if(f.st==='done'&&d.status!=='Done') return false;
+    if(f.st==='late'&&!LATE(d)) return false;
+    if(f.bl&&!(d.blocked&&d.status!=='Done')) return false;
+    if(f.cat&&!(d.pri===f.cat||CATS[f.cat].test(String(d.issue||'')+' '+String(d.cm||'')))) return false;
+    if(f.own&&String(d.owner||'').toLowerCase().indexOf(f.own.toLowerCase())<0) return false;
+    if(f.cust&&String(d.customer||'').toLowerCase()!==f.cust.toLowerCase()) return false;
+    if(f.model&&String(d.model||'').toLowerCase()!==f.model.toLowerCase()) return false;
+    if(f.kw&&[d.issue,d.cm,d.remark,d.blocker].join(' ').toLowerCase().indexOf(f.kw.toLowerCase())<0) return false;
+    if(f.ym&&!(inYM(d.date,f.ym)||inYM(DUE(d),f.ym))) return false;
+    if(f.day&&!(d.date===f.day||DUE(d)===f.day||(f.st!=='done'&&LATE(d)&&f.day===TODAY()))) return false;
+    if(f.wk&&!((d.date>=f.wk[0]&&d.date<=f.wk[1])||(DUE(d)>=f.wk[0]&&DUE(d)<=f.wk[1]))) return false;
+    return true;
+  });
+  const ord=d=>d.status==='Done'?2:(LATE(d)?0:1);
+  L.sort((a,b)=>ord(a)-ord(b)||String(DUE(a)||'9').localeCompare(String(DUE(b)||'9'))||b.id-a.id);
+  return {items:L,desc:descF(f)};
+}
+function descF(f){
+  const a=[];
+  if(f.cat) a.push(CAT_N[f.cat]);
+  if(f.own) a.push('ผู้รับผิดชอบ: '+f.own);
+  if(f.cust) a.push('Customer: '+f.cust);
+  if(f.model) a.push('Model: '+f.model);
+  if(f.kw) a.push('คำค้น: “'+f.kw+'”');
+  if(f.st) a.push({open:'ยังไม่เสร็จ',late:'เลยกำหนด (Delay)',done:'เสร็จแล้ว'}[f.st]);
+  if(f.bl) a.push('ติดปัญหา');
+  if(f.ym) a.push('เดือน '+TH_MS[f.ym.m]+' '+(f.ym.y+543)+' (วันที่แจ้งหรือ Due)');
+  if(f.day) a.push('วันที่ '+FMT(f.day));
+  if(f.wk) a.push('สัปดาห์ '+FMT(f.wk[0])+' – '+FMT(f.wk[1]));
+  return a.length?a.join(' · '):'ทั้งหมด (ไม่มีเงื่อนไขเฉพาะ)';
+}
+function compact(d){
+  const o={id:d.id,date:d.date||'',owner:String(d.owner||'').slice(0,80),issue:String(d.issue||'').slice(0,400),cm:String(d.cm||'').slice(0,400),
+    due:DUE(d)||'',dueOriginal:d.due||'',revCount:(d.revs||[]).length,status:d.status,delay:LATE(d)};
+  if(o.delay){ try{ o.delayDays=dayNum(TODAY())-dayNum(DUE(d)); }catch(e){} }
+  if(d.pri) o.category=CAT_N[d.pri]||d.pri;
+  if(d.customer) o.customer=String(d.customer).slice(0,80);
+  if(d.model) o.model=String(d.model).slice(0,80);
+  if(d.remark) o.remark=String(d.remark).slice(0,200);
+  if(d.blocked&&d.status!=='Done'){ o.blocked=true; o.blocker=String(d.blocker||'').slice(0,200); }
+  if(d.progress!==''&&d.progress!=null) o.progress=d.progress;
+  if(d.doneDate) o.doneDate=d.doneDate;
+  return o;
+}
+function trackerCtx(res,f){
+  const all=ITEMS();
+  return {filter:res.desc,filterIsEmpty:!Object.keys(f||{}).length,matched:res.items.length,totalItemsInTracker:all.length,
+    overall:{open:all.filter(d=>d.status!=='Done').length,delay:all.filter(LATE).length,done:all.filter(d=>d.status==='Done').length,blocked:all.filter(d=>d.blocked&&d.status!=='Done').length},
+    truncated:res.items.length>MAX_ITEMS,items:res.items.slice(0,MAX_ITEMS).map(compact)};
+}
+function collectContext(extra){
+  extra=extra||{};
+  const ctx={generatedAt:new Date().toISOString(),date:isoToday(),source:'QE Elec. Daily Job Tracker',mode:'qe'};
+  if(extra.tracker) ctx.tracker=extra.tracker;
   try{ if(window.__TODAY&&typeof window.__TODAY.collect==='function') ctx.today=clean(window.__TODAY.collect(),0); }catch(e){ ctx.todayError=String(e.message||e); }
   try{
     if(window.__MTG&&typeof window.__MTG.getDay==='function') ctx.meetings=clean(window.__MTG.getDay(ctx.date),0);
     if(window.__MTG&&typeof window.__MTG.analyze==='function') ctx.meetingAnalysis=clean(window.__MTG.analyze(ctx.date),0);
   }catch(e){ ctx.meetingError=String(e.message||e); }
   try{ if(window.__TODAY&&typeof window.__TODAY.text==='function') ctx.todayText=String(window.__TODAY.text()||'').slice(0,12000); }catch(e){}
-  let text=JSON.stringify(ctx); if(text.length>MAX_CONTEXT_CHARS){ ctx.contextTrimmed=true; delete ctx.todayText; text=JSON.stringify(ctx); }
+  try{ if(window.MJ&&window.MJ.getData){ const mj=clean(window.MJ.getData(),0), t=JSON.stringify(mj); if(t&&t.length<=20000) ctx.mainQeJobs=mj; else if(t) ctx.mainQeJobsNote='ข้อมูล Main QE Jobs ใหญ่เกิน — ส่งเฉพาะส่วน PCR/Claim'; if(t&&t.length>20000&&mj){ ctx.mainQeJobsPart={pcr:mj.pcr,claim:mj.claim}; if(JSON.stringify(ctx.mainQeJobsPart).length>20000) delete ctx.mainQeJobsPart; } } }catch(e){}
+  try{ if(window.__checklist){ const ck=window.__checklist.get(); const rows=((ck&&ck.days)||{})[ctx.date]||[]; ctx.checklistToday=rows.filter(r=>r&&String(r.t||'').trim()).slice(0,60).map(r=>({task:String(r.t).slice(0,200),note:String(r.n||'').slice(0,200),state:r.st===1?'done':r.st===2?'cancelled':'open'})); } }catch(e){}
+  if(extra.q&&/(mission|hoshin|ฮอชิน|ลา|อบรม|\bot\b)/i.test(extra.q)){
+    try{ if(window.MS&&window.MS.get){ const t=JSON.stringify(clean(window.MS.get(),0)); if(t.length<15000) ctx.missions=JSON.parse(t); } }catch(e){}
+    try{ if(window.HS&&window.HS.get){ const t=JSON.stringify(clean(window.HS.get(),0)); if(t.length<15000) ctx.hoshin=JSON.parse(t); } }catch(e){}
+  }
+  const size=()=>JSON.stringify(ctx).length;
+  ['todayText','missions','hoshin','mainQeJobs','mainQeJobsPart','meetingAnalysis'].forEach(k=>{ if(size()>MAX_CONTEXT_CHARS&&k in ctx){ delete ctx[k]; ctx.contextTrimmed=true; } });
+  while(size()>MAX_CONTEXT_CHARS&&ctx.tracker&&ctx.tracker.items.length>20){ ctx.tracker.items=ctx.tracker.items.slice(0,Math.floor(ctx.tracker.items.length*0.7)); ctx.tracker.truncated=true; ctx.contextTrimmed=true; }
   return ctx;
 }
-async function ask(question){
+
+/* ---------- เรียก Edge Function (Endpoint เดิม) ---------- */
+let lastServerV=0;
+async function ask(question,opts){
+  opts=opts||{};
   if(!CFG.supabaseUrl||!CFG.supabaseKey) throw new Error('ยังไม่ได้ตั้งค่า Supabase URL หรือ Publishable key');
-  const controller=new AbortController(); const timer=setTimeout(()=>controller.abort(),60000);
+  if(!navigator.onLine) throw new Error('ไม่มีการเชื่อมต่ออินเทอร์เน็ต');
+  const mode=opts.mode==='general'?'general':'qe';
+  const context=opts.context||(mode==='qe'?collectContext():{date:isoToday(),mode:'general'});
+  const controller=new AbortController(); const timer=setTimeout(()=>controller.abort(),75000);
   try{
-    const res=await fetch(FUNCTION_URL,{method:'POST',signal:controller.signal,headers:{'Content-Type':'application/json','apikey':CFG.supabaseKey,'Authorization':'Bearer '+CFG.supabaseKey},body:JSON.stringify({action:'qe_tracker_assistant',question:String(question).slice(0,4000),context:collectContext()})});
-    const raw=await res.text(); let data={}; try{ data=JSON.parse(raw); }catch(e){ data={answer:raw}; }
-    if(!res.ok) throw new Error(data.error||data.message||('Edge Function ตอบกลับ '+res.status));
-    return String(data.answer||data.result||data.reply||'AI ไม่ได้ส่งคำตอบกลับมา');
-  }catch(e){ if(e.name==='AbortError') throw new Error('หมดเวลารอคำตอบจาก AI'); throw e; } finally{ clearTimeout(timer); }
+    const res=await fetch(FUNCTION_URL,{method:'POST',signal:controller.signal,headers:{'Content-Type':'application/json','apikey':CFG.supabaseKey,'Authorization':'Bearer '+CFG.supabaseKey},
+      body:JSON.stringify({action:'qe_tracker_assistant',version:2,mode:mode,question:String(question).slice(0,4000),history:(opts.history||[]).slice(-12),context:context})});
+    const raw=await res.text(); let d={}; try{ d=JSON.parse(raw); }catch(e){ d={answer:raw}; }
+    if(!res.ok) throw new Error(d.error||d.message||('Edge Function ตอบกลับ HTTP '+res.status));
+    if(d.ok===false&&d.error) throw new Error(d.error);
+    lastServerV=+d.v||0;
+    const ans=String(d.answer||d.result||d.reply||'').trim();
+    if(!ans) throw new Error('AI ไม่ได้ส่งคำตอบกลับมา');
+    return ans;
+  }catch(e){ if(e.name==='AbortError') throw new Error('หมดเวลารอคำตอบจาก AI (75 วินาที)'); if(e instanceof TypeError) throw new Error('เชื่อมต่อ Edge Function ไม่ได้ ('+e.message+')'); throw e; }
+  finally{ clearTimeout(timer); }
 }
-function open(){ g('qeAiOv').classList.add('on'); g('qeAiOv').setAttribute('aria-hidden','false'); setTimeout(()=>g('qeAiQuestion').focus(),30); }
+
+/* ---------- สถานะ / ประวัติ ---------- */
+let mode=lsGet(MK)==='general'?'general':'qe', busy=false, hist=[];
+try{ hist=JSON.parse(lsGet(HK)||'[]'); if(!Array.isArray(hist)) hist=[]; }catch(e){ hist=[]; }
+hist=hist.filter(m=>m&&(m.role==='user'||m.role==='assistant')&&typeof m.content==='string').slice(-MAX_HIST);
+const saveHist=()=>{ hist=hist.slice(-MAX_HIST); lsSet(HK,JSON.stringify(hist)); };
+function lastQeF(){ for(let i=hist.length-1;i>=0;i--){ const m=hist[i]; if(m.role==='user'&&m.mode==='qe'&&m.f&&!m.f.none) return m.f; } return null; }
+function historyFor(m,uptoIdx){
+  return hist.slice(0,uptoIdx).filter(x=>!x.err&&x.content&&(m==='qe'||x.mode==='general')).slice(-10)
+    .map(x=>({role:x.role,content:String(x.content).slice(0,3000)}));
+}
+const QA=[
+  {t:'📋 สรุปงานวันนี้',m:'qe',fx:'today',q:'สรุปงานวันนี้ แยกงานเสร็จ งานค้าง งานเลยกำหนด ความเสี่ยง และสิ่งที่ต้องติดตาม',run:1,tip:'สรุปจากข้อมูล Tracker / Checklist / ประชุมวันนี้'},
+  {t:'📅 วิเคราะห์ Meeting',m:'qe',fx:'none',q:'วิเคราะห์ตารางประชุมวันนี้ ระบุเวลาซ้อน รายการที่ยังไม่มอบหมาย และข้อเสนอแนะ',run:1,tip:'ใช้ตารางประชุมของวันนี้ในระบบ'},
+  {t:'🧩 Problem / Cause / CM',m:'qe',q:'สรุปเป็น Problem, Current condition, Possible cause, Correction และ Permanent countermeasure โดยอ้างอิงเฉพาะข้อมูลในระบบ สำหรับงาน: ',tip:'พิมพ์ชื่องาน/คำค้นต่อท้าย แล้วกดส่ง'},
+  {t:'🟪 เขียนข้อความ Teams',m:'qe',q:'ร่างข้อความสำหรับส่งใน Microsoft Teams แบบกระชับ สุภาพ อ่านง่าย (ไทยผสมศัพท์เทคนิคอังกฤษ) เรื่อง: ',tip:'พิมพ์เรื่องต่อท้าย แล้วกดส่ง'},
+  {t:'🔍 Root Cause',m:'general',q:'ช่วยวิเคราะห์ Root Cause แบบ 4M1E (Man, Machine, Method, Material, Environment) พร้อมวิธียืนยันแต่ละสาเหตุ สำหรับปัญหา: ',tip:'โหมด General — อธิบายปัญหาต่อท้าย'},
+  {t:'❓ 5 Why',m:'general',q:'ช่วยทำ 5 Why Analysis ทีละขั้น พร้อมระบุจุดที่ต้องยืนยันข้อเท็จจริงหน้างาน สำหรับปัญหา: ',tip:'โหมด General — อธิบายปัญหาต่อท้าย'},
+  {t:'💬 General Question',m:'general',q:'',tip:'ถามอะไรก็ได้ เช่น เขียน Email ภาษาอังกฤษ แปล อธิบาย Excel Formula'}
+];
+
+/* ---------- แสดงผล ---------- */
+function fmtAns(t){ return E(t).replace(/\*\*([^*\n]{1,200})\*\*/g,'<b>$1</b>').replace(/^#{1,4}\s*(.+)$/gm,'<b>$1</b>'); }
+function stamp(ts){ try{ return new Date(ts).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'}); }catch(e){ return ''; } }
+function dataBox(meta){
+  if(!meta) return '';
+  const byId=new Map(ITEMS().map(d=>[d.id,d]));
+  const rows=(meta.ids||[]).slice(0,40).map(id=>{ const d=byId.get(id); if(!d) return '<li class="gone">#'+E(id)+' (ไม่พบในข้อมูลปัจจุบัน — อาจถูกลบ)</li>';
+    const st=d.status==='Done'?'✅ Done':LATE(d)?'🔴 Delay':'🟡 In Progress';
+    return '<li><button type="button" class="qeai-go" data-go="'+E(d.id)+'" title="ไปที่รายการนี้ในตาราง Tracker">#'+E(d.id)+'</button> '+st+' · <b>'+E(String(d.issue||'').replace(/\s+/g,' ').slice(0,90))+'</b> · 👤 '+E(d.owner||'-')+' · Due '+E(FMT(DUE(d)))+'</li>'; }).join('');
+  return '<details class="qeai-data"><summary title="รายการจริงที่ระบบกรองได้และส่งให้ AI — ใช้ตรวจสอบคำตอบ">📂 ข้อมูลที่ระบบพบจริง: <b>'+E(meta.n)+'</b> รายการ · '+E(meta.desc||'')+'</summary>'+
+    (meta.n?'<ul>'+rows+(meta.n>40?'<li class="gone">…และอีก '+(meta.n-40)+' รายการ</li>':'')+'</ul>':'<div class="qeai-empty">ไม่พบรายการใน Tracker ตามเงื่อนไขนี้</div>')+'</details>';
+}
+function draw(loading){
+  const log=g('qeAiLog'); if(!log) return;
+  let h='';
+  if(!hist.length&&!loading){
+    h='<div class="qeai-welcome"><b>สวัสดีครับ 👋</b><br>ลองถาม: <i>“วันนี้มีงานอะไรค้าง?”</i> · <i>“งานไหน Delay?”</i> · <i>“งาน PCR ไหนยังไม่เสร็จ”</i> แล้วต่อด้วย <i>“เฉพาะเดือนนี้”</i><br>หรือเปลี่ยนเป็นโหมด <b>💬 General</b> เพื่อเขียน Email / แปล / อธิบาย 5 Why / Excel Formula</div>';
+  }
+  hist.forEach((m,i)=>{
+    const tag=m.mode==='general'?'💬 General':'🔎 QE';
+    if(m.role==='user') h+='<div class="qeai-m u"><div class="qeai-b">'+E(m.content)+'</div><div class="qeai-t">'+tag+(m.follow?' · ต่อจากคำถามก่อน':'')+' · '+stamp(m.at)+'</div></div>';
+    else if(m.err) h+='<div class="qeai-m a err"><div class="qeai-b">❌ '+E(m.err)+'<div class="qeai-hint">ตรวจว่า Edge Function “qe-ai-assistant” ถูก Deploy และตั้งค่า AI secret แล้ว · หรือกดลองใหม่</div></div><div class="qeai-ft"><button type="button" class="qeai-sm" data-ai="retry" data-i="'+i+'" title="ส่งคำถามเดิมอีกครั้ง">🔁 ลองใหม่</button></div>'+dataBox(m.meta)+'</div>';
+    else h+='<div class="qeai-m a"><div class="qeai-b">'+fmtAns(m.content)+'</div><div class="qeai-ft"><button type="button" class="qeai-sm" data-ai="copy" data-i="'+i+'" title="คัดลอกคำตอบนี้">📋 คัดลอก</button><span class="qeai-t">'+tag+' · '+stamp(m.at)+'</span></div>'+dataBox(m.meta)+(m.oldServer?'<div class="qeai-hint">ℹ️ Edge Function เวอร์ชันเดิมอาจยังจำกัดคำตอบเฉพาะเรื่อง Tracker — Deploy เวอร์ชัน v2 ตามคู่มือเพื่อใช้โหมด General เต็มรูปแบบ</div>':'')+'</div>';
+  });
+  if(loading) h+='<div class="qeai-m a load" aria-label="กำลังคิด"><div class="qeai-b"><span class="qeai-dots"><i></i><i></i><i></i></span> AI กำลังคิด…</div></div>';
+  log.innerHTML=h; log.scrollTop=log.scrollHeight;
+}
+function setMode(m){
+  mode=m==='general'?'general':'qe'; lsSet(MK,mode);
+  document.querySelectorAll('#qeAiOv [data-mode]').forEach(b=>{ const on=b.dataset.mode===mode; b.classList.toggle('on',on); b.setAttribute('aria-checked',on?'true':'false'); });
+  const n=ITEMS().length;
+  g('qeAiModeHint').textContent=mode==='qe'?('ใช้ข้อมูลในระบบ (Tracker '+n+' รายการ) · ส่งเฉพาะส่วนที่เกี่ยวข้อง'):'ไม่ส่งข้อมูล Tracker/งานภายในให้ AI';
+  g('qeAiQuestion').placeholder=mode==='qe'?'ตัวอย่าง: งาน PCR ไหนยังไม่เสร็จ → แล้วพิมพ์ต่อว่า “เฉพาะเดือนนี้”':'ตัวอย่าง: ช่วยเขียน Email ภาษาอังกฤษแจ้งลูกค้าว่าจะส่ง 8D Report ภายในวันศุกร์';
+}
+function consent(){
+  if(lsGet(CK)==='1') return true;
+  const ok=window.confirm('โหมด QE Context จะส่งข้อมูลภายในไปยัง AI เพื่อวิเคราะห์:\n\n• รายการ Tracker ที่เกี่ยวข้องกับคำถาม (ปัญหา, Countermeasure, ผู้รับผิดชอบ, Due, สถานะ, Customer/Model)\n• สรุป Main QE Jobs, Checklist และตารางประชุมของวันนี้\n\nส่งผ่าน Supabase Edge Function “qe-ai-assistant” ไปยังผู้ให้บริการ AI ที่ตั้งค่าไว้ฝั่ง Server\nไม่ส่ง PIN / Token / ค่าตั้งค่า Cloud\n\nกด OK = ยินยอม (ไม่ถามซ้ำในเครื่องนี้) · Cancel = ไม่ส่ง');
+  if(ok) lsSet(CK,'1');
+  return ok;
+}
+function status(t){ const s=g('qeAiStatus'); if(s) s.textContent=t; }
+async function runAt(ui){
+  const u=hist[ui]; if(!u) return;
+  busy=true; g('qeAiRun').disabled=true; status('กำลังวิเคราะห์…'); draw(true);
+  let meta=null, ctx;
+  try{
+    if(u.mode==='qe'&&u.f&&u.f.none){ ctx=collectContext({q:u.content}); }
+    else if(u.mode==='qe'){ const res=applyF(u.f||{}); meta={n:res.items.length,desc:res.desc,ids:res.items.slice(0,60).map(d=>d.id)}; ctx=collectContext({tracker:trackerCtx(res,u.f||{}),q:u.content}); }
+    else ctx={date:isoToday(),mode:'general',locale:'th-TH'};
+    const ans=await ask(u.content,{mode:u.mode,history:historyFor(u.mode,ui),context:ctx});
+    const m={role:'assistant',mode:u.mode,content:ans,at:Date.now(),meta:meta};
+    if(u.mode==='general'&&lastServerV<2) m.oldServer=1;
+    hist.splice(ui+1,0,m); status('ตอบเสร็จแล้ว');
+  }catch(e){
+    hist.splice(ui+1,0,{role:'assistant',mode:u.mode,content:'',err:String(e.message||e).slice(0,300),at:Date.now(),meta:meta});
+    status('เชื่อมต่อ AI ไม่สำเร็จ — กด 🔁 ลองใหม่ได้');
+  }finally{ busy=false; g('qeAiRun').disabled=false; saveHist(); draw(false); }
+}
+async function send(fx){
+  if(busy) return;
+  const ta=g('qeAiQuestion'), q=ta.value.trim();
+  if(!q){ status('กรุณาพิมพ์คำถาม'); ta.focus(); return; }
+  if(mode==='qe'&&!consent()){ status('ยังไม่ได้ยินยอมส่งข้อมูล — เปลี่ยนเป็นโหมด General ได้'); return; }
+  const u={role:'user',mode:mode,content:q.slice(0,4000),at:Date.now()};
+  if(mode==='qe'){ if(fx==='today') u.f={day:TODAY()}; else if(fx==='none') u.f={none:1}; else { const r=mergeF(q,lastQeF()); u.f=r.f; if(r.follow) u.follow=1; } }
+  hist.push(u); saveHist(); ta.value='';
+  await runAt(hist.length-1);
+}
+function open(){ g('qeAiOv').classList.add('on'); g('qeAiOv').setAttribute('aria-hidden','false'); setMode(mode); draw(false); setTimeout(()=>g('qeAiQuestion').focus(),30); }
 function close(){ g('qeAiOv').classList.remove('on'); g('qeAiOv').setAttribute('aria-hidden','true'); }
-async function run(){
-  const q=g('qeAiQuestion').value.trim(); if(!q){ g('qeAiStatus').textContent='กรุณาพิมพ์คำถาม'; g('qeAiQuestion').focus(); return; }
-  const b=g('qeAiRun'); b.disabled=true; g('qeAiStatus').textContent='กำลังวิเคราะห์…'; g('qeAiAnswer').textContent='';
-  try{ g('qeAiAnswer').textContent=await ask(q); g('qeAiStatus').textContent='วิเคราะห์เสร็จแล้ว'; }
-  catch(e){ g('qeAiAnswer').textContent='เกิดข้อผิดพลาด: '+String(e.message||e)+'\n\nตรวจสอบว่า Supabase Edge Function ชื่อ qe-ai-assistant ถูก Deploy และตั้งค่า AI secret แล้ว'; g('qeAiStatus').textContent='เชื่อมต่อ AI ไม่สำเร็จ'; }
-  finally{ b.disabled=false; }
-}
+async function copyText(t){ try{ await navigator.clipboard.writeText(t); return true; }catch(e){ try{ const a=document.createElement('textarea'); a.value=t; a.style.position='fixed'; a.style.opacity='0'; document.body.appendChild(a); a.select(); const ok=document.execCommand('copy'); a.remove(); return ok; }catch(err){ return false; } } }
+
+g('qeAiQuick').innerHTML=QA.map((a,i)=>'<button type="button" class="qeai-chip" data-qa="'+i+'" title="'+E(a.tip||'')+' ('+(a.m==='qe'?'QE Context':'General')+')">'+E(a.t)+'</button>').join('');
+g('qeAiQuick').addEventListener('click',e=>{ const b=e.target.closest('[data-qa]'); if(!b) return; const a=QA[+b.dataset.qa]; setMode(a.m); const ta=g('qeAiQuestion'); ta.value=a.q; ta.focus(); ta.setSelectionRange(ta.value.length,ta.value.length); if(a.run) send(a.fx); });
+document.querySelectorAll('#qeAiOv [data-mode]').forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.mode)));
+g('qeAiLog').addEventListener('click',async e=>{
+  const go=e.target.closest('[data-go]'); if(go){ close(); try{ const tb=g('tabT'); if(tb&&g('viewTracker')&&g('viewTracker').style.display==='none') tb.click(); }catch(err){} setTimeout(()=>{ try{ goToItem(+go.dataset.go); }catch(err){} },200); return; }
+  const b=e.target.closest('[data-ai]'); if(!b) return; const i=+b.dataset.i;
+  if(b.dataset.ai==='copy'){ const ok=await copyText(String((hist[i]||{}).content||'')); status(ok?'คัดลอกคำตอบแล้ว':'คัดลอกไม่สำเร็จ'); }
+  else if(b.dataset.ai==='retry'&&!busy){ const m=hist[i]; if(!m||!m.err) return; hist.splice(i,1); let ui=i-1; while(ui>=0&&hist[ui].role!=='user') ui--; if(ui<0) return; await runAt(ui); }
+});
 g('qeAiFab').addEventListener('click',open); g('qeAiClose').addEventListener('click',close);
-g('qeAiOv').addEventListener('click',e=>{if(e.target===g('qeAiOv')) close();});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&g('qeAiOv').classList.contains('on')) close();});
-document.querySelectorAll('[data-qeai]').forEach(b=>b.addEventListener('click',()=>{g('qeAiQuestion').value=b.dataset.qeai||'';g('qeAiQuestion').focus();}));
-g('qeAiRun').addEventListener('click',run); g('qeAiQuestion').addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();run();}});
-g('qeAiCopy').addEventListener('click',async()=>{const t=g('qeAiAnswer').textContent.trim();if(!t||t==='คำตอบจะแสดงที่นี่')return;try{await navigator.clipboard.writeText(t);g('qeAiStatus').textContent='คัดลอกคำตอบแล้ว';}catch(e){g('qeAiStatus').textContent='คัดลอกไม่สำเร็จ';}});
-window.__QE_AI={ask:ask,collectContext:collectContext,open:open};
+g('qeAiOv').addEventListener('click',e=>{ if(e.target===g('qeAiOv')) close(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&g('qeAiOv').classList.contains('on')) close(); });
+g('qeAiRun').addEventListener('click',()=>send());
+g('qeAiQuestion').addEventListener('keydown',e=>{ if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){ e.preventDefault(); send(); } });
+g('qeAiCopy').addEventListener('click',async()=>{ const m=[...hist].reverse().find(x=>x.role==='assistant'&&!x.err); if(!m){ status('ยังไม่มีคำตอบให้คัดลอก'); return; } status((await copyText(m.content))?'คัดลอกคำตอบแล้ว':'คัดลอกไม่สำเร็จ'); });
+g('qeAiClear').addEventListener('click',()=>{ if(busy) return; if(!hist.length){ status('ยังไม่มีบทสนทนา'); return; } if(!window.confirm('ล้างประวัติการสนทนากับ AI ทั้งหมดในเครื่องนี้?')) return; hist=[]; saveHist(); draw(false); status('ล้างบทสนทนาแล้ว'); });
+g('qeAiRevoke').addEventListener('click',()=>{ try{ localStorage.removeItem(CK); }catch(e){} status('ยกเลิกการยินยอมแล้ว — โหมด QE จะถามก่อนส่งข้อมูลครั้งถัดไป'); });
+window.__QE_AI={ask:(q,o)=>ask(q,o||{mode:'qe',context:collectContext({q:q})}),collectContext:collectContext,open:open,_parse:mergeF,_apply:applyF,setMode:setMode};
 })();
 </script>
 <!-- ===== end QE AI Assistant add-on ===== -->
@@ -14354,4 +14620,960 @@ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded'
 })();
 </script>
 <!-- ===== end v62 ===== -->
+<!-- ===== v63 · Smart Import · Month/Year filter · Share to LINE/Teams · AI chat UI ===== -->
+<style id="qeV63Css">
+/* ---- ตัวกรองเดือน/ปี (อยู่ในแถบ .tools เดิม) ---- */
+.v63-mf{display:inline-flex;flex-wrap:wrap;align-items:center;gap:4px;padding:3px 6px;border:1px dashed var(--line);border-radius:10px;background:var(--soft)}
+#viewTracker .tools .v63-mf select,#viewTracker .tools.nv-tl .v63-mf select{min-width:0!important;width:auto;max-width:132px;padding:6px 8px;font-size:13px;margin:0}
+.v63-ib{padding:5px 9px!important;font-size:12.5px!important;line-height:1.2;margin:0!important;border-radius:8px}
+.v63-mfi{font-size:12px;color:var(--t-vio);font-weight:700;white-space:nowrap;padding:0 4px}
+.v63-mfi:empty{display:none}
+.v63-mf.on{border-style:solid;border-color:var(--pri);background:color-mix(in srgb,var(--pri) 8%,var(--card))}
+/* ---- ฟอร์ม: ข้อมูลเพิ่มเติม ---- */
+.v63-more{margin-top:12px;border:1px dashed var(--line);border-radius:10px;padding:6px 10px;background:var(--soft)}
+.v63-more>summary{cursor:pointer;font-size:13px;font-weight:700;color:var(--mut)}
+.v63-g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:8px}
+@media(max-width:700px){.v63-g3{grid-template-columns:1fr}}
+/* ---- ป้ายข้อมูลเสริมในตาราง ---- */
+.v63-meta{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
+.v63-meta span{font-size:11.5px;padding:1px 8px;border-radius:99px;border:1px solid var(--line);background:var(--soft);color:var(--mut);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.v63-share{color:#5b5fc7!important}
+/* ---- แถบ Drop สำหรับ Import ---- */
+.v63-dz{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:0 0 12px;padding:9px 14px;border:2px dashed var(--line);border-radius:12px;background:var(--card);color:var(--mut);font-size:13px;cursor:pointer;transition:border-color .15s,background .15s}
+.v63-dz:hover,.v63-dz:focus-visible{border-color:var(--pri);color:var(--txt)}
+.v63-dz.drag{border-color:var(--pri);background:color-mix(in srgb,var(--pri) 10%,var(--card));color:var(--txt)}
+.v63-dz b{color:var(--txt)}
+.v63-dz .v63-sp{flex:1 1 auto}
+.v63-dz button{margin:0;padding:5px 10px;font-size:12.5px}
+/* ---- Modal พื้นฐาน (ใช้โครงเดียวกับ .ux-ov / .ux-md เดิม) ---- */
+.v63-ov{position:fixed;inset:0;z-index:230;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:12px}
+.v63-md{background:var(--pop);color:var(--txt);border:1px solid var(--line);border-radius:16px;padding:16px 18px;width:min(760px,100%);max-height:90vh;overflow:auto;box-shadow:0 18px 50px rgba(0,0,0,.4)}
+.v63-ov .v63-md{max-width:760px}
+.v63-ov .v63-md.wide{width:min(1180px,100%);max-width:1180px;max-height:92vh;display:flex;flex-direction:column;overflow:hidden}
+#qiStep1{overflow:auto;min-height:0}
+#qiStep2:not([hidden]){display:flex;flex-direction:column;min-height:0;flex:1 1 auto}
+#qiStep2 .v63-res{overflow:auto}
+.v63-hd{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px}
+.v63-hd h3{margin:0;font-size:18px;flex:1}
+.v63-x{border:1px solid var(--line);background:transparent;color:var(--txt);border-radius:9px;padding:4px 10px;cursor:pointer;margin:0}
+.v63-sub{font-size:12.5px;color:var(--mut);line-height:1.6}
+.v63-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
+.v63-row button{margin:0}
+.v63-msg{margin-top:8px;min-height:18px;font-size:13px}
+.v63-msg.err{color:var(--t-dang)} .v63-msg.ok{color:var(--t-ok)} .v63-msg.busy{color:var(--t-warn)}
+.v63-drop{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:110px;margin:6px 0 10px;padding:14px;border:2px dashed var(--line);border-radius:14px;background:var(--soft);text-align:center;cursor:pointer}
+.v63-drop.drag,.v63-drop:hover,.v63-drop:focus-visible{border-color:var(--pri);background:color-mix(in srgb,var(--pri) 9%,var(--soft))}
+.v63-drop small{color:var(--mut);font-size:12px}
+.v63-md textarea{font-size:13px}
+.v63-tpl{margin-top:8px;border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--soft);font-size:12.5px;max-height:34vh;overflow:auto}
+.v63-tpl table{width:100%;border-collapse:collapse;box-shadow:none}
+.v63-tpl th,.v63-tpl td{border-bottom:1px dashed var(--line);padding:4px 6px;text-align:left;vertical-align:top}
+/* ---- Import: ขั้น Mapping + Preview ---- */
+.v63-src{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;font-size:12.5px;padding:6px 10px;border-radius:10px;background:var(--soft);border:1px solid var(--line)}
+.v63-src select{width:auto;padding:4px 8px;font-size:12.5px;margin:0}
+.v63-src label{display:inline-flex;gap:6px;align-items:center;margin:0;font-size:12.5px}
+.v63-src input[type=checkbox]{width:auto;margin:0}
+.v63-map{display:grid;grid-template-columns:repeat(auto-fill,minmax(178px,1fr));gap:8px;margin:8px 0;max-height:24vh;overflow:auto;padding:2px}
+.v63-col{border:1px solid var(--line);border-radius:10px;padding:6px 8px;background:var(--card);font-size:12px;min-width:0}
+.v63-col .h{font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.v63-col .s{color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:2px 0 4px}
+.v63-col select{width:100%;padding:4px 6px;font-size:12.5px;margin:0}
+.v63-col.ig{opacity:.6}
+.v63-cf{display:inline-block;font-size:10.5px;font-weight:800;padding:0 7px;border-radius:99px;margin-left:4px;vertical-align:1px;border:1px solid}
+.v63-cf.H{color:var(--t-ok);border-color:var(--ok);background:rgba(22,163,74,.10)}
+.v63-cf.M{color:var(--t-warn);border-color:var(--warn);background:rgba(217,119,6,.10)}
+.v63-cf.L{color:var(--t-dang);border-color:var(--dang);background:rgba(220,38,38,.08)}
+.v63-defs{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;font-size:12.5px;margin:2px 0 6px}
+.v63-defs input{width:150px;padding:4px 8px;font-size:12.5px;margin:0}
+.v63-chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:4px 0 6px}
+.v63-chip{padding:4px 10px;border-radius:99px;font-size:12px;font-weight:700;border:1px solid var(--line);background:transparent;color:var(--txt);cursor:pointer;margin:0}
+.v63-chip.on{background:var(--pri);color:var(--on-pri);border-color:var(--pri)}
+.v63-tw{flex:1 1 auto;min-height:120px;overflow:auto;border:1px solid var(--line);border-radius:10px}
+.v63-pv{width:100%;border-collapse:separate;border-spacing:0;font-size:12px;box-shadow:none;min-width:1100px}
+.v63-pv th{position:sticky;top:0;z-index:1;background:var(--th,var(--soft));padding:6px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+.v63-pv td{padding:3px 4px;border-bottom:1px dashed var(--line);vertical-align:top}
+.v63-pv td input[type=text]{width:100%;min-width:70px;padding:4px 6px;font-size:12px;margin:0;border-radius:6px}
+.v63-pv td input.L{border-color:var(--dang);background:rgba(220,38,38,.05)}
+.v63-pv td input.M{border-color:var(--warn)}
+.v63-pv td input[type=checkbox]{width:auto;margin:4px}
+.v63-pv tr.x td{opacity:.55}
+.v63-pv .st{white-space:nowrap;font-weight:700;min-width:160px}
+.v63-pv .st small{display:block;font-weight:500;color:var(--mut);white-space:normal;max-width:190px}
+.v63-pv .w-issue{min-width:230px}.v63-pv .w-cm{min-width:180px}.v63-pv .w-d{min-width:96px}
+.v63-foot{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin-top:10px;padding-top:8px;border-top:1px solid var(--line)}
+.v63-foot label{display:inline-flex;gap:6px;align-items:center;margin:0;font-size:12.5px}
+.v63-foot input[type=checkbox]{width:auto;margin:0}
+.v63-foot .grow{flex:1 1 auto;font-size:12.5px;color:var(--mut)}
+.v63-foot button{margin:0}
+.v63-foot button:disabled{opacity:.45;cursor:not-allowed}
+.v63-res{text-align:center;padding:18px 8px}
+.v63-res b{font-size:20px}
+/* ---- Share ---- */
+.v63-share-ta{width:100%;min-height:170px;font:13px/1.55 "Segoe UI",Tahoma,sans-serif}
+.v63-sbtn{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;margin-top:10px}
+.v63-sbtn button{margin:0;text-align:left;padding:9px 12px;border-radius:10px;font-weight:700}
+.v63-sbtn button small{display:block;font-weight:500;font-size:11.5px;opacity:.85;margin-top:2px}
+.v63-sbtn .ln{border:1px solid #06C755;color:#06803a;background:rgba(6,199,85,.08)}
+.v63-sbtn .tm{border:1px solid #5b5fc7;color:#4b4fb5;background:rgba(91,95,199,.08)}
+.v63-sbtn .cp{border:1px solid var(--line);color:var(--txt);background:var(--soft)}
+.v63-sbtn button:disabled{opacity:.45;cursor:not-allowed}
+.v63-cfg{margin-top:10px;border:1px dashed var(--line);border-radius:10px;padding:6px 10px;font-size:12.5px}
+.v63-cfg summary{cursor:pointer;font-weight:700;color:var(--mut)}
+.v63-cfg label{display:block;margin:8px 0 3px;font-size:12.5px}
+.v63-cfg input[type=text]{padding:6px 8px;font-size:12.5px}
+.v63-cfg input[type=checkbox]{width:auto}
+body.neo .v63-sbtn .ln,body.ember .v63-sbtn .ln{color:#4ade80}
+body.neo .v63-sbtn .tm,body.ember .v63-sbtn .tm{color:#a5b4fc}
+/* ---- AI chat (ปรับจากกล่องเดิม .qeai-*) ---- */
+.qeai-md.qeai2{display:flex;flex-direction:column;width:min(860px,100%);height:min(780px,90vh);max-height:90vh;overflow:hidden;padding:14px 16px}
+.qeai2 .qeai-hd{flex:0 0 auto}
+.qeai-mode{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:10px 0 2px}
+.qeai-mode button{border:1px solid var(--line);background:transparent;color:var(--txt);border-radius:999px;padding:6px 12px;font-size:12.5px;font-weight:800;cursor:pointer;margin:0}
+.qeai-mode button.on{background:var(--pri);color:var(--on-pri);border-color:var(--pri)}
+.qeai-modehint{font-size:11.5px;color:var(--mut)}
+.qeai2 .qeai-actions{margin:8px 0 6px;flex:0 0 auto}
+.qeai-log{flex:1 1 auto;min-height:120px;overflow:auto;background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px}
+.qeai-welcome{font-size:13px;line-height:1.7;color:var(--mut);padding:6px}
+.qeai-m{max-width:92%;display:flex;flex-direction:column;gap:3px}
+.qeai-m.u{align-self:flex-end;align-items:flex-end}
+.qeai-m.a{align-self:flex-start}
+.qeai-b{white-space:pre-wrap;word-break:break-word;padding:8px 11px;border-radius:12px;font:13px/1.62 "Segoe UI",Tahoma,sans-serif;border:1px solid var(--line)}
+.qeai-m.u .qeai-b{background:color-mix(in srgb,var(--pri) 14%,var(--card))}
+.qeai-m.a .qeai-b{background:var(--card)}
+.qeai-m.err .qeai-b{border-color:var(--dang);color:var(--t-dang)}
+.qeai-t{font-size:10.5px;color:var(--mut)}
+.qeai-ft{display:flex;gap:8px;align-items:center}
+.qeai-sm{border:1px solid var(--line);background:transparent;color:var(--txt);border-radius:8px;padding:2px 8px;font-size:11.5px;cursor:pointer;margin:0}
+.qeai-hint{font-size:11.5px;color:var(--mut);margin-top:4px;white-space:normal}
+.qeai-data{font-size:12px;border:1px dashed var(--line);border-radius:10px;padding:4px 8px;background:var(--card);max-width:100%}
+.qeai-data summary{cursor:pointer;color:var(--mut)}
+.qeai-data ul{margin:6px 0 2px;padding-left:16px;line-height:1.6}
+.qeai-data li.gone,.qeai-empty{color:var(--mut);font-style:italic}
+.qeai-go{border:0;background:transparent;color:var(--pri);font-weight:800;cursor:pointer;padding:0;margin:0;font-size:12px;text-decoration:underline}
+.qeai-dots{display:inline-flex;gap:3px;vertical-align:middle}
+.qeai-dots i{width:6px;height:6px;border-radius:50%;background:var(--pri);animation:qeaiDot 1s infinite ease-in-out}
+.qeai-dots i:nth-child(2){animation-delay:.15s}.qeai-dots i:nth-child(3){animation-delay:.3s}
+@keyframes qeaiDot{0%,80%,100%{opacity:.25;transform:translateY(0)}40%{opacity:1;transform:translateY(-3px)}}
+@media (prefers-reduced-motion:reduce){.qeai-dots i{animation:none}}
+.qeai-in{flex:0 0 auto;margin-top:6px}
+.qeai2 .qeai-ta{min-height:58px}
+.qeai2 .qeai-label small{font-weight:500;color:var(--mut)}
+.qeai2 .qeai-note{flex:0 0 auto}
+.qeai-lnk{border:0;background:transparent;color:var(--pri);padding:0;margin:0;font-size:11px;cursor:pointer;text-decoration:underline}
+@media(max-width:600px){.qeai-md.qeai2{height:94vh;max-height:94vh;padding:10px}.qeai-m{max-width:100%}}
+</style>
+<script id="qeV63Js">
+/* ===== v63 (28-Oct-2026) · Change log =====
+   [1] Smart File Import → Tracker: Drag & Drop / เลือกไฟล์ / Paste (.xlsx · .xlsm · .csv · .tsv · .txt · ตารางจาก Excel)
+       - Auto-detect หัวคอลัมน์ (ไทย/อังกฤษ/ชื่อต่างกัน) + วิเคราะห์จากเนื้อหาเมื่อไม่มีหัวตาราง + แยกข้อความอิสระ
+       - Preview + เปลี่ยน Mapping ด้วย Dropdown + Confidence High/Medium/Low + เลือกแถว + ตรวจซ้ำ + Validate วันที่
+       - ต้องกด “ยืนยัน Import” และยืนยันอีกครั้งจึงบันทึก · ย้อนกลับการนำเข้าครั้งล่าสุดได้
+       - ใช้ตัวอ่าน .xlsx เดิม (otXlsxRows) — ไม่มีไลบรารีภายนอก · .xls รุ่นเก่า (BIFF) อ่านได้เฉพาะเมื่อมี window.XLSX (SheetJS)
+   [2] ตัวกรองเดือน + ปี (พ.ศ.) · เดือนนี้ / ก่อน / ถัดไป / ล้าง · เลือกฐาน: วันที่แจ้ง หรือ Due — ตาราง ตัวนับ กราฟ สรุปผู้แจ้ง และปฏิทิน sync
+   [3] Share to LINE / Microsoft Teams ต่อรายการ และสรุปรายการที่กรองอยู่ (Level 1 = Deep link · Level 2 = Edge Function teams-notify)
+   [4] ช่องเสริม Customer / Model / Remark ในฟอร์ม (เก็บเป็นฟิลด์เสริมของรายการ — โครงสร้างเดิมไม่เปลี่ยน)
+   [5] ลิงก์ตรงไปยังรายการ: …/index.html#job=<id>
+   ค่าที่เก็บในเครื่องเท่านั้น (ไม่ซิงก์ Cloud): ux_month_filter_v1 · ux_teams_cfg_v1 — ไม่มี Secret/Token ใด ๆ ในไฟล์นี้ */
+(function(){
+'use strict';
+if(window.__QE_V63) return; window.__QE_V63=true;
+const g=id=>document.getElementById(id);
+const E=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const say=(m,c)=>{ try{ toast(m,c); }catch(e){} };
+const lsJ=(k,d)=>{ try{ const v=localStorage.getItem(k); return v==null?d:(JSON.parse(v)||d); }catch(e){ return d; } };
+const lsSetJ=(k,v)=>{ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} };
+const RO=()=>!!window.__QE_RO;
+const roBlock=()=>{ try{ if(window.__QE_ROblock) window.__QE_ROblock(); else say('👁 โหมดดูอย่างเดียว — แก้ไขข้อมูลไม่ได้','var(--t-dang)'); }catch(e){} };
+const p2=n=>String(n).padStart(2,'0');
+const ymdOf=(y,m,d)=>y+'-'+p2(m)+'-'+p2(d);
+const TODAY=()=>{ try{ return today; }catch(e){ const d=new Date(); return ymdOf(d.getFullYear(),d.getMonth()+1,d.getDate()); } };
+const ITEMS=()=>{ try{ return Array.isArray(data)?data:[]; }catch(e){ return []; } };
+const DUE=r=>{ try{ return curDue(r)||''; }catch(e){ return (r&&r.due)||''; } };
+const LATE=r=>{ try{ return !!isLate(r); }catch(e){ return false; } };
+const FMT=s=>{ try{ return fmt(s); }catch(e){ return s||'—'; } };
+const norm=s=>String(s==null?'':s).toLowerCase().replace(/\s+/g,' ').trim();
+const ME=()=>{ try{ return (localStorage.getItem('ux_me')||'').trim(); }catch(e){ return ''; } };
+const TH_M=(typeof MONTHS!=='undefined'&&MONTHS.length===12)?MONTHS:['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+const TH_MS=(typeof MONTHS_SHORT!=='undefined'&&MONTHS_SHORT.length===12)?MONTHS_SHORT:['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+const YMIN=(typeof Y_MIN!=='undefined')?Y_MIN:2023, YMAX=(typeof Y_MAX!=='undefined')?Y_MAX:2032;
+const PRI_N={urgent:'Urgent',newjob:'New',pcr:'PCR',claim:'Claim',inhouse:'In-house',activity:'Activity'};
+const CTRL_RE=/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g;
+const cleanTxt=(v,n)=>String(v==null?'':v).replace(CTRL_RE,'').replace(/\r\n?/g,'\n').trim().slice(0,n||5000);
+async function copyText(t){ try{ await navigator.clipboard.writeText(t); return true; }catch(e){ try{ const a=document.createElement('textarea'); a.value=t; a.style.position='fixed'; a.style.opacity='0'; document.body.appendChild(a); a.select(); const ok=document.execCommand('copy'); a.remove(); return ok; }catch(err){ return false; } } }
+const MSTACK=[];
+function modal(html,cls){
+  const ov=document.createElement('div'); ov.className='ux-ov v63-ov';
+  ov.innerHTML='<div class="ux-md v63-md '+(cls||'')+'" role="dialog" aria-modal="true">'+html+'</div>';
+  document.body.appendChild(ov);
+  MSTACK.push(ov);
+  const esc=e=>{ if(e.key!=='Escape'||MSTACK[MSTACK.length-1]!==ov) return; const ai=document.getElementById('qeAiOv'); if(ai&&ai.classList.contains('on')) return; e.stopPropagation(); close(); };
+  function close(){ ov.remove(); document.removeEventListener('keydown',esc,true); const i=MSTACK.indexOf(ov); if(i>=0) MSTACK.splice(i,1); if(ov===IMP) IMP=null; }
+  document.addEventListener('keydown',esc,true);
+  ov.addEventListener('mousedown',e=>{ if(e.target===ov) close(); });
+  ov._close=close; return ov;
+}
+
+/* =====================================================================
+   [2] ตัวกรองเดือน / ปี
+   ===================================================================== */
+const MF_K='ux_month_filter_v1';
+let MF=Object.assign({m:'',y:'',b:'date'},lsJ(MF_K,{}));
+(function(){ if(MF.m!==''&&!(Number.isInteger(MF.m)&&MF.m>=0&&MF.m<=11)) MF.m=''; if(MF.y!==''&&!(Number.isInteger(MF.y)&&MF.y>=1900&&MF.y<=2200)) MF.y=''; if(MF.b!=='due') MF.b='date'; })();
+const qeMF={
+  active:()=>MF.m!==''||MF.y!=='',
+  ok:d=>{ const s=MF.b==='due'?DUE(d):((d&&d.date)||''); if(!/^\d{4}-\d{2}/.test(s)) return false; const y=+s.slice(0,4), m=+s.slice(5,7)-1; return (MF.y===''||y===MF.y)&&(MF.m===''||m===MF.m); },
+  get:()=>Object.assign({},MF),
+  label:()=>{ if(!qeMF.active()) return ''; return (MF.m!==''?TH_M[MF.m]:'ทุกเดือน')+' '+(MF.y!==''?(MF.y+543):'ทุกปี'); },
+  set:o=>{ Object.assign(MF,o||{}); lsSetJ(MF_K,MF); mfPaint(); try{ render(); }catch(e){} mfSyncCal(); },
+  clear:()=>qeMF.set({m:'',y:''})
+};
+window.qeMF=qeMF;
+function mfYears(){
+  const cy=+TODAY().slice(0,4), ys=new Set([cy-1,cy,cy+1]);
+  ITEMS().forEach(d=>{ [d.date,DUE(d)].forEach(s=>{ if(/^\d{4}-/.test(s||'')) ys.add(+s.slice(0,4)); }); });
+  if(MF.y!=='') ys.add(MF.y);
+  return [...ys].filter(y=>y>=1990&&y<=2200).sort((a,b)=>b-a);
+}
+function mfPaint(){
+  const fm=g('fMonth'), fy=g('fYear'), fb=g('fMBasis'); if(!fm||!fy) return;
+  if(fm.options.length<13) fm.innerHTML='<option value="">ทุกเดือน</option>'+TH_M.map((n,i)=>'<option value="'+i+'">'+E(n)+'</option>').join('');
+  const ys=mfYears(), key=ys.join(',');
+  if(fy.dataset.k!==key){ fy.innerHTML='<option value="">ทุกปี</option>'+ys.map(y=>'<option value="'+y+'">'+(y+543)+'</option>').join(''); fy.dataset.k=key; }
+  fm.value=MF.m===''?'':String(MF.m); fy.value=MF.y===''?'':String(MF.y); if(fb) fb.value=MF.b;
+  const box=g('mfBox'); if(box) box.classList.toggle('on',qeMF.active());
+  const info=g('mfInfo');
+  if(info){ if(qeMF.active()){ const n=ITEMS().filter(qeMF.ok).length; info.textContent='📅 '+qeMF.label()+' · '+n+' งาน'; info.title='กรองตาม'+(MF.b==='due'?' Due Date (ปัจจุบัน)':'วันที่แจ้ง')+' — กด “ล้างตัวกรอง” หรือเลือก “ทุกเดือน/ทุกปี” เพื่อดูทั้งหมด'; } else { info.textContent=''; info.title=''; } }
+}
+function mfSyncCal(){
+  /* ปฏิทินใช้ข้อมูลชุดเดียวกัน (Tracker) → เลื่อนไปเดือนที่เลือก · Main QE Jobs เป็นข้อมูลอีกชุด จึงไม่ sync */
+  if(MF.m===''||MF.y==='') return;
+  try{ if(typeof drawCal==='function'){ calY=MF.y; calM=MF.m; drawCal(); } }catch(e){}
+}
+function mfShift(k){
+  const t=TODAY(); let m=MF.m===''?+t.slice(5,7)-1:MF.m, y=MF.y===''?+t.slice(0,4):MF.y;
+  m+=k; if(m<0){ m=11; y--; } if(m>11){ m=0; y++; }
+  qeMF.set({m:m,y:y});
+}
+(function(){
+  const fm=g('fMonth'), fy=g('fYear'); if(!fm||!fy) return;
+  mfPaint();
+  fm.addEventListener('change',()=>qeMF.set({m:fm.value===''?'':+fm.value}));
+  fy.addEventListener('change',()=>qeMF.set({y:fy.value===''?'':+fy.value}));
+  const fb=g('fMBasis'); if(fb) fb.addEventListener('change',()=>qeMF.set({b:fb.value==='due'?'due':'date'}));
+  const pv=g('mfPrev'), nx=g('mfNext'), nw=g('mfNow');
+  if(pv) pv.addEventListener('click',()=>mfShift(-1));
+  if(nx) nx.addEventListener('click',()=>mfShift(1));
+  if(nw) nw.addEventListener('click',()=>{ const t=TODAY(); qeMF.set({m:+t.slice(5,7)-1,y:+t.slice(0,4)}); });
+  const clr=g('clearBtn'); if(clr) clr.addEventListener('click',()=>{ if(qeMF.active()) qeMF.clear(); });
+})();
+
+/* =====================================================================
+   [4] ฟอร์ม: Customer / Model / Remark (ห่อ qeBlk.read / qeBlk.fill เดิม)
+   ===================================================================== */
+(function(){
+  const B=window.qeBlk; if(!B||!g('qiCust')) return;
+  const _rd=B.read, _fl=B.fill;
+  B.read=function(){
+    const o=_rd.apply(this,arguments)||{}; let ed=false; try{ ed=editId!=null; }catch(e){}
+    const v={customer:cleanTxt(g('qiCust').value,200),model:cleanTxt(g('qiModel').value,200),remark:cleanTxt(g('qiRemark').value,1000)};
+    Object.keys(v).forEach(k=>{ if(v[k]||ed) o[k]=v[k]; });
+    return o;
+  };
+  B.fill=function(d){
+    _fl.apply(this,arguments);
+    g('qiCust').value=(d&&d.customer)||''; g('qiModel').value=(d&&d.model)||''; g('qiRemark').value=(d&&d.remark)||'';
+    g('qiMore').open=!!(d&&(d.customer||d.model||d.remark));
+  };
+})();
+
+/* =====================================================================
+   หลัง render(): ป้ายข้อมูลเสริม · ปุ่มแชร์ · ข้อความเมื่อเดือนที่เลือกไม่มีงาน
+   ===================================================================== */
+function after63(){
+  mfPaint();
+  const byId=new Map(ITEMS().map(d=>[String(d.id),d]));
+  document.querySelectorAll('#tb tr[data-id]').forEach(tr=>{
+    const d=byId.get(tr.dataset.id); if(!d) return;
+    const cell=tr.children[2];
+    if(cell){ cell.querySelectorAll('.v63-meta').forEach(x=>x.remove());
+      const a=[]; if(d.customer) a.push('🏢 '+d.customer); if(d.model) a.push('🔩 '+d.model); if(d.remark) a.push('📝 '+d.remark);
+      if(a.length){ const box=document.createElement('div'); box.className='v63-meta'; a.forEach(t=>{ const s=document.createElement('span'); s.textContent=t; s.title=t; box.appendChild(s); }); cell.appendChild(box); } }
+    const row=tr.querySelector('.act-row');
+    if(row&&!row.querySelector('[data-v63="share"]')){ const b=document.createElement('button'); b.type='button'; b.className='btn-g v63-share'; b.dataset.v63='share'; b.dataset.id=d.id; b.title='แชร์งานนี้ไป LINE / Microsoft Teams'; b.setAttribute('aria-label','แชร์งานนี้ไป LINE หรือ Microsoft Teams'); b.textContent='📤'; row.appendChild(b); }
+  });
+  if(qeMF.active()&&!document.querySelector('#tb tr[data-id]')){ const td=document.querySelector('#tb td.empty'); if(td) td.textContent='ไม่พบรายการใน '+qeMF.label()+' (กรอง'+(MF.b==='due'?'ตาม Due Date':'ตามวันที่แจ้ง')+') — กด “ล้างตัวกรอง” เพื่อดูทั้งหมด'; }
+}
+{ const _r63=render; render=function(){ const r=_r63.apply(this,arguments); try{ after63(); }catch(e){ console.error('[v63]',e); } return r; }; }
+
+/* =====================================================================
+   [3] Share to LINE / Microsoft Teams
+   ===================================================================== */
+const TM_K='ux_teams_cfg_v1';
+let TM=Object.assign({users:'',relay:false,fn:'teams-notify'},lsJ(TM_K,{}));
+if(!/^[a-z0-9][a-z0-9_-]{1,60}$/i.test(TM.fn||'')) TM.fn='teams-notify';
+const CLOUD=window.COUNTERMEASURE_CLOUD_DEFAULTS||{};
+const fnUrl=name=>String(CLOUD.supabaseUrl||'').replace(/\/$/,'')+'/functions/v1/'+name;
+function userJwt(){
+  /* ถ้าเข้าระบบด้วย Supabase Auth อยู่ ใช้ access token ของผู้ใช้ (หมดอายุแล้วไม่ใช้) — ไม่เคยเก็บลงไฟล์ */
+  try{ for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(!/^sb-.+-auth-token$/.test(k)) continue; const o=JSON.parse(localStorage.getItem(k)||'null'); const s=o&&(o.currentSession||o); if(s&&s.access_token&&(!s.expires_at||s.expires_at*1000>Date.now()+30000)) return s.access_token; } }catch(e){}
+  return '';
+}
+function jobLink(d){ if(!/^https?:$/.test(location.protocol)||!d) return ''; return location.origin+location.pathname+'#job='+d.id; }
+function stTxt(d){ if(d.status==='Done') return 'Done ✅'+(d.doneDate?' ('+FMT(d.doneDate)+')':''); if(LATE(d)){ let n=''; try{ n=dayNum(TODAY())-dayNum(DUE(d)); }catch(e){} return 'Delay ⚠️'+(n!==''?' (เลยกำหนด '+n+' วัน)':''); } return 'In Progress'+((d.progress!==''&&d.progress!=null)?' ('+d.progress+'%)':''); }
+function itemMsg(d){
+  const n=(d.revs||[]).length, L=[];
+  L.push('📌 QE Job');
+  L.push('Issue: '+String(d.issue||'-').trim());
+  L.push('Countermeasure: '+(String(d.cm||'').trim()||'-'));
+  L.push('Owner: '+(d.owner||'-'));
+  L.push('Due Date: '+(DUE(d)?FMT(DUE(d))+(n?' (Rev.'+n+' · เดิม '+FMT(d.due)+')':''):'-'));
+  L.push('Status: '+stTxt(d));
+  if(d.pri&&PRI_N[d.pri]) L.push('Category: '+PRI_N[d.pri]);
+  if(d.customer) L.push('Customer: '+d.customer);
+  if(d.model) L.push('Model / Part: '+d.model);
+  if(d.blocked&&d.status!=='Done') L.push('⛔ ติดปัญหา: '+(d.blocker||'-'));
+  const lk=jobLink(d); L.push('Link: '+(lk||'(เปิดไฟล์จากเว็บไซต์เพื่อให้มีลิงก์)'));
+  return L.join('\n');
+}
+function visibleItems(){
+  const byId=new Map(ITEMS().map(d=>[String(d.id),d]));
+  return Array.from(document.querySelectorAll('#tb tr[data-id]')).filter(tr=>tr.style.display!=='none').map(tr=>byId.get(tr.dataset.id)).filter(Boolean);
+}
+function listMsg(list){
+  const open=list.filter(d=>d.status!=='Done'), late=list.filter(LATE), MAX=15, L=[];
+  L.push('📋 QE Tracker — สรุป '+list.length+' รายการ'+(qeMF.active()?' ('+qeMF.label()+')':'')+' · ข้อมูล ณ '+FMT(TODAY()));
+  L.push('ค้าง '+open.length+' · Delay '+late.length+' · Done '+(list.length-open.length));
+  L.push('');
+  list.slice(0,MAX).forEach((d,i)=>L.push((i+1)+'. '+(d.status==='Done'?'✅':LATE(d)?'🔴':'🟡')+' '+String(d.issue||'').replace(/\s+/g,' ').slice(0,80)+' | '+(d.owner||'-')+' | Due '+(DUE(d)?FMT(DUE(d)):'-')));
+  if(list.length>MAX) L.push('…และอีก '+(list.length-MAX)+' รายการ');
+  if(/^https?:$/.test(location.protocol)){ L.push(''); L.push('Link: '+location.origin+location.pathname); }
+  return L.join('\n');
+}
+function openShare(o){
+  const meName=ME(), lineOk=!!(CLOUD.supabaseUrl&&CLOUD.supabaseKey);
+  const ov=modal(
+    '<div class="v63-hd"><h3>📤 '+E(o.title)+'</h3><button type="button" class="v63-x" data-s="x" title="ปิด (Esc)" aria-label="ปิด">✕</button></div>'+
+    '<div class="v63-sub">ตรวจ/แก้ข้อความได้ก่อนส่ง · ระบบไม่ส่งอะไรออกไปจนกว่าคุณจะกดปุ่มด้านล่าง</div>'+
+    '<textarea class="v63-share-ta" id="shTxt" maxlength="6000" aria-label="ข้อความที่จะแชร์">'+E(o.text)+'</textarea>'+
+    '<div class="v63-sbtn">'+
+      '<button type="button" class="cp" data-s="copy" title="คัดลอกข้อความไปวางที่ไหนก็ได้">📋 คัดลอกข้อความ<small>วางใน Teams / LINE / Email</small></button>'+
+      '<button type="button" class="ln" data-s="lineshare" title="เปิดหน้าแชร์ของ LINE แล้วเลือกแชต/กลุ่มเอง">🟩 Share to LINE<small>เลือกแชต/กลุ่มเอง (LINE share)</small></button>'+
+      '<button type="button" class="ln" data-s="linegroup" '+(lineOk?'':'disabled ')+'title="'+(lineOk?'ส่งเข้ากลุ่ม QE ผ่าน Team Chat เดิม (Edge Function line-send-message)':'ยังไม่ได้ตั้งค่า Supabase')+'">💬 ส่งเข้ากลุ่ม QE LINE<small>ผ่าน Team Chat เดิม · ในนาม '+E(meName||'(ยังไม่ระบุชื่อ)')+'</small></button>'+
+      '<button type="button" class="tm" data-s="teams" title="เปิด Microsoft Teams พร้อมข้อความ แล้วเลือก Chat / Channel และกดส่งเอง">🟪 Share to Teams<small>Level 1 · เลือก Chat/Channel เอง</small></button>'+
+      (TM.relay?'<button type="button" class="tm" data-s="relay" title="ส่งเข้า Channel ที่ตั้งไว้ผ่าน Edge Function (Webhook เก็บที่ Server)">🤖 ส่งเข้า Teams อัตโนมัติ<small>Level 2 · ผ่าน '+E(TM.fn)+'</small></button>':'')+
+    '</div>'+
+    '<details class="v63-cfg"><summary title="ตั้งค่าเฉพาะเครื่องนี้ — ไม่มี Secret/Token">⚙️ ตั้งค่า Microsoft Teams (เฉพาะเครื่องนี้)</summary>'+
+      '<label for="tmUsers">ผู้รับสำหรับเปิดแชตตรง (ไม่บังคับ) — อีเมลองค์กรคั่นด้วยจุลภาค</label><input type="text" id="tmUsers" value="'+E(TM.users)+'" placeholder="name1@company.com, name2@company.com" autocomplete="off">'+
+      '<label><input type="checkbox" id="tmRelay"'+(TM.relay?' checked':'')+'> เปิด Level 2: ส่งอัตโนมัติผ่าน Supabase Edge Function</label>'+
+      '<label for="tmFn">ชื่อ Edge Function</label><input type="text" id="tmFn" value="'+E(TM.fn)+'" maxlength="60" autocomplete="off">'+
+      '<div class="v63-sub" style="margin-top:6px">Level 2 ต้อง Deploy Edge Function และตั้ง Secret <b>TEAMS_WEBHOOK_URL</b> ที่ Supabase ก่อน (ดูคู่มือ) — ห้ามใส่ Webhook URL / Token ในช่องใด ๆ ของหน้านี้</div>'+
+      '<div class="v63-row"><button type="button" class="btn-p" data-s="cfgsave">💾 บันทึกการตั้งค่า</button></div>'+
+    '</details>'+
+    '<div class="v63-msg" id="shMsg" role="status" aria-live="polite"></div>');
+  const T=()=>ov.querySelector('#shTxt').value.trim();
+  const msg=(t,k)=>{ const m=ov.querySelector('#shMsg'); m.textContent=t; m.className='v63-msg '+(k||''); };
+  ov.addEventListener('click',async e=>{
+    const b=e.target.closest('[data-s]'); if(!b||b.disabled) return; const a=b.dataset.s;
+    if(a==='x'){ ov._close(); return; }
+    if(a==='copy'){ msg((await copyText(T()))?'📋 คัดลอกแล้ว':'คัดลอกไม่สำเร็จ — เลือกข้อความแล้วกด Ctrl+C', 'ok'); return; }
+    if(a==='lineshare'){ await copyText(T()); window.open('https://line.me/R/share?text='+encodeURIComponent(T().slice(0,1500)),'_blank','noopener,noreferrer'); msg('🟩 เปิด LINE แล้ว (ข้อความถูกคัดลอกไว้ด้วย)','ok'); return; }
+    if(a==='linegroup'){
+      if(RO()){ roBlock(); return; }
+      const name=ME(); if(!name){ msg('⚠️ กรุณาตั้งชื่อ “👤 ฉันคือ” ในแถบ Tracker ก่อน (ใช้เป็นชื่อผู้ส่ง)','err'); return; }
+      if(!window.confirm('ส่งข้อความนี้เข้ากลุ่ม QE LINE ในนาม “'+name+'” ?')) return;
+      b.disabled=true; msg('กำลังส่ง…','busy');
+      try{ const r=await fetch(fnUrl('line-send-message'),{method:'POST',headers:{'Content-Type':'application/json','apikey':CLOUD.supabaseKey,'Authorization':'Bearer '+(userJwt()||CLOUD.supabaseKey)},body:JSON.stringify({room_key:'qe-team',sender_id:name,sender_name:name,message:T().slice(0,4500)})});
+        const t=await r.text(); let j={}; try{ j=JSON.parse(t); }catch(err){}
+        if(!r.ok||j.ok===false) throw new Error(j.error||('HTTP '+r.status));
+        msg('✅ ส่งเข้ากลุ่ม QE LINE แล้ว','ok'); say('✅ ส่งเข้ากลุ่ม QE LINE แล้ว');
+      }catch(err){ msg('❌ ส่งไม่สำเร็จ: '+String(err.message||err).slice(0,160),'err'); }
+      finally{ b.disabled=false; }
+      return;
+    }
+    if(a==='teams'){
+      const full=T(); await copyText(full);
+      const short=full.length>700?full.slice(0,690)+'…':full;
+      const rc=String(TM.users||'').split(/[,;\s]+/).filter(x=>/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(x)).slice(0,20);
+      let url;
+      if(rc.length) url='https://teams.microsoft.com/l/chat/0/0?users='+encodeURIComponent(rc.join(','))+'&message='+encodeURIComponent(short);
+      else if(o.link) url='https://teams.microsoft.com/share?href='+encodeURIComponent(o.link)+'&msgText='+encodeURIComponent(short)+'&preview=false';
+      else url='https://teams.microsoft.com/';
+      window.open(url,'_blank','noopener,noreferrer');
+      msg(rc.length||o.link?'🟪 เปิด Microsoft Teams แล้ว — เลือก Chat/Channel แล้วกดส่ง · ข้อความเต็มถูกคัดลอกไว้ (Ctrl+V ถ้าข้อความไม่ครบ)':'🟪 เปิด Teams แล้ว — ไฟล์นี้เปิดแบบ file:// จึงไม่มีลิงก์สำหรับแชร์ · ข้อความถูกคัดลอกไว้ กด Ctrl+V ในแชตที่ต้องการ','ok');
+      return;
+    }
+    if(a==='relay'){
+      if(RO()){ roBlock(); return; }
+      if(!window.confirm('ส่งข้อความนี้เข้า Microsoft Teams Channel ที่ตั้งค่าไว้ (ผ่าน Edge Function “'+TM.fn+'”) ?')) return;
+      b.disabled=true; msg('กำลังส่งเข้า Teams…','busy');
+      try{ const r=await fetch(fnUrl(TM.fn),{method:'POST',headers:{'Content-Type':'application/json','apikey':CLOUD.supabaseKey||'','Authorization':'Bearer '+(userJwt()||CLOUD.supabaseKey||'')},body:JSON.stringify({title:o.cardTitle||o.title,text:T().slice(0,6000),link:o.link||'',facts:o.facts||[],sender:ME()})});
+        const t=await r.text(); let j={}; try{ j=JSON.parse(t); }catch(err){}
+        if(!r.ok||j.ok===false) throw new Error(j.error||('HTTP '+r.status));
+        msg('✅ ส่งเข้า Teams แล้ว','ok'); say('✅ ส่งเข้า Microsoft Teams แล้ว');
+      }catch(err){ msg('❌ ส่งไม่สำเร็จ: '+String(err.message||err).slice(0,160)+' — ตรวจว่า Deploy Edge Function และตั้ง TEAMS_WEBHOOK_URL แล้ว','err'); }
+      finally{ b.disabled=false; }
+      return;
+    }
+    if(a==='cfgsave'){
+      const fn=ov.querySelector('#tmFn').value.trim();
+      if(!/^[a-z0-9][a-z0-9_-]{1,60}$/i.test(fn)){ msg('⚠️ ชื่อ Edge Function ใช้ได้เฉพาะ a-z 0-9 - _','err'); return; }
+      const us=ov.querySelector('#tmUsers').value.trim();
+      if(/(token|secret|key=|sig=|webhook|https?:)/i.test(us)){ msg('⚠️ ช่องผู้รับใส่ได้เฉพาะอีเมล — ห้ามใส่ URL/Token','err'); return; }
+      TM={users:us.slice(0,500),relay:ov.querySelector('#tmRelay').checked,fn:fn}; lsSetJ(TM_K,TM);
+      ov._close(); say('💾 บันทึกการตั้งค่า Teams แล้ว (เฉพาะเครื่องนี้)'); openShare(o);
+    }
+  });
+  setTimeout(()=>{ const t=ov.querySelector('#shTxt'); if(t) t.focus(); },30);
+}
+function shareItem(id){
+  const d=ITEMS().find(x=>String(x.id)===String(id)); if(!d){ say('⚠️ ไม่พบรายการนี้','var(--t-dang)'); return; }
+  openShare({title:'แชร์งาน → LINE / Microsoft Teams',cardTitle:'📌 QE Job',text:itemMsg(d),link:jobLink(d),
+    facts:[{title:'Issue',value:String(d.issue||'-').slice(0,500)},{title:'Countermeasure',value:String(d.cm||'-').slice(0,500)},{title:'Owner',value:d.owner||'-'},{title:'Due Date',value:DUE(d)?FMT(DUE(d)):'-'},{title:'Status',value:stTxt(d)}]});
+}
+{ const tb=g('tb'); if(tb) tb.addEventListener('click',e=>{ const b=e.target.closest('[data-v63="share"]'); if(!b) return; e.stopPropagation(); shareItem(b.dataset.id); }); }
+{ const b=g('tmBtn'); if(b) b.addEventListener('click',()=>{ const L=visibleItems(); if(!L.length){ say('ไม่มีรายการที่แสดงอยู่ให้แชร์','var(--t-warn)'); return; } openShare({title:'แชร์สรุปรายการที่แสดงอยู่ ('+L.length+') → Teams / LINE',cardTitle:'📋 QE Tracker Summary',text:listMsg(L),link:/^https?:$/.test(location.protocol)?location.origin+location.pathname:''}); }); }
+
+/* ลิงก์ตรง #job=<id> → เปิดแท็บ Tracker แล้วเลื่อนไปที่รายการ */
+function hashJob(tries){
+  const m=/[#&]job=(\d{1,16})/.exec(location.hash||''); if(!m) return;
+  const id=+m[1], d=ITEMS().find(x=>x.id===id);
+  if(!d){ if((tries||0)<4){ setTimeout(()=>hashJob((tries||0)+1),1500); return; } say('⚠️ ไม่พบรายการที่ลิงก์อ้างถึง (อาจถูกลบ หรือยังไม่ซิงก์)','var(--t-dang)'); try{ history.replaceState(null,'',location.pathname+location.search); }catch(e){} return; }
+  try{ history.replaceState(null,'',location.pathname+location.search); }catch(e){}
+  try{ const t=g('tabT'), v=g('viewTracker'); if(t&&v&&v.style.display==='none') t.click(); }catch(e){}
+  if(qeMF.active()&&!qeMF.ok(d)) qeMF.clear();
+  setTimeout(()=>{ try{ goToItem(id); }catch(e){} },350);
+}
+window.addEventListener('hashchange',()=>hashJob(0));
+setTimeout(()=>hashJob(0),900);
+
+/* =====================================================================
+   [1] Smart File Import → Tracker
+   ===================================================================== */
+const MAX_BYTES=5*1024*1024, MAX_ROWS=500, MAX_COLS=40;
+const FILE_OK=/\.(xlsx|xlsm|xls|csv|tsv|txt)$/i;
+const FIELDS=[
+  {k:'',n:'— ไม่นำเข้า —'},
+  {k:'date',n:'วันที่แจ้ง (Received Date)'},
+  {k:'owner',n:'ผู้แจ้ง / ผู้รับผิดชอบ (Owner)'},
+  {k:'issue',n:'ปัญหา (Issue)',multi:1},
+  {k:'customer',n:'Customer'},
+  {k:'model',n:'Model / Part'},
+  {k:'cm',n:'Countermeasure',multi:1},
+  {k:'due',n:'Due Date'},
+  {k:'status',n:'Status'},
+  {k:'pri',n:'Category (ประเภทงาน)'},
+  {k:'remark',n:'Remark',multi:1}
+];
+const FN=k=>(FIELDS.find(f=>f.k===k)||FIELDS[0]).n;
+const nh=s=>String(s==null?'':s).toLowerCase().replace(/[\s_\-.\/()#:：*'"“”\[\]]+/g,'');
+const SYN={
+  date:['receiveddate','receivedate','received','dateofissue','issuedate','reportdate','opendate','startdate','founddate','occurdate','occurrencedate','createddate','created','date','วันที่แจ้ง','วันที่รับแจ้ง','วันที่รับ','วันที่พบ','วันที่เกิด','วันที่เปิด','วันแจ้ง','วันที่'],
+  owner:['owner','requester','requestedby','requestby','reporter','reportedby','pic','personincharge','incharge','responsible','responsibleperson','resp','assignee','assignedto','by','name','ผู้แจ้ง','ผู้รับผิดชอบ','ผู้รับผิดชอบงาน','ผู้ร้องขอ','ผู้ดำเนินการ','ผู้ติดตาม','ชื่อ','ผู้แจ้งผู้รับผิดชอบ'],
+  issue:['issue','issues','problem','problems','topic','subject','title','description','problemdescription','detail','details','defect','phenomenon','concern','item','task','job','ปัญหา','หัวข้อ','รายละเอียด','รายละเอียดปัญหา','อาการ','เรื่อง','งาน','หัวข้อปัญหา'],
+  customer:['customer','customername','cust','client','oem','ลูกค้า','ชื่อลูกค้า'],
+  model:['model','modelpart','part','partno','partnumber','pn','product','productname','itemno','partname','รุ่น','ชิ้นงาน','พาร์ท','ชื่อชิ้นงาน','รหัสชิ้นงาน'],
+  cm:['countermeasure','countermeasures','cm','correctiveaction','action','actions','actionplan','solution','measure','ca','pca','มาตรการ','มาตรการแก้ไข','การแก้ไข','แนวทางแก้ไข','วิธีแก้','วิธีแก้ไข'],
+  due:['duedate','due','deadline','target','targetdate','plandate','planfinish','finishdate','completiondate','completedate','commitdate','dueปัจจุบัน','กำหนดเสร็จ','วันกำหนดเสร็จ','วันที่กำหนดเสร็จ','กำหนดส่ง','ครบกำหนด','เป้าหมาย','วันครบกำหนด'],
+  status:['status','state','progressstatus','result','สถานะ','ผล','สถานะงาน'],
+  pri:['category','type','kind','classification','jobtype','ประเภท','ประเภทงาน','หมวด','หมวดหมู่','กลุ่ม'],
+  remark:['remark','remarks','note','notes','comment','comments','memo','หมายเหตุ','ความเห็น','บันทึก']
+};
+const EN_M={jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,sept:9,oct:10,nov:11,dec:12};
+const TH_MON=[['มกราคม','ม.ค.','มค'],['กุมภาพันธ์','ก.พ.','กพ'],['มีนาคม','มี.ค.','มีค'],['เมษายน','เม.ย.','เมย'],['พฤษภาคม','พ.ค.','พค'],['มิถุนายน','มิ.ย.','มิย'],['กรกฎาคม','ก.ค.','กค'],['สิงหาคม','ส.ค.','สค'],['กันยายน','ก.ย.','กย'],['ตุลาคม','ต.ค.','ตค'],['พฤศจิกายน','พ.ย.','พย'],['ธันวาคม','ธ.ค.','ธค']];
+function monName(s){ s=String(s||'').toLowerCase().replace(/\.$/,''); if(EN_M[s.slice(0,4)]) return EN_M[s.slice(0,4)]; if(EN_M[s.slice(0,3)]&&/^[a-z]+$/.test(s)) return EN_M[s.slice(0,3)];
+  for(let i=0;i<12;i++){ if(TH_MON[i].some(x=>s===x||s.replace(/\./g,'')===x.replace(/\./g,''))) return {m:i+1,th:1}; } return 0; }
+function fixY(y,thai){ y=+y; if(y<100){ const cy=+TODAY().slice(0,4); if(thai) y=2500+y-543; else{ y=2000+y; if(y>cy+20) y=y+500-543; } } else if(y>=2400) y-=543; return y; }
+function okD(y,m,d){ return y>=1900&&y<=2200&&m>=1&&m<=12&&d>=1&&d<=new Date(y,m,0).getDate(); }
+/* วันที่ → {s:'YYYY-MM-DD', amb} | null — รองรับ Excel serial, ISO, วว/ดด/ปปปป, 30-Oct-26, 30 ต.ค. 69, Oct 30 2026, พ.ศ. */
+function pDate(v){
+  if(v==null||v==='') return null;
+  if(typeof v==='number'){ if(v>20000&&v<80000){ const d=new Date(Date.UTC(1899,11,30)+Math.round(v)*864e5); return {s:ymdOf(d.getUTCFullYear(),d.getUTCMonth()+1,d.getUTCDate())}; } return null; }
+  if(v instanceof Date&&!isNaN(v)) return {s:ymdOf(v.getFullYear(),v.getMonth()+1,v.getDate())};
+  let s=String(v).trim().replace(/\s+/g,' ').replace(/[,]/g,' ').replace(/\s+/g,' ');
+  if(/^\d{5}(\.\d+)?$/.test(s)) return pDate(+s);
+  s=s.replace(/(\d)T\d{1,2}:\d{2}.*$/,'$1').replace(/\s+\d{1,2}:\d{2}(:\d{2})?(\s*[ap]m)?$/i,'');
+  let m=/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})$/.exec(s);
+  if(m){ const y=fixY(m[1]); return okD(y,+m[2],+m[3])?{s:ymdOf(y,+m[2],+m[3])}:null; }
+  m=/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{2,4})$/.exec(s);
+  if(m){ let d=+m[1], mo=+m[2], amb=false; const y=fixY(m[3]); if(mo>12&&d<=12){ const t=d; d=mo; mo=t; } else if(d<=12&&mo<=12&&d!==mo) amb=true; return okD(y,mo,d)?{s:ymdOf(y,mo,d),amb:amb}:null; }
+  m=/^(\d{1,2})[\s\-\/.]*([A-Za-z]{3,9}\.?|[ก-๙][ก-๙.]{1,10})[\s\-\/.]*(\d{2,4})?$/.exec(s);
+  if(m){ const mn=monName(m[2]); if(mn){ const mo=typeof mn==='object'?mn.m:mn, th=typeof mn==='object'; const y=m[3]?fixY(m[3],th):+TODAY().slice(0,4); return okD(y,mo,+m[1])?{s:ymdOf(y,mo,+m[1]),noY:!m[3]}:null; } }
+  m=/^([A-Za-z]{3,9})\.?\s+(\d{1,2})(?:st|nd|rd|th)?\s+(\d{2,4})$/.exec(s);
+  if(m){ const mo=monName(m[1]); if(mo&&typeof mo==='number'){ const y=fixY(m[3]); return okD(y,mo,+m[2])?{s:ymdOf(y,mo,+m[2])}:null; } }
+  return null;
+}
+const DONE_RE=/^(done|close|closed|complete|completed|finish|finished|resolved|ok|เสร็จ|เสร็จแล้ว|เสร็จสิ้น|ปิด|ปิดแล้ว|ปิดงาน|เรียบร้อย|เรียบร้อยแล้ว|✓|✔|o|100%)$/i;
+const OPEN_RE=/^(in ?progress|inprogress|on ?going|ongoing|open|opened|pending|wip|delay|delayed|late|hold|on hold|plan|planned|not started|waiting|ดำเนินการ|กำลังดำเนินการ|กำลังทำ|รอ.*|ค้าง|ยังไม่เสร็จ|ยังไม่.*|เปิด|ล่าช้า|\d{1,2}%)$/i;
+function pStatus(v){ const s=String(v==null?'':v).trim(); if(!s) return null; if(DONE_RE.test(s)) return {st:'Done',known:1}; if(OPEN_RE.test(s)) return {st:'In Progress',known:1};
+  if(/(ยังไม่|not\s)/i.test(s)) return {st:'In Progress',known:0}; if(/(done|closed|complete|เสร็จ|ปิดงาน)/i.test(s)) return {st:'Done',known:0}; return {st:'In Progress',known:0}; }
+function pCat(v){ const s=String(v==null?'':v).trim().toLowerCase(); if(!s) return ''; if(PRI_N[s]) return s;
+  if(/\bpcr\b/.test(s)) return 'pcr'; if(/claim|complaint|เคลม|ร้องเรียน/.test(s)) return 'claim'; if(/urgent|ด่วน/.test(s)) return 'urgent';
+  if(/^new\b|new ?(job|project|model)|งานใหม่|ใหม่/.test(s)) return 'newjob'; if(/in-?house|ภายใน|internal/.test(s)) return 'inhouse'; if(/activity|กิจกรรม|kaizen|improve/.test(s)) return 'activity'; return null; }
+function knownOwners(){ return [...new Set(ITEMS().map(d=>String(d.owner||'').trim()).filter(Boolean))]; }
+
+/* ---------- อ่านไฟล์ / ข้อความ ---------- */
+function decodeText(buf){
+  const u=new Uint8Array(buf);
+  if(u[0]===0xFF&&u[1]===0xFE) return new TextDecoder('utf-16le').decode(buf);
+  if(u[0]===0xFE&&u[1]===0xFF) return new TextDecoder('utf-16be').decode(buf);
+  try{ return new TextDecoder('utf-8',{fatal:true}).decode(buf).replace(/^\ufeff/,''); }
+  catch(e){ try{ return new TextDecoder('windows-874').decode(buf); }catch(err){ return new TextDecoder('utf-8').decode(buf); } }
+}
+function parseDelim(text,dl){
+  const rows=[]; let row=[], cur='', q=false;
+  for(let i=0;i<text.length;i++){ const ch=text[i];
+    if(q){ if(ch==='"'){ if(text[i+1]==='"'){ cur+='"'; i++; } else q=false; } else cur+=ch; continue; }
+    if(ch==='"'&&cur.trim()===''){ q=true; cur=''; continue; }
+    if(ch===dl){ row.push(cur); cur=''; continue; }
+    if(ch==='\n'){ row.push(cur); rows.push(row); row=[]; cur=''; continue; }
+    if(ch==='\r') continue;
+    cur+=ch; }
+  if(cur!==''||row.length){ row.push(cur); rows.push(row); }
+  return rows.map(r=>r.map(c=>c.trim())).filter(r=>r.some(c=>c!==''));
+}
+function textToTable(text,strict){
+  text=String(text||'').replace(/^\ufeff/,'');
+  const lines=text.split(/\r?\n/).filter(l=>l.trim()); if(!lines.length) return null;
+  const order=[['\t',0.5],[',',0.7],[';',0.7],['|',0.7]];
+  for(const [dl,need] of order){
+    const hits=lines.slice(0,30).filter(l=>l.indexOf(dl)>=0).length/Math.min(lines.length,30); if(hits<need) continue;
+    const rows=parseDelim(text,dl); if(rows.length<2) continue;
+    const cnt={}; rows.forEach(r=>{ cnt[r.length]=(cnt[r.length]||0)+1; }); const mode=+Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a])[0];
+    if(mode<2||cnt[mode]/rows.length<0.6) continue;
+    if(dl!=='\t'&&strict){ const hd=detectHeader(rows); if(!hd.has) continue; }  /* ข้อความวางที่คั่นด้วย , ต้องมีหัวตารางชัดเจน ไม่งั้นถือเป็นข้อความอิสระ */
+    return rows;
+  }
+  return null;
+}
+function htmlTables(html){
+  const doc=new DOMParser().parseFromString(String(html||''),'text/html');   /* DOMParser ไม่รันสคริปต์/ไม่โหลดรูป */
+  return Array.from(doc.querySelectorAll('table')).map((t,i)=>({name:'Table '+(i+1),rows:Array.from(t.rows).map(tr=>{ const a=[]; Array.from(tr.cells).forEach(c=>{ a.push(cleanTxt(c.innerText!=null&&c.innerText!==''?c.innerText:c.textContent,5000)); for(let k=1;k<Math.min(+c.colSpan||1,20);k++) a.push(''); }); return a; }).filter(r=>r.some(c=>c!==''))})).filter(s=>s.rows.length);
+}
+async function readFile(f){
+  if(!f) throw new Error('ไม่พบไฟล์');
+  if(!FILE_OK.test(f.name)) throw new Error('ไม่รองรับไฟล์ “'+f.name+'” — ใช้ได้เฉพาะ .xlsx .xlsm .xls .csv .tsv .txt');
+  if(!f.size) throw new Error('ไฟล์ว่างเปล่า');
+  if(f.size>MAX_BYTES) throw new Error('ไฟล์ใหญ่เกิน 5 MB ('+(f.size/1048576).toFixed(1)+' MB) — ตัดเฉพาะแถวที่ต้องการแล้วลองใหม่');
+  const buf=await f.arrayBuffer(), u=new Uint8Array(buf.slice(0,8));
+  const isZip=u[0]===0x50&&u[1]===0x4B, isOle=u[0]===0xD0&&u[1]===0xCF&&u[2]===0x11&&u[3]===0xE0;
+  if(/\.(xlsx|xlsm)$/i.test(f.name)||isZip){
+    if(!isZip) throw new Error('ไฟล์นี้ไม่ใช่ .xlsx ที่ถูกต้อง (หรือไฟล์เสียหาย)');
+    if(typeof window.__qeXlsxRows!=='function') throw new Error('ไม่พบตัวอ่าน .xlsx ของระบบ');
+    const sheets=await window.__qeXlsxRows(buf);
+    return sheets.map((rows,i)=>({name:'Sheet '+(i+1),rows:(rows||[]).filter(r=>r&&r.some(c=>String(c==null?'':c).trim()!==''))})).filter(s=>s.rows.length);
+  }
+  if(isOle){
+    if(window.XLSX&&window.XLSX.read){ const wb=window.XLSX.read(buf,{type:'array'}); return wb.SheetNames.map(n=>({name:n,rows:window.XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,raw:true,defval:''})})).filter(s=>s.rows.length); }
+    throw new Error('ไฟล์ .xls รุ่นเก่า (Excel 97-2003) อ่านใน Browser โดยไม่มีไลบรารีไม่ได้ — เปิดใน Excel แล้ว Save As เป็น .xlsx หรือคัดลอกตารางมาวางในช่องข้อความ');
+  }
+  const text=decodeText(buf);
+  if(/<table[\s>]/i.test(text.slice(0,200000))){ const t=htmlTables(text); if(t.length) return t; }
+  if(/[\u0000-\u0008]/.test(text.slice(0,2000))) throw new Error('ไฟล์นี้ไม่ใช่ข้อความหรือตาราง (อาจเป็นไฟล์ Binary) — ตรวจชนิดไฟล์อีกครั้ง');
+  const rows=textToTable(text,false);
+  if(rows) return [{name:f.name,rows:rows}];
+  return [{name:f.name,text:text}];
+}
+
+/* ---------- ตรวจหัวตาราง + Mapping ---------- */
+function hdrMatch(h){
+  const x=nh(h); if(!x||x.length>40) return null; let best=null;
+  Object.keys(SYN).forEach(k=>SYN[k].forEach(sy=>{
+    let sc=0; if(x===sy) sc=1; else if(sy.length>=3&&x.indexOf(sy)>=0) sc=0.6+Math.min(sy.length,12)/60; else if(x.length>=3&&sy.indexOf(x)>=0&&x.length/sy.length>=0.6) sc=0.55;
+    if(sc&&(!best||sc>best.sc||(sc===best.sc&&sy.length>best.len))) best={k:k,sc:sc,len:sy.length,sy:sy}; }));
+  if(best&&best.k==='due'){ if(/(เดิม|original|old|initial|first)/i.test(h)) best.sc-=0.2; if(/(ปัจจุบัน|current|latest|revised|new)/i.test(h)) best.sc+=0.08; }
+  return best;
+}
+function isDateLike(v){ return !!pDate(v); }
+function detectHeader(rows){
+  let best={i:-1,n:0};
+  for(let i=0;i<Math.min(rows.length,10);i++){ const r=rows[i]||[]; let n=0, txt=0, ne=0;
+    r.forEach(c=>{ const s=String(c==null?'':c).trim(); if(!s) return; ne++; if(typeof c!=='number'&&!isDateLike(c)) txt++; const m=hdrMatch(s); if(m&&m.sc>=0.6) n++; });
+    if(ne&&txt/ne>=0.8&&n>best.n) best={i:i,n:n}; }
+  if(best.n>=2||(best.n===1&&rows.length>1&&(rows[best.i]||[]).filter(c=>String(c).trim()).length<=2)) return {has:true,row:best.i,n:best.n};
+  return {has:false,row:-1,n:0};
+}
+function colStats(rows,ci){
+  const v=rows.map(r=>r[ci]).filter(x=>x!=null&&String(x).trim()!==''), n=v.length||1, ow=knownOwners().map(x=>x.toLowerCase());
+  const s=v.map(x=>String(x).trim());
+  return {ne:v.length,
+    date:v.filter(isDateLike).length/n,
+    st:s.filter(x=>DONE_RE.test(x)||OPEN_RE.test(x)).length/n,
+    cat:s.filter(x=>pCat(x)).length/n,
+    own:s.filter(x=>ow.indexOf(x.toLowerCase())>=0).length/n,
+    len:s.reduce((a,x)=>a+x.length,0)/n,
+    distinct:new Set(s.map(x=>x.toLowerCase())).size/n,
+    code:s.filter(x=>/^[A-Za-z0-9][A-Za-z0-9\-_\/. ]{1,24}$/.test(x)&&/\d/.test(x)&&/[A-Za-z\-]/.test(x)&&x.split(' ').length<=3).length/n,
+    num:v.filter(x=>typeof x==='number'||/^-?\d+(\.\d+)?$/.test(String(x).trim())).length/n,
+    name:s.filter(x=>x.length<=25&&x.split(/\s+/).length<=3&&!/\d/.test(x)).length/n,
+    caps:s.filter(x=>/^[A-Z][A-Z0-9&.\- ]{1,20}$/.test(x)).length/n,
+    samples:s.slice(0,3)};
+}
+const confOf=sc=>sc>=0.85?'H':sc>=0.6?'M':'L';
+const CONF_N={H:'High',M:'Medium',L:'Low'};
+function autoMap(rows,hasHeader,hdrRow){
+  const body=hasHeader?rows.slice(hdrRow+1):rows;
+  const ncol=Math.min(MAX_COLS,rows.reduce((a,r)=>Math.max(a,r.length),0));
+  const cols=[];
+  for(let ci=0;ci<ncol;ci++){ const h=hasHeader?String((rows[hdrRow]||[])[ci]==null?'':(rows[hdrRow]||[])[ci]).trim():''; cols.push({ci:ci,h:h,st:colStats(body,ci),field:'',sc:0,why:''}); }
+  const used={};
+  /* 1) จากชื่อหัวคอลัมน์ + ตรวจเนื้อหาประกอบ */
+  if(hasHeader){
+    const cand=[];
+    cols.forEach(c=>{ if(!c.st.ne) return; const m=hdrMatch(c.h); if(!m) return; let sc=m.sc;
+      if(m.k==='date'||m.k==='due'){ if(c.st.date>=0.6) sc+=0.1; else if(c.st.date<0.3) sc*=0.5; }
+      if(m.k==='status'&&c.st.st>=0.6) sc+=0.1; if(m.k==='pri'&&c.st.cat>=0.6) sc+=0.1; if(m.k==='owner'&&c.st.own>=0.5) sc+=0.1;
+      cand.push({c:c,k:m.k,sc:Math.min(1,sc),why:'หัวคอลัมน์ “'+c.h+'” ตรงกับ '+FN(m.k)+(m.sc>=1?' (ตรงทุกตัวอักษร)':' (ใกล้เคียง)')}); });
+    cand.sort((a,b)=>b.sc-a.sc).forEach(x=>{ if(x.c.field) return; const multi=(FIELDS.find(f=>f.k===x.k)||{}).multi; if(used[x.k]&&!multi) return; if(used[x.k]&&multi&&x.k!=='remark') return; x.c.field=x.k; x.c.sc=x.sc; x.c.why=x.why; used[x.k]=1; });
+  }
+  /* 2) วิเคราะห์จากเนื้อหาสำหรับคอลัมน์ที่เหลือ */
+  const free=()=>cols.filter(c=>!c.field&&c.st.ne);
+  const set=(c,k,sc,why)=>{ c.field=k; c.sc=sc; c.why=why; used[k]=1; };
+  free().filter(c=>c.st.date>=0.6).forEach(c=>{ if(!used.date) set(c,'date',hasHeader?0.5:0.55,'เนื้อหาเป็นวันที่ '+Math.round(c.st.date*100)+'% (คอลัมน์วันที่แรก → วันที่แจ้ง)'); else if(!used.due) set(c,'due',hasHeader?0.5:0.55,'เนื้อหาเป็นวันที่ (คอลัมน์วันที่ที่สอง → Due Date)'); });
+  free().forEach(c=>{ if(c.st.st>=0.6&&!used.status) set(c,'status',0.7,'ค่าส่วนใหญ่เป็นคำสถานะ เช่น Done / In Progress'); });
+  free().forEach(c=>{ if(c.st.cat>=0.6&&!used.pri) set(c,'pri',0.65,'ค่าส่วนใหญ่เป็นประเภทงาน เช่น PCR / Claim'); });
+  free().forEach(c=>{ if(c.st.own>=0.5&&!used.owner) set(c,'owner',0.8,'ตรงกับชื่อผู้แจ้งที่มีอยู่ใน Tracker '+Math.round(c.st.own*100)+'%'); });
+  free().forEach(c=>{ if(c.st.code>=0.6&&c.st.num<0.6&&!used.model) set(c,'model',0.5,'รูปแบบเหมือนรหัสรุ่น/ชิ้นงาน (ตัวอักษร+ตัวเลข)'); });
+  const texts=free().filter(c=>c.st.num<0.6&&c.st.date<0.6).sort((a,b)=>b.st.len-a.st.len);
+  if(!used.issue&&texts[0]&&texts[0].st.len>=8){ set(texts[0],'issue',0.6,'ข้อความยาวที่สุด (เฉลี่ย '+Math.round(texts[0].st.len)+' ตัวอักษร) → ปัญหา'); }
+  free().forEach(c=>{ if(!used.owner&&c.st.name>=0.8&&c.st.len<=20&&c.st.num<0.3) set(c,'owner',0.45,'ข้อความสั้นคล้ายชื่อคน (ไม่มั่นใจ)'); });
+  free().forEach(c=>{ if(!used.customer&&c.st.caps>=0.7&&c.st.distinct<=0.6&&c.st.len<=15) set(c,'customer',0.4,'ตัวพิมพ์ใหญ่สั้น ๆ ซ้ำกันหลายแถว คล้ายชื่อลูกค้า (ไม่มั่นใจ)'); });
+  const t2=free().filter(c=>c.st.num<0.6&&c.st.date<0.6&&c.st.len>=12).sort((a,b)=>b.st.len-a.st.len);
+  if(!used.cm&&t2[0]&&used.issue) set(t2[0],'cm',0.4,'ข้อความยาวลำดับถัดไป → Countermeasure (ไม่มั่นใจ)');
+  free().forEach(c=>{ if(c.st.num>=0.8&&c.st.len<=5){ c.why='ตัวเลขลำดับ/จำนวน — ไม่นำเข้า'; return; } c.field='remark'; c.sc=0.35; c.why='ไม่ทราบความหมาย → รวมเป็น Remark (เปลี่ยนได้)'; });
+  return {cols:cols,body:body.slice(0,MAX_ROWS),total:body.length};
+}
+
+/* ---------- แยกข้อความอิสระทีละบรรทัด ---------- */
+const TL='(?:\\s*[:：=]|\\s+)';   /* ป้ายภาษาไทย: ตามด้วย : หรือเว้นวรรค */
+const LBL=[
+  ['due',/^(?:due(?:\s*date)?|deadline|target(?:\s*date)?|กำหนดเสร็จ|กำหนดส่ง|ครบกำหนด|กำหนด|ภายใน(?:วันที่)?|by)\s*[:：=]?\s*(.+)$/i],
+  ['date',/^(?:received(?:\s*date)?|date|วันที่แจ้ง|วันที่รับ|วันที่|แจ้งเมื่อ)\s*[:：=]?\s*(.+)$/i],
+  ['owner',new RegExp('^(?:(?:owner|pic|requester|reporter|responsible|assignee|assigned to)\\s*[:：=]|(?:ผู้รับผิดชอบ|ผู้แจ้ง|ผู้ดำเนินการ)'+TL+'|(?:by|โดย)(?=\\s))\\s*(.+)$','i')],
+  ['cm',new RegExp('^(?:(?:countermeasure|c/m|cm|action|corrective action)\\s*[:：=]|(?:มาตรการแก้ไข|มาตรการ|แนวทางแก้ไข|วิธีแก้ไข|วิธีแก้)'+TL+')\\s*(.+)$','i')],
+  ['customer',new RegExp('^(?:(?:customer|cust)\\s*[:：=]|ลูกค้า'+TL+')\\s*(.+)$','i')],
+  ['model',new RegExp('^(?:(?:model|part(?:\\s*no)?|p/n)\\s*[:：=]|(?:รุ่น|ชิ้นงาน)'+TL+')\\s*(.+)$','i')],
+  ['status',new RegExp('^(?:status\\s*[:：=]|สถานะ'+TL+')\\s*(.+)$','i')],
+  ['pri',new RegExp('^(?:(?:category|type)\\s*[:：=]|(?:ประเภทงาน|ประเภท|หมวด)'+TL+')\\s*(.+)$','i')],
+  ['remark',new RegExp('^(?:(?:remark|note)\\s*[:：=]|หมายเหตุ'+TL+')\\s*(.+)$','i')],
+  ['issue',new RegExp('^(?:(?:issue|problem)\\s*[:：=]|(?:ปัญหา|หัวข้อ)'+TL+')\\s*(.+)$','i')]
+];
+function parseLine(line,owners){
+  const v={}, cf={}, rest=[];
+  const toks=line.split(/\s*[;|]\s*|\s*,\s+|\s*,(?=\D)|\s+[-–—]\s+/).map(t=>t.trim()).filter(Boolean);
+  toks.forEach((t,ti)=>{
+    for(const [k,re] of LBL){ const m=re.exec(t); if(!m) continue; const val=String(m[1]||'').trim(); if(!val) continue;
+      if(k==='due'||k==='date'){ if(pDate(val)){ if(!v[k]){ v[k]=val; cf[k]='H'; } return; } continue; }
+      if(k==='owner'&&pDate(val)) continue;
+      if(!v[k]){ v[k]=val; cf[k]='H'; } else v[k]+=' / '+val; return; }
+    const at=/^@([^\s,]{2,30})$/.exec(t); if(at&&!v.owner){ v.owner=at[1]; cf.owner='H'; return; }
+    if(pDate(t)&&t.length<=24){ if(!v.due){ v.due=t; cf.due='L'; return; } if(!v.date){ v.date=t; cf.date='L'; return; } }
+    if(!v.status&&(DONE_RE.test(t)||OPEN_RE.test(t))&&t.length<=20){ v.status=t; cf.status='M'; return; }
+    if(!v.pri&&PRI_N[t.toLowerCase()]){ v.pri=t; cf.pri='M'; return; }
+    if(ti>0&&!v.owner){ const lo=t.toLowerCase().replace(/^(คุณ|k\.|khun\s)/i,''); const hit=owners.find(o=>o.toLowerCase()===lo);
+      if(hit){ v.owner=hit; cf.owner='H'; return; }
+      if(/^[A-Za-zก-๙][A-Za-zก-๙.]{1,20}$/.test(t)&&!/^(and|or|the|pending|wait|และ|หรือ)$/i.test(t)){ v.owner=t.replace(/^(คุณ|k\.)/i,''); cf.owner='L'; return; } }
+    rest.push(t);
+  });
+  if(rest.length){ v.issue=(v.issue?v.issue+' / ':'')+rest.join(', '); cf.issue=cf.issue||'M'; }
+  if(!v.pri&&v.issue){ const c=pCat(/\bpcr\b/i.test(v.issue)?'pcr':/claim|complaint|เคลม/i.test(v.issue)?'claim':''); if(c){ v.pri=PRI_N[c]; cf.pri='L'; } }
+  return {v:v,cf:cf};
+}
+function parseFreeText(text){
+  const owners=knownOwners(), out=[];
+  String(text||'').replace(/\r/g,'').split('\n').map(l=>l.replace(/^\s*(?:[-•*▪●○]|\d{1,3}[.)])\s+/,'').trim()).filter(Boolean).slice(0,MAX_ROWS).forEach(l=>{
+    const r=parseLine(cleanTxt(l,5000),owners);
+    if(!r.v.issue&&out.length&&Object.keys(r.v).length){ const p=out[out.length-1]; Object.keys(r.v).forEach(k=>{ if(!p.v[k]){ p.v[k]=r.v[k]; p.cf[k]=r.cf[k]; } else if(k==='cm'||k==='remark') p.v[k]+=' / '+r.v[k]; }); return; }
+    out.push(r);
+  });
+  return out;
+}
+
+/* ---------- สร้างแถว Preview + Validate ---------- */
+let S=null, lastImport=null;
+function buildRowsFromTable(){
+  const t=S.map, out=[];
+  t.body.forEach((r,ri)=>{
+    const v={}, cf={};
+    t.cols.forEach(c=>{ if(!c.field) return; let x=r[c.ci]; if(x==null||String(x).trim()==='') return;
+      if((c.field==='date'||c.field==='due')&&typeof x==='number'){ const d=pDate(x); x=d?FMT(d.s):String(x); }
+      x=cleanTxt(x,5000);
+      if(c.field==='remark'&&t.cols.filter(z=>z.field==='remark').length>1&&c.h) x=c.h+': '+x;
+      if(v[c.field]) v[c.field]+=(c.field==='remark'?' · ':' / ')+x; else v[c.field]=x;
+      cf[c.field]=cf[c.field]?(cf[c.field]<confOf(c.sc)?cf[c.field]:confOf(c.sc)):confOf(c.sc); });
+    out.push({n:(S.hdr.has?S.hdr.row+2:1)+ri,v:v,cf:cf,sel:true});
+  });
+  return out;
+}
+function validate(row){
+  const v=row.v, o={}, err=[], warn=[]; let extra=[];
+  const defOwner=cleanTxt(S.defOwner,200);
+  o.issue=cleanTxt(v.issue,5000); if(!o.issue) err.push('ไม่มี “ปัญหา (Issue)”');
+  o.owner=cleanTxt(v.owner,200); if(!o.owner){ if(defOwner){ o.owner=defOwner; warn.push('ไม่มีผู้รับผิดชอบ → ใช้ค่าเริ่มต้น “'+defOwner+'”'); } else err.push('ไม่มีผู้รับผิดชอบ (ใส่ค่าเริ่มต้นด้านบนได้)'); }
+  o.cm=cleanTxt(v.cm,5000);
+  const t=TODAY();
+  if(v.date){ const d=pDate(v.date); if(d){ o.date=d.s; if(d.amb) warn.push('วันที่แจ้ง “'+v.date+'” อ่านเป็น วัน/เดือน (ตรวจสอบ)'); } else { o.date=t; warn.push('อ่านวันที่แจ้ง “'+v.date+'” ไม่ได้ → ใช้วันนี้'); extra.push('วันที่แจ้งเดิม: '+v.date); } }
+  else { o.date=t; warn.push('ไม่มีวันที่แจ้ง → ใช้วันนี้'); }
+  o.due='';
+  if(v.due){ const d=pDate(v.due); if(d){ o.due=d.s; if(d.amb) warn.push('Due “'+v.due+'” อ่านเป็น วัน/เดือน (ตรวจสอบ)'); } else { warn.push('อ่าน Due “'+v.due+'” ไม่ได้ → เว้นว่าง'); extra.push('Due เดิม: '+v.due); } }
+  else warn.push('ไม่มี Due Date');
+  if(o.date&&(+o.date.slice(0,4)<YMIN||+o.date.slice(0,4)>YMAX)) err.push('ปีของวันที่แจ้งอยู่นอกช่วงที่ระบบรองรับ ('+(YMIN+543)+'–'+(YMAX+543)+')');
+  if(o.due&&(+o.due.slice(0,4)<YMIN||+o.due.slice(0,4)>YMAX)) err.push('ปีของ Due อยู่นอกช่วงที่ระบบรองรับ');
+  if(o.due&&o.date&&o.due<o.date) warn.push('Due อยู่ก่อนวันที่แจ้ง');
+  const st=pStatus(v.status); o.status=st?st.st:'In Progress'; if(st&&!st.known){ warn.push('สถานะ “'+v.status+'” ไม่ตรงมาตรฐาน → '+o.status); extra.push('สถานะเดิม: '+v.status); }
+  if(v.pri){ const c=pCat(v.pri); if(c) o.pri=c; else { warn.push('Category “'+v.pri+'” ไม่ตรงประเภทของระบบ → เก็บใน Remark'); extra.push('Category: '+v.pri); } }
+  if(v.customer) o.customer=cleanTxt(v.customer,200);
+  if(v.model) o.model=cleanTxt(v.model,200);
+  const rm=[cleanTxt(v.remark,1000)].concat(extra).filter(Boolean).join(' · '); if(rm) o.remark=rm.slice(0,1000);
+  if(o.status==='Done'&&o.due&&o.due<=t) o.doneDate=o.due;
+  row.out=o; row.err=err; row.warn=warn;
+  return row;
+}
+function markDup(){
+  const ex=new Map(); ITEMS().forEach(d=>ex.set(norm(d.issue)+'|'+norm(d.owner),d));
+  const seen=new Set();
+  S.rows.forEach(r=>{ r.dup=''; if(!r.out||!r.out.issue) return; const k=norm(r.out.issue)+'|'+norm(r.out.owner);
+    const d=ex.get(k); if(d) r.dup='ซ้ำกับรายการเดิม (วันที่แจ้ง '+FMT(d.date)+', '+d.status+')';
+    else if(seen.has(k)) r.dup='ซ้ำกับแถวก่อนหน้าในไฟล์นี้';
+    seen.add(k); });
+}
+function rebuild(keepSel){
+  const prev=keepSel?new Map(S.rows.map(r=>[r.n,r.sel])):null;
+  S.rows=S.mode==='table'?buildRowsFromTable():S.free.map((r,i)=>({n:i+1,v:Object.assign({},r.v),cf:Object.assign({},r.cf),sel:true}));
+  S.rows.forEach(validate); markDup();
+  S.rows.forEach(r=>{ r.sel=!r.err.length&&!r.dup; if(prev&&prev.has(r.n)&&!r.err.length) r.sel=prev.get(r.n); });
+}
+
+/* ---------- UI ---------- */
+let IMP=null;
+function impMsg(t,k){ if(!IMP) return; const m=IMP.querySelector('#qiMsg'); if(m){ m.textContent=t; m.className='v63-msg '+(k||''); } }
+function tplRows(){
+  const t=TODAY(), d7=(()=>{ const d=new Date(+t.slice(0,4),+t.slice(5,7)-1,+t.slice(8,10)+7); return ymdOf(d.getFullYear(),d.getMonth()+1,d.getDate()); })();
+  const F=s=>{ const [y,m,d]=s.split('-'); return +d+'-'+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+m-1]+'-'+y; };
+  return [['Received Date','Owner','Issue','Customer','Model / Part','Countermeasure','Due Date','Status','Category','Remark'],
+    [F(t),'Mana','Customer PCR approval pending','TOYOTA','AS-288','Follow up approval with customer QA',F(d7),'In Progress','PCR','ตัวอย่าง — ลบแถวนี้ก่อนนำเข้า'],
+    [F(t),'Natcha','Hall IC forming deformation (line 4)','ADVICS','89xxx-xxxxx','Adjust forming jig + 100% visual check',F(d7),'In Progress','In-house','ตัวอย่าง — ลบแถวนี้ก่อนนำเข้า']];
+}
+function downloadTemplate(){
+  const csv='\ufeff'+tplRows().map(r=>r.map(c=>window.qeCsvCell?window.qeCsvCell(c):'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\r\n');
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})); a.download='QE_Tracker_Import_Template.csv'; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },500);
+  say('📄 ดาวน์โหลด Template แล้ว — เปิดด้วย Excel ได้เลย');
+}
+function tplHtml(){
+  return '<div class="v63-tpl" id="qiTplView" hidden><b>ชื่อหัวคอลัมน์ที่ระบบรู้จัก</b> (ไม่ต้องเรียงลำดับ · ไม่ต้องครบทุกคอลัมน์ · ใช้ชื่อไทย/อังกฤษได้)<table><thead><tr><th>ช่องใน Tracker</th><th>ตัวอย่างหัวคอลัมน์ที่ใช้ได้</th></tr></thead><tbody>'+
+    [['date','Received Date, Date, Issue Date, วันที่แจ้ง, วันที่'],['owner','Owner, Requester, PIC, Responsible, ผู้แจ้ง, ผู้รับผิดชอบ'],['issue','Issue, Problem, Topic, Description, ปัญหา, หัวข้อ, รายละเอียด'],['customer','Customer, Client, ลูกค้า'],['model','Model, Part No, P/N, รุ่น, ชิ้นงาน'],['cm','Countermeasure, C/M, Action, Corrective Action, มาตรการ, การแก้ไข'],['due','Due Date, Deadline, Target, กำหนดเสร็จ, ครบกำหนด'],['status','Status, สถานะ (Done / In Progress / เสร็จ / ปิด / รอ …)'],['pri','Category, Type, ประเภท (PCR / Claim / Urgent / New / In-house / Activity)'],['remark','Remark, Note, Comment, หมายเหตุ']]
+      .map(r=>'<tr><td><b>'+E(FN(r[0]))+'</b></td><td>'+E(r[1])+'</td></tr>').join('')+
+    '</tbody></table><div class="v63-sub" style="margin-top:6px">รูปแบบวันที่ที่อ่านได้: 30-Oct-2026 · 30/10/2026 (วัน/เดือน) · 2026-10-30 · 30 ต.ค. 69 · ปี พ.ศ. · วันที่จาก Excel โดยตรง — แนะนำ “30-Oct-2026” เพื่อไม่ให้สับสนวัน/เดือน</div></div>';
+}
+function openImport(){
+  if(RO()){ roBlock(); return; }
+  if(IMP){ IMP._close(); }
+  S=null;
+  IMP=modal(
+    '<div class="v63-hd"><h3>📥 Smart Import → Tracker</h3><button type="button" class="v63-x" data-q="close" title="ปิด (Esc)" aria-label="ปิด">✕</button></div>'+
+    '<div id="qiStep1">'+
+      '<div class="v63-sub">ไม่ต้องจัดรูปแบบตาม Template — ระบบอ่านหัวคอลัมน์และเนื้อหาให้อัตโนมัติ แล้วแสดง <b>Preview + Mapping</b> ให้ตรวจก่อนทุกครั้ง <b>จะยังไม่บันทึกจนกว่าจะกด “ยืนยัน Import”</b></div>'+
+      '<div class="v63-drop" id="qiZone" tabindex="0" role="button" aria-label="ลากไฟล์มาวาง หรือกดเพื่อเลือกไฟล์" title="รองรับ .xlsx .xlsm .csv .tsv .txt (.xls รุ่นเก่า: Save As เป็น .xlsx) · สูงสุด 5 MB"><b>📂 ลากไฟล์มาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์</b><small>.xlsx · .xlsm · .csv · .tsv · .txt · (.xls รุ่นเก่า: Save As เป็น .xlsx) · สูงสุด 5 MB · '+MAX_ROWS+' แถว/ครั้ง</small></div>'+
+      '<input type="file" id="qiFile" accept=".xlsx,.xlsm,.xls,.csv,.tsv,.txt" hidden>'+
+      '<label for="qiText" style="font-size:13px;font-weight:700">หรือวางข้อความ / ตารางที่ Copy จาก Excel (Ctrl+V)</label>'+
+      '<textarea id="qiText" rows="4" maxlength="200000" placeholder="ตัวอย่าง (1 บรรทัด = 1 งาน):\nCustomer PCR approval pending, Mana, Due 30-Oct-2026\nHall IC forming NG, Natcha, CM: adjust jig, Due 5-Nov-2026"></textarea>'+
+      '<div class="v63-row"><button type="button" class="btn-p" data-q="analyze" title="วิเคราะห์ข้อความ/ตารางที่วางไว้">🔍 วิเคราะห์ข้อความ</button><button type="button" class="btn-g" data-q="tpl" title="ดาวน์โหลด Template (CSV เปิดด้วย Excel) — ใช้เมื่ออยากให้แม่นยำ 100%">📄 Download Template</button><button type="button" class="btn-g" data-q="tplview" title="ดูชื่อหัวคอลัมน์ที่ระบบรู้จัก">👁 ดู Template / หัวคอลัมน์ที่รองรับ</button></div>'+
+      tplHtml()+
+    '</div>'+
+    '<div id="qiStep2" hidden></div>'+
+    '<div class="v63-msg" id="qiMsg" role="status" aria-live="polite"></div>','wide');
+  const zone=IMP.querySelector('#qiZone'), fileIn=IMP.querySelector('#qiFile'), ta=IMP.querySelector('#qiText');
+  zone.addEventListener('click',()=>fileIn.click());
+  zone.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); fileIn.click(); } });
+  ['dragenter','dragover'].forEach(t=>zone.addEventListener(t,e=>{ e.preventDefault(); zone.classList.add('drag'); }));
+  ['dragleave','drop'].forEach(t=>zone.addEventListener(t,()=>zone.classList.remove('drag')));
+  zone.addEventListener('drop',e=>{ e.preventDefault(); const f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0]; if(f) loadFile(f); });
+  fileIn.addEventListener('change',()=>{ const f=fileIn.files&&fileIn.files[0]; fileIn.value=''; if(f) loadFile(f); });
+  ta.addEventListener('paste',e=>{
+    const cd=e.clipboardData; if(!cd) return; const html=cd.getData('text/html');
+    if(html&&/<table[\s>]/i.test(html)){ const t=htmlTables(html); if(t.length&&t[0].rows.length>=1){ e.preventDefault(); ta.value=cd.getData('text/plain')||''; startSheets(t,'ตารางที่วางจาก Excel'); } }
+  });
+  IMP.addEventListener('click',e=>{
+    const b=e.target.closest('[data-q]'); if(!b||b.disabled) return; const a=b.dataset.q;
+    if(a==='close'){ IMP._close(); IMP=null; }
+    else if(a==='tpl') downloadTemplate();
+    else if(a==='tplview'){ const v=IMP.querySelector('#qiTplView'); v.hidden=!v.hidden; }
+    else if(a==='analyze') analyzeText(ta.value);
+    else if(a==='back'){ IMP.querySelector('#qiStep2').hidden=true; IMP.querySelector('#qiStep1').hidden=false; S=null; impMsg(''); }
+    else if(a==='commit') commit();
+    else if(a==='undo') undoImport();
+    else if(a==='goto'){ IMP._close(); IMP=null; try{ const t=g('tabT'); if(t&&g('viewTracker').style.display==='none') t.click(); }catch(err){} const id=lastImport&&lastImport.ids[0]; if(id!=null) setTimeout(()=>{ try{ goToItem(id); }catch(err){} },250); }
+    else if(a==='all'||a==='none'||a==='ready'){ S.rows.forEach(r=>{ r.sel=a==='none'?false:(a==='all'?!r.err.length:(!r.err.length&&!r.dup&&!r.warn.length)); }); drawPreview(); }
+    else if(a==='flt'){ S.flt=b.dataset.f; drawPreview(); }
+  });
+  setTimeout(()=>zone.focus(),30);
+  return IMP;
+}
+async function loadFile(f){
+  impMsg('⏳ กำลังอ่านไฟล์ '+f.name+' …','busy');
+  try{
+    const sheets=await readFile(f);
+    if(!sheets.length) throw new Error('ไม่พบข้อมูลในไฟล์');
+    if(sheets.length===1&&sheets[0].text!=null){ analyzeText(sheets[0].text,f.name); return; }
+    startSheets(sheets,f.name);
+  }catch(e){ impMsg('❌ '+String(e.message||e),'err'); }
+}
+function analyzeText(text,src){
+  text=String(text||''); if(!text.trim()){ impMsg('⚠️ ยังไม่มีข้อความให้วิเคราะห์','err'); return; }
+  if(text.length>200000){ impMsg('❌ ข้อความยาวเกินไป (สูงสุด 200,000 ตัวอักษร)','err'); return; }
+  const rows=textToTable(text,!src||/\.txt$/i.test(src||''));
+  if(rows){ startSheets([{name:src||'ข้อความที่วาง',rows:rows}],src||'ข้อความที่วาง (ตาราง)'); return; }
+  const free=parseFreeText(text); if(!free.length){ impMsg('❌ ไม่พบข้อมูลที่นำเข้าได้','err'); return; }
+  S={mode:'text',src:src||'ข้อความที่วาง',free:free,defOwner:ME()||'',flt:'all',hdr:{has:false}};
+  rebuild(false); showStep2();
+}
+function startSheets(sheets,src){
+  sheets=sheets.map(s=>({name:s.name,rows:(s.rows||[]).map(r=>Array.from(r||[],c=>c==null?'':c).slice(0,MAX_COLS))})).filter(s=>s.rows.length);
+  if(!sheets.length){ impMsg('❌ ไม่พบข้อมูลในไฟล์/ตาราง','err'); return; }
+  let si=0; sheets.forEach((s,i)=>{ if(s.rows.length>sheets[si].rows.length) si=i; });
+  S={mode:'table',src:src,sheets:sheets,si:si,defOwner:ME()||'',flt:'all'};
+  setSheet(si,null);
+}
+function setSheet(si,forceHdr){
+  S.si=si; const rows=S.sheets[si].rows;
+  const hd=detectHeader(rows); S.autoHdr=hd.has;
+  S.hdr=forceHdr==null?hd:(forceHdr?{has:true,row:hd.has?hd.row:0}:{has:false,row:-1});
+  S.map=autoMap(rows,S.hdr.has,S.hdr.row);
+  rebuild(false); showStep2();
+}
+function showStep2(){
+  IMP.querySelector('#qiStep1').hidden=true; const st=IMP.querySelector('#qiStep2'); st.hidden=false;
+  impMsg('');
+  const lowCols=S.mode==='table'?S.map.cols.filter(c=>c.field&&confOf(c.sc)==='L').length:0;
+  let h='<div class="v63-src">📄 <b>'+E(S.src)+'</b>';
+  if(S.mode==='table'){
+    if(S.sheets.length>1) h+='<label>Sheet <select id="qiSheet" title="เลือก Sheet">'+S.sheets.map((s,i)=>'<option value="'+i+'"'+(i===S.si?' selected':'')+'>'+E(s.name)+' ('+s.rows.length+' แถว)</option>').join('')+'</select></label>';
+    h+='<span>'+S.map.total+' แถวข้อมูล'+(S.map.total>MAX_ROWS?' — <b style="color:var(--t-dang)">แสดง/นำเข้าได้ '+MAX_ROWS+' แถวแรก</b>':'')+'</span>';
+    h+='<label title="ระบบตรวจพบอัตโนมัติ — เปลี่ยนได้ถ้าไม่ถูกต้อง"><input type="checkbox" id="qiHdr"'+(S.hdr.has?' checked':'')+'> แถวแรกของตารางเป็นหัวคอลัมน์ '+(S.autoHdr?'<small>(ตรวจพบอัตโนมัติ)</small>':'<small>(ไม่พบหัวตาราง → วิเคราะห์จากเนื้อหา)</small>')+'</label>';
+  } else h+='<span>วิเคราะห์จากข้อความทีละบรรทัด (1 บรรทัด = 1 งาน) · ช่องสีส้ม/แดง = ระบบไม่มั่นใจ แก้ได้ในตาราง</span>';
+  h+='<button type="button" class="btn-g v63-ib" data-q="back" title="กลับไปเลือกไฟล์/ข้อความใหม่">↩ เลือกใหม่</button></div>';
+  if(S.mode==='table'){
+    h+='<div class="v63-sub" style="margin-top:6px"><b>Mapping</b> — ระบบจับคู่คอลัมน์ให้แล้ว เปลี่ยนได้จาก Dropdown · Confidence: <span class="v63-cf H">High</span><span class="v63-cf M">Medium</span><span class="v63-cf L">Low</span>'+(lowCols?' · <b style="color:var(--t-dang)">มี '+lowCols+' คอลัมน์ที่ไม่มั่นใจ — โปรดตรวจ</b>':'')+'</div>';
+    h+='<div class="v63-map" id="qiMap">'+S.map.cols.map(c=>{ const cf=c.field?confOf(c.sc):''; return '<div class="v63-col'+(c.field?'':' ig')+'" title="'+E(c.why||'')+'"><div class="h">'+E(c.h||('คอลัมน์ '+colName(c.ci)))+(cf?'<span class="v63-cf '+cf+'" title="'+E(c.why)+'">'+CONF_N[cf]+'</span>':'')+'</div><div class="s">'+E(c.st.samples.join(' · ')||'(ว่าง)')+'</div><select data-ci="'+c.ci+'" aria-label="จับคู่คอลัมน์ '+E(c.h||colName(c.ci))+'">'+FIELDS.map(f=>'<option value="'+f.k+'"'+(f.k===c.field?' selected':'')+'>'+E(f.n)+'</option>').join('')+'</select></div>'; }).join('')+'</div>';
+  }
+  h+='<div class="v63-defs"><label for="qiDefOwner" title="ใช้เมื่อแถวไม่มีชื่อผู้รับผิดชอบ">ค่าเริ่มต้นเมื่อไม่มีผู้รับผิดชอบ:</label><input id="qiDefOwner" list="ownerList" value="'+E(S.defOwner)+'" maxlength="200" placeholder="เช่น ชื่อคุณ"><span class="v63-sub">วันที่แจ้งว่าง → ใช้วันนี้ · สถานะว่าง → In Progress · ข้อมูลที่จับคู่ไม่ได้จะเก็บใน Remark (ไม่ทิ้งข้อมูล)</span></div>';
+  h+='<div class="v63-chips" id="qiChips"></div>';
+  h+='<div class="v63-tw"><table class="v63-pv" id="qiPv"></table></div>';
+  h+='<div class="v63-foot"><label title="ต้องติ๊กเมื่อมีคอลัมน์/ช่องที่ระบบไม่มั่นใจ"><input type="checkbox" id="qiAck"> ฉันตรวจสอบ Mapping และข้อมูลแล้ว</label><span class="grow" id="qiSum"></span><button type="button" class="btn-g" data-q="close">ยกเลิก</button><button type="button" class="btn-p" data-q="commit" id="qiCommit" title="บันทึกเฉพาะแถวที่เลือกเข้า Tracker">✅ ยืนยัน Import</button></div>';
+  st.innerHTML=h;
+  const sh=st.querySelector('#qiSheet'); if(sh) sh.addEventListener('change',()=>setSheet(+sh.value,null));
+  const hc=st.querySelector('#qiHdr'); if(hc) hc.addEventListener('change',()=>setSheet(S.si,hc.checked));
+  const mp=st.querySelector('#qiMap'); if(mp) mp.addEventListener('change',e=>{ const s=e.target.closest('select[data-ci]'); if(!s) return; remap(+s.dataset.ci,s.value); });
+  st.querySelector('#qiDefOwner').addEventListener('change',e=>{ S.defOwner=e.target.value; S.rows.forEach(validate); markDup(); drawPreview(); });
+  st.querySelector('#qiAck').addEventListener('change',updFoot);
+  const pv=st.querySelector('#qiPv');
+  pv.addEventListener('change',e=>{
+    const t=e.target, tr=t.closest('tr[data-i]'); if(!tr) return; const r=S.rows[+tr.dataset.i]; if(!r) return;
+    if(t.type==='checkbox'){ if(r.err.length){ t.checked=false; return; } r.sel=t.checked; tr.classList.toggle('x',!r.sel); updFoot(); return; }
+    if(t.dataset.f){ r.v[t.dataset.f]=t.value; r.cf[t.dataset.f]='H'; validate(r); markDup(); if(r.err.length) r.sel=false; drawPreview(); }
+  });
+  drawPreview();
+}
+const colName=i=>{ let s=''; i++; while(i>0){ const m=(i-1)%26; s=String.fromCharCode(65+m)+s; i=Math.floor((i-1)/26); } return s; };
+function remap(ci,k){
+  const c=S.map.cols.find(x=>x.ci===ci); if(!c) return;
+  const multi=(FIELDS.find(f=>f.k===k)||{}).multi;
+  if(k&&!multi){ S.map.cols.forEach(x=>{ if(x!==c&&x.field===k){ x.field=''; x.sc=0; x.why='ถูกแทนที่ด้วยคอลัมน์ '+(c.h||colName(ci)); say('↔ ย้าย '+FN(k)+' จากคอลัมน์ “'+(x.h||colName(x.ci))+'” มาที่ “'+(c.h||colName(ci))+'”'); } }); }
+  c.field=k; c.sc=k?1:0; c.why=k?'เลือกเองโดยผู้ใช้':'ไม่นำเข้า (เลือกโดยผู้ใช้)';
+  rebuild(true); showStep2();
+}
+const PV_COLS=[['date','วันที่แจ้ง','w-d'],['owner','ผู้รับผิดชอบ',''],['issue','ปัญหา (Issue)','w-issue'],['customer','Customer',''],['model','Model / Part',''],['cm','Countermeasure','w-cm'],['due','Due Date','w-d'],['status','Status',''],['pri','Category',''],['remark','Remark','w-cm']];
+function rowState(r){ return r.err.length?'err':r.dup?'dup':r.warn.length?'warn':'ok'; }
+function drawPreview(){
+  const pv=IMP&&IMP.querySelector('#qiPv'); if(!pv) return;
+  const cnt={all:S.rows.length,ok:0,warn:0,err:0,dup:0}; S.rows.forEach(r=>cnt[rowState(r)]++);
+  const fl=S.flt||'all';
+  IMP.querySelector('#qiChips').innerHTML=[['all','ทั้งหมด'],['ok','✅ พร้อม'],['warn','⚠️ มีคำเตือน'],['dup','♻️ ซ้ำ'],['err','❌ ผิดพลาด']].map(x=>'<button type="button" class="v63-chip'+(fl===x[0]?' on':'')+'" data-q="flt" data-f="'+x[0]+'" title="กรองแถวใน Preview">'+x[1]+' '+cnt[x[0]]+'</button>').join('')+
+    '<span style="flex:1"></span><button type="button" class="v63-chip" data-q="ready" title="เลือกเฉพาะแถวที่ไม่มีคำเตือน/ไม่ซ้ำ">เลือกเฉพาะที่พร้อม</button><button type="button" class="v63-chip" data-q="all" title="เลือกทุกแถวที่ไม่มีข้อผิดพลาด (รวมแถวซ้ำ)">เลือกทั้งหมด</button><button type="button" class="v63-chip" data-q="none" title="ไม่เลือกทุกแถว">ไม่เลือก</button>';
+  let h='<thead><tr><th title="เลือกแถวที่จะนำเข้า">✓</th><th>แถว</th><th>ผลตรวจ</th>'+PV_COLS.map(c=>'<th>'+E(c[1])+'</th>').join('')+'</tr></thead><tbody>';
+  S.rows.forEach((r,i)=>{
+    const s=rowState(r); if(fl!=='all'&&fl!==s) return;
+    const badge=s==='err'?'❌ ผิดพลาด':s==='dup'?'♻️ ซ้ำ':s==='warn'?'⚠️ ตรวจ':'✅ พร้อม';
+    const notes=[].concat(r.err,r.dup?[r.dup]:[],r.warn);
+    h+='<tr data-i="'+i+'" class="'+(r.sel?'':'x')+'"><td><input type="checkbox" aria-label="เลือกแถว '+r.n+'"'+(r.sel?' checked':'')+(r.err.length?' disabled title="แก้ข้อผิดพลาดก่อนจึงจะเลือกได้"':'')+'></td><td>'+r.n+'</td><td class="st" title="'+E(notes.join('\n'))+'">'+badge+(notes.length?'<small>'+E(notes.slice(0,2).join(' · '))+(notes.length>2?' …':'')+'</small>':'')+'</td>'+
+      PV_COLS.map(c=>{ const cf=r.cf[c[0]]; const val=r.v[c[0]]==null?'':String(r.v[c[0]]); const shown=(c[0]==='date'||c[0]==='due')&&r.out&&r.out[c[0]]?val:val;
+        const tip=(c[0]==='date'||c[0]==='due')&&r.out&&r.out[c[0]]?'อ่านได้เป็น '+FMT(r.out[c[0]]):(cf?'Confidence: '+CONF_N[cf]:'');
+        return '<td class="'+c[2]+'"><input type="text" data-f="'+c[0]+'" value="'+E(shown)+'" class="'+(cf==='L'?'L':cf==='M'&&S.mode==='text'?'M':'')+'" title="'+E(tip||val)+'" aria-label="'+E(c[1])+' แถว '+r.n+'"></td>'; }).join('')+'</tr>';
+  });
+  pv.innerHTML=h+'</tbody>';
+  updFoot();
+}
+function needAck(){ if(S.mode==='text') return true; if(!S.hdr.has) return true; if(S.map.cols.some(c=>c.field&&confOf(c.sc)==='L')) return true; return S.rows.some(r=>r.sel&&Object.values(r.cf).indexOf('L')>=0); }
+function updFoot(){
+  if(!IMP||!S) return; const sel=S.rows.filter(r=>r.sel&&!r.err.length), need=needAck(), ack=IMP.querySelector('#qiAck'), btn=IMP.querySelector('#qiCommit'), sum=IMP.querySelector('#qiSum');
+  if(S.mode==='table'&&!S.map.cols.some(c=>c.field==='issue')){ sum.innerHTML='<b style="color:var(--t-dang)">ยังไม่ได้เลือกคอลัมน์ “ปัญหา (Issue)”</b>'; btn.disabled=true; return; }
+  ack.closest('label').style.display=need?'':'none';
+  sum.innerHTML='จะนำเข้า <b>'+sel.length+'</b> จาก '+S.rows.length+' แถว · ซ้ำ '+S.rows.filter(r=>r.dup).length+' · ผิดพลาด '+S.rows.filter(r=>r.err.length).length+(need&&!ack.checked?' · <b style="color:var(--t-warn)">ระบบไม่มั่นใจบางส่วน — ติ๊ก “ตรวจสอบแล้ว” ก่อน</b>':'');
+  btn.textContent='✅ ยืนยัน Import ('+sel.length+')';
+  btn.disabled=!sel.length||(need&&!ack.checked);
+}
+function commit(){
+  if(RO()){ roBlock(); return; }
+  if(!S) return; const sel=S.rows.filter(r=>r.sel&&!r.err.length);
+  if(!sel.length){ impMsg('⚠️ ยังไม่ได้เลือกแถวที่จะนำเข้า','err'); return; }
+  if(needAck()&&!IMP.querySelector('#qiAck').checked){ impMsg('⚠️ กรุณาตรวจสอบและติ๊ก “ฉันตรวจสอบ Mapping และข้อมูลแล้ว”','err'); return; }
+  const dupN=sel.filter(r=>r.dup).length;
+  if(!window.confirm('ยืนยันนำเข้า '+sel.length+' รายการเข้า Tracker?'+(dupN?'\n• รวมแถวที่ซ้ำกับข้อมูลเดิม '+dupN+' แถว':'')+'\n• แหล่งข้อมูล: '+S.src+'\n• ย้อนกลับการนำเข้าครั้งนี้ได้จากหน้าต่างผลลัพธ์')) return;
+  const ids=[], at=new Date().toISOString();
+  try{
+    sel.slice().reverse().forEach(r=>{
+      const o=Object.assign({},r.out); o.id=window.qeNewId(); o.revs=[]; o.impSrc=String(S.src).slice(0,120); o.impAt=at;
+      const s=window.__qeSan&&window.__qeSan.item?window.__qeSan.item(o,null,false):o; if(s&&s.__fx) delete s.__fx;
+      data.unshift(o); ids.push(o.id);
+    });
+    save(); render();
+  }catch(e){ impMsg('❌ บันทึกไม่สำเร็จ: '+String(e.message||e),'err'); return; }
+  lastImport={ids:ids,src:S.src,at:at};
+  say('📥 นำเข้า '+ids.length+' รายการเข้า Tracker แล้ว');
+  const st=IMP.querySelector('#qiStep2');
+  st.innerHTML='<div class="v63-res"><b>✅ นำเข้าแล้ว '+ids.length+' รายการ</b><div class="v63-sub" style="margin:8px 0 14px">จาก '+E(S.src)+' · ซิงก์ขึ้น Cloud DB อัตโนมัติ (ถ้าเชื่อมต่ออยู่) · ไม่ได้ส่งแจ้งเตือน LINE ทีละรายการ เพื่อไม่ให้ข้อความท่วมกลุ่ม</div>'+
+    '<div class="v63-row" style="justify-content:center"><button type="button" class="btn-p" data-q="goto" title="ไปที่รายการที่นำเข้าในตาราง">📊 ไปที่ Tracker</button><button type="button" class="btn-g" data-q="undo" style="color:var(--t-dang)" title="ลบรายการที่เพิ่งนำเข้าครั้งนี้ทั้งหมด">↩ ย้อนกลับการนำเข้านี้</button><button type="button" class="btn-g" data-q="back" title="นำเข้าไฟล์/ข้อความอื่นต่อ">📥 นำเข้าเพิ่ม</button></div></div>';
+  S=null; impMsg('');
+}
+function undoImport(){
+  if(RO()){ roBlock(); return; }
+  if(!lastImport||!lastImport.ids.length) return;
+  const set=new Set(lastImport.ids), n=ITEMS().filter(d=>set.has(d.id)).length;
+  if(!n){ impMsg('ไม่พบรายการที่นำเข้าแล้ว (อาจถูกลบไปก่อน)'); return; }
+  if(!window.confirm('ย้อนกลับการนำเข้าครั้งล่าสุด — ลบ '+n+' รายการที่เพิ่งนำเข้า (จาก '+lastImport.src+')?\nรายการที่ถูกแก้ไขหลังนำเข้าก็จะถูกลบด้วย')) return;
+  for(let i=data.length-1;i>=0;i--){ if(set.has(data[i].id)) data.splice(i,1); }
+  save(); render(); lastImport=null;
+  say('↩ ย้อนกลับการนำเข้าแล้ว ('+n+' รายการ)');
+  if(IMP){ IMP._close(); IMP=null; }
+}
+
+/* ---------- แถบ Drop ในหน้า Tracker + ปุ่ม Import ---------- */
+(function(){
+  const tools=document.querySelector('#viewTracker .tools'); if(!tools||g('qiDrop')) return;
+  const dz=document.createElement('div'); dz.className='v63-dz'; dz.id='qiDrop'; dz.tabIndex=0; dz.setAttribute('role','button');
+  dz.title='Smart Import: ลากไฟล์ Excel / CSV / TXT มาวาง หรือคลิกเพื่อเปิด (ตรวจ Preview ก่อนบันทึกทุกครั้ง)';
+  dz.setAttribute('aria-label','Smart Import — ลากไฟล์มาวาง หรือกด Enter เพื่อเปิดหน้าต่างนำเข้า');
+  dz.innerHTML='<span>📥 <b>Smart Import</b> — ลากไฟล์ <b>.xlsx / .csv / .txt</b> มาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์ / วางข้อความ</span><span class="v63-sp"></span><button type="button" class="btn-g" data-dz="tpl" title="ดาวน์โหลด Template สำหรับกรณีต้องการความแม่นยำสูง (ไม่บังคับ)">📄 Template</button>';
+  tools.parentNode.insertBefore(dz,tools.nextSibling);
+  dz.addEventListener('click',e=>{ if(e.target.closest('[data-dz="tpl"]')){ e.stopPropagation(); downloadTemplate(); return; } openImport(); });
+  dz.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); openImport(); } });
+  dz.addEventListener('paste',e=>{ const cd=e.clipboardData; if(!cd) return; const html=cd.getData('text/html'), txt=cd.getData('text/plain'); if(!html&&!txt) return; e.preventDefault(); if(!openImport()) return;
+    if(html&&/<table[\s>]/i.test(html)){ const t=htmlTables(html); if(t.length){ IMP.querySelector('#qiText').value=txt||''; startSheets(t,'ตารางที่วางจาก Excel'); return; } }
+    IMP.querySelector('#qiText').value=txt; analyzeText(txt); });
+  const vt=g('viewTracker'), hasFiles=e=>!!(e.dataTransfer&&Array.from(e.dataTransfer.types||[]).indexOf('Files')>=0);
+  let dragN=0;
+  if(vt){
+    vt.addEventListener('dragenter',e=>{ if(!hasFiles(e)) return; dragN++; dz.classList.add('drag'); });
+    vt.addEventListener('dragleave',e=>{ if(!hasFiles(e)) return; dragN=Math.max(0,dragN-1); if(!dragN) dz.classList.remove('drag'); });
+    vt.addEventListener('dragover',e=>{ if(hasFiles(e)){ e.preventDefault(); e.dataTransfer.dropEffect='copy'; } });
+    vt.addEventListener('drop',e=>{ if(!hasFiles(e)) return; e.preventDefault(); dragN=0; dz.classList.remove('drag'); const f=e.dataTransfer.files&&e.dataTransfer.files[0]; if(!f) return; if(e.dataTransfer.files.length>1) say('ℹ️ นำเข้าได้ครั้งละ 1 ไฟล์ — ใช้ไฟล์แรก: '+f.name); if(openImport()) loadFile(f); });
+  }
+  const ib=g('qiBtn'); if(ib) ib.addEventListener('click',openImport);
+})();
+
+window.__QE_V63API={openImport:openImport,pDate:pDate,parseFreeText:parseFreeText,autoMap:autoMap,detectHeader:detectHeader,textToTable:textToTable,shareItem:shareItem,itemMsg:itemMsg,mf:qeMF,_state:()=>S};
+mfPaint();
+try{ render(); }catch(e){ console.error('[v63] render',e); }
+})();
+</script>
+<!-- ===== end v63 ===== -->
 </body></html>
