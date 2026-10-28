@@ -14424,4 +14424,17 @@ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded'
 })();
 </script>
 <!-- ===== end v63 ===== -->
+<script>
+/* v61.5 · ช่วง 06:58–08:00 ดึงประชุมจากอีเมลทุก 1 นาที + ดึงทันทีเมื่อกลับมาที่แท็บ */
+(function () {
+  function sync() { if (typeof window.QE_MAIL_SYNC === 'function') window.QE_MAIL_SYNC(); }
+  function morning() { var d = new Date(), t = d.getHours() * 60 + d.getMinutes(); return t >= 418 && t <= 480; }
+  setInterval(function () {
+    if (document.visibilityState === 'visible' && morning()) sync();
+  }, 60000);
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible') sync();
+  });
+})();
+</script>
 </body></html>
