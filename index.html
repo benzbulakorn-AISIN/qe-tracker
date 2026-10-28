@@ -15576,4 +15576,59 @@ try{ render(); }catch(e){ console.error('[v63] render',e); }
 })();
 </script>
 <!-- ===== end v63 ===== -->
+<!-- v63.1 · AI Assistant: อ่านง่ายบนจอเล็ก (ขยายเต็มจอ / ขนาดตัวอักษร / ซ่อนปุ่มลัด) -->
+<style id="qeAiReadCss">
+#qeAiOv .qeai-md.qeai2{height:min(880px,94vh);max-height:94vh}
+#qeAiOv .qeai-b{font-size:var(--qeai-fs,14px);line-height:1.7}
+#qeAiOv .qeai-m{max-width:96%}
+#qeAiOv .qeai-tb{display:inline-flex;gap:4px;align-items:center;margin-right:4px}
+#qeAiOv .qeai-tb button{min-width:34px;height:34px;padding:0 8px;border:1px solid var(--line);background:transparent;color:var(--txt);border-radius:9px;cursor:pointer;font:700 13px "Segoe UI",Tahoma,sans-serif;margin:0}
+#qeAiOv .qeai-tb button[aria-pressed="true"]{background:var(--pri);color:var(--on-pri);border-color:var(--pri)}
+#qeAiOv.qeai-noqa .qeai-actions{display:none}
+#qeAiOv.qeai-big{padding:6px}
+#qeAiOv.qeai-big .qeai-md.qeai2{width:calc(100vw - 12px);max-width:none;height:calc(100vh - 12px);max-height:none}
+#qeAiOv.qeai-big .qeai-sub,#qeAiOv.qeai-big .qeai-note{display:none}
+@media (max-height:820px){
+  #qeAiOv .qeai-md.qeai2{padding:10px 14px;height:96vh;max-height:96vh}
+  #qeAiOv .qeai-sub,#qeAiOv .qeai-note,#qeAiOv .qeai-label{display:none}
+  #qeAiOv .qeai-hd h3{font-size:17px}
+  #qeAiOv .qeai-mode{margin:6px 0 0}
+  #qeAiOv .qeai-actions{margin:6px 0 4px;gap:5px}
+  #qeAiOv .qeai-chip{padding:4px 10px;font-size:12px}
+  #qeAiOv .qeai-ta{min-height:44px}
+  #qeAiOv .qeai-in{margin-top:4px}
+}
+</style>
+<script id="qeAiReadJs">
+(function(){
+  'use strict';
+  var ov=document.getElementById('qeAiOv'), clr=document.getElementById('qeAiClear');
+  if(!ov||!clr||document.getElementById('qeAiTb')) return;
+  var K='ux_ai_view_v1', st={big:false,fs:14,noqa:false};
+  try{ var s=JSON.parse(localStorage.getItem(K)||'{}'); if(s&&typeof s==='object'){ st.big=!!s.big; st.noqa=!!s.noqa; if(+s.fs>=12&&+s.fs<=22) st.fs=+s.fs; } }catch(e){}
+  var tb=document.createElement('span'); tb.className='qeai-tb'; tb.id='qeAiTb';
+  tb.innerHTML='<button type="button" data-v="qa" title="ซ่อน/แสดงปุ่มคำสั่งด่วน">⚡</button>'+
+    '<button type="button" data-v="dn" title="ลดขนาดตัวอักษรคำตอบ" aria-label="ลดขนาดตัวอักษร">A−</button>'+
+    '<button type="button" data-v="up" title="เพิ่มขนาดตัวอักษรคำตอบ" aria-label="เพิ่มขนาดตัวอักษร">A+</button>'+
+    '<button type="button" data-v="big" title="ขยายเต็มจอ / ย่อกลับ" aria-label="ขยายเต็มจอ">⛶</button>';
+  clr.parentNode.insertBefore(tb,clr);
+  function apply(){
+    ov.classList.toggle('qeai-big',st.big); ov.classList.toggle('qeai-noqa',st.noqa);
+    ov.style.setProperty('--qeai-fs',st.fs+'px');
+    tb.querySelector('[data-v="big"]').setAttribute('aria-pressed',st.big?'true':'false');
+    tb.querySelector('[data-v="qa"]').setAttribute('aria-pressed',st.noqa?'false':'true');
+    try{ localStorage.setItem(K,JSON.stringify(st)); }catch(e){}
+    var log=document.getElementById('qeAiLog'); if(log) log.scrollTop=log.scrollHeight;
+  }
+  tb.addEventListener('click',function(e){
+    var b=e.target.closest('[data-v]'); if(!b) return; var v=b.dataset.v;
+    if(v==='big') st.big=!st.big;
+    else if(v==='qa') st.noqa=!st.noqa;
+    else if(v==='up') st.fs=Math.min(22,st.fs+1);
+    else if(v==='dn') st.fs=Math.max(12,st.fs-1);
+    apply();
+  });
+  apply();
+})();
+</script>
 </body></html>
