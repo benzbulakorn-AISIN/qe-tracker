@@ -6,6 +6,7 @@
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'; form-action 'self'">
 <title>QE Elec. Daily Job Tracker</title>
 <!-- v62 (27-Oct-2026): Time-saving & Ergonomics layer — ดู Change log ในบล็อก qeV62Css ท้ายไฟล์ -->
+<!-- v65 (29-Oct-2026): Meeting safety — Cloud merge รายประชุม · อีเมลอัตโนมัติไม่ลบ (ติดป้ายแทน) · ถังขยะประชุม 30 วัน · เตือน .ics แบบ Busy/Tentative -->
 <!-- v63 (28-Oct-2026): Smart Import · Month/Year filter · Share to LINE/Teams · AI General+QE — ดู Change log ในบล็อก qeV63Js ท้ายไฟล์ -->
 <!--
   CENTRAL DATABASE CONFIGURATION
@@ -2000,7 +2001,8 @@ window.qeBlk={
         latest.forEach((r,k)=>{if(!local.has(k))removed.push(r);});
       }else{
         local.forEach((r,k)=>{const old=baseline.get(k);if(!old||old.type!==r.type||old.json!==r.json){ let up=r; const rem=latest.get(k);
-          if(!old&&rem&&hrec(rem)!==hrec(r)){ conf.push({k:k,remote:rem,fields:[]}); }   // สองคนสร้างรายการ/วันเดียวกันใหม่พร้อมกัน → แจ้งว่าชนกัน (ไม่ทับเงียบ ๆ)
+          if(isMtg(r)&&isMtg(rem)&&hrec(rem)!==hrec(r)&&!(old&&hrec(rem)===hrec(old))){ const mp=mtgMerge(old&&old.payload,r.payload,rem.payload); up=Object.assign({},r,{payload:mp,json:cj(mp)}); auto++; }
+          else if(!old&&rem&&hrec(rem)!==hrec(r)){ conf.push({k:k,remote:rem,fields:[]}); }   // สองคนสร้างรายการ/วันเดียวกันใหม่พร้อมกัน → แจ้งว่าชนกัน (ไม่ทับเงียบ ๆ)
           else if(old&&rem&&hrec(rem)!==hrec(old)&&hrec(rem)!==hrec(r)){ const cf=[]; if(mergeable(r)&&mergeable(rem)){ const mp=m3(old.payload,r.payload,rem.payload,'',cf); up=Object.assign({},r,{payload:mp,json:cj(mp)}); if(cf.length) conf.push({k:k,remote:rem,fields:cf}); else auto++; } else conf.push({k:k,remote:rem,fields:[]}); }
           changed.push(up); }});
         baseline.forEach((r,k)=>{if(!local.has(k))removed.push(r);});
@@ -2059,6 +2061,19 @@ window.qeBlk={
     cf.push(path||'(ทั้งรายการ)'); return l;
   }
   const mergeable=r=>r&&(r.type==='TrackerItem'||(r.type==='LocalStorageData'&&r.payload&&r.payload.mjk));
+  /* v65: ประชุมรายวัน (qe_mtg_d_*) + ถังขยะประชุม รวมกันระดับ "รายการประชุม" — สองเครื่องแก้วันเดียวกันไม่ทับกันหายอีก */
+  const isMtg=r=>r&&r.type==='LocalStorageData'&&r.payload&&/^qe_mtg_(d_|trash$)/.test(String(r.payload.storageKey||''));
+  function mtgMerge(b,l,r){
+    const arr=p=>{ try{ const a=JSON.parse((p&&p.value)||'[]'); return Array.isArray(a)?a.filter(x=>x&&typeof x==='object'):[]; }catch(e){ return []; } };
+    const idOf=x=>String(x.id||x.tid||''), mp=a=>{ const m=new Map(); a.forEach(x=>{ const k=idOf(x); if(k) m.set(k,x); }); return m; };
+    const B=mp(arr(b)), L=mp(arr(l)), R=mp(arr(r)), out=[], seenUid=new Set();
+    const push=x=>{ const u=x.uid?String(x.uid):''; if(u){ if(seenUid.has(u)) return; seenUid.add(u); } out.push(x); };
+    L.forEach((x,k)=>{ const y=R.get(k), o=B.get(k);
+      if(y){ push((o&&eqv(o,x))?y:x); }
+      else if(!(o&&eqv(o,x))) push(x); });                 // อีกเครื่องลบ และเครื่องนี้ไม่ได้แก้ → ลบตาม
+    R.forEach((y,k)=>{ if(L.has(k)) return; const o=B.get(k); if(!(o&&eqv(o,y))) push(y); });   // เครื่องนี้ลบ และอีกเครื่องไม่ได้แก้ → ลบตาม
+    return Object.assign({},l,{value:JSON.stringify(out)});
+  }
   function mergeRecords(L,R,B){
     const M=new Map(), conflicts=[]; let kept=0; const keys=new Set([...L.keys(),...R.keys()]);
     keys.forEach(k=>{
@@ -9830,10 +9845,34 @@ const skipHit=t=>{ const n=nkey(t); return cfg.skip.some(k=>{ k=nkey(k); return 
 function normM(m){
   if(!m||typeof m!=='object') return null;
   const who=(Array.isArray(m.who)?m.who:[]).map(String), inv=(Array.isArray(m.inv)?m.inv:[]).map(String);
-  return {id:String(m.id||uid()),s:String(m.s||''),e:String(m.e||''),t:String(m.t||''),room:String(m.room||''),who:who.indexOf('all')>=0?['all']:who,inv:inv,note:String(m.note||''),src:String(m.src||''),uid:String(m.uid||''),wa:m.wa==='manual'?'manual':'',gr:String(m.gr||'')};
+  return {id:String(m.id||uid()),s:String(m.s||''),e:String(m.e||''),t:String(m.t||''),room:String(m.room||''),who:who.indexOf('all')>=0?['all']:who,inv:inv,note:String(m.note||''),src:String(m.src||''),uid:String(m.uid||''),wa:m.wa==='manual'?'manual':'',gr:String(m.gr||''),gone:m.gone?1:0};
 }
 function getDay(ds){ try{ const a=JSON.parse(localStorage.getItem(KD+ds)||'[]'); return Array.isArray(a)?a.map(normM).filter(Boolean):[]; }catch(e){ return []; } }
-function setDay(ds,arr){ arr=arr.filter(Boolean); try{ if(arr.length) localStorage.setItem(KD+ds,JSON.stringify(arr)); else localStorage.removeItem(KD+ds); }catch(e){ say('⚠ บันทึกไม่สำเร็จ — พื้นที่เบราว์เซอร์เต็ม?',true); } }
+/* v65: ถังขยะประชุม — ทุกรายการที่หายจากวัน (ลบเอง / Outlook ยกเลิก / ซิงก์) ถูกเก็บไว้ 30 วัน กู้คืนได้ */
+const KT='qe_mtg_trash';
+function trGet(){ try{ const a=JSON.parse(localStorage.getItem(KT)||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+function trSet(a){ const lim=Date.now()-30*864e5; a=a.filter(x=>x&&x.tid&&Date.parse(x.at||0)>lim).slice(-300); try{ localStorage.setItem(KT,JSON.stringify(a)); }catch(e){} }
+let mtgWhy='';
+function setDay(ds,arr){ arr=arr.filter(Boolean);
+  try{ const old=getDay(ds), ids=new Set(arr.map(m=>m.id)), gone=old.filter(m=>!ids.has(m.id)&&(m.t||m.s));
+    if(gone.length){ const at=new Date().toISOString(), T=trGet(); gone.forEach(m=>T.push({tid:'t'+uid(),ds:ds,at:at,why:mtgWhy||'ลบเอง',m:m})); trSet(T); } }catch(e){}
+  try{ if(arr.length||localStorage.getItem(KD+ds)!==null) localStorage.setItem(KD+ds,JSON.stringify(arr)); }catch(e){ say('⚠ บันทึกไม่สำเร็จ — พื้นที่เบราว์เซอร์เต็ม?',true); } }
+function trashModal(){
+  const draw=()=>{ const b=md.querySelector('#mgTrB'), T=trGet().slice().reverse();
+    b.innerHTML=T.length?'<div class="mg-pv"><table><thead><tr><th>วันที่ประชุม</th><th>เวลา</th><th>หัวข้อ</th><th>สาเหตุ</th><th>เมื่อ</th><th></th></tr></thead><tbody>'+
+      T.map(x=>'<tr><td>'+E(fmtD(x.ds))+'</td><td>'+E((x.m.s||'')+'–'+(x.m.e||''))+'</td><td>'+E(x.m.t||'(ไม่มีชื่อ)')+'</td><td>'+E(x.why||'')+'</td><td>'+E(new Date(x.at).toLocaleString('th-TH',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}))+'</td><td><button type="button" class="btn-g" data-tr="rs" data-t="'+E(x.tid)+'">↩ กู้คืน</button></td></tr>').join('')+
+      '</tbody></table></div><div class="mg-act"><button type="button" class="btn-g" data-tr="all">↩ กู้คืนทั้งหมด</button><button type="button" class="btn-g" data-tr="clr" style="color:var(--t-dang)">ล้างถังขยะ</button><button type="button" class="btn-g" data-x="cancel">ปิด</button></div>'
+      :'<div class="mg-sb">ถังขยะว่าง — ประชุมที่ถูกลบ/หายจากการซิงก์จะมาอยู่ที่นี่ 30 วัน</div>'; };
+  openMd('<h3>🗑 ถังขยะประชุม</h3><div class="mg-sb">ประชุมที่ถูกลบหรือหายจากการซิงก์ (Outlook / Cloud) — กดกู้คืนเพื่อนำกลับวันเดิม</div><div id="mgTrB"></div>',()=>{
+    draw();
+    md.addEventListener('click',e=>{ const b=e.target.closest('[data-tr]'); if(!b) return; const T=trGet(), a=b.dataset.tr;
+      const back=list=>{ const by={}; list.forEach(x=>{ const L=by[x.ds]||(by[x.ds]=getDay(x.ds)); if(!L.some(m=>m.id===x.m.id||(x.m.uid&&m.uid===x.m.uid))) L.push(normM(Object.assign({},x.m,{wa:'manual',gone:0}))); }); Object.keys(by).forEach(ds=>setDay(ds,by[ds])); const ids=new Set(list.map(x=>x.tid)); trSet(trGet().filter(x=>!ids.has(x.tid))); render(); refreshTodayCard(); say('↩ กู้คืน '+list.length+' ประชุมแล้ว'); };
+      if(a==='rs'){ const x=T.find(y=>y.tid===b.dataset.t); if(x) back([x]); }
+      else if(a==='all'){ if(T.length) back(T); }
+      else if(a==='clr'){ if(window.confirm('ล้างถังขยะประชุมทั้งหมด? (กู้คืนไม่ได้อีก)')) trSet([]); }
+      draw(); });
+  },true);
+}
 const bySt=(a,b)=>(tmin(a.s)==null?9999:tmin(a.s))-(tmin(b.s)==null?9999:tmin(b.s))||(tmin(a.e)||0)-(tmin(b.e)||0)||a.t.localeCompare(b.t,'th');
 const durOf=m=>{ const a=tmin(m.s), b=tmin(m.e); return (a!=null&&b!=null&&b>a)?b-a:60; };
 const whoIds=m=>m.who.indexOf('all')>=0?cfg.people.map(p=>p.id):m.who.filter(id=>P(id));
@@ -10220,7 +10259,7 @@ function rowHtml(m,A,ds){
     '<div class="mg-t" title="ระยะเวลา '+hrs(durOf(m))+' ชม."><b>'+E(m.s||'--:--')+'</b><span>'+E(m.e||'--:--')+'</span><small>'+hrs(durOf(m))+' ชม.</small></div>'+
     '<div class="mg-mid"><div class="mg-ti" data-mg="edit" data-m="'+E(m.id)+'" title="คลิกเพื่อแก้ไข">'+E(m.t||'(ไม่มีชื่อ)')+'</div>'+
       '<div class="mg-sub"><span>📍</span><input class="mg-room" data-mg="room" data-m="'+E(m.id)+'" value="'+E(m.room)+'" title="'+E(m.room)+'" placeholder="ห้องประชุม (ว่างไว้ได้)" autocomplete="off">'+
-      (un?'<span class="mg-un">ยังไม่ระบุคน</span>':'')+bad.join('')+
+      (un?'<span class="mg-un">ยังไม่ระบุคน</span>':'')+(m.gone?'<span class="mg-bad" title="อีเมล Schedule ฉบับล่าสุดไม่มีประชุมนี้ — ถ้ายกเลิกจริงให้กด 🗑 ลบเอง">⚠ ไม่มีในอีเมลล่าสุด</span>':'')+bad.join('')+
       (m.src==='graph'?'<span class="mg-src" title="ดึงจาก Outlook อัตโนมัติ">Outlook ⟳</span>':m.src==='mail'?'<span class="mg-src" title="นำเข้าจากอีเมล Schedule">อีเมล ✉</span>':m.src==='ics'?'<span class="mg-src" title="นำเข้าจากไฟล์ .ics">.ics</span>':'')+
       (invOnly.length&&un?'<span class="mg-src" title="ถูกเชิญใน Outlook แต่ยังไม่ได้ลงชื่อ">เชิญ: '+E(invOnly.join(', '))+'</span>':'')+'</div></div>'+
     chips(m,A,ds)+
@@ -10297,7 +10336,7 @@ function render(){
     '<button type="button" class="btn-g" data-mg="imp">📥 นำเข้า (ไฟล์ / ข้อความ)</button>'+
     '<button type="button" class="btn-p" data-mg="clip" style="animation:none" title="คัดลอกเนื้อหาอีเมล Schedule แล้วกดปุ่มนี้ — นำเข้าทันที ไม่ต้องเปิดหน้าต่าง">📋 วางจากอีเมล</button>'+
     '<button type="button" class="btn-g" data-mg="copy" title="คัดลอกข้อความ “📢 Schedule QE Electronics …” ของวันที่เลือก">📋 คัดลอกข้อความ Schedule</button><label style="margin:0;display:inline-flex;gap:5px;align-items:center;font-size:12px;color:var(--txt);cursor:pointer"><input type="checkbox" id="mgAt" '+(ui.at?'checked':'')+' style="width:auto"> ใส่ @</label>'+
-    '<span class="mg-grow"></span><button type="button" class="btn-g" data-mg="team" title="ชื่อทีม / อีเมล / ชื่อประชุมที่ข้ามเสมอ">👥 ตั้งค่าทีม</button><button type="button" class="btn-g" data-mg="exp" title="สำรองข้อมูลประชุมทั้งหมด">💾 JSON</button><button type="button" class="btn-g" data-mg="impjson" title="นำเข้าไฟล์สำรอง">📂</button><input type="file" id="mgJson" accept=".json,application/json" style="display:none"></div>';
+    '<span class="mg-grow"></span><button type="button" class="btn-g" data-mg="team" title="ชื่อทีม / อีเมล / ชื่อประชุมที่ข้ามเสมอ">👥 ตั้งค่าทีม</button><button type="button" class="btn-g" data-mg="trash" title="ถังขยะประชุม — กู้คืนประชุมที่ถูกลบ/หายจากการซิงก์">🗑 ถังขยะ'+(trGet().length?' ('+trGet().length+')':'')+'</button><button type="button" class="btn-g" data-mg="exp" title="สำรองข้อมูลประชุมทั้งหมด">💾 JSON</button><button type="button" class="btn-g" data-mg="impjson" title="นำเข้าไฟล์สำรอง">📂</button><input type="file" id="mgJson" accept=".json,application/json" style="display:none"></div>';
   h+=olLine();
   h+=ui.view==='week'?renderWeek():renderDay();
   view.innerHTML=h; view.classList.toggle('mg-cp',!!ui.cp); lastSig=sigNow(); if(window.scrollY!==y) window.scrollTo(0,y);
@@ -10363,7 +10402,8 @@ function drawImp(){
   }
   drawPv();
 }
-function reparseIcs(){ try{ const r=icsEvents(imp.ics,imp.from,imp.to); imp.cands=r.items; imp.stats=r.stats; imp.off=new Set(); }catch(e){ console.error(e); imp.cands=[]; imp.stats=null; say('อ่านไฟล์ .ics ไม่สำเร็จ',true); } drawPv(); }
+const icsBlind=t=>/^(busy|tentative|free|out of office|working elsewhere|ไม่ว่าง|ไม่แน่นอน|ว่าง|ไม่อยู่ที่สำนักงาน)$/i.test(String(t||'').trim());
+function reparseIcs(){ try{ const r=icsEvents(imp.ics,imp.from,imp.to); imp.cands=r.items; imp.stats=r.stats; imp.off=new Set(); imp.cands.forEach((x,i)=>{ if(icsBlind(x.t)) imp.off.add(i); }); imp.blind=imp.cands.filter(x=>icsBlind(x.t)).length; }catch(e){ console.error(e); imp.cands=[]; imp.stats=null; say('อ่านไฟล์ .ics ไม่สำเร็จ',true); } drawPv(); }
 function dupOf(c){ const L=getDay(c.date); return L.find(m=>(c.uid&&m.uid===c.uid)||(m.s===c.s&&m.e===c.e&&nkey(m.t)===nkey(c.t)))||null; }
 function drawPv(){
   if(!md||!imp) return; const box=md.querySelector('#mgImpPv'); const c=imp.cands; const _sc=box.querySelector('.mg-pv'), _top=_sc?_sc.scrollTop:0;
@@ -10372,7 +10412,9 @@ function drawPv(){
   const cnt={}; c.forEach(x=>{ const k=nkey(x.t); cnt[k]=(cnt[k]||0)+1; });
   const reps=Object.keys(cnt).filter(k=>cnt[k]>=3).sort((a,b)=>cnt[b]-cnt[a]);
   const isOff=(x,i)=>imp.off.has(i)||imp.skip.has(nkey(x.t));
-  let h='<div class="mg-sb" style="margin-top:10px"><b>พบ '+c.length+' ประชุม</b>'+(imp.stats?' · ข้ามเต็มวัน '+imp.stats.allday+' · ยกเลิก '+imp.stats.cancelled:'')+' — ติ๊กเฉพาะที่ต้องการนำเข้า</div>';
+  const nb=c.filter(x=>icsBlind(x.t)).length;
+  let h=(imp.mode==='ics'&&nb)?'<div class="mg-sb" style="margin-top:10px;padding:10px 12px;border-radius:10px;background:rgba(217,119,6,.12);border:1px solid rgba(217,119,6,.45);color:var(--txt)"><b>⚠ ไฟล์ .ics นี้มีแค่สถานะว่าง/ไม่ว่าง ('+nb+' จาก '+c.length+' รายการเป็น Busy / Tentative)</b><br>ไม่มีชื่อหัวข้อ ห้อง หรือผู้เข้าร่วม — ระบบ<b>ไม่ติ๊ก</b>รายการเหล่านี้ให้แล้ว<br>แก้ที่ Outlook: <b>File → Save Calendar → More Options → Detail: Full details</b> แล้วส่งออกใหม่</div>':'';
+  h+='<div class="mg-sb" style="margin-top:10px"><b>พบ '+c.length+' ประชุม</b>'+(imp.stats?' · ข้ามเต็มวัน '+imp.stats.allday+' · ยกเลิก '+imp.stats.cancelled:'')+' — ติ๊กเฉพาะที่ต้องการนำเข้า</div>';
   if(reps.length) h+='<div class="mg-sb" style="margin:0">ประชุมที่ซ้ำบ่อย (คลิกเพื่อ <b>ข้ามเสมอ</b> / เอากลับ):</div><div class="mg-rep">'+reps.map(k=>{ const t=(c.find(x=>nkey(x.t)===k)||{}).t; return '<button type="button" class="'+(imp.skip.has(k)?'off':'')+'" data-i="rep" data-k="'+E(k)+'">'+E(t)+' ×'+cnt[k]+'</button>'; }).join('')+'</div>';
   h+='<div class="mg-pv"><table><thead><tr><th style="width:30px"><input type="checkbox" id="mgAll" checked style="width:auto"></th><th>วันที่</th><th>เวลา</th><th>หัวข้อ</th><th>ห้อง</th><th>คน / เชิญ</th><th></th></tr></thead><tbody>';
   let last='';
@@ -10385,6 +10427,7 @@ function drawPv(){
 }
 function commitImport(){
   const c=imp.cands.filter((x,i)=>!(imp.off.has(i)||imp.skip.has(nkey(x.t))));
+  if(imp.mode==='ics'){ const nb=c.filter(x=>icsBlind(x.t)).length; if(nb&&!window.confirm('มี '+nb+' รายการที่ชื่อเป็นแค่ Busy / Tentative (ไม่มีหัวข้อจริง)\n\nยังต้องการนำเข้าไหม?\nแนะนำ: ยกเลิก แล้วส่งออก .ics ใหม่แบบ Full details')) return; }
   if(!c.length){ say('ไม่มีรายการที่เลือก',true); return; }
   const by={}; let add=0, fill=0, same=0, first=null;
   c.forEach(x=>{ const L=by[x.date]||(by[x.date]=getDay(x.date)); const ex=L.find(m=>(x.uid&&m.uid===x.uid)||(m.s===x.s&&m.e===x.e&&nkey(m.t)===nkey(x.t)));
@@ -10545,7 +10588,7 @@ async function gSync(manual){
     });
     const meOk=!results[0].err;                                       // ปฏิทินของเราดึงได้ → ลบประชุมที่หายไปจาก Outlook ได้อย่างปลอดภัย
     if(meOk) Object.keys(days).forEach(ds=>{ const L=days[ds], n0=L.length; days[ds]=L.filter(m=>!(m.src==='graph'&&!keep.has(m.uid))); del+=n0-days[ds].length; });
-    Object.keys(days).forEach(ds=>{ if(JSON.stringify(days[ds])!==before[ds]) setDay(ds,days[ds]); });
+    mtgWhy='หายจาก Outlook (ยกเลิก/ย้าย)'; try{ Object.keys(days).forEach(ds=>{ if(JSON.stringify(days[ds])!==before[ds]) setDay(ds,days[ds]); }); }finally{ mtgWhy=''; }
     gst.res=res; gst.at=Date.now(); gst.last=new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
     if(!allOk) gst.err='ดึงปฏิทินของบางคนไม่ได้ (อาจไม่มีสิทธิ์ดู) — ดูรายละเอียดที่ ⚙ ตั้งค่า';
     saveGS();
@@ -10622,13 +10665,15 @@ function applyCands(c,o){
       if(x.room&&ex.gr!==x.room){ ex.gr=x.room; ch=true; }
       if(ex.wa!=='manual'&&x.who.length&&JSON.stringify(ex.who)!==JSON.stringify(x.who)){ ex.who=x.who.slice(); ch=true; }
       if(!ex.uid){ ex.uid=key; ch=true; }
+      if(ex.gone){ ex.gone=0; ch=true; }
       keep.add(ex.uid); if(ch) upd++; else same++;
     }else{
       L.push(normM({id:uid(),s:x.s,e:x.e,t:x.t,room:x.room,gr:x.room,who:x.who,inv:[],note:x.note||'',src:'mail',uid:key})); keep.add(key); add++;
     }
     if(!first||x.date<first) first=x.date;
   });
-  if(o.prune) Object.keys(by).forEach(ds=>{ const keep=keepByDay[ds], n0=by[ds].length; by[ds]=by[ds].filter(m=>!(m.src==='mail'&&m.wa!=='manual'&&!keep.has(m.uid))); del+=n0-by[ds].length; });
+  /* v65: ไม่ลบอีกแล้ว — ประชุมที่ไม่อยู่ในอีเมลฉบับล่าสุด แค่ติดป้าย "ไม่มีในอีเมลล่าสุด" ให้คนตัดสินใจลบเอง */
+  if(o.prune) Object.keys(by).forEach(ds=>{ const keep=keepByDay[ds]; by[ds].forEach(m=>{ if(m.src==='mail'&&m.wa!=='manual'&&!keep.has(m.uid)&&!m.gone){ m.gone=1; del++; } }); });
   Object.keys(by).forEach(ds=>setDay(ds,by[ds]));
   return {add:add,upd:upd,same:same,del:del,skip:skip,first:first,days:Object.keys(by).sort()};
 }
@@ -10642,7 +10687,7 @@ function importMailText(txt,o){
   if(isoOK(target)){ ui.date=target; ui.view='day'; saveUI(); }
   openMeet(ui.date);
   if(!res.days.length){ say('อ่านได้ '+r.items.length+' ประชุม แต่ทั้งหมดอยู่ในรายการข้ามเสมอ (เช่น Lunch / ไร่กะหล่ำปลี / Ukai) — ไม่มีอะไรนำเข้า',true); return res; }
-  say('📥 นำเข้าจาก'+(o.label||'อีเมล')+' '+fmtD(ui.date)+(res.days.length>1?' (+'+(res.days.length-1)+' วัน)':'')+': เพิ่ม '+res.add+(res.upd?' · อัปเดต '+res.upd:'')+(res.del?' · เอาออก '+res.del:'')+(res.same?' · ไม่เปลี่ยน '+res.same:'')+(res.skip?' · ข้าม '+res.skip+' (รายการข้ามเสมอ)':''));
+  say('📥 นำเข้าจาก'+(o.label||'อีเมล')+' '+fmtD(ui.date)+(res.days.length>1?' (+'+(res.days.length-1)+' วัน)':'')+': เพิ่ม '+res.add+(res.upd?' · อัปเดต '+res.upd:'')+(res.del?' · ไม่มีในอีเมลล่าสุด '+res.del+' (ไม่ลบ — ติดป้ายไว้)':'')+(res.same?' · ไม่เปลี่ยน '+res.same:'')+(res.skip?' · ข้าม '+res.skip+' (รายการข้ามเสมอ)':''));
   refreshTodayCard();
   return res;
 }
@@ -10706,7 +10751,7 @@ async function mailSchedSync(manual){
     if(list.length){
       try{ refreshTodayCard(); }catch(e){}
       try{ if(shown()) render(); }catch(e){}
-      if(add||upd||del) say('\uD83D\uDCE7 อัปเดตประชุมจากอีเมล Schedule อัตโนมัติ: เพิ่ม '+add+(upd?' · อัปเดต '+upd:'')+(del?' · เอาออก '+del:''));
+      if(add||upd||del) say('\uD83D\uDCE7 อัปเดตประชุมจากอีเมล Schedule อัตโนมัติ: เพิ่ม '+add+(upd?' · อัปเดต '+upd:'')+(del?' · ไม่มีในอีเมลล่าสุด '+del+' (ไม่ลบ — ติดป้ายไว้)':''));
     }else if(manual) say('\uD83D\uDCE7 ไม่มีอีเมล Schedule ใหม่');
   }catch(e){
     if(manual) say('ดึงอีเมล Schedule ไม่สำเร็จ ('+(e&&e.message||e)+') — ตรวจตาราง mail_schedule ใน Supabase',true);
@@ -10739,6 +10784,7 @@ view.addEventListener('click',async e=>{
   else if(a==='copy'){ const t=scheduleText(ui.date,ui.at); if(await copyText(t)){ const un=getDay(ui.date).filter(m=>!m.who.length).length; say('📋 คัดลอกข้อความ Schedule '+fmtD(ui.date)+' แล้ว — วางใน Teams ได้เลย'+(un?'\n⚠ ยังมี '+un+' ประชุมที่ไม่ได้ระบุคน':'')); } }
   else if(a==='team') teamModal();
   else if(a==='exp') exportJson();
+  else if(a==='trash') trashModal();
   else if(a==='impjson') g('mgJson').click();
 });
 view.addEventListener('change',e=>{
