@@ -6,6 +6,7 @@
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'; form-action 'self'">
 <title>QE Elec. Daily Job Tracker</title>
 <!-- v62 (27-Oct-2026): Time-saving & Ergonomics layer — ดู Change log ในบล็อก qeV62Css ท้ายไฟล์ -->
+<!-- v66 (30-Oct-2026): หน้า 🗓️ ประชุม — เส้นเวลาปัจจุบัน (Now line) + ไทม์ไลน์รายวัน + ไฮไลต์ประชุมที่กำลังเกิด/ผ่านไปแล้ว — ดูบล็อก "v66" ในสคริปต์ mtgAddon -->
 <!-- v65 (29-Oct-2026): Meeting safety — Cloud merge รายประชุม · อีเมลอัตโนมัติไม่ลบ (ติดป้ายแทน) · ถังขยะประชุม 30 วัน · เตือน .ics แบบ Busy/Tentative -->
 <!-- v63 (28-Oct-2026): Smart Import · Month/Year filter · Share to LINE/Teams · AI General+QE — ดู Change log ในบล็อก qeV63Js ท้ายไฟล์ -->
 <!--
@@ -10220,6 +10221,38 @@ const st=document.createElement('style'); st.id='mgStyle'; st.textContent=`
 #viewMeet.mg-cp .mg-wk th,#viewMeet.mg-cp .mg-wk td{padding:5px 6px}
 @media(max-width:860px){#viewMeet.mg-cp .mg-row{grid-template-columns:90px minmax(0,1fr)}#viewMeet.mg-cp .mg-ti{grid-column:2}#viewMeet.mg-cp .mg-sub{grid-column:1/-1;flex-direction:row;max-width:none}#viewMeet.mg-cp .mg-sub>span:first-child{display:inline}#viewMeet.mg-cp .mg-who{flex-wrap:wrap}}
 @media(max-width:860px){.mg-row{grid-template-columns:78px 1fr}.mg-who,.mg-ac{grid-column:1/-1}.mg-fg{grid-template-columns:1fr}.mg-tr{grid-template-columns:34px 1fr}.mg-tr input:nth-child(n+3){grid-column:1/-1}}
+
+/* ===== v66: Now line / Timeline ===== */
+.mg-tl{margin:0 0 10px;padding:8px 12px 6px;border:1px solid var(--line);border-radius:12px;background:var(--card);box-shadow:0 1px 4px var(--sh)}
+.mg-tl-h{display:flex;flex-wrap:wrap;align-items:center;gap:2px 12px;font-size:12.5px;color:var(--mut);margin:0 0 4px}
+.mg-tl-h b{color:var(--txt);font-size:13px}
+.mg-tl-st{font-weight:700;color:var(--txt);min-width:0;overflow-wrap:anywhere}
+.mg-tl-bar{position:relative;margin:0 14px}
+.mg-tl-tk{position:absolute;top:18px;bottom:15px;width:0;border-left:1px dashed var(--line);pointer-events:none}
+.mg-tl-tl{position:absolute;bottom:0;transform:translateX(-50%);font-size:10.5px;line-height:13px;color:var(--mut);font-variant-numeric:tabular-nums;pointer-events:none}
+.mg-tl-b{position:absolute;height:20px;box-sizing:border-box;border-radius:6px;padding:0 5px;font-size:11px;line-height:18px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer;border:1px solid var(--c);background:color-mix(in srgb,var(--c) 22%,var(--card));color:var(--txt);z-index:2}
+.mg-tl-b.un{--c:#f59e0b}.mg-tl-b.ok{--c:var(--ok)}.mg-tl-b.cf{--c:var(--dang)}
+.mg-tl-b.past{opacity:.45}
+.mg-tl-b.live{background:color-mix(in srgb,var(--c) 45%,var(--card));box-shadow:0 0 0 2px #ef4444;font-weight:700}
+.mg-tl-now{position:absolute;top:0;bottom:15px;width:2px;margin-left:-1px;background:#ef4444;z-index:4;pointer-events:none;display:none;box-shadow:0 0 6px rgba(239,68,68,.55)}
+.mg-tl-now::before{content:attr(data-t);position:absolute;top:0;left:50%;transform:translateX(-50%);background:#ef4444;color:#fff;font-size:10.5px;font-weight:800;padding:0 6px;border-radius:99px;line-height:16px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.mg-now{display:flex;align-items:center;gap:8px;margin:-1px 0;position:relative;z-index:2}
+.mg-now span{background:#ef4444;color:#fff;border-radius:99px;padding:1px 10px;font-size:12px;font-weight:800;white-space:nowrap;font-variant-numeric:tabular-nums}
+.mg-now i{flex:1;height:2px;background:#ef4444;border-radius:2px;box-shadow:0 0 6px rgba(239,68,68,.55)}
+#viewMeet .mg-row.mg-past{opacity:.55}
+#viewMeet .mg-row.mg-past:hover,#viewMeet .mg-row.mg-past:focus-within,#viewMeet .mg-row.mg-past.sel{opacity:1}
+#viewMeet .mg-row.mg-live{outline:2px solid rgba(239,68,68,.75);outline-offset:-1px}
+#viewMeet .mg-row.mg-live::before{content:'';position:absolute;left:0;top:0;bottom:0;width:var(--prog,0%);background:rgba(239,68,68,.13);border-radius:inherit;pointer-events:none}
+#viewMeet .mg-row.mg-live::after{content:'';position:absolute;top:0;bottom:0;left:var(--prog,0%);width:2px;margin-left:-1px;background:#ef4444;pointer-events:none}
+.mg-lb{display:inline-block;margin-left:8px;padding:0 8px;border-radius:99px;font-size:11px;font-weight:800;vertical-align:1px;white-space:nowrap;line-height:17px}
+.mg-lb.live{background:#ef4444;color:#fff}
+.mg-lb.live::before{content:'● ';animation:mgBl 1.4s ease-in-out infinite}
+.mg-lb.next{background:color-mix(in srgb,var(--pri) 16%,transparent);color:var(--pri);border:1px solid color-mix(in srgb,var(--pri) 40%,transparent)}
+@keyframes mgBl{50%{opacity:.25}}
+@keyframes mgFl{0%,100%{box-shadow:0 0 0 0 transparent}50%{box-shadow:0 0 0 4px var(--pri)}}
+.mg-row.mg-flash{animation:mgFl .8s 2}
+@media (prefers-reduced-motion:reduce){.mg-lb.live::before,.mg-row.mg-flash{animation:none}}
+@media(max-width:560px){.mg-tl{padding:6px 8px 4px}.mg-tl-bar{margin:0 12px}.mg-tl-b{font-size:10px;padding:0 3px}}
 `; document.head.appendChild(st);
 
 /* ================= แท็บ + หน้า ================= */
@@ -10301,7 +10334,7 @@ function renderDay(){
     h+='<div class="mg-empty">ยังไม่มีประชุมวันนี้<br>'+(connected()?'กด <b>🔄 ซิงก์ Outlook</b> เพื่อดึงล่าสุด':'กด <b>🔗 เชื่อม Outlook อัตโนมัติ</b> เพื่อให้ระบบดึงประชุมเอง')+' — หรือ <b>📥 นำเข้า</b> ไฟล์ .ics / ข้อความ Schedule, <b>➕ เพิ่มประชุม</b> พิมพ์เอง</div>';
   }else{
     const ids=new Set(list.map(m=>m.id)); Array.from(mgSel).forEach(k=>{ if(!ids.has(k)) mgSel.delete(k); });
-    h+=selBarHtml(list.length)+'<div class="mg-list">'+list.map(m=>rowHtml(m,A,ds)).join('')+'</div>';
+    h+=tlHtml(list,ds,A)+selBarHtml(list.length)+'<div class="mg-list">'+list.map(m=>rowHtml(m,A,ds)).join('')+'</div>';
   }
   h+='<div class="mg-hint">💡 คลิกชื่อ <b>Earn / Natcha / Mana / Benz</b> เพื่อลงคนเข้าร่วม (เลือกได้หลายคน) · <b>All</b> = ทุกคน · กรอบประ = ถูกเชิญใน Outlook แต่ยังไม่ได้ลงชื่อ · ที่คุณแก้เองจะไม่ถูกซิงก์ Outlook ทับ · <b>📋 คัดลอกข้อความ</b> ได้ข้อความ Schedule พร้อมวางใน Teams</div>';
   return h;
@@ -10340,7 +10373,79 @@ function render(){
   h+=olLine();
   h+=ui.view==='week'?renderWeek():renderDay();
   view.innerHTML=h; view.classList.toggle('mg-cp',!!ui.cp); lastSig=sigNow(); if(window.scrollY!==y) window.scrollTo(0,y);
+  try{ nowSync(); }catch(e){}
 }
+
+
+/* ===== v66: เส้นเวลาปัจจุบัน (Now line) + ไทม์ไลน์รายวัน =====
+   • แถบไทม์ไลน์แนวนอน (ช่วงเวลาตามประชุมของวัน, อย่างน้อย 08:00–17:00) + เข็มสีแดงบอกเวลาตอนนี้ (เฉพาะวันนี้)
+   • เส้นแดง “ตอนนี้ HH:MM” แทรกในรายการประชุม ระหว่างประชุมที่ผ่านไปแล้ว กับที่ยังไม่เริ่ม
+   • ประชุมที่กำลังดำเนินอยู่: ขอบแดง + แถบเปลี่ยนสีตามความคืบหน้า + ป้าย “กำลังประชุม · เหลือ …”
+   • ประชุมที่จบแล้วจางลง · ประชุมถัดไปมีป้ายนับถอยหลัง · อัปเดตเองทุก 15 วินาที (ไม่ต้องรีเฟรช ไม่แตะข้อมูล)
+   • คลิกบล็อกในไทม์ไลน์ = เลื่อนไปที่แถวประชุมนั้น                                                                */
+function nowMin(){ const d=new Date(); return d.getHours()*60+d.getMinutes()+d.getSeconds()/60; }
+function hhmm(m){ m=Math.floor(m); return pad(Math.floor(m/60))+':'+pad(m%60); }
+function durTxt(min){ min=Math.max(1,Math.round(min)); const h=Math.floor(min/60), r=min%60; return h?(h+' ชม.'+(r?' '+r+' น.':'')):(r+' น.'); }
+function rangeOf(m){ const a=tmin(m.s); if(a==null) return null; let b=tmin(m.e); if(b==null||b<=a) b=a+durOf(m); return {a:a,b:b}; }
+function tlHtml(list,ds,A){
+  const it=[]; list.forEach(m=>{ const r=rangeOf(m); if(r) it.push({m:m,a:r.a,b:r.b}); });
+  if(!it.length) return '';
+  let r0=Math.min(480,Math.min.apply(null,it.map(x=>x.a))), r1=Math.max(1020,Math.max.apply(null,it.map(x=>x.b)));
+  r0=Math.floor(r0/60)*60; r1=Math.min(1440,Math.ceil(r1/60)*60); if(r1<=r0) r1=Math.min(1440,r0+60);
+  const span=r1-r0, lanes=[];
+  it.slice().sort((p,q)=>p.a-q.a||p.b-q.b).forEach(x=>{ let i=0; while(lanes[i]!==undefined&&lanes[i]>x.a) i++; lanes[i]=x.b; x.l=i; });
+  const H=20+lanes.length*24+16, step=span>720?120:60;
+  let tk='';
+  for(let t=r0;t<=r1;t+=60){ const left=((t-r0)/span*100).toFixed(2)+'%';
+    tk+='<div class="mg-tl-tk" style="left:'+left+'"></div>'+(((t-r0)%step===0)?'<div class="mg-tl-tl" style="left:'+left+'">'+pad(t/60%24)+':00</div>':''); }
+  const bl=it.map(x=>{ const cf=A&&A.conf&&A.conf[x.m.id]&&A.conf[x.m.id].length, cls=!x.m.who.length?'un':(cf?'cf':'ok');
+    const left=((x.a-r0)/span*100).toFixed(2), w=Math.max(1.2,(Math.min(x.b,r1)-x.a)/span*100).toFixed(2);
+    return '<div class="mg-tl-b '+cls+'" data-tl="'+E(x.m.id)+'" data-a="'+x.a+'" data-b="'+x.b+'" style="left:'+left+'%;width:'+w+'%;top:'+(20+x.l*24)+'px" title="'+E(x.m.s+'–'+x.m.e+'  '+(x.m.t||''))+'">'+E(x.m.s+' '+(x.m.t||''))+'</div>'; }).join('');
+  return '<div class="mg-tl" data-r0="'+r0+'" data-r1="'+r1+'"><div class="mg-tl-h"><b>⏱ ไทม์ไลน์'+(ds===today?'วันนี้':'')+'</b><span class="mg-tl-st" id="mgTlSt" aria-live="polite"></span></div>'+
+    '<div class="mg-tl-bar" style="height:'+H+'px">'+tk+bl+'<div class="mg-tl-now" data-t=""></div></div></div>';
+}
+function nowBadge(row,cls,txt){ const ti=row.querySelector('.mg-ti'); if(!ti) return; const s=document.createElement('span'); s.className='mg-lb '+cls; s.textContent=txt; ti.appendChild(s); }
+function nowSync(){
+  if(!shown()) return;
+  view.querySelectorAll('.mg-now,.mg-lb').forEach(n=>n.remove());
+  view.querySelectorAll('.mg-row.mg-past,.mg-row.mg-live').forEach(r=>{ r.classList.remove('mg-past','mg-live'); r.style.removeProperty('--prog'); });
+  view.querySelectorAll('.mg-tl-b.past,.mg-tl-b.live').forEach(b=>b.classList.remove('past','live'));
+  const tl=view.querySelector('.mg-tl'), nd=tl&&tl.querySelector('.mg-tl-now'), st=g('mgTlSt');
+  if(ui.view!=='day'||ui.date!==today){ if(nd) nd.style.display='none'; if(st) st.textContent=''; return; }
+  const n=nowMin(), nowTxt=hhmm(n), byId={}; getDay(ui.date).forEach(m=>{ byId[m.id]=m; });
+  const rows=Array.from(view.querySelectorAll('.mg-list .mg-row[data-m]'));
+  let firstFuture=null, lastTimed=null, hasPast=false, live=[], next=null;
+  rows.forEach(r=>{ const m=byId[r.dataset.m]; if(!m) return; const rg=rangeOf(m); if(!rg) return; lastTimed=r;
+    if(rg.b<=n){ r.classList.add('mg-past'); hasPast=true; }
+    else if(rg.a<=n){ r.classList.add('mg-live'); r.style.setProperty('--prog',Math.min(100,Math.max(0,(n-rg.a)/(rg.b-rg.a)*100)).toFixed(1)+'%'); live.push({m:m,left:rg.b-n}); nowBadge(r,'live','กำลังประชุม · เหลือ '+durTxt(rg.b-n)); }
+    else if(!firstFuture){ firstFuture=r; next={m:m,in:rg.a-n}; nowBadge(r,'next','ถัดไปอีก '+durTxt(rg.a-n)); }
+  });
+  /* เส้นแดงในรายการ */
+  const listEl=view.querySelector('.mg-list');
+  if(listEl&&lastTimed){
+    const ln=document.createElement('div'); ln.className='mg-now'; ln.setAttribute('role','separator');
+    const note=!firstFuture?(live.length?'':' · เลิกประชุมครบแล้ว'):((!hasPast&&!live.length)?' · ยังไม่เริ่มประชุม':'');
+    ln.innerHTML='<span>🕒 ตอนนี้ '+nowTxt+E(note)+'</span><i></i>';
+    if(firstFuture) listEl.insertBefore(ln,firstFuture); else lastTimed.insertAdjacentElement('afterend',ln);
+  }
+  /* เข็มบนไทม์ไลน์ */
+  if(tl){
+    const r0=+tl.dataset.r0, r1=+tl.dataset.r1;
+    tl.querySelectorAll('.mg-tl-b').forEach(b=>{ const a=+b.dataset.a, e=+b.dataset.b; if(e<=n) b.classList.add('past'); else if(a<=n) b.classList.add('live'); });
+    if(nd){ if(n>=r0&&n<=r1){ nd.style.display='block'; nd.style.left=((n-r0)/(r1-r0)*100).toFixed(2)+'%'; nd.setAttribute('data-t',nowTxt); } else nd.style.display='none'; }
+    if(st){ const cut=s=>{ s=String(s||''); return s.length>38?s.slice(0,37)+'…':s; };
+      let t='ตอนนี้ '+nowTxt;
+      if(live.length) t+=' · กำลังประชุม “'+cut(live[0].m.t)+'”'+(live.length>1?' (+'+(live.length-1)+')':'')+' เหลือ '+durTxt(live[0].left);
+      if(next) t+=' · ถัดไป '+next.m.s+' “'+cut(next.m.t)+'” อีก '+durTxt(next.in);
+      else if(!live.length) t+=' · เลิกประชุมครบแล้ว';
+      st.textContent=t; }
+  }
+}
+view.addEventListener('click',e=>{ const b=e.target.closest('[data-tl]'); if(!b) return;
+  const r=view.querySelector('.mg-row[data-m="'+(window.CSS&&CSS.escape?CSS.escape(b.dataset.tl):b.dataset.tl)+'"]'); if(!r) return;
+  r.scrollIntoView({behavior:'smooth',block:'center'}); r.classList.add('mg-flash'); setTimeout(()=>r.classList.remove('mg-flash'),1700); });
+setInterval(()=>{ if(!document.hidden) try{ nowSync(); }catch(e){} },15000);
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden) try{ nowSync(); }catch(e){} });
 
 /* ================= แก้ไขข้อมูล ================= */
 function mutate(ds,fn){ const L=getDay(ds); fn(L); setDay(ds,L); render(); refreshTodayCard(); }
