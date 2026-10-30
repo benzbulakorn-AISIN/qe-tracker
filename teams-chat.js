@@ -1,14 +1,18 @@
 /* =====================================================================
-   QE Tracker — Teams Chat (v2)   แชตสองทางกับ Microsoft Teams (QE ABS Dream team)
+   QE Tracker — Teams Chat (v3)   แชตสองทางกับ Microsoft Teams (QE ABS Dream team)
    บรรทัดเรียกใช้ (ใส่ไว้ใน index.html แล้ว):
        <script src="teams-chat.js" defer></script>
+
+   v3: แก้ปุ่ม “บันทึก (1) / ยังไม่บันทึก 1 รายการ” ขึ้นเองเมื่อเปิดหน้า
+       สาเหตุ: v2 เก็บตำแหน่งข้อความที่อ่านแล้วในคีย์ qe_teams_seen_v1 ซึ่งขึ้นต้นด้วย qe_
+               ระบบซิงก์ของ Tracker มองว่าเป็นข้อมูลกลางที่ต้องบันทึกขึ้น Cloud
+       แก้: เปลี่ยนเป็นคีย์ ux_teams_seen_v1 (ขึ้นต้น ux_ = เก็บเฉพาะเครื่องนี้ ไม่ซิงก์ ไม่ขึ้นรายการค้างบันทึก)
 
    ทิศทาง
    • พิมพ์ในหน้าเว็บ  → Edge Function  teams-send-message    → Workflows webhook → แชต Teams
    • พิมพ์ใน Teams    → Power Automate → Gmail → Apps Script → Edge Function teams-receive-message → ตาราง chat_messages → หน้าเว็บ
    • ใช้ตาราง chat_messages เดิม ห้อง (room_key) = teams-qe  — ไม่ยุ่งกับห้อง LINE / PCR / Audit / Meeting
    • ใช้ Supabase URL/key เดียวกับ Line Chat (window.COUNTERMEASURE_CLOUD_DEFAULTS)
-   • เก็บในเครื่องแค่ id ข้อความล่าสุดที่อ่านแล้ว (qe_teams_seen_v1) เพื่อนับข้อความใหม่
 
    ปรับแต่ง (ไม่บังคับ) ใส่ก่อนโหลดไฟล์นี้:
        window.QE_TEAMS_CHAT_CFG = { chatLabel:'QE ABS Dream team', room:'teams-qe', fnSend:'teams-send-message' };
@@ -28,15 +32,16 @@
   var cloud = window.COUNTERMEASURE_CLOUD_DEFAULTS || {};
   var base = String(cloud.supabaseUrl || '').replace(/\/$/, ''), key = String(cloud.supabaseKey || '');
 
-  var SEENK = 'qe_teams_seen_v1';
-  var seen = null;                                     // id ล่าสุดที่อ่านแล้ว (null = ยังไม่เคยตั้ง)
+  /* เก็บ id ข้อความล่าสุดที่อ่านแล้ว — คีย์ต้องไม่ขึ้นต้นด้วย qe_ หรือ issue_tracker_ (ไม่งั้นระบบซิงก์จะนับเป็นข้อมูลค้างบันทึก) */
+  var SEENK = 'ux_teams_seen_v1';
+  var seen = null;                                     // null = ยังไม่เคยตั้ง
   try { var o0 = JSON.parse(localStorage.getItem(SEENK) || '{}') || {}; if (o0[C.room] != null) seen = +o0[C.room] || 0; } catch (e) { seen = null; }
   function saveSeen(v) {
     seen = v;
     try { var o = JSON.parse(localStorage.getItem(SEENK) || '{}') || {}; o[C.room] = v; localStorage.setItem(SEENK, JSON.stringify(o)); } catch (e) {}
   }
 
-  /* ---------- CSS (หน้าตาเดียวกับปุ่ม/หน้าต่าง Line Chat) ---------- */
+  /* ---------- CSS ---------- */
   var css = [
     '.qet-fab{position:fixed;right:12px;bottom:12px;z-index:244;width:46px;height:46px;padding:0;border:0;border-radius:999px;background:linear-gradient(135deg,#6264a7,#464eb8);color:#fff;box-shadow:0 8px 24px rgba(70,78,184,.42);cursor:pointer;display:inline-flex;align-items:center;justify-content:center}',
     '.qet-fab:hover{filter:brightness(1.1)}.qet-fab:focus-visible{outline:3px solid #a5b4fc;outline-offset:2px}',
