@@ -7,6 +7,7 @@
 <title>QE Elec. Daily Job Tracker</title>
 <!-- v62 (27-Oct-2026): Time-saving & Ergonomics layer — ดู Change log ในบล็อก qeV62Css ท้ายไฟล์ -->
 <!-- v66 (30-Oct-2026): หน้า 🗓️ ประชุม — เส้นเวลาปัจจุบัน (Now line) + ไทม์ไลน์รายวัน + ไฮไลต์ประชุมที่กำลังเกิด/ผ่านไปแล้ว — ดูบล็อก "v66" ในสคริปต์ mtgAddon -->
+<!-- v67 (30-Oct-2026): หน้า “งานของฉัน” — แผนงานประจำวัน (ตารางรายชั่วโมง 07:30–16:30 + OT, ขั้น 30 น./1 ชม., ดึงประชุมของฉัน, งานอื่นอยู่ด้านล่าง) — ดูบล็อก “v67” ในสคริปต์ myWorkNavAddon -->
 <!-- v65 (29-Oct-2026): Meeting safety — Cloud merge รายประชุม · อีเมลอัตโนมัติไม่ลบ (ติดป้ายแทน) · ถังขยะประชุม 30 วัน · เตือน .ics แบบ Busy/Tentative -->
 <!-- v63 (28-Oct-2026): Smart Import · Month/Year filter · Share to LINE/Teams · AI General+QE — ดู Change log ในบล็อก qeV63Js ท้ายไฟล์ -->
 <!--
@@ -12762,6 +12763,70 @@ window.__QE_CHAT={open,load,send,close};
 #viewMyWork{display:none}
 .mw-wrap{padding:2px 0 96px}.mw-head{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;margin-bottom:14px}.mw-head>div:first-child{flex:1;min-width:220px}.mw-head h1{margin:0 0 4px}.mw-sub{color:var(--mut);font-size:13px}.mw-user{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:7px 12px;font-size:12px;font-weight:800}.mw-kpis{display:grid;grid-template-columns:repeat(5,minmax(115px,1fr));gap:10px;margin:12px 0 14px}.mw-kpi{text-align:left;border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--txt);padding:12px;min-height:83px}.mw-kpi.on{outline:3px solid var(--ring);border-color:var(--pri)}.mw-kpi b{display:block;font-size:27px;line-height:1}.mw-kpi span{display:block;font-size:11px;color:var(--mut);margin-top:7px}.mw-kpi[data-f="late"] b{color:var(--dang)}.mw-kpi[data-f="today"] b{color:var(--warn)}.mw-kpi[data-f="soon"] b{color:#2563eb}.mw-kpi[data-f="mine"] b{color:var(--vio)}.mw-kpi[data-f="all"] b{color:var(--ok)}
 .mw-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}.mw-tools input,.mw-tools select{width:auto;min-width:150px}.mw-tools input{flex:1;min-width:220px}.mw-count{color:var(--mut);font-size:12px;margin-left:auto}.mw-list{display:flex;flex-direction:column;gap:9px}.mw-card{display:grid;grid-template-columns:6px minmax(0,1fr) auto;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:0 1px 4px var(--sh)}.mw-ac{background:var(--ac,#64748b)}.mw-body{padding:12px;min-width:0}.mw-topline{display:flex;gap:7px;align-items:center;flex-wrap:wrap}.mw-badge{font-size:10px;font-weight:800;color:#fff;background:var(--ac,#64748b);padding:3px 8px;border-radius:999px}.mw-src{font-size:10px;color:var(--mut);background:var(--soft2);padding:3px 8px;border-radius:999px}.mw-title{font-size:14px;font-weight:800}.mw-meta{display:flex;gap:8px 14px;flex-wrap:wrap;color:var(--mut);font-size:11px;margin-top:7px}.mw-next{margin-top:8px;background:var(--soft);border-radius:9px;padding:8px 10px;font-size:12px;line-height:1.45}.mw-act{display:flex;gap:5px;align-items:center;padding:10px}.mw-act button{padding:6px 9px}.mw-empty{display:none;text-align:center;color:var(--mut);padding:40px 14px;border:1px dashed var(--line);border-radius:14px;background:var(--card)}.mw-note{font-size:11px;color:var(--mut);margin-top:10px}
+/* ===== v67: แผนงานประจำวัน ===== */
+.mw-h2{margin:6px 0 2px;font-size:17px}.mw-h2 small{color:var(--mut);font-size:12px;font-weight:600;margin-left:6px}
+.pl-card{border:1px solid var(--line);border-radius:16px;background:var(--card);padding:12px 12px 10px;margin:0 0 18px;box-shadow:0 1px 4px var(--sh)}
+.pl-h{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:0 0 8px}
+.pl-h h2{margin:0;font-size:18px}.pl-h h2 small{color:var(--mut);font-size:12.5px;font-weight:600;margin-left:6px}
+.pl-nav{display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap}
+.pl-nav input[type=date]{width:auto;min-width:0;font-weight:700;padding:5px 8px}
+.pl-h .btn-g,.pl-h .btn-p{padding:6px 12px;font-size:12.5px}
+.pl-h .btn-g.on{background:var(--pri);color:var(--on-pri);border-color:var(--pri)}
+.pl-grow{flex:1}
+.pl-sum{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px}
+.pl-sum span{padding:3px 10px;border-radius:99px;font-size:12px;font-weight:700;border:1px solid var(--line);background:var(--soft);color:var(--txt)}
+.pl-sum .w{color:var(--t-dang);border-color:var(--dang)}
+.pl-warn{font-size:12px;color:var(--t-warn);margin:0 0 8px}
+.pl-tray{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 8px;font-size:12.5px;padding:6px 10px;border:1px dashed var(--line);border-radius:10px;background:var(--soft)}
+.pl-chip{padding:3px 10px!important;font-size:12px!important;border-radius:99px!important;border:1px solid var(--ac,#64748b)!important;background:color-mix(in srgb,var(--ac,#64748b) 12%,var(--card))!important;color:var(--txt)!important;font-weight:700!important}
+.pl-grid{position:relative;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--card)}
+.pl-r{position:absolute;left:0;right:0;border-top:1px dashed color-mix(in srgb,var(--line) 65%,transparent);cursor:cell;box-sizing:border-box}
+.pl-r.hr{border-top:1px solid var(--line)}
+.pl-r.first{border-top:0}
+.pl-r.ot{background:repeating-linear-gradient(135deg,transparent 0 8px,rgba(245,158,11,.09) 8px 16px)}
+.pl-r:hover{background:color-mix(in srgb,var(--pri) 9%,transparent)}
+.pl-lb{position:absolute;left:8px;top:2px;width:46px;font-size:11.5px;font-weight:800;color:var(--mut);font-variant-numeric:tabular-nums;pointer-events:none}
+.pl-r:not(.hr) .pl-lb{font-weight:500;opacity:.7}
+.pl-plus{position:absolute;left:64px;top:50%;transform:translateY(-50%);opacity:0;font-size:12px;color:var(--pri);font-weight:700;pointer-events:none;white-space:nowrap}
+.pl-r:hover .pl-plus{opacity:1}
+.pl-ottag{position:absolute;right:8px;top:3px;font-size:11px;font-weight:800;color:var(--t-warn);pointer-events:none}
+.pl-bl{position:absolute;left:60px;right:6px;top:0;bottom:0;pointer-events:none;z-index:3}
+.pl-b{position:absolute;box-sizing:border-box;pointer-events:auto;border-radius:8px;padding:3px 6px;display:flex;gap:6px;align-items:flex-start;overflow:hidden;font-size:12px;line-height:1.25;border:1px solid var(--ac);border-left-width:4px;background:color-mix(in srgb,var(--ac) 14%,var(--card));color:var(--txt)}
+.pl-b.mt{--ac:#3b82f6;cursor:default;background:repeating-linear-gradient(135deg,color-mix(in srgb,#3b82f6 17%,var(--card)) 0 8px,color-mix(in srgb,#3b82f6 9%,var(--card)) 8px 16px)}
+.pl-b.mt.inv{border-style:dashed;opacity:.8}
+.pl-b.tk{cursor:grab}
+.pl-b.tk:focus-visible{outline:2px solid var(--pri);outline-offset:1px}
+.pl-b.cf{box-shadow:0 0 0 2px var(--dang)}
+.pl-b.done{opacity:.55}.pl-b.done .pl-bt b{text-decoration:line-through}
+.pl-bt{flex:1;min-width:0}
+.pl-bt b{display:block;font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pl-b.tall .pl-bt b{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.pl-bt small{display:block;font-size:11px;color:var(--mut);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pl-b:not(.tall) .pl-bt small{display:none}
+.pl-ck{width:15px;height:15px;margin:1px 0 0;accent-color:var(--ok);flex:0 0 auto;cursor:pointer}
+.pl-b button{flex:0 0 auto;margin:0}
+.pl-b .pl-dur{padding:0 8px;font-size:11px;font-weight:800;border-radius:99px;border:1px solid var(--ac);background:var(--card);color:var(--txt);line-height:18px;white-space:nowrap}
+.pl-b .pl-x{padding:0 5px;background:transparent;color:var(--mut);font-size:12px;line-height:18px;border-radius:6px}
+.pl-b .pl-x:hover{color:var(--dang)}
+.pl-now{position:absolute;left:0;right:0;height:0;border-top:2px solid #ef4444;z-index:6;pointer-events:none;box-shadow:0 0 6px rgba(239,68,68,.5)}
+.pl-now::before{content:attr(data-t);position:absolute;left:4px;top:-10px;background:#ef4444;color:#fff;font-size:11px;font-weight:800;padding:0 7px;border-radius:99px;line-height:17px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pl-shade{position:absolute;left:0;right:0;top:0;background:color-mix(in srgb,var(--txt) 6%,transparent);pointer-events:none;z-index:1}
+.pl-ghost{position:absolute;left:0;right:0;border:2px dashed var(--pri);background:color-mix(in srgb,var(--pri) 14%,transparent);border-radius:8px;pointer-events:none;z-index:4;box-sizing:border-box}
+.pl-foot{font-size:11.5px;color:var(--mut);margin:8px 2px 0;line-height:1.6}
+.mw-card.pl-in{box-shadow:0 0 0 2px var(--ok) inset}
+.mw-act .btn-g.pl-on{border-color:var(--ok);color:var(--t-ok);font-weight:800}
+.pl-ov{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:14px}
+.pl-md{background:var(--pop,#fff);color:var(--txt);border:1px solid var(--line);border-radius:14px;padding:18px;width:100%;max-width:460px;max-height:92vh;overflow:auto;box-shadow:0 18px 50px rgba(0,0,0,.45)}
+.pl-md h3{margin:0 0 8px;font-size:17px}
+.pl-md label{display:block;margin:10px 0 4px;font-weight:700;font-size:12px}
+.pl-md select,.pl-md input[type=text]{width:100%;box-sizing:border-box}
+.pl-md .pl-two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pl-seg{display:flex;gap:6px}
+.pl-seg button{flex:1;padding:8px 10px;font-size:13px;border:1px solid var(--line);background:transparent;color:var(--mut);border-radius:10px}
+.pl-seg button.on{background:var(--pri);color:var(--on-pri);border-color:var(--pri)}
+.pl-act{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;align-items:center}
+@media(max-width:620px){.pl-lb{width:40px;font-size:11px}.pl-bl{left:50px}.pl-plus{left:54px}.pl-md .pl-two{grid-template-columns:1fr}}
+
 @media(max-width:900px){.mw-kpis{grid-template-columns:repeat(2,1fr)}}@media(max-width:620px){.mw-card{grid-template-columns:6px 1fr}.mw-act{grid-column:2;padding-top:0}.mw-tools input{flex-basis:100%}.tabbar .tabbtn{padding-left:10px!important;padding-right:10px!important}}
 </style>
 <script id="myWorkNavAddon">
@@ -12810,16 +12875,172 @@ const view=document.createElement('div');view.id='viewMyWork';g('viewToday').par
 let filter='all';
 function allViews(){return ['viewToday','viewTracker','viewSheet','viewMission','viewHoshin','viewMainJobs','viewMeet','viewMyWork']}
 function allTabs(){return ['tabD','tabW','tabT','tabS','tabM','tabH','tabJ','tabG']}
-function show(){allViews().forEach(id=>{const e=g(id);if(e)e.style.display=id==='viewMyWork'?'block':'none'});allTabs().forEach(id=>{const e=g(id);if(e)e.classList.toggle('on',id==='tabW')});render();window.scrollTo(0,0)}
-function card(x){return '<article class="mw-card" data-level="'+x.level+'" style="--ac:'+x.ac+'"><div class="mw-ac"></div><div class="mw-body"><div class="mw-topline"><span class="mw-badge">'+x.label+'</span><span class="mw-title">'+E(x.issue)+'</span><span class="mw-src">Tracker</span></div><div class="mw-meta"><span>👤 '+E(x.owner||'-')+'</span><span>📅 '+E(x.due||'ยังไม่มี Due Date')+'</span><span>🟠 '+E(x.status)+'</span></div><div class="mw-next"><b>Next action:</b> '+E(x.cm||'ยังไม่ได้ระบุ Countermeasure / Next action')+'</div></div><div class="mw-act"><button type="button" class="btn-g" data-mw-go="'+E(x.id)+'" title="เปิดรายการต้นทาง">↗ เปิด</button></div></article>'}
-function render(){const R=rows(),late=R.filter(x=>x.level==='late').length,tdy=R.filter(x=>x.level==='today').length,soon=R.filter(x=>x.level==='soon').length,nodue=R.filter(x=>!x.due).length,urgent=late+tdy;setWBadge(late,tdy);view.innerHTML='<div class="mw-wrap"><div class="mw-head"><div><h1>📥 งานของฉัน</h1><div class="mw-sub">รวมงานที่ยังไม่เสร็จของผู้ใช้ที่ Login · เรียงตามความเร่งด่วนจาก Tracker</div></div><div class="mw-user">👤 '+E(user()||'ยังไม่ได้ Login')+'</div></div><div class="mw-kpis"><button class="mw-kpi '+(filter==='late'?'on':'')+'" data-f="late"><b>'+late+'</b><span>เลยกำหนด</span></button><button class="mw-kpi '+(filter==='today'?'on':'')+'" data-f="today"><b>'+tdy+'</b><span>ครบกำหนดวันนี้</span></button><button class="mw-kpi '+(filter==='soon'?'on':'')+'" data-f="soon"><b>'+soon+'</b><span>ภายใน 3 วัน</span></button><button class="mw-kpi '+(filter==='nodue'?'on':'')+'" data-f="nodue"><b>'+nodue+'</b><span>ยังไม่มี Due Date</span></button><button class="mw-kpi '+(filter==='all'?'on':'')+'" data-f="all"><b>'+R.length+'</b><span>งานที่ยังเปิดอยู่</span></button></div><div class="mw-tools"><input id="mwQ" placeholder="🔎 ค้นหา Issue หรือ Countermeasure"><select id="mwSort"><option value="priority">เรียงตามความเร่งด่วน</option><option value="due">เรียงตาม Due Date</option></select><button type="button" class="btn-g" id="mwReset">↻ ล้างตัวกรอง</button><span class="mw-count" id="mwCount"></span></div><div class="mw-list" id="mwList"></div><div class="mw-empty" id="mwEmpty">ไม่พบงานตามตัวกรอง</div><div class="mw-note">วันที่อ้างอิง: '+localDay()+' · ใช้ Due Date ล่าสุด (รวม Rev.) จาก Tracker · Meeting Action และ Checklist เชื่อมเพิ่มภายหลังได้</div></div>';bind(R);apply(R)}
+function show(){allViews().forEach(id=>{const e=g(id);if(e)e.style.display=id==='viewMyWork'?'block':'none'});allTabs().forEach(id=>{const e=g(id);if(e)e.classList.toggle('on',id==='tabW')});plDate=localDay();render();window.scrollTo(0,0);try{planScrollNow()}catch(err){}}
+function card(x){return '<article class="mw-card'+(planOf(x)?' pl-in':'')+'" draggable="true" data-pl-task="'+E(x.id)+'" data-level="'+x.level+'" style="--ac:'+x.ac+'"><div class="mw-ac"></div><div class="mw-body"><div class="mw-topline"><span class="mw-badge">'+x.label+'</span><span class="mw-title">'+E(x.issue)+'</span><span class="mw-src">Tracker</span></div><div class="mw-meta"><span>👤 '+E(x.owner||'-')+'</span><span>📅 '+E(x.due||'ยังไม่มี Due Date')+'</span><span>🟠 '+E(x.status)+'</span></div><div class="mw-next"><b>Next action:</b> '+E(x.cm||'ยังไม่ได้ระบุ Countermeasure / Next action')+'</div></div><div class="mw-act'+'">'+planBtn(x)+'<button type="button" class="btn-g" data-mw-go="'+E(x.id)+'" title="เปิดรายการต้นทาง">↗ เปิด</button></div></article>'}
+function render(){const _pq=(g('mwQ')||{}).value||'',_ps=(g('mwSort')||{}).value||'priority',_py=window.scrollY;const R=rows(),late=R.filter(x=>x.level==='late').length,tdy=R.filter(x=>x.level==='today').length,soon=R.filter(x=>x.level==='soon').length,nodue=R.filter(x=>!x.due).length,urgent=late+tdy;setWBadge(late,tdy);view.innerHTML='<div class="mw-wrap"><div class="mw-head"><div><h1>📥 งานของฉัน</h1><div class="mw-sub">วางแผนงานรายชั่วโมง (07:30–16:30 + OT) พร้อมประชุมของฉัน · งานที่ยังเปิดอยู่จาก Tracker อยู่ด้านล่าง</div></div><div class="mw-user">👤 '+E(user()||'ยังไม่ได้ Login')+'</div></div><div id="mwPlan" class="pl-card"></div><h2 class="mw-h2">📋 งานอื่น ๆ ที่ยังเปิดอยู่<small>งานที่ยังมาไม่ถึง / ยังไม่ได้วางแผน — กด 📅 วางแผน หรือลากการ์ดขึ้นไปวางในตารางด้านบน</small></h2><div class="mw-kpis"><button class="mw-kpi '+(filter==='late'?'on':'')+'" data-f="late"><b>'+late+'</b><span>เลยกำหนด</span></button><button class="mw-kpi '+(filter==='today'?'on':'')+'" data-f="today"><b>'+tdy+'</b><span>ครบกำหนดวันนี้</span></button><button class="mw-kpi '+(filter==='soon'?'on':'')+'" data-f="soon"><b>'+soon+'</b><span>ภายใน 3 วัน</span></button><button class="mw-kpi '+(filter==='nodue'?'on':'')+'" data-f="nodue"><b>'+nodue+'</b><span>ยังไม่มี Due Date</span></button><button class="mw-kpi '+(filter==='all'?'on':'')+'" data-f="all"><b>'+R.length+'</b><span>งานที่ยังเปิดอยู่</span></button></div><div class="mw-tools"><input id="mwQ" placeholder="🔎 ค้นหา Issue หรือ Countermeasure"><select id="mwSort"><option value="priority">เรียงตามความเร่งด่วน</option><option value="due">เรียงตาม Due Date</option></select><button type="button" class="btn-g" id="mwReset">↻ ล้างตัวกรอง</button><span class="mw-count" id="mwCount"></span></div><div class="mw-list" id="mwList"></div><div class="mw-empty" id="mwEmpty">ไม่พบงานตามตัวกรอง</div><div class="mw-note">วันที่อ้างอิง: '+localDay()+' · ใช้ Due Date ล่าสุด (รวม Rev.) จาก Tracker · Meeting Action และ Checklist เชื่อมเพิ่มภายหลังได้</div></div>';bind(R);if(g('mwQ'))g('mwQ').value=_pq;if(g('mwSort'))g('mwSort').value=_ps;apply(R);try{planRender()}catch(err){console.error(err)}if(window.scrollY!==_py)window.scrollTo(0,_py)}
 function bind(R){view.querySelectorAll('[data-f]').forEach(b=>b.addEventListener('click',()=>{filter=b.dataset.f;view.querySelectorAll('[data-f]').forEach(x=>x.classList.toggle('on',x===b));apply(R)}));g('mwQ').addEventListener('input',()=>apply(R));g('mwSort').addEventListener('change',()=>apply(R));g('mwReset').addEventListener('click',()=>{filter='all';g('mwQ').value='';g('mwSort').value='priority';view.querySelectorAll('[data-f]').forEach(x=>x.classList.toggle('on',x.dataset.f==='all'));apply(R)});g('mwList').addEventListener('click',e=>{const b=e.target.closest('[data-mw-go]');if(!b)return;g('tabT').click();setTimeout(()=>{try{goToItem(+b.dataset.mwGo)}catch(err){}},100)})}
 function apply(R){const q=String(g('mwQ')?.value||'').trim().toLowerCase(),sort=g('mwSort')?.value||'priority';let A=R.filter(x=>(filter==='all'||(filter==='nodue'?!x.due:x.level===filter))&&(!q||(x.issue+' '+x.cm+' '+x.owner).toLowerCase().includes(q)));const rank={late:0,today:1,soon:2,normal:3};A.sort((a,b)=>sort==='due'?((a.due||'9999').localeCompare(b.due||'9999')):((rank[a.level]??9)-(rank[b.level]??9)||((a.due||'9999').localeCompare(b.due||'9999'))));g('mwList').innerHTML=A.map(card).join('');g('mwCount').textContent='แสดง '+A.length+' รายการ';g('mwEmpty').style.display=A.length?'none':'block'}
+
+/* ===== v67: แผนงานประจำวัน (ตารางรายชั่วโมงในหน้า “งานของฉัน”) =====
+   • ตาราง 07:30–16:30 (ช่องละ 30 น.) + ปุ่ม 🌙 OT (ถึง 19:30; ขยายเองถ้ามีงาน/ประชุมนอกช่วง)
+   • แสดง “ประชุมของฉัน” จากหน้าประชุมเป็นบล็อกสีฟ้า (อ่านอย่างเดียว) — งานที่วางแผนซ้อนกับประชุมจะมีกรอบแดง
+   • แต่ละงานเลือก 30 น. / 1 ชม. ได้ (กดป้ายบนบล็อกเพื่อสลับ) · ติ๊กเสร็จ · ลากย้ายเวลา · คลิกบล็อกเพื่อแก้
+   • เก็บเป็นรายคน/รายวัน key = qe_plan_<ชื่อ>_<วันที่> (ซิงก์ Cloud อัตโนมัติเหมือนข้อมูลอื่นที่ขึ้นต้น qe_)
+   • งานที่ยังไม่อยู่ในแผน อยู่ด้านล่าง: ปุ่ม 📅 วางแผน = วางช่องว่างถัดไป 1 ชม. · หรือลากการ์ดขึ้นไปวางในตาราง */
+const PL={ws:450,we:990,otEnd:1170,slot:36};
+let plDate=localDay(), plOT=false, plDrag=null, plModal=null;
+try{plOT=localStorage.getItem('ux_plan_ot')==='1'}catch(e){}
+const pad2=n=>String(n).padStart(2,'0');
+const hm=m=>pad2(Math.floor(m/60))+':'+pad2(m%60);
+const tmin=s=>{const m=/^(\d{1,2}):(\d{2})$/.exec(String(s||''));return m?(+m[1])*60+ +m[2]:null};
+const dtxt=min=>{min=Math.round(min);const h=Math.floor(min/60),r=min%60;return h?(h+' ชม.'+(r?' '+r+' น.':'')):(r+' น.')};
+const hrT=min=>String(Math.round(min/6)/10)+' ชม.';
+const cutT=(s,n)=>{s=String(s||'');return s.length>n?s.slice(0,n-1)+'…':s};
+const plId=()=>'p'+Math.random().toString(36).slice(2,9)+Date.now().toString(36).slice(-3);
+const uslug=()=>(user().toLowerCase().replace(/[^a-z0-9\u0E00-\u0E7F]+/g,'')||'me');
+const plKey=ds=>'qe_plan_'+uslug()+'_'+ds;
+const TH_DL=['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'],TH_M=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+function plLabel(ds){const p=ds.split('-').map(Number),d=new Date(p[0],p[1]-1,p[2]);return TH_DL[d.getDay()]+' '+p[2]+' '+TH_M[p[1]-1]+' '+(p[0]+543)}
+function plGet(ds){try{const a=JSON.parse(localStorage.getItem(plKey(ds))||'[]');return Array.isArray(a)?a.filter(x=>x&&typeof x==='object').map(x=>({id:String(x.id||plId()),tid:x.tid==null?'':String(x.tid),t:String(x.t||''),s:+x.s||0,d:+x.d||60,done:!!x.done})):[]}catch(e){return[]}}
+function plSet(ds,a){try{if(a.length||localStorage.getItem(plKey(ds))!==null)localStorage.setItem(plKey(ds),JSON.stringify(a))}catch(e){try{toast('⚠ บันทึกแผนไม่สำเร็จ (พื้นที่เบราว์เซอร์เต็ม?)','var(--t-dang)')}catch(_){}}}
+function plPeople(){let o=null;try{o=JSON.parse(localStorage.getItem('qe_mtg_cfg')||'null')}catch(e){}const src=(o&&Array.isArray(o.people)&&o.people.length)?o.people:[{id:'earn',name:'Earn'},{id:'natcha',name:'Natcha'},{id:'mana',name:'Mana'},{id:'benz',name:'Benz'}];return src.map(p=>({id:String((p&&p.id)||''),name:String((p&&p.name)||''),alias:(Array.isArray(p&&p.alias)?p.alias:[]).map(a=>String(a).toLowerCase())}))}
+function plMeId(){const me=user().toLowerCase();if(!me)return'';const p=plPeople().find(p=>p.id.toLowerCase()===me||p.name.toLowerCase()===me||p.alias.indexOf(me)>=0);return p?p.id:''}
+function plMeetings(ds){let a=[];try{a=JSON.parse(localStorage.getItem('qe_mtg_d_'+ds)||'[]')}catch(e){}if(!Array.isArray(a))return[];const me=plMeId(),out=[];
+  a.forEach(m=>{if(!m||typeof m!=='object')return;const who=Array.isArray(m.who)?m.who.map(String):[],inv=Array.isArray(m.inv)?m.inv.map(String):[];const mine=who.indexOf('all')>=0||(me&&who.indexOf(me)>=0),invOnly=!mine&&me&&inv.indexOf(me)>=0;if(!mine&&!invOnly)return;const s=tmin(m.s);if(s==null)return;let e=tmin(m.e);if(e==null||e<=s)e=s+60;out.push({k:'mt',id:'m'+String(m.id||s),t:String(m.t||'(ไม่มีชื่อ)'),room:String(m.room||''),s:s,e:e,inv:!!invOnly})});return out}
+function plTasks(){const L=rows(),M=new Map();L.forEach(x=>M.set(String(x.id),x));return{list:L,map:M}}
+function planOf(x){try{return plGet(plDate).find(i=>i.tid===String(x.id))||null}catch(e){return null}}
+function planBtn(x){const p=planOf(x);return p?'<button type="button" class="btn-g pl-on" data-pl-edit-task="'+E(x.id)+'" title="อยู่ในแผนวันที่เลือกแล้ว — กดเพื่อแก้เวลา">📅 '+hm(p.s)+'</button>':'<button type="button" class="btn-g" data-pl-add="'+E(x.id)+'" title="วางในช่องว่างถัดไป (1 ชม.) ของแผนวันที่เลือก — หรือลากการ์ดขึ้นไปวางในตารางเพื่อเลือกเวลาเอง">📅 วางแผน</button>'}
+function plNextFree(ds,d){const busy=plGet(ds).map(x=>({s:x.s,e:x.s+x.d})).concat(plMeetings(ds).map(m=>({s:m.s,e:m.e})));let from=PL.ws;if(ds===localDay()){const n=new Date();from=Math.max(PL.ws,Math.ceil((n.getHours()*60+n.getMinutes())/30)*30)}
+  const free=s=>!busy.some(b=>s<b.e&&s+d>b.s);for(let s=from;s+d<=PL.otEnd;s+=30)if(free(s))return s;for(let s=PL.ws;s+d<=PL.otEnd;s+=30)if(free(s))return s;return PL.ws}
+function plLanes(B){B.sort((x,y)=>x.s-y.s||y.e-x.e);let cl=[],cur=null,end=-1;B.forEach(x=>{if(!cur||x.s>=end){cur=[];cl.push(cur);end=-1}cur.push(x);end=Math.max(end,x.e)});cl.forEach(c=>{const lanes=[];c.forEach(x=>{let i=0;while(lanes[i]!==undefined&&lanes[i]>x.s)i++;lanes[i]=x.e;x.l=i});c.forEach(x=>{x.n=lanes.length})})}
+function plUnion(list){const iv=list.map(x=>[Math.max(x.s,PL.ws),Math.min(x.e,PL.we)]).filter(x=>x[1]>x[0]).sort((a,b)=>a[0]-b[0]);let tot=0,cs=null,ce=null;iv.forEach(x=>{if(cs==null){cs=x[0];ce=x[1]}else if(x[0]<=ce)ce=Math.max(ce,x[1]);else{tot+=ce-cs;cs=x[0];ce=x[1]}});if(cs!=null)tot+=ce-cs;return tot}
+function nowMinPl(){const n=new Date();return n.getHours()*60+n.getMinutes()+n.getSeconds()/60}
+function planRender(){
+  const box=g('mwPlan');if(!box)return;
+  const ds=plDate,isT=ds===localDay(),items=plGet(ds),mts=plMeetings(ds),T=plTasks();
+  let a=PL.ws,b=plOT?PL.otEnd:PL.we;
+  items.forEach(x=>{a=Math.min(a,Math.floor(x.s/30)*30);b=Math.max(b,Math.ceil((x.s+x.d)/30)*30)});
+  mts.forEach(x=>{a=Math.min(a,Math.floor(x.s/30)*30);b=Math.max(b,Math.ceil(x.e/30)*30)});
+  a=Math.max(0,a);b=Math.min(1440,b);
+  const B=items.map(x=>({k:'tk',id:x.id,tid:x.tid,t:x.t,s:x.s,e:x.s+x.d,d:x.d,done:x.done,tk:x.tid?T.map.get(x.tid):null})).concat(mts);
+  B.forEach(x=>{if(x.k==='tk')x.cf=B.some(y=>y!==x&&y.s<x.e&&y.e>x.s)});
+  plLanes(B);
+  const nCf=B.filter(x=>x.cf).length;
+  /* สรุป */
+  const mtMin=plUnion(mts),tkMin=plUnion(B.filter(x=>x.k==='tk')),allMin=plUnion(B),free=Math.max(0,(PL.we-PL.ws)-allMin);
+  let otMin=0;B.forEach(x=>{if(x.k==='tk')otMin+=Math.max(0,x.e-Math.max(x.s,PL.we))});
+  const sum='<div class="pl-sum"><span>🗓 ประชุม '+hrT(mtMin)+'</span><span>🛠 งานที่วางแผน '+hrT(tkMin)+'</span><span>⬜ ว่าง '+hrT(free)+' <small>(จาก '+hrT(PL.we-PL.ws)+')</small></span>'+(otMin?'<span>🌙 OT '+hrT(otMin)+'</span>':'')+(nCf?'<span class="w">⚠ เวลาซ้อน '+nCf+' รายการ</span>':'')+'</div>';
+  const warn=!user()?'<div class="pl-warn">⚠ ยังไม่ได้ Login — แผนจะถูกเก็บในชื่อ “me” และไม่มีประชุมแสดง</div>':(!plMeId()?'<div class="pl-warn">⚠ ไม่พบชื่อ “'+E(user())+'” ในรายชื่อทีมของหน้าประชุม — แสดงเฉพาะประชุมที่ลง All (ตั้งค่าที่หน้าประชุม → 👥 ตั้งค่าทีม)</div>':'');
+  /* ถาดงานเร่งด่วนที่ยังไม่วางแผน */
+  let tray='';if(ds>=localDay()){const pl=new Set(items.map(x=>x.tid)),U=T.list.filter(x=>(x.level==='late'||x.level==='today')&&!pl.has(String(x.id)));
+    if(U.length)tray='<div class="pl-tray"><b>⚡ ควรวางแผน</b>'+U.slice(0,6).map(x=>'<button type="button" class="pl-chip" data-pl-quick="'+E(x.id)+'" style="--ac:'+x.ac+'" title="'+E(x.label+' — '+x.issue+' · กดเพื่อวางช่องว่างถัดไป (1 ชม.)')+'">＋ '+E(cutT(x.issue,28))+'</button>').join('')+(U.length>6?'<span>+'+(U.length-6)+' งาน</span>':'')+'</div>'}
+  /* ตาราง */
+  const H=(b-a)/30*PL.slot;let rowsH='';
+  for(let t=a;t<b;t+=30){const top=(t-a)/30*PL.slot;rowsH+='<div class="pl-r'+(t%60===0?' hr':'')+((t>=PL.we||t<PL.ws)?' ot':'')+(t===a?' first':'')+'" data-s="'+t+'" style="top:'+top+'px;height:'+PL.slot+'px"><span class="pl-lb">'+hm(t)+'</span><span class="pl-plus">＋ เพิ่มงาน '+hm(t)+'</span>'+(t===PL.we?'<span class="pl-ottag">🌙 OT</span>':'')+'</div>'}
+  const bl=B.map(x=>{
+    const top=(x.s-a)/30*PL.slot+1,h=Math.max(PL.slot-2,(x.e-x.s)/30*PL.slot-2),tall=h>=60?' tall':'';
+    const pos='top:'+top+'px;height:'+h+'px;left:calc('+x.l+' * 100% / '+x.n+');width:calc(100% / '+x.n+' - 4px)';
+    if(x.k==='mt')return '<div class="pl-b mt'+(x.inv?' inv':'')+tall+'" style="'+pos+'" title="'+E(hm(x.s)+'–'+hm(x.e)+'  '+x.t+(x.room?' · '+x.room:'')+(x.inv?' (ถูกเชิญ ยังไม่ได้ลงชื่อ)':''))+'"><span>🗓</span><div class="pl-bt"><b>'+E(x.t)+'</b><small>'+hm(x.s)+'–'+hm(x.e)+(x.room?' · 📍'+E(x.room):'')+(x.inv?' · เชิญ':'')+'</small></div></div>';
+    const ac=x.tk?x.tk.ac:'#7c3aed',lab=x.tk?x.tk.label:'งานอื่น ๆ';
+    return '<div class="pl-b tk'+tall+(x.done?' done':'')+(x.cf?' cf':'')+'" tabindex="0" role="button" draggable="true" data-pl-blk="'+E(x.id)+'" style="--ac:'+ac+';'+pos+'" title="'+E(hm(x.s)+'–'+hm(x.e)+'  '+x.t+' · '+lab+(x.cf?' · ⚠ เวลาซ้อนกับรายการอื่น':'')+' — คลิกเพื่อแก้ไข · ลากเพื่อย้ายเวลา')+'">'+
+      '<input type="checkbox" class="pl-ck" data-pl-ck="'+E(x.id)+'"'+(x.done?' checked':'')+' aria-label="เสร็จแล้ว" title="ติ๊กเมื่อทำเสร็จ">'+
+      '<div class="pl-bt"><b>'+E(x.t||'(ไม่มีชื่อ)')+'</b><small>'+hm(x.s)+'–'+hm(x.e)+' · '+E(lab)+(x.cf?' · ⚠ เวลาซ้อน':'')+'</small></div>'+
+      '<button type="button" class="pl-dur" data-pl-dur="'+E(x.id)+'" title="สลับ 30 นาที / 1 ชั่วโมง">'+(x.d===30?'30 น.':x.d===60?'1 ชม.':E(dtxt(x.d)))+'</button>'+
+      '<button type="button" class="pl-x" data-pl-del="'+E(x.id)+'" title="เอาออกจากแผน">✕</button></div>'}).join('');
+  let nowH='';if(isT){const n=nowMinPl();if(n>=a&&n<=b){const y=(n-a)/30*PL.slot;nowH='<div class="pl-shade" style="height:'+y.toFixed(1)+'px"></div><div class="pl-now" data-t="ตอนนี้ '+hm(Math.floor(n))+'" style="top:'+y.toFixed(1)+'px"></div>'}else if(n>b)nowH='<div class="pl-shade" style="height:100%"></div>'}
+  else if(ds<localDay())nowH='<div class="pl-shade" style="height:100%"></div>';
+  const head='<div class="pl-h"><h2>🗓 แผนงานประจำวัน<small>'+E(plLabel(ds))+(isT?' · วันนี้':'')+'</small></h2><span class="pl-grow"></span>'+
+    '<div class="pl-nav"><button type="button" class="btn-g" data-pl-a="prev" title="วันก่อนหน้า">◀</button><input type="date" id="plDate" value="'+E(ds)+'"><button type="button" class="btn-g" data-pl-a="next" title="วันถัดไป">▶</button><button type="button" class="btn-g" data-pl-a="today">วันนี้</button></div>'+
+    '<button type="button" class="btn-p" style="animation:none" data-pl-a="add">➕ เพิ่มงาน</button><button type="button" class="btn-g'+(plOT?' on':'')+'" data-pl-a="ot" title="แสดงช่วง OT ถึง 19:30">🌙 OT</button></div>';
+  box.innerHTML=head+sum+warn+tray+'<div class="pl-grid" data-a="'+a+'" data-b="'+b+'" style="height:'+H+'px">'+rowsH+nowH+'<div class="pl-bl">'+bl+'</div></div>'+
+    '<div class="pl-foot">💡 คลิกช่องว่างเพื่อเพิ่มงาน · ลากบล็อกเพื่อย้ายเวลา · กดป้าย <b>30 น. / 1 ชม.</b> เพื่อสลับระยะเวลา · ติ๊ก ☐ เมื่อทำเสร็จ · บล็อกสีฟ้า = ประชุมของฉัน (จากหน้าประชุม) · กรอบแดง = เวลาซ้อนกัน</div>';
+}
+function planNowUpdate(){const gr=view.querySelector('.pl-grid');if(!gr||plDate!==localDay())return;const a=+gr.dataset.a,b=+gr.dataset.b,n=nowMinPl(),nd=gr.querySelector('.pl-now'),sh=gr.querySelector('.pl-shade');if(!nd||!sh)return;if(n<a||n>b)return;const y=((n-a)/30*PL.slot).toFixed(1)+'px';nd.style.top=y;sh.style.height=y;nd.setAttribute('data-t','ตอนนี้ '+hm(Math.floor(n)))}
+function planScrollNow(){const nd=view.querySelector('.pl-now');if(!nd)return;const y=nd.getBoundingClientRect().top+window.scrollY-Math.round(window.innerHeight*0.4);window.scrollTo(0,Math.max(0,y))}
+function plBusy(){if(plModal||plDrag)return true;const a=document.activeElement;return !!(a&&view.contains(a)&&/^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName))}
+function plToast(m,c){try{toast(m,c)}catch(e){}}
+function plPatch(id,fn){const ds=plDate,a=plGet(ds),x=a.find(i=>i.id===id);if(!x)return;fn(x);x.s=Math.max(0,Math.min(x.s,1440-x.d));plSet(ds,a);render()}
+function plDel(id){const ds=plDate,a=plGet(ds),i=a.findIndex(x=>x.id===id);if(i<0)return;const keep=a.slice(),rm=a.splice(i,1)[0];plSet(ds,a);render();
+  if(window.qeUndoRow){window.qeUndoRow(()=>{plSet(ds,keep);render()});const sp=document.querySelector('#qeUndo span');if(sp)sp.textContent='เอา “'+cutT(rm.t,24)+'” ออกจากแผนแล้ว'}}
+function plPlace(tid,s){const T=plTasks().map.get(String(tid));if(!T)return;const ds=plDate,a=plGet(ds),ex=a.find(x=>x.tid===String(tid));
+  if(ex){ex.s=Math.max(0,Math.min(s,1440-ex.d));plSet(ds,a);render();return}
+  s=Math.max(0,Math.min(s,1380));a.push({id:plId(),tid:String(tid),t:T.issue,s:s,d:60,done:false});plSet(ds,a);render();
+  plToast('📅 วาง “'+cutT(T.issue,30)+'” '+hm(s)+'–'+hm(s+60)+(ds===localDay()?'':' ('+plLabel(ds)+')')+' แล้ว · คลิกบล็อกเพื่อแก้เวลา/ระยะเวลา')}
+function plQuick(tid){const ex=plGet(plDate).find(x=>x.tid===String(tid));if(ex){plOpen({id:ex.id});return}plPlace(tid,plNextFree(plDate,60))}
+function plClose(){if(plModal){plModal.remove();plModal=null}document.removeEventListener('keydown',plKey2,true)}
+function plKey2(e){if(!plModal)return;if(e.key==='Escape'){e.preventDefault();plClose()}else if(e.key==='Enter'&&e.target&&e.target.tagName==='INPUT'){e.preventDefault();const s=plModal.querySelector('[data-pm="save"]');if(s)s.click()}}
+function plOpen(o){
+  plClose();const ds=plDate,items=plGet(ds),cur=o.id?items.find(x=>x.id===o.id):null;if(o.id&&!cur)return;const T=plTasks();
+  const d0=cur?cur.d:60,s0=cur?cur.s:(o.s!=null?o.s:plNextFree(ds,d0)),tid0=cur?cur.tid:String(o.tid||''),tk0=tid0?T.map.get(tid0):null,t0=cur?cur.t:(tk0?tk0.issue:'');
+  const rank={late:0,today:1,soon:2,normal:3},ico={late:'🔴',today:'🟠',soon:'🔵',normal:'⚪'};
+  const L=T.list.slice().sort((a,b)=>(rank[a.level]??9)-(rank[b.level]??9)||(a.due||'9999').localeCompare(b.due||'9999'));
+  const pl=new Set(items.filter(x=>!cur||x.id!==cur.id).map(x=>x.tid).filter(Boolean));
+  let opts='<option value="">✎ พิมพ์เอง (งานอื่น ๆ)</option>'+L.map(x=>'<option value="'+E(x.id)+'"'+(String(x.id)===tid0?' selected':'')+'>'+ico[x.level]+' '+E(cutT(x.issue,60))+(x.due?' · '+E(x.due):'')+(pl.has(String(x.id))?' (วางแล้ว)':'')+'</option>').join('');
+  if(tid0&&!tk0)opts+='<option value="'+E(tid0)+'" selected>'+E(cutT(t0,60))+' (งานเดิม)</option>';
+  const ts=[];for(let t=360;t<=1290;t+=30)ts.push(t);if(ts.indexOf(s0)<0){ts.push(s0);ts.sort((a,b)=>a-b)}
+  const topts=ts.map(t=>'<option value="'+t+'"'+(t===s0?' selected':'')+'>'+hm(t)+(t>=PL.we?' · OT':'')+'</option>').join('');
+  const ov=document.createElement('div');ov.className='pl-ov';ov.setAttribute('role','dialog');ov.setAttribute('aria-modal','true');
+  ov.innerHTML='<div class="pl-md"><h3>'+(cur?'✎ แก้ไขงานในแผน':'➕ เพิ่มงานในแผน')+' <small style="color:var(--mut);font-weight:600">'+E(plLabel(ds))+'</small></h3>'+
+    '<label for="plmTask">เลือกจากงานของฉัน (Tracker)</label><select id="plmTask">'+opts+'</select>'+
+    '<label for="plmTitle">ชื่องาน / สิ่งที่จะทำ</label><input type="text" id="plmTitle" maxlength="160" value="'+E(t0)+'" placeholder="เช่น ทำ PFMEA Hall IC / เตรียมสไลด์ / ตรวจ Q-patrol">'+
+    '<div class="pl-two"><div><label for="plmStart">เริ่มเวลา</label><select id="plmStart">'+topts+'</select></div><div><label>ระยะเวลา</label><div class="pl-seg" id="plmDur"><button type="button" data-d="30" class="'+(d0===30?'on':'')+'">30 นาที</button><button type="button" data-d="60" class="'+(d0!==30?'on':'')+'">1 ชั่วโมง</button></div></div></div>'+
+    '<div class="pl-act"><button type="button" class="btn-p" style="animation:none" data-pm="save">'+(cur?'💾 บันทึก':'➕ เพิ่มลงแผน')+'</button>'+(cur?'<button type="button" class="btn-g" data-pm="del" style="color:var(--t-dang)">🗑 เอาออก</button>':'')+'<button type="button" class="btn-g" data-pm="x">ยกเลิก</button></div></div>';
+  document.body.appendChild(ov);plModal=ov;let dd=d0===30?30:60,lastAuto=t0;
+  ov.addEventListener('click',e=>{
+    if(e.target===ov){plClose();return}
+    const d=e.target.closest('#plmDur button');if(d){dd=+d.dataset.d;ov.querySelectorAll('#plmDur button').forEach(x=>x.classList.toggle('on',x===d));return}
+    const b=e.target.closest('[data-pm]');if(!b)return;const k=b.dataset.pm;
+    if(k==='x'){plClose();return}
+    if(k==='del'){const id=cur.id;plClose();plDel(id);return}
+    if(k==='save'){const title=ov.querySelector('#plmTitle').value.trim();if(!title){plToast('⚠ กรุณาใส่ชื่องาน หรือเลือกจากรายการ','var(--t-dang)');ov.querySelector('#plmTitle').focus();return}
+      const tid=ov.querySelector('#plmTask').value,s=Math.max(0,Math.min(+ov.querySelector('#plmStart').value||PL.ws,1440-dd)),a=plGet(ds);
+      if(cur){const x=a.find(i=>i.id===cur.id);if(x){x.t=title;x.tid=tid;x.s=s;x.d=dd}}else a.push({id:plId(),tid:tid,t:title,s:s,d:dd,done:false});
+      plSet(ds,a);plClose();render()}
+  });
+  ov.querySelector('#plmTask').addEventListener('change',e=>{const v=e.target.value,x=v?T.map.get(v):null,ti=ov.querySelector('#plmTitle');if(x&&(!ti.value.trim()||ti.value===lastAuto)){ti.value=x.issue;lastAuto=x.issue}else if(!v&&ti.value===lastAuto){ti.value='';lastAuto=''}});
+  document.addEventListener('keydown',plKey2,true);
+  setTimeout(()=>{const f=ov.querySelector(cur||tid0?'#plmTitle':'#plmTask');if(f)f.focus()},30);
+}
+/* ---- เหตุการณ์ (delegate ที่ view ครั้งเดียว) ---- */
+view.addEventListener('click',e=>{
+  const t=e.target;let b;
+  if((b=t.closest('[data-pl-add],[data-pl-quick]'))){plQuick(b.dataset.plAdd||b.dataset.plQuick);return}
+  if((b=t.closest('[data-pl-edit-task]'))){const it=plGet(plDate).find(i=>i.tid===b.dataset.plEditTask);if(it)plOpen({id:it.id});return}
+  if((b=t.closest('[data-pl-a]'))){const a=b.dataset.plA;
+    if(a==='prev'||a==='next'){plDate=add(plDate,a==='prev'?-1:1);render()}
+    else if(a==='today'){plDate=localDay();render();setTimeout(()=>{try{planScrollNow()}catch(e){}},0)}
+    else if(a==='ot'){plOT=!plOT;try{localStorage.setItem('ux_plan_ot',plOT?'1':'0')}catch(e){}planRender()}
+    else if(a==='add')plOpen({});
+    return}
+  if((b=t.closest('[data-pl-del]'))){e.stopPropagation();plDel(b.dataset.plDel);return}
+  if((b=t.closest('[data-pl-dur]'))){e.stopPropagation();plPatch(b.dataset.plDur,x=>{x.d=x.d===30?60:30});return}
+  if(t.closest('[data-pl-ck]'))return;
+  if((b=t.closest('.pl-b'))){if(b.dataset.plBlk)plOpen({id:b.dataset.plBlk});return}
+  if((b=t.closest('.pl-r'))){plOpen({s:+b.dataset.s});return}
+});
+view.addEventListener('change',e=>{const t=e.target;
+  if(t.id==='plDate'){if(/^\d{4}-\d{2}-\d{2}$/.test(t.value)){plDate=t.value;render()}return}
+  if(t.dataset&&t.dataset.plCk){const id=t.dataset.plCk,v=t.checked;plPatch(id,x=>{x.done=v})}});
+view.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.classList&&e.target.classList.contains('tk')&&e.target.dataset.plBlk){e.preventDefault();plOpen({id:e.target.dataset.plBlk})}});
+function plSlotAt(e){const gr=view.querySelector('.pl-grid');if(!gr||!plDrag)return null;const r=gr.getBoundingClientRect(),a=+gr.dataset.a,b=+gr.dataset.b,blk=plDrag.k==='blk';
+  const y=e.clientY-r.top-(blk?plDrag.off:0),i=blk?Math.round(y/PL.slot):Math.floor(y/PL.slot);let s=a+i*30;s=Math.max(a,Math.min(s,Math.max(a,b-plDrag.d)));return{gr:gr,s:s,a:a}}
+function plGhost(gr,s,a,d){let gh=gr.querySelector('.pl-ghost');if(!gh){gh=document.createElement('div');gh.className='pl-ghost';gr.appendChild(gh);gh.style.left='60px';gh.style.right='6px'}gh.style.top=((s-a)/30*PL.slot+1)+'px';gh.style.height=(d/30*PL.slot-2)+'px'}
+function plGhostOff(){view.querySelectorAll('.pl-ghost').forEach(x=>x.remove())}
+view.addEventListener('dragstart',e=>{let b=e.target.closest&&e.target.closest('[data-pl-blk]');
+  if(b){const it=plGet(plDate).find(i=>i.id===b.dataset.plBlk);plDrag={k:'blk',id:b.dataset.plBlk,d:it?it.d:60,off:e.clientY-b.getBoundingClientRect().top}}
+  else{b=e.target.closest&&e.target.closest('[data-pl-task]');if(!b)return;plDrag={k:'task',id:b.dataset.plTask,d:60,off:0}}
+  try{e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain','qe-plan')}catch(err){}});
+view.addEventListener('dragover',e=>{if(!plDrag)return;const gr=e.target.closest&&e.target.closest('.pl-grid');if(!gr){return}e.preventDefault();try{e.dataTransfer.dropEffect='move'}catch(err){}const p=plSlotAt(e);if(p)plGhost(p.gr,p.s,p.a,plDrag.d)});
+view.addEventListener('drop',e=>{if(!plDrag)return;const gr=e.target.closest&&e.target.closest('.pl-grid');if(!gr)return;e.preventDefault();const p=plSlotAt(e),d=plDrag;plGhostOff();plDrag=null;if(!p)return;
+  if(d.k==='blk')plPatch(d.id,x=>{x.s=p.s});else plPlace(d.id,p.s)});
+view.addEventListener('dragend',()=>{plGhostOff();plDrag=null});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&view.style.display==='block'&&!plBusy()){try{render()}catch(e){}}});
+
 tab.addEventListener('click',show);
 ['tabD','tabT','tabS','tabM','tabH','tabJ'].forEach(id=>{const b=g(id);if(b)b.addEventListener('click',()=>{view.style.display='none';tab.classList.remove('on')},true)});
 // ประชุมยังคงอยู่ในหน้า “วันนี้” ผ่านการ์ด mgToday; ซ่อนเฉพาะแท็บหลัก
 const mt=g('tabG');if(mt){mt.style.display='none';mt.setAttribute('aria-hidden','true')}
-setInterval(()=>{if(view.style.display==='block')render();else badgeNow()},30000);
+setInterval(()=>{if(document.hidden)return;if(view.style.display==='block'){if(plBusy())planNowUpdate();else render()}else badgeNow()},30000);
 render();
 window.__MY_WORK={open:show,refresh:render,badge:badgeNow};
 return true;
