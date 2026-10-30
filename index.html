@@ -8,6 +8,7 @@
 <!-- v62 (27-Oct-2026): Time-saving & Ergonomics layer — ดู Change log ในบล็อก qeV62Css ท้ายไฟล์ -->
 <!-- v66 (30-Oct-2026): หน้า 🗓️ ประชุม — เส้นเวลาปัจจุบัน (Now line) + ไทม์ไลน์รายวัน + ไฮไลต์ประชุมที่กำลังเกิด/ผ่านไปแล้ว — ดูบล็อก "v66" ในสคริปต์ mtgAddon -->
 <!-- v67 (30-Oct-2026): หน้า “งานของฉัน” — แผนงานประจำวัน (ตารางรายชั่วโมง 07:30–16:30 + OT, ขั้น 30 น./1 ชม., ดึงประชุมของฉัน, งานอื่นอยู่ด้านล่าง) — ดูบล็อก “v67” ในสคริปต์ myWorkNavAddon -->
+<!-- v68 (30-Oct-2026): หน้า Main QE Jobs › 6 Organization — ปุ่ม 📷 ที่วงกลมของแต่ละคน อัปโหลดรูปได้ (ย่อ/ตัดเป็นสี่เหลี่ยมจัตุรัส 160px · เก็บเฉพาะเครื่องนี้ ux_org_photos_v1 · ไม่ซิงก์ Cloud) -->
 <!-- v65 (29-Oct-2026): Meeting safety — Cloud merge รายประชุม · อีเมลอัตโนมัติไม่ลบ (ติดป้ายแทน) · ถังขยะประชุม 30 วัน · เตือน .ics แบบ Busy/Tentative -->
 <!-- v63 (28-Oct-2026): Smart Import · Month/Year filter · Share to LINE/Teams · AI General+QE — ดู Change log ในบล็อก qeV63Js ท้ายไฟล์ -->
 <!--
@@ -6936,7 +6937,18 @@ const CSS=`
 .og-nb{display:flex;gap:12px;align-items:center;padding:10px 12px;font-size:12.5px;line-height:1.75}
 .og-ct{font-size:12px;color:var(--mut)}.og-ct a,.og-mb a{color:var(--pri);word-break:break-all}
 .og-ph{width:46px;height:50px;object-fit:cover;border-radius:10px;border:2px solid var(--line);flex:0 0 auto}
-.og-av{width:44px;height:44px;border-radius:50%;background:var(--c);color:#06101c;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:17px;flex:0 0 auto}
+.og-av{width:54px;height:54px;border-radius:50%;background:var(--c);color:#06101c;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:20px;flex:0 0 auto}
+/* v68: รูปในวงกลม + ปุ่ม 📷 อัปโหลด */
+.og-avw{position:relative;display:inline-block;width:54px;height:54px;flex:0 0 auto}
+.og-pc{display:block;width:54px;height:54px;border-radius:50%;object-fit:cover;border:3px solid var(--c);box-sizing:border-box;background:var(--card)}
+.og-cam{position:absolute;right:-5px;bottom:-5px;width:24px;height:24px;padding:0;margin:0;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--txt);font-size:12px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 5px var(--sh,rgba(0,0,0,.25))}
+.og-cam:hover,.og-cam:focus-visible{background:var(--pri);border-color:var(--pri);color:var(--on-pri,#fff);outline:none}
+.og-menu{position:fixed;z-index:400;min-width:170px;padding:6px;border-radius:12px;border:1px solid var(--line);background:var(--pop,var(--card,#fff));color:var(--txt);box-shadow:0 10px 30px rgba(0,0,0,.35);display:flex;flex-direction:column;gap:4px}
+.og-menu button{width:100%;margin:0;padding:8px 10px;border:0;border-radius:8px;background:transparent;color:var(--txt);font-size:13px;font-weight:700;text-align:left;cursor:pointer}
+.og-menu button:hover,.og-menu button:focus-visible{background:var(--soft2,rgba(120,120,160,.18));outline:none}
+.og-menu button.d{color:var(--t-dang,#dc2626)}
+.og-menu small{display:block;padding:2px 10px 4px;font-size:10.5px;color:var(--mut)}
+@media print{.og-cam,.og-menu{display:none!important}}
 .og-vac{color:var(--t-dang);font-weight:800}
 .og-members{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;width:100%;padding-top:14px;border-top:2px solid var(--line);position:relative;margin-top:-1px}
 .og-mem{position:relative;border:1px solid var(--line);border-top:4px solid var(--c);border-radius:14px;background:var(--card);overflow:visible;box-shadow:0 1px 4px var(--sh)}
@@ -8022,6 +8034,7 @@ function onClick(e){
     case 'person-add': personModal(null); break;
     case 'it-edit': itemModal(id); break;
     case 'it-add': itemModal(null); break;
+    case 'org-photo': orgPhotoMenu(b,b.dataset.k); break;
     case 'path-add': pathModal({kind:'claim',item:id,pid:null}); break;
     case 'path-edit': pathModal(PATHS[num('i')].ref); break;
     case 'copy': case 'copyx': { const p=PATHS[num('i')].p, txt=a==='copyx'?xPath(p.unc):p.unc, old=b.textContent; copyText(txt).then(ok=>{ if(ok){ b.textContent='✓ คัดลอกแล้ว'; setTimeout(()=>{ b.textContent=old; },1500); toast('📋 คัดลอก Path แล้ว — วางใน File Explorer ได้เลย'); } }); break; }
@@ -8055,7 +8068,12 @@ function onClick(e){
 
 /* ===================== ORGANIZATION · ผังองค์กร QE Electronics + ตารางไลน์ (ตามไฟล์ Quality Engineering Organization_Section QE Electronics part.xlsx) ===================== */
 const T_ORG='Organization';
-const ORG_PHOTO={}; /* v34: ลบรูปพนักงานที่ฝังในไฟล์ (ข้อมูลส่วนบุคคล) */
+/* v34: ไม่ฝังรูปพนักงานในไฟล์ (ข้อมูลส่วนบุคคล)
+   v68: อัปโหลดรูปเองได้ — เก็บเฉพาะเครื่องนี้ใน localStorage คีย์ ux_org_photos_v1 (ขึ้นต้น ux_ = ไม่ซิงก์ Cloud, ไม่อยู่ในไฟล์ที่เผยแพร่)
+        key: 'dept' · 'sect' · 'm:<id สมาชิก>'  ค่า: data URL JPEG 160×160 */
+const ORG_PH_K='ux_org_photos_v1';
+function orgPhotos(){ try{ const o=JSON.parse(localStorage.getItem(ORG_PH_K)||'{}'); return (o&&typeof o==='object'&&!Array.isArray(o))?o:{}; }catch(e){ return {}; } }
+const orgPhoto=k=>{ const v=orgPhotos()[k]; return (typeof v==='string'&&/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+\/=]+$/.test(v))?v:''; };
 const ORG_DEF={"title": "Quality Engineering Organization: Section QE Electronics part.", "timing": "Feb-26", "updBy": "Bulakorn_Ko", "impl": "01-Feb-26", "chart": {"gm": "Ms.Charinya Udomsri (Pik)", "pgm": "Mr.Eiichi Toda", "dept": {"unit": "Quality Assurance Electronic & Powertrain & Chassis", "role": "Dept. Mgr.", "name": "(Vacancy)", "rep": "Mr. Jumnean Chiwirach (Jay)"}, "sect": {"unit": "Quality Engineering Electronics", "role": "Sect. Mgr.", "name": "(Vacancy)", "rep": "Mr. Bulakorn Kongnarong (Benz)", "mail": "bulakorn_ko@siamaisin.co.th", "eid": "", "tel": ""}}, "members": [{"id": "q1", "unit": "QE Electronics#1 (Main Hub type)", "name": "Mana Kumkrai", "nick": "Mana", "short": "Mana K.", "mail": "mana_ku@siamaisin.co.th", "eid": "", "tel": "", "color": "#22d3ee"}, {"id": "q2", "unit": "QE Electronics#2 (Main Direct type)", "name": "Chonlakarn Harikunsawad", "nick": "Earn", "short": "Chonlakarn H.(Earn)", "mail": "Chonlakarn_ha@siamaisin.co.th", "eid": "", "tel": "", "color": "#f59e0b"}, {"id": "q3", "unit": "QE Electronics#3 (Main Wire type)", "name": "Natcha Choomas", "nick": "Natcha", "short": "Natcha C.(Cha)", "mail": "natcha_ch@siamaisin.co.th", "eid": "", "tel": "", "color": "#34d399"}], "lines": [{"id": "ol1", "qe": "q1", "part": "Wire type/ All model", "line": "AS-186", "name": "Harness Sub-Assy", "grp": "SEMI 1"}, {"id": "ol2", "qe": "q1", "part": "Wire type/ All model", "line": "AS-270", "name": "Clamp (F/G)", "grp": "SEMI 1"}, {"id": "ol3", "qe": "q1", "part": "Wire type/ All model", "line": "AS-272", "name": "Clamp (F/G)", "grp": "SEMI 1"}, {"id": "ol4", "qe": "q1", "part": "Hub type/ All model", "line": "AS-144", "name": "Detector Sub-Assy", "grp": "SEMI 2"}, {"id": "ol5", "qe": "q1", "part": "Hub type/ All model", "line": "AS-232", "name": "Detector Sub-Assy", "grp": "SEMI 2"}, {"id": "ol6", "qe": "q1", "part": "Hub type/ All model", "line": "AS-142", "name": "Hub (F/G)", "grp": "SEMI 2"}, {"id": "ol7", "qe": "q1", "part": "Hub type/ All model", "line": "AS-248", "name": "Hub (F/G)", "grp": "SEMI 2"}, {"id": "ol8", "qe": "q2", "part": "Wire type/ All model", "line": "AS-187", "name": "Harness Sub-Assy", "grp": "SEMI 1"}, {"id": "ol9", "qe": "q2", "part": "Wire type/ All model", "line": "AS-252", "name": "Clamp (F/G)", "grp": "SEMI 1"}, {"id": "ol10", "qe": "q2", "part": "Wire type/ All model", "line": "AS-254", "name": "Clamp (F/G)", "grp": "SEMI 1"}, {"id": "ol11", "qe": "q2", "part": "Wire type/ All model", "line": "AS-271", "name": "Clamp (F/G)", "grp": "SEMI 1"}, {"id": "ol12", "qe": "q2", "part": "Wire type/ All model", "line": "AS-273", "name": "Clamp (F/G)", "grp": "SEMI 1"}, {"id": "ol13", "qe": "q2", "part": "Direct type/ All model", "line": "AS-286", "name": "Holder Sub-Assy", "grp": "SEMI 2"}, {"id": "ol14", "qe": "q2", "part": "Direct type/ All model", "line": "AS-285", "name": "Direct (F/G)", "grp": "SEMI 1"}, {"id": "ol15", "qe": "q3", "part": "Wire type, Direct type/ All model", "line": "AS-181", "name": "Injection", "grp": "SEMI 1"}, {"id": "ol16", "qe": "q3", "part": "Wire type/ All model", "line": "AS-219", "name": "Harness Sub-Assy", "grp": "SEMI 1"}, {"id": "ol17", "qe": "q3", "part": "Wire type/ All model", "line": "AS-131", "name": "Clamp (F/G)", "grp": "SEMI 1"}, {"id": "ol18", "qe": "q3", "part": "Wire type/ All model", "line": "AS-251", "name": "Clamp (F/G)", "grp": "SEMI 1"}, {"id": "ol19", "qe": "q3", "part": "Wire type/ All model", "line": "AS-253", "name": "Clamp (F/G)", "grp": "SEMI 1"}, {"id": "ol20", "qe": "q3", "part": "Wire type/ All model", "line": "AS-185", "name": "IC forming", "grp": "SEMI 2"}, {"id": "ol21", "qe": "q3", "part": "Wire type/ All model", "line": "AS-151", "name": "Clamp (F/G)", "grp": "SEMI 2"}, {"id": "ol22", "qe": "q3", "part": "Direct (MPU) Service part", "line": "AS-99", "name": "Sub-Assy", "grp": "SEMI 1"}, {"id": "ol23", "qe": "q1", "part": "Direct (MPU) Service part", "line": "AS-108", "name": "Direct (F/G)", "grp": "SEMI 1"}, {"id": "ol24", "qe": "q2", "part": "Direct (MPU) Service part", "line": "AS-110", "name": "Direct (F/G)", "grp": "SEMI 1"}]};
 const orgDefaults=()=>JSON.parse(JSON.stringify(ORG_DEF));
 function normOrg(o){
@@ -8086,7 +8104,10 @@ function orgFiltered(){
   });
 }
 const orgInit=n=>{ const t=String(n||'').replace(/^(mr|ms|mrs|miss)\.?\s*/i,'').trim(); return (t.charAt(0)||'?').toUpperCase(); };
-const orgAv=(name,color,photo)=>photo?`<img class="og-ph" src="${E(photo)}" alt="${E(name)}">`:`<span class="og-av" style="--c:${E(color||'#64748b')}">${E(orgInit(name))}</span>`;
+const orgAv=(name,color,photo,key)=>{
+  const c=E(color||'#64748b'), face=photo?`<img class="og-pc" style="--c:${c}" src="${E(photo)}" alt="${E(name)}">`:`<span class="og-av" style="--c:${c}">${E(orgInit(name))}</span>`;
+  return key?`<span class="og-avw">${face}<button type="button" class="og-cam" data-mje="org-photo" data-k="${E(key)}" title="${photo?'เปลี่ยน / ลบรูป':'เพิ่มรูป'}" aria-label="${photo?'เปลี่ยนหรือลบรูป':'เพิ่มรูป'}: ${E(name)}">\uD83D\uDCF7</button></span>`:face;
+};
 const orgVac=t=>/vacan/i.test(t||'')?`<b class="og-vac">${E(t)}</b>`:`<b>${E(t||'—')}</b>`;
 function orgStats(){
   const O=S.org, per={}; O.members.forEach(m=>{ per[m.id]={n:0,g:{}}; });
@@ -8098,11 +8119,11 @@ function orgTree(){
   const node=(n,unit,body)=>`<div class="og-node"><div class="og-nh"><span>${unit}</span><button type="button" class="mje-ic" data-mje="org-node" data-n="${n}" title="แก้ไข" style="color:#fff;border-color:rgba(255,255,255,.45)">✎</button></div><div class="og-nb">${body}</div></div>`;
   return `<div class="og-tree">`+
     `<div class="og-gm"><span>👤 GM : <b>${E(C.gm)}</b></span><span>Project GM. : <b>${E(C.pgm)}</b></span><button type="button" class="mje-ic" data-mje="org-node" data-n="gm" title="แก้ไข">✎</button></div><i class="og-vl"></i>`+
-    node('dept',E(D.unit),`${orgAv(D.rep||D.name,'#2563eb')}<div>${E(D.role)} : ${orgVac(D.name)}<br>Represent by : ${orgVac(D.rep)}</div>`)+`<i class="og-vl"></i>`+
-    node('sect',E(X.unit),`${orgAv(X.rep||X.name,'#0ea5e9')}<div>${E(X.role)} : ${orgVac(X.name)}<br>Represent by : ${orgVac(X.rep)}`+(X.mail||X.eid||X.tel?`<br><span class="og-ct">${X.mail?`✉ <a href="mailto:${E(X.mail)}">${E(X.mail)}</a>`:''}${X.eid?` · ID: ${E(X.eid)}`:''}${X.tel?` · Tel: ${E(X.tel)}`:''}</span>`:'')+`</div>`)+`<i class="og-vl"></i>`+
+    node('dept',E(D.unit),`${orgAv(D.rep||D.name,'#2563eb',orgPhoto('dept'),'dept')}<div>${E(D.role)} : ${orgVac(D.name)}<br>Represent by : ${orgVac(D.rep)}</div>`)+`<i class="og-vl"></i>`+
+    node('sect',E(X.unit),`${orgAv(X.rep||X.name,'#0ea5e9',orgPhoto('sect'),'sect')}<div>${E(X.role)} : ${orgVac(X.name)}<br>Represent by : ${orgVac(X.rep)}`+(X.mail||X.eid||X.tel?`<br><span class="og-ct">${X.mail?`✉ <a href="mailto:${E(X.mail)}">${E(X.mail)}</a>`:''}${X.eid?` · ID: ${E(X.eid)}`:''}${X.tel?` · Tel: ${E(X.tel)}`:''}</span>`:'')+`</div>`)+`<i class="og-vl"></i>`+
     `<div class="og-members">`+O.members.map(m=>{ const p=st.per[m.id]||{n:0,g:{}};
       return `<section class="og-mem" style="--c:${E(m.color)}"><div class="og-mh"><span>${E(m.unit)}</span><button type="button" class="mje-ic" data-mje="org-mem" data-id="${E(m.id)}" title="แก้ไข / ลบ">✎</button></div>`+
-        `<div class="og-mb">${orgAv(m.name,m.color,ORG_PHOTO[m.id])}<div><b>QE : ${E(m.name)}${m.nick?` (${E(m.nick)})`:''}</b><br>${m.mail?`✉ <a href="mailto:${E(m.mail)}">${E(m.mail)}</a><br>`:''}${m.eid?`ID: ${E(m.eid)}`:''}${m.tel?` · Tel: <a href="tel:${E(String(m.tel).replace(/[^\d+]/g,''))}">${E(m.tel)}</a>`:''}</div></div>`+
+        `<div class="og-mb">${orgAv(m.name,m.color,orgPhoto('m:'+m.id),'m:'+m.id)}<div><b>QE : ${E(m.name)}${m.nick?` (${E(m.nick)})`:''}</b><br>${m.mail?`✉ <a href="mailto:${E(m.mail)}">${E(m.mail)}</a><br>`:''}${m.eid?`ID: ${E(m.eid)}`:''}${m.tel?` · Tel: <a href="tel:${E(String(m.tel).replace(/[^\d+]/g,''))}">${E(m.tel)}</a>`:''}</div></div>`+
         `<div class="og-ms"><button type="button" class="og-lk" data-mje="org-f" data-k="q" data-v="${E(m.id)}" title="กรองตารางไลน์เฉพาะคนนี้"><b>${p.n}</b> ไลน์</button>${Object.keys(p.g).map(g=>`<span class="og-g" style="--c:${orgGcol(g)}">${E(g||'—')} · ${p.g[g]}</span>`).join('')}</div></section>`; }).join('')+`</div>`+
     `<div class="mje-addrow" style="justify-content:center"><button type="button" class="btn-g" data-mje="org-mem-add">＋ เพิ่ม QE</button></div></div>`;
 }
@@ -8154,6 +8175,54 @@ function orgNodeModal(n){
     :{title:'แก้ไข: Section',fields:[{n:'unit',l:'ชื่อหน่วยงาน',v:C.sect.unit}].concat(person(C.sect),[{n:'mail',l:'E-mail',v:C.sect.mail},{n:'eid',l:'ID',v:C.sect.eid},{n:'tel',l:'Tel',v:C.sect.tel}])};
   modal(Object.assign({},cfg,{onSave(v){
     change(T_ORG,'แก้ไขผังองค์กร · '+(n==='gm'?'GM':n==='dept'?'Department':'Section'),()=>{ const c=S.org.chart; if(n==='gm'){ c.gm=v.gm.trim(); c.pgm=v.pgm.trim(); } else { const t=c[n]; Object.keys(v).forEach(k=>{ t[k]=String(v[k]).trim(); }); } }); }}));
+}
+/* ---------- v68: อัปโหลดรูปในวงกลม ---------- */
+let ogPhKey='';
+function ogPhClose(){ const m=g('ogPhMenu'); if(m) m.remove(); document.removeEventListener('mousedown',ogPhOut,true); document.removeEventListener('keydown',ogPhEsc,true); }
+function ogPhOut(e){ const m=g('ogPhMenu'); if(m&&!m.contains(e.target)) ogPhClose(); }
+function ogPhEsc(e){ if(e.key==='Escape'){ const k=ogPhKey; ogPhClose(); const b=document.querySelector('.og-cam[data-k="'+(window.CSS&&CSS.escape?CSS.escape(k):k)+'"]'); if(b) b.focus(); } }
+function ogPhInput(){
+  let f=g('ogPhFile');
+  if(!f){ f=document.createElement('input'); f.type='file'; f.id='ogPhFile'; f.accept='image/*'; f.hidden=true; f.setAttribute('data-ro-ok','');
+    f.addEventListener('change',()=>{ const file=f.files&&f.files[0], k=ogPhKey; f.value=''; if(file&&k) orgPhotoProcess(file,k); });
+    document.body.appendChild(f); }
+  return f;
+}
+function orgPhotoSave(key,data){
+  const o=orgPhotos(); if(data) o[key]=data; else delete o[key];
+  try{ if(Object.keys(o).length) localStorage.setItem(ORG_PH_K,JSON.stringify(o)); else localStorage.removeItem(ORG_PH_K); }
+  catch(e){ toast('⚠ พื้นที่เบราว์เซอร์เต็ม — บันทึกรูปไม่ได้',true); return false; }
+  toast(data?'\uD83D\uDCF7 เพิ่มรูปแล้ว (เก็บเฉพาะเครื่องนี้)':'ลบรูปแล้ว'); show(); return true;
+}
+function orgPhotoProcess(file,key){
+  if(!/^image\//i.test(file.type||'')&&!/\.(jpe?g|png|webp|gif|bmp)$/i.test(file.name||'')){ toast('ไฟล์นี้ไม่ใช่รูปภาพ — เลือกไฟล์ JPG / PNG',true); return; }
+  if(file.size>15*1024*1024){ toast('รูปใหญ่เกิน 15 MB — เลือกรูปที่เล็กกว่านี้',true); return; }
+  const url=URL.createObjectURL(file), img=new Image();
+  img.onload=()=>{
+    try{
+      const w=img.naturalWidth, h=img.naturalHeight; if(!w||!h) throw new Error('size');
+      const side=Math.min(w,h), sx=(w-side)/2, sy=h>w?(h-side)*0.2:(h-side)/2;   // รูปแนวตั้ง: เลื่อนกรอบขึ้นบนเล็กน้อย ให้ใบหน้าไม่ขาด
+      const N=160, c=document.createElement('canvas'); c.width=N; c.height=N;
+      const x=c.getContext('2d'); x.fillStyle='#fff'; x.fillRect(0,0,N,N); x.imageSmoothingQuality='high'; x.drawImage(img,sx,sy,side,side,0,0,N,N);
+      orgPhotoSave(key,c.toDataURL('image/jpeg',0.86));
+    }catch(e){ toast('ประมวลผลรูปไม่สำเร็จ — ลองรูปอื่น',true); }
+    finally{ URL.revokeObjectURL(url); }
+  };
+  img.onerror=()=>{ URL.revokeObjectURL(url); toast('เปิดรูปไม่ได้ — ลองไฟล์ JPG หรือ PNG (ไม่รองรับ HEIC)',true); };
+  img.src=url;
+}
+function orgPhotoPick(key){ ogPhKey=key; const f=ogPhInput(); f.value=''; f.click(); }
+function orgPhotoMenu(btn,key){
+  ogPhClose(); ogPhKey=key;
+  if(!orgPhoto(key)){ orgPhotoPick(key); return; }                       // ยังไม่มีรูป: เปิดตัวเลือกไฟล์ทันที (คลิกเดียว)
+  const m=document.createElement('div'); m.id='ogPhMenu'; m.className='og-menu'; m.setAttribute('role','menu');
+  m.innerHTML='<button type="button" role="menuitem" data-a="pick">\uD83D\uDCF7 เปลี่ยนรูป…</button><button type="button" role="menuitem" data-a="del" class="d">\uD83D\uDDD1 ลบรูป</button><small>เก็บเฉพาะเครื่องนี้ · ไม่ขึ้น Cloud</small>';
+  document.body.appendChild(m);
+  const r=btn.getBoundingClientRect(), mw=m.offsetWidth||180, mh=m.offsetHeight||110;
+  m.style.left=Math.max(6,Math.min(r.left,window.innerWidth-mw-6))+'px';
+  m.style.top=Math.max(6,(r.bottom+mh+8>window.innerHeight)?r.top-mh-6:r.bottom+6)+'px';
+  m.addEventListener('click',e=>{ const b=e.target.closest('button[data-a]'); if(!b) return; const k=ogPhKey; ogPhClose(); if(b.dataset.a==='pick') orgPhotoPick(k); else orgPhotoSave(k,''); });
+  setTimeout(()=>{ document.addEventListener('mousedown',ogPhOut,true); document.addEventListener('keydown',ogPhEsc,true); const f=m.querySelector('button'); if(f) f.focus(); },0);
 }
 function orgMemberModal(id){
   const O=S.org, isNew=!id, m=isNew?null:O.members.find(x=>x.id===id); if(!isNew&&!m) return;

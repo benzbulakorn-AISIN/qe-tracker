@@ -1,21 +1,27 @@
 /* =====================================================================
-   QE Tracker — Space Theme + น้องดุ๊กดิ๊ก (v4)
-   ใส่บรรทัดเดียวก่อน </body> ของ index.html :
+   QE Tracker — Space Theme + น้องดุ๊กดิ๊ก (v5)
+   ใส่บรรทัดเดียวก่อน </body> ของ index.html (ใส่ไว้แล้ว):
        <script src="space-theme.js" defer></script>
-   v4 เพิ่ม:
-   • ธีมสว่างก็มี ดวงดาวหลากสี + จรวดบินไปมา เหมือนธีมมืด (จรวดบินทับหน้าจอเป็นระยะ แต่กดทะลุได้ ไม่บังการใช้งาน)
-   • จรวดทุกลำหัวชี้ไปตามทิศที่บินจริง (คำนวณตามขนาดหน้าจอ)
-   • ปุ่มใหม่ในฟองคำพูดของน้อง: ✨ ปิด/เปิด ดาว+จรวด (ใช้ได้ทั้งธีมมืดและสว่าง)
-   v3: ตัวอักษรอ่านได้บนธีมมืด (สลับไปใช้ชุดสี Neo ของระบบ แล้วคืนธีมเดิมตอนปิด) · ลากน้องได้ + จำตำแหน่ง · ปุ่มลูกศรเลื่อนน้อง
-   • ไม่แตะข้อมูลงาน/Checklist/ประชุม และไม่ซิงก์ Cloud (เก็บแค่ค่าในเครื่องนี้: ux_space_theme, ux_space_pet, ux_space_pet_pos, ux_space_fx)
+   v5 เพิ่ม:
+   • น้องพูดขึ้นมาเอง “โดยไม่ต้องกด” แล้วฟองหายไปเองภายในไม่กี่วินาที
+       - ฟองพูดสั้น = ข้อความล้วน ไม่มีปุ่ม ไม่ขวางการคลิก (pointer-events:none)
+       - ครั้งแรกประมาณ 4 วินาทีหลังเปิดหน้า แล้วสุ่มทุก 2–4 นาที (ปรับได้ที่ window.QE_SPACE_CFG)
+       - ไม่พูดตอนกำลังพิมพ์ / มีหน้าต่างเปิดอยู่ (login, popup) / แท็บถูกซ่อน / กำลังลากน้อง / เมนูน้องเปิดอยู่
+       - ปุ่มใหม่ในเมนูน้อง: 💬 ปิด/เปิดคำพูดเอง  (จำค่าไว้ในเครื่อง)
+   • คลิกที่น้อง = เปิดเมนูเต็ม (ธีม / ดาว-จรวด / ตำแหน่ง / ซ่อนน้อง) เหมือนเดิม
+   v4: ธีมสว่างมีดาว+จรวด · v3: ตัวอักษรอ่านง่ายบนธีมมืด, ลากน้องได้ + จำตำแหน่ง
+   • ไม่แตะข้อมูลงาน/Checklist/ประชุม และไม่ซิงก์ Cloud (เก็บแค่ค่าในเครื่องนี้: ux_space_*)
    • ปิดแอนิเมชันอัตโนมัติถ้าเครื่องตั้ง “ลดการเคลื่อนไหว” · ซ่อนตอนพิมพ์ (Print)
+
+   ปรับแต่ง (ไม่บังคับ) ใส่ก่อนโหลดไฟล์นี้:
+       window.QE_SPACE_CFG = { firstMs:4000, minMs:120000, maxMs:240000, showMs:6500 };
    ===================================================================== */
 (function () {
   'use strict';
   if (window.__QE_SPACE) return;
   window.__QE_SPACE = true;
 
-  var K_THEME = 'ux_space_theme', K_PET = 'ux_space_pet', K_POS = 'ux_space_pet_pos', K_FX = 'ux_space_fx';
+  var K_THEME = 'ux_space_theme', K_PET = 'ux_space_pet', K_POS = 'ux_space_pet_pos', K_FX = 'ux_space_fx', K_TALK = 'ux_space_talk';
   var ls = {
     get: function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
     set: function (k, v) { try { localStorage.setItem(k, v); } catch (e) {} },
@@ -24,7 +30,18 @@
   var themeOn = ls.get(K_THEME) !== 'off';   // true = ธีมอวกาศ (มืด) · false = ธีมสว่างเดิมของระบบ
   var petOn = ls.get(K_PET) !== 'off';
   var fxOn = ls.get(K_FX) !== 'off';         // ดาว + จรวด
+  var talkOn = ls.get(K_TALK) !== 'off';     // น้องพูดเอง
   var PW = 66, PH = 80;                        // ขนาดน้อง (px)
+
+  var UC = window.QE_SPACE_CFG || {};
+  var CFG = {
+    firstMs: +UC.firstMs || 4000,
+    minMs: +UC.minMs || 120000,
+    maxMs: +UC.maxMs || 240000,
+    showMs: +UC.showMs || 6500,
+    retryMs: +UC.retryMs || 20000
+  };
+  if (CFG.maxMs < CFG.minMs) CFG.maxMs = CFG.minMs;
 
   /* ---------- CSS ---------- */
   var css = [
@@ -98,8 +115,19 @@
     '@keyframes qsLau{0%{opacity:0;transform:translateY(0) scale(.6)}12%{opacity:1}100%{opacity:0;transform:translateY(-68vh) scale(1.1)}}',
     '#qeSpacePet.jump .qs-btn{animation:qsJump .6s cubic-bezier(.3,.7,.4,1)}',
     '@keyframes qsJump{0%{transform:translateY(0)}35%{transform:translateY(-22px) scale(.96,1.06)}65%{transform:translateY(0) scale(1.08,.92)}100%{transform:translateY(0)}}',
-    /* ฟองคำพูด: ปกติอยู่เหนือน้อง / ชิดขอบบน → อยู่ใต้น้อง / ชิดซ้าย → ชิดขอบซ้าย */
-    '#qeSpacePet .qs-pop{pointer-events:auto;position:absolute;right:0;bottom:' + (PH + 8) + 'px;width:224px;box-sizing:border-box;padding:10px 12px;border-radius:14px 14px 4px 14px;background:#fff;color:#1e1b4b;box-shadow:0 8px 26px rgba(0,0,0,.4);font-size:13px;line-height:1.45;display:none}',
+
+    /* ฟองพูดสั้น (พูดเอง): ข้อความล้วน ไม่มีปุ่ม กดทะลุได้ ค่อย ๆ ปรากฏแล้วจางหาย
+       ตำแหน่งตามน้อง: ปกติอยู่เหนือน้อง / ชิดขอบบน → ใต้น้อง / ชิดซ้าย → ชิดขอบซ้าย */
+    '#qeSpacePet .qs-say{position:absolute;right:0;bottom:' + (PH + 10) + 'px;width:max-content;max-width:230px;box-sizing:border-box;padding:8px 12px;border-radius:14px 14px 4px 14px;background:#fff;color:#1e1b4b;box-shadow:0 8px 24px rgba(0,0,0,.38);font-size:13px;font-weight:600;line-height:1.45;pointer-events:none;opacity:0;visibility:hidden;transform:translateY(6px) scale(.96);transform-origin:90% 100%;transition:opacity .28s ease,transform .28s ease,visibility 0s linear .28s}',
+    '#qeSpacePet .qs-say.on{opacity:1;visibility:visible;transform:none;transition:opacity .28s ease,transform .28s ease,visibility 0s}',
+    '#qeSpacePet .qs-say::after{content:"";position:absolute;right:24px;bottom:-5px;width:10px;height:10px;background:#fff;transform:rotate(45deg);border-radius:0 0 3px 0}',
+    '#qeSpacePet.below .qs-say{bottom:auto;top:' + (PH + 10) + 'px;border-radius:4px 14px 14px 14px;transform-origin:90% 0}',
+    '#qeSpacePet.below .qs-say::after{bottom:auto;top:-5px;border-radius:3px 0 0 0}',
+    '#qeSpacePet.lft .qs-say{right:auto;left:0;transform-origin:10% 100%}',
+    '#qeSpacePet.lft .qs-say::after{right:auto;left:24px}',
+
+    /* เมนูน้อง (คลิกที่น้อง) */
+    '#qeSpacePet .qs-pop{pointer-events:auto;position:absolute;right:0;bottom:' + (PH + 8) + 'px;width:228px;box-sizing:border-box;padding:10px 12px;border-radius:14px 14px 4px 14px;background:#fff;color:#1e1b4b;box-shadow:0 8px 26px rgba(0,0,0,.4);font-size:13px;line-height:1.45;display:none}',
     '#qeSpacePet.below .qs-pop{bottom:auto;top:' + (PH + 8) + 'px;border-radius:4px 14px 14px 14px}',
     '#qeSpacePet.lft .qs-pop{right:auto;left:0}',
     '#qeSpacePet .qs-pop.on{display:block;animation:qsPop .18s ease-out}',
@@ -112,8 +140,8 @@
     '#qeSpacePet .qs-row button:focus-visible{outline:2px solid #6366f1;outline-offset:1px}',
     '#qeSpaceChip{position:fixed;right:76px;bottom:16px;z-index:246;width:32px;height:32px;padding:0;border-radius:50%;border:1px solid rgba(148,163,255,.5);background:rgba(20,26,58,.9);color:#fff;font-size:16px;line-height:30px;cursor:pointer;opacity:.7;display:none}',
     '#qeSpaceChip:hover,#qeSpaceChip:focus-visible{opacity:1}',
-    '@media(max-width:720px){#qeSpacePet .qs-pop{width:196px}#qeSpaceBg .p1,#qeSpaceBg .p2{opacity:.35}.qs-bs.hide-sm{display:none}#qeSkyFx .qs-bs{opacity:.5}}',
-    '@media(prefers-reduced-motion:reduce){#qeSpaceBg *,#qeSkyFx *,#qeSpacePet *,#qeSpacePet{animation:none!important}#qeSpaceBg .qs-rk,#qeSkyFx .qs-rk,#qeSpacePet .qs-lau{display:none!important}}',
+    '@media(max-width:720px){#qeSpacePet .qs-pop{width:196px}#qeSpacePet .qs-say{max-width:190px}#qeSpaceBg .p1,#qeSpaceBg .p2{opacity:.35}.qs-bs.hide-sm{display:none}#qeSkyFx .qs-bs{opacity:.5}}',
+    '@media(prefers-reduced-motion:reduce){#qeSpaceBg *,#qeSkyFx *,#qeSpacePet *,#qeSpacePet{animation:none!important}#qeSpacePet .qs-say{transition:none!important}#qeSpaceBg .qs-rk,#qeSkyFx .qs-rk,#qeSpacePet .qs-lau{display:none!important}}',
     '@media print{#qeSpaceBg,#qeSkyFx,#qeSpacePet,#qeSpaceChip{display:none!important}}'
   ].join('\n');
   var st = document.createElement('style');
@@ -239,10 +267,11 @@
 
   var pet = document.createElement('div');
   pet.id = 'qeSpacePet';
-  pet.innerHTML = '<div class="qs-pop" role="dialog" aria-label="น้องดุ๊กดิ๊ก"><p class="qs-msg" aria-live="polite"></p>' +
+  pet.innerHTML = '<div class="qs-say" aria-hidden="true"></div>' +
+    '<div class="qs-pop" role="dialog" aria-label="น้องดุ๊กดิ๊ก"><p class="qs-msg" aria-live="polite"></p>' +
     '<p class="qs-hint">💡 ลากน้องไปวางตรงไหนก็ได้ (หรือกดลูกศรเมื่อโฟกัสที่น้อง)</p>' +
-    '<div class="qs-row"><button type="button" data-qs="theme"></button><button type="button" data-qs="fx"></button><button type="button" data-qs="reset">📍 ตำแหน่งเดิม</button><button type="button" data-qs="hide">🙈 ซ่อนน้อง</button></div></div>' +
-    '<button type="button" class="qs-btn" aria-label="น้องดุ๊กดิ๊ก — คลิกเพื่อดูข้อความ / ลากเพื่อย้ายตำแหน่ง" title="น้องดุ๊กดิ๊ก — ลากเพื่อย้ายได้">' + SVG + '</button>';
+    '<div class="qs-row"><button type="button" data-qs="theme"></button><button type="button" data-qs="fx"></button><button type="button" data-qs="talk"></button><button type="button" data-qs="reset">📍 ตำแหน่งเดิม</button><button type="button" data-qs="hide">🙈 ซ่อนน้อง</button></div></div>' +
+    '<button type="button" class="qs-btn" aria-label="น้องดุ๊กดิ๊ก — คลิกเพื่อดูเมนู / ลากเพื่อย้ายตำแหน่ง" title="น้องดุ๊กดิ๊ก — คลิกเพื่อเปิดเมนู · ลากเพื่อย้าย">' + SVG + '</button>';
   document.body.appendChild(pet);
 
   var chip = document.createElement('button');
@@ -253,8 +282,8 @@
   chip.setAttribute('aria-label', 'เรียกน้องดุ๊กดิ๊กกลับมา');
   document.body.appendChild(chip);
 
-  var pop = pet.querySelector('.qs-pop'), msg = pet.querySelector('.qs-msg'), btn = pet.querySelector('.qs-btn'),
-      btnTheme = pet.querySelector('[data-qs="theme"]'), btnFx = pet.querySelector('[data-qs="fx"]');
+  var pop = pet.querySelector('.qs-pop'), msg = pet.querySelector('.qs-msg'), btn = pet.querySelector('.qs-btn'), say = pet.querySelector('.qs-say'),
+      btnTheme = pet.querySelector('[data-qs="theme"]'), btnFx = pet.querySelector('[data-qs="fx"]'), btnTalk = pet.querySelector('[data-qs="talk"]');
 
   /* ---------- ธีมสีของหน้าเว็บ: ใช้ชุดมืด “Neo” ของระบบเอง ตอนเปิดธีมอวกาศ ---------- */
   var APP_THEMES = ['calm', 'neo', 'holo', 'ember', 'classic'];
@@ -325,7 +354,7 @@
     var dx = e.clientX - drag.x, dy = e.clientY - drag.y;
     if (!drag.moved) {
       if (Math.sqrt(dx * dx + dy * dy) < 6) return;       // ขยับน้อยกว่า 6px ถือว่าเป็นการคลิก
-      drag.moved = true; closePop(); pet.classList.add('drag');
+      drag.moved = true; closePop(); hideSay(); pet.classList.add('drag');
     }
     place(drag.r - dx, drag.b - dy);
     e.preventDefault();
@@ -344,10 +373,10 @@
     if (e.key === 'ArrowLeft') dr = step; else if (e.key === 'ArrowRight') dr = -step;
     else if (e.key === 'ArrowUp') db = step; else if (e.key === 'ArrowDown') db = -step;
     else return;
-    e.preventDefault(); closePop(); place(posR + dr, posB + db); savePos();
+    e.preventDefault(); closePop(); hideSay(); place(posR + dr, posB + db); savePos();
   });
 
-  /* ---------- ข้อความให้กำลังใจ ---------- */
+  /* ---------- ข้อความของน้อง ---------- */
   function who() { var n = (ls.get('ux_me') || '').trim(); return n || 'เพื่อน'; }
   function leftToday() {
     var d = new Date(), m = d.getHours() * 60 + d.getMinutes(), end = 16 * 60 + 30, dow = d.getDay();
@@ -356,6 +385,13 @@
     if (m >= end) return 'เลิกงาน 16:30 แล้ว — ถ้าทำ OT อย่าลืมพักสายตานะ 🌙';
     var r = end - m, h = Math.floor(r / 60), mm = r % 60;
     return 'อีก ' + (h ? h + ' ชม. ' : '') + mm + ' นาทีจะถึงเวลาเลิกงาน 🚀';
+  }
+  function greeting() {
+    var h = new Date().getHours();
+    if (h < 11) return 'อรุณสวัสดิ์ครับ คุณ' + who() + ' ☀️ วันนี้ลุยกัน!';
+    if (h < 13) return 'สวัสดีครับ คุณ' + who() + ' 😊 อย่าลืมพักกินข้าวนะ';
+    if (h < 17) return 'สวัสดีตอนบ่ายครับ คุณ' + who() + ' 🚀 สู้ ๆ';
+    return 'สวัสดีตอนเย็นครับ คุณ' + who() + ' 🌙';
   }
   var QUIPS = [
     function () { return 'สู้ ๆ นะครับ คุณ' + who() + ' 🚀'; },
@@ -367,16 +403,19 @@
     function () { return 'งานเยอะก็ทำทีละดวง ดาวทุกดวงเริ่มจากจุดเล็ก ๆ ✨'; },
     function () { return 'วันนี้ทำได้ดีแล้วนะ 🌟'; },
     function () { return 'จรวดพร้อมแล้ว! เคลียร์งาน Delay แล้วออกเดินทางกัน 🚀'; },
-    function () { return 'เก็บดาวไปทีละดวง… งานเสร็จทีละอัน ⭐'; }
+    function () { return 'เก็บดาวไปทีละดวง… งานเสร็จทีละอัน ⭐'; },
+    function () { return 'นั่งนานแล้วนะ ลุกเดินสักนิดไหม 🚶'; },
+    function () { return 'หายใจลึก ๆ… แล้วไปต่อ 😌'; }
   ];
   var qi = -1;
   function nextQuip() { qi = (qi + 1 + Math.floor(Math.random() * (QUIPS.length - 1))) % QUIPS.length; return QUIPS[qi](); }
 
-  /* ---------- การทำงาน ---------- */
+  /* ---------- เมนู (คลิกที่น้อง) ---------- */
   var popT = 0;
   function labelBtns() {
     btnTheme.textContent = themeOn ? '☀️ ธีมสว่าง' : '🌌 ธีมมืด';
     btnFx.textContent = fxOn ? '✨ ปิดดาว/จรวด' : '✨ เปิดดาว/จรวด';
+    btnTalk.textContent = talkOn ? '💬 ปิดคำพูดเอง' : '💬 เปิดคำพูดเอง';
   }
   function applyAll() {
     document.documentElement.classList.toggle('qe-space', themeOn);
@@ -385,10 +424,12 @@
     else { unwatchBody(); setBodyClasses(classesFor(appTheme())); }   // คืนธีมเดิมของระบบ
     pet.style.display = petOn ? 'block' : 'none';
     chip.style.display = petOn ? 'none' : 'block';
+    if (!petOn) hideSay();
     labelBtns();
   }
   function closePop() { pop.classList.remove('on'); clearTimeout(popT); }
   function openPop(text) {
+    hideSay();
     msg.textContent = text || nextQuip();
     place(posR, posB);
     pop.classList.add('on');
@@ -408,6 +449,57 @@
     pet.classList.add('jump');
     setTimeout(function () { pet.classList.remove('jump'); }, 700);
   }
+
+  /* ---------- พูดเอง: ฟองสั้น ไม่มีปุ่ม หายเอง ---------- */
+  var sayT = 0, talkT = 0, firstDone = false;
+  function hideSay() { clearTimeout(sayT); say.classList.remove('on'); }
+  function showSay(text) {
+    var dur = CFG.showMs + Math.min(3500, String(text).length * 35);   // ข้อความยาวอยู่นานขึ้นอีกนิด
+    place(posR, posB);
+    say.textContent = text;
+    say.classList.add('on');
+    clearTimeout(sayT);
+    sayT = setTimeout(hideSay, dur);
+    return dur;
+  }
+  function shown(el) {   // หน้า Tracker มีหน้าต่างป๊อปอัปแฝงอยู่ในหน้าตลอด (ซ่อนอยู่) — นับเฉพาะตัวที่มองเห็นจริง
+    if (!el) return false;
+    try {
+      if (!(el.offsetWidth > 0 || el.offsetHeight > 0 || (el.getClientRects && el.getClientRects().length))) return false;
+      var cs = window.getComputedStyle(el);
+      return cs.visibility !== 'hidden' && cs.display !== 'none';
+    } catch (e) { return false; }
+  }
+  function busyUI() {
+    try {
+      var ms = document.querySelectorAll('[aria-modal="true"],.ov.on,.pl-ov,#nfOv');   // login / popup / หน้าต่างยืนยัน
+      for (var i = 0; i < ms.length; i++) if (shown(ms[i])) return true;
+      var a = document.activeElement;
+      if (a && a !== document.body && (/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) || a.isContentEditable) && !pet.contains(a)) return true;   // กำลังพิมพ์
+    } catch (e) {}
+    return false;
+  }
+  function canSpeak() {
+    return petOn && talkOn && !document.hidden && !drag && !pop.classList.contains('on') && !busyUI();
+  }
+  function speakNow() {                                     // คืนค่า: ระยะเวลาที่ฟองจะอยู่ (ms) หรือ 0 ถ้าพูดไม่ได้ตอนนี้
+    if (!canSpeak()) return 0;
+    var text = firstDone ? nextQuip() : greeting();
+    firstDone = true;
+    jump();
+    return showSay(text);
+  }
+  function rand(a, b) { return a + Math.random() * (b - a); }
+  function scheduleTalk(ms) {
+    clearTimeout(talkT);
+    if (!talkOn) return;
+    talkT = setTimeout(function () {
+      var dur = speakNow();
+      if (dur) scheduleTalk(dur + rand(CFG.minMs, CFG.maxMs));   // นับช่วงห่างหลังฟองหายไปแล้ว
+      else scheduleTalk(CFG.retryMs);                         // พูดไม่ได้ตอนนี้ (กำลังพิมพ์/มีหน้าต่างเปิด) → ลองใหม่เร็ว ๆ
+    }, ms);
+  }
+
   btn.addEventListener('click', function () {
     if (Date.now() - lastDragEnd < 400) return;             // เพิ่งลากเสร็จ ไม่นับเป็นการคลิก
     if (pop.classList.contains('on')) { closePop(); return; }
@@ -422,6 +514,10 @@
     } else if (b.dataset.qs === 'fx') {
       fxOn = !fxOn; ls.set(K_FX, fxOn ? 'on' : 'off'); applyAll();
       openPop(fxOn ? 'ดาวกับจรวดกลับมาแล้ว 🚀✨' : 'พักดาวกับจรวดไว้ก่อนนะ 😌');
+    } else if (b.dataset.qs === 'talk') {
+      talkOn = !talkOn; ls.set(K_TALK, talkOn ? 'on' : 'off'); applyAll();
+      if (talkOn) { scheduleTalk(rand(CFG.minMs, CFG.maxMs)); openPop('ได้เลย! เดี๋ยวน้องแวะมาทักเป็นระยะนะ 💬'); }
+      else { clearTimeout(talkT); openPop('โอเค น้องจะเงียบ ๆ ไม่พูดเองแล้ว 🤐 (คลิกที่น้องเพื่อคุยได้เสมอ)'); }
     } else if (b.dataset.qs === 'reset') {
       ls.del(K_POS); place(R0, B0); openPop('กลับมาที่เดิมแล้ว 📍');
     } else if (b.dataset.qs === 'hide') {
@@ -430,28 +526,21 @@
   });
   chip.addEventListener('click', function () {
     petOn = true; ls.set(K_PET, 'on'); applyAll(); place(posR, posB); jump(); launch(); openPop('กลับมาแล้ว! 👋');
+    if (talkOn) scheduleTalk(rand(CFG.minMs, CFG.maxMs));
   });
   document.addEventListener('click', function (e) { if (pop.classList.contains('on') && !pet.contains(e.target)) closePop(); }, true);
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && pop.classList.contains('on')) closePop(); });
 
-  /* ทักทายเบา ๆ ครั้งแรกหลังเปิดหน้า แล้วห่างกันอย่างน้อย 30 นาที (ไม่ทักตอนมี popup เปิดอยู่) */
-  var lastHi = 0;
-  function hello() {
-    if (!petOn || document.hidden || drag || Date.now() - lastHi < 30 * 60000) return;
-    if (document.querySelector('.ov.on,.pl-ov,#nfOv')) return;
-    lastHi = Date.now(); jump(); openPop();
-    setTimeout(function () { if (!pop.matches(':hover')) closePop(); }, 5000);
-  }
-  setTimeout(hello, 4000);
-  setInterval(hello, 40 * 60000);
-
   applyAll();
+  scheduleTalk(CFG.firstMs);
 
-  /* ควบคุมจาก Console ได้: QE_SPACE.theme(false) / .pet(false) / .fx(false) / .reset() */
+  /* ควบคุมจาก Console ได้: QE_SPACE.theme(false) / .pet(false) / .fx(false) / .talk(false) / .say('ข้อความ') / .reset() */
   window.QE_SPACE = {
     theme: function (on) { themeOn = on !== false; ls.set(K_THEME, themeOn ? 'on' : 'off'); applyAll(); },
     pet: function (on) { petOn = on !== false; ls.set(K_PET, petOn ? 'on' : 'off'); applyAll(); },
     fx: function (on) { fxOn = on !== false; ls.set(K_FX, fxOn ? 'on' : 'off'); applyAll(); },
+    talk: function (on) { talkOn = on !== false; ls.set(K_TALK, talkOn ? 'on' : 'off'); applyAll(); if (talkOn) scheduleTalk(rand(CFG.minMs, CFG.maxMs)); else { clearTimeout(talkT); hideSay(); } },
+    say: function (t) { if (petOn) { jump(); showSay(String(t || nextQuip())); } },
     reset: function () { ls.del(K_POS); place(R0, B0); }
   };
 })();
