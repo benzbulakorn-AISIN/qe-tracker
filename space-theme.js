@@ -1,13 +1,13 @@
 /* =====================================================================
-   QE Tracker — Space Theme + น้องดุ๊กดิ๊ก (v3)
+   QE Tracker — Space Theme + น้องดุ๊กดิ๊ก (v4)
    ใส่บรรทัดเดียวก่อน </body> ของ index.html :
        <script src="space-theme.js" defer></script>
-   v3 แก้:
-   • ตัวอักษรมองไม่เห็น → ตอนเปิดธีมอวกาศ สคริปต์จะสลับหน้าเว็บไปใช้ชุดสีมืด “Neo” ของระบบเอง (ตัวอักษรสว่าง การ์ดมืดโปร่ง)
-     แล้วคืนธีมเดิมที่คุณเลือกไว้ (Calm/Holo/…) อัตโนมัติเมื่อปิดธีมอวกาศ — ไม่แตะข้อมูลและไม่แก้ค่า ui_theme ของระบบ
-   • น้องโดนปุ่ม LINE / AI บัง → ย้ายตำแหน่งเริ่มต้นไปซ้ายของปุ่ม + ลากน้องไปวางตรงไหนก็ได้ (จำตำแหน่งไว้)
-       - ลากด้วยเมาส์/นิ้ว · หรือกดโฟกัสที่น้องแล้วใช้ลูกศร ← ↑ → ↓ (กด Shift = เร็วขึ้น)
-   • ไม่แตะข้อมูลงาน/Checklist/ประชุม และไม่ซิงก์ Cloud (เก็บแค่ค่าในเครื่องนี้: ux_space_theme, ux_space_pet, ux_space_pet_pos)
+   v4 เพิ่ม:
+   • ธีมสว่างก็มี ดวงดาวหลากสี + จรวดบินไปมา เหมือนธีมมืด (จรวดบินทับหน้าจอเป็นระยะ แต่กดทะลุได้ ไม่บังการใช้งาน)
+   • จรวดทุกลำหัวชี้ไปตามทิศที่บินจริง (คำนวณตามขนาดหน้าจอ)
+   • ปุ่มใหม่ในฟองคำพูดของน้อง: ✨ ปิด/เปิด ดาว+จรวด (ใช้ได้ทั้งธีมมืดและสว่าง)
+   v3: ตัวอักษรอ่านได้บนธีมมืด (สลับไปใช้ชุดสี Neo ของระบบ แล้วคืนธีมเดิมตอนปิด) · ลากน้องได้ + จำตำแหน่ง · ปุ่มลูกศรเลื่อนน้อง
+   • ไม่แตะข้อมูลงาน/Checklist/ประชุม และไม่ซิงก์ Cloud (เก็บแค่ค่าในเครื่องนี้: ux_space_theme, ux_space_pet, ux_space_pet_pos, ux_space_fx)
    • ปิดแอนิเมชันอัตโนมัติถ้าเครื่องตั้ง “ลดการเคลื่อนไหว” · ซ่อนตอนพิมพ์ (Print)
    ===================================================================== */
 (function () {
@@ -15,27 +15,31 @@
   if (window.__QE_SPACE) return;
   window.__QE_SPACE = true;
 
-  var K_THEME = 'ux_space_theme', K_PET = 'ux_space_pet', K_POS = 'ux_space_pet_pos';
+  var K_THEME = 'ux_space_theme', K_PET = 'ux_space_pet', K_POS = 'ux_space_pet_pos', K_FX = 'ux_space_fx';
   var ls = {
     get: function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
     set: function (k, v) { try { localStorage.setItem(k, v); } catch (e) {} },
     del: function (k) { try { localStorage.removeItem(k); } catch (e) {} }
   };
-  var themeOn = ls.get(K_THEME) !== 'off';   // ค่าเริ่มต้น = เปิด
+  var themeOn = ls.get(K_THEME) !== 'off';   // true = ธีมอวกาศ (มืด) · false = ธีมสว่างเดิมของระบบ
   var petOn = ls.get(K_PET) !== 'off';
+  var fxOn = ls.get(K_FX) !== 'off';         // ดาว + จรวด
   var PW = 66, PH = 80;                        // ขนาดน้อง (px)
 
   /* ---------- CSS ---------- */
   var css = [
-    /* หน้าเว็บ: พื้นโปร่งเพื่อให้เห็นดาว + ตัวแปรสีที่อ่านง่ายบนพื้นมืด (ตัวแปรของระบบตั้งไว้ที่ body จึงต้องตั้งที่ body + !important) */
+    /* ธีมมืด: พื้นโปร่งเพื่อให้เห็นดาว + ตัวแปรสีที่อ่านง่ายบนพื้นมืด */
     'html.qe-space{background:#070b1f!important;background-image:none!important;color-scheme:dark}',
     'html.qe-space body{background:transparent!important;background-image:none!important;--card:rgba(13,19,44,.86)!important;--mut:#b4c0e0!important;--txt:#eef1ff!important}',
     'html.qe-space ::placeholder{color:#9aa6cf!important;opacity:1}',
 
-    /* ฉากหลัง */
+    /* ฉากหลัง (อยู่หลังเนื้อหา) */
     '#qeSpaceBg{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden;display:none;',
     'background:radial-gradient(60% 50% at 14% 8%,rgba(124,58,237,.36),transparent 70%),radial-gradient(50% 45% at 92% 88%,rgba(14,165,233,.26),transparent 70%),radial-gradient(40% 40% at 72% 14%,rgba(236,72,153,.18),transparent 70%),linear-gradient(180deg,#070b1f 0%,#0d1233 55%,#150f3a 100%)}',
     'html.qe-space #qeSpaceBg{display:block}',
+    /* ธีมสว่าง: ไม่มีพื้นมืด/ดาวเล็ก/ดาวเคราะห์ — เหลือเฉพาะดวงดาวสีสด (หลังเนื้อหา) */
+    'html:not(.qe-space) #qeSpaceBg{display:block;background:none}',
+    'html:not(.qe-space) #qeSpaceBg .qs-s,html:not(.qe-space) #qeSpaceBg .qs-pl,html:not(.qe-space) #qeSpaceBg .qs-sh,html:not(.qe-space) #qeSpaceBg .qs-rk{display:none}',
     '#qeSpaceBg .qs-s{position:absolute;left:0;top:0;border-radius:50%;background:transparent}',
     '#qeSpaceBg .s1{width:1px;height:1px;opacity:.75}',
     '#qeSpaceBg .s2{width:2px;height:2px;animation:qsTw 5s ease-in-out infinite alternate}',
@@ -49,20 +53,28 @@
     '#qeSpaceBg .qs-sh{position:absolute;right:22%;top:-4%;width:110px;height:2px;background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.95));opacity:0;transform:rotate(35deg);animation:qsSh 31s linear 6s infinite}',
     '@keyframes qsSh{0%{opacity:0;transform:translate(0,0) rotate(35deg)}1.2%{opacity:1}5%{opacity:0;transform:translate(-380px,300px) rotate(35deg)}100%{opacity:0;transform:translate(-380px,300px) rotate(35deg)}}',
 
-    /* ดวงดาวหลากสี + ประกาย */
-    '#qeSpaceBg .qs-bs{position:absolute;display:block;animation:qsTw 4.5s ease-in-out infinite alternate,qsDr 14s ease-in-out infinite alternate}',
-    '#qeSpaceBg .qs-bs.five{clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)}',
-    '#qeSpaceBg .qs-bs.four{clip-path:polygon(50% 0%,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0% 50%,38% 38%)}',
+    /* ดวงดาวหลากสี + ประกาย (ใช้ทั้งหลังเนื้อหา และชั้นหน้าของธีมสว่าง) — สีเข้มขึ้นอัตโนมัติบนพื้นสว่าง */
+    '.qs-bs{position:absolute;display:block;opacity:.85;filter:drop-shadow(0 0 5px currentColor);animation:qsTw 4.5s ease-in-out infinite alternate,qsDr 14s ease-in-out infinite alternate}',
+    '.qs-bs.five{clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)}',
+    '.qs-bs.four{clip-path:polygon(50% 0%,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0% 50%,38% 38%)}',
+    '.qs-bs.c0{background:#fde047;color:#fde047}.qs-bs.c1{background:#f9a8d4;color:#f9a8d4}.qs-bs.c2{background:#67e8f9;color:#67e8f9}.qs-bs.c3{background:#c4b5fd;color:#c4b5fd}.qs-bs.c4{background:#fdba74;color:#fdba74}',
+    'html:not(.qe-space) .qs-bs.c0{background:#f59e0b;color:#f59e0b}html:not(.qe-space) .qs-bs.c1{background:#ec4899;color:#ec4899}html:not(.qe-space) .qs-bs.c2{background:#06b6d4;color:#06b6d4}html:not(.qe-space) .qs-bs.c3{background:#8b5cf6;color:#8b5cf6}html:not(.qe-space) .qs-bs.c4{background:#f97316;color:#f97316}',
     '@keyframes qsDr{0%{transform:translateY(-4px) rotate(-8deg)}100%{transform:translateY(5px) rotate(10deg)}}',
-    /* จรวดบินผ่าน */
-    '#qeSpaceBg .qs-rk{position:absolute;left:0;top:0;width:34px;opacity:0;will-change:transform}',
-    '#qeSpaceBg .qs-rk svg{display:block;width:100%;height:auto;overflow:visible}',
+
+    /* จรวดบินผ่าน (ตำแหน่ง/ทิศ/มุม ตั้งค่าด้วย JS ผ่านตัวแปร --x0 --y0 --x1 --y1 --a) */
+    '.qs-rk{position:absolute;left:0;top:0;width:34px;opacity:0;will-change:transform}',
+    '.qs-rk svg{display:block;width:100%;height:auto;overflow:visible}',
     '.qs-fl{transform-box:fill-box;transform-origin:50% 0;animation:qsFlame .18s ease-in-out infinite alternate}',
     '@keyframes qsFlame{0%{transform:scaleY(.8)}100%{transform:scaleY(1.25)}}',
-    '#qeSpaceBg .r1{animation:qsRk1 44s linear 9s infinite}',
-    '#qeSpaceBg .r2{width:26px;animation:qsRk2 61s linear 31s infinite}',
-    '@keyframes qsRk1{0%{opacity:0;transform:translate(-6vw,106vh) rotate(38deg)}1%{opacity:.95}15%{opacity:.95}17%{opacity:0;transform:translate(104vw,-12vh) rotate(38deg)}100%{opacity:0;transform:translate(104vw,-12vh) rotate(38deg)}}',
-    '@keyframes qsRk2{0%{opacity:0;transform:translate(104vw,98vh) rotate(-30deg)}1%{opacity:.9}18%{opacity:.9}20%{opacity:0;transform:translate(-8vw,-10vh) rotate(-30deg)}100%{opacity:0;transform:translate(-8vw,-10vh) rotate(-30deg)}}',
+    '@keyframes qsRkV{0%{opacity:0;transform:translate(var(--x0),var(--y0)) rotate(var(--a))}1%{opacity:.95}15%{opacity:.95}17%,100%{opacity:0;transform:translate(var(--x1),var(--y1)) rotate(var(--a))}}',
+    /* ชั้นหน้า (ธีมสว่างเท่านั้น): ดาวที่ขอบจอ + จรวดบินทับหน้าจอ แต่กดทะลุได้ */
+    '#qeSkyFx{position:fixed;inset:0;z-index:30;pointer-events:none;overflow:hidden;display:none}',
+    'html:not(.qe-space) #qeSkyFx{display:block}',
+    '#qeSkyFx .qs-bs{opacity:.7}',
+    '#qeSkyFx .qs-rk{width:30px}#qeSkyFx .qs-rk.r2{width:24px}#qeSkyFx .qs-rk.r3{width:20px}',
+    '#qeSkyFx .qs-rk svg{filter:drop-shadow(0 0 1px #6366f1) drop-shadow(0 3px 5px rgba(79,70,229,.38))}',
+    '#qeSpaceBg .qs-rk.r2{width:26px}',
+    'html.qs-nofx #qeSpaceBg .qs-bs,html.qs-nofx #qeSpaceBg .qs-rk,html.qs-nofx #qeSkyFx{display:none!important}',
 
     /* น้องดุ๊กดิ๊ก (ลากได้) — z-index สูงกว่าปุ่ม LINE/AI (244-245) */
     '#qeSpacePet{position:fixed;right:76px;bottom:16px;z-index:246;width:' + PW + 'px;pointer-events:none;font-family:inherit}',
@@ -86,8 +98,8 @@
     '@keyframes qsLau{0%{opacity:0;transform:translateY(0) scale(.6)}12%{opacity:1}100%{opacity:0;transform:translateY(-68vh) scale(1.1)}}',
     '#qeSpacePet.jump .qs-btn{animation:qsJump .6s cubic-bezier(.3,.7,.4,1)}',
     '@keyframes qsJump{0%{transform:translateY(0)}35%{transform:translateY(-22px) scale(.96,1.06)}65%{transform:translateY(0) scale(1.08,.92)}100%{transform:translateY(0)}}',
-    /* ฟองคำพูด: ปกติอยู่เหนือน้อง / ถ้าน้องอยู่ชิดขอบบนจะกลับไปอยู่ใต้น้อง / ถ้าอยู่ชิดซ้ายจะชิดขอบซ้าย */
-    '#qeSpacePet .qs-pop{pointer-events:auto;position:absolute;right:0;bottom:' + (PH + 8) + 'px;width:214px;box-sizing:border-box;padding:10px 12px;border-radius:14px 14px 4px 14px;background:#fff;color:#1e1b4b;box-shadow:0 8px 26px rgba(0,0,0,.4);font-size:13px;line-height:1.45;display:none}',
+    /* ฟองคำพูด: ปกติอยู่เหนือน้อง / ชิดขอบบน → อยู่ใต้น้อง / ชิดซ้าย → ชิดขอบซ้าย */
+    '#qeSpacePet .qs-pop{pointer-events:auto;position:absolute;right:0;bottom:' + (PH + 8) + 'px;width:224px;box-sizing:border-box;padding:10px 12px;border-radius:14px 14px 4px 14px;background:#fff;color:#1e1b4b;box-shadow:0 8px 26px rgba(0,0,0,.4);font-size:13px;line-height:1.45;display:none}',
     '#qeSpacePet.below .qs-pop{bottom:auto;top:' + (PH + 8) + 'px;border-radius:4px 14px 14px 14px}',
     '#qeSpacePet.lft .qs-pop{right:auto;left:0}',
     '#qeSpacePet .qs-pop.on{display:block;animation:qsPop .18s ease-out}',
@@ -100,9 +112,9 @@
     '#qeSpacePet .qs-row button:focus-visible{outline:2px solid #6366f1;outline-offset:1px}',
     '#qeSpaceChip{position:fixed;right:76px;bottom:16px;z-index:246;width:32px;height:32px;padding:0;border-radius:50%;border:1px solid rgba(148,163,255,.5);background:rgba(20,26,58,.9);color:#fff;font-size:16px;line-height:30px;cursor:pointer;opacity:.7;display:none}',
     '#qeSpaceChip:hover,#qeSpaceChip:focus-visible{opacity:1}',
-    '@media(max-width:720px){#qeSpacePet .qs-pop{width:190px}#qeSpaceBg .p1,#qeSpaceBg .p2{opacity:.35}#qeSpaceBg .qs-bs.hide-sm{display:none}}',
-    '@media(prefers-reduced-motion:reduce){#qeSpaceBg *,#qeSpacePet *,#qeSpacePet{animation:none!important}#qeSpaceBg .qs-rk,#qeSpacePet .qs-lau{display:none!important}}',
-    '@media print{#qeSpaceBg,#qeSpacePet,#qeSpaceChip{display:none!important}}'
+    '@media(max-width:720px){#qeSpacePet .qs-pop{width:196px}#qeSpaceBg .p1,#qeSpaceBg .p2{opacity:.35}.qs-bs.hide-sm{display:none}#qeSkyFx .qs-bs{opacity:.5}}',
+    '@media(prefers-reduced-motion:reduce){#qeSpaceBg *,#qeSkyFx *,#qeSpacePet *,#qeSpacePet{animation:none!important}#qeSpaceBg .qs-rk,#qeSkyFx .qs-rk,#qeSpacePet .qs-lau{display:none!important}}',
+    '@media print{#qeSpaceBg,#qeSkyFx,#qeSpacePet,#qeSpaceChip{display:none!important}}'
   ].join('\n');
   var st = document.createElement('style');
   st.id = 'qeSpaceCss';
@@ -120,7 +132,7 @@
     '<rect x="10.5" y="47" width="19" height="3.2" rx="1.6" fill="#a5b4fc"/><rect x="14" y="52" width="12" height="4" rx="2" fill="#94a3b8"/></svg>'
   ].join('');
 
-  /* ---------- ฉากหลัง ---------- */
+  /* ---------- ฉากหลัง (หลังเนื้อหา) ---------- */
   var bg = document.createElement('div');
   bg.id = 'qeSpaceBg';
   bg.setAttribute('aria-hidden', 'true');
@@ -128,6 +140,13 @@
     '<div class="qs-pl p1"></div><div class="qs-pl p2"></div><div class="qs-sh"></div>' +
     '<div class="qs-rk r1">' + ROCKET + '</div><div class="qs-rk r2">' + ROCKET + '</div>';
   document.body.insertBefore(bg, document.body.firstChild);
+
+  /* ---------- ชั้นหน้าของธีมสว่าง: ดาวที่ขอบจอ + จรวด 3 ลำ (กดทะลุได้) ---------- */
+  var sky = document.createElement('div');
+  sky.id = 'qeSkyFx';
+  sky.setAttribute('aria-hidden', 'true');
+  sky.innerHTML = '<div class="qs-rk r1">' + ROCKET + '</div><div class="qs-rk r2">' + ROCKET + '</div><div class="qs-rk r3">' + ROCKET + '</div>';
+  document.body.appendChild(sky);
 
   var COLS = ['#ffffff', '#dbeafe', '#fef9c3', '#e9d5ff'];
   function starShadow(n) {
@@ -143,21 +162,52 @@
     bg.querySelector('.s2').style.boxShadow = starShadow(Math.round(40 * k));
     bg.querySelector('.s3').style.boxShadow = starShadow(Math.round(16 * k));
   }
-  var BCOLS = ['#fde047', '#f9a8d4', '#67e8f9', '#c4b5fd', '#fdba74'];
+  function mkStar(i, left, top, szMin, szVar) {
+    var d = document.createElement('i'), four = i % 3 === 1, sz = szMin + Math.random() * (four ? szVar + 2 : szVar);
+    d.className = 'qs-bs ' + (four ? 'four' : 'five') + ' c' + (i % 5) + (i > 6 ? ' hide-sm' : '');
+    d.style.cssText = 'left:' + left.toFixed(1) + '%;top:' + top.toFixed(1) + '%;width:' + sz.toFixed(0) + 'px;height:' + sz.toFixed(0) + 'px;' +
+      'animation-duration:' + (3 + Math.random() * 4).toFixed(1) + 's,' + (10 + Math.random() * 10).toFixed(1) + 's;animation-delay:-' + (Math.random() * 8).toFixed(1) + 's,-' + (Math.random() * 12).toFixed(1) + 's';
+    return d;
+  }
+  function clearStars(box) { Array.prototype.slice.call(box.querySelectorAll('.qs-bs')).forEach(function (n) { n.remove(); }); }
   function paintBigStars() {
-    Array.prototype.slice.call(bg.querySelectorAll('.qs-bs')).forEach(function (n) { n.remove(); });
+    /* หลังเนื้อหา: กระจายทั้งจอ */
+    clearStars(bg);
     var small = (window.innerWidth || 1280) < 720, n = small ? 7 : 13;
-    for (var i = 0; i < n; i++) {
-      var d = document.createElement('i'), four = i % 3 === 1, sz = 8 + Math.random() * (four ? 12 : 11), c = BCOLS[i % BCOLS.length];
-      d.className = 'qs-bs ' + (four ? 'four' : 'five') + (i > 6 ? ' hide-sm' : '');
-      d.style.cssText = 'left:' + (Math.random() * 96).toFixed(1) + '%;top:' + (Math.random() * 94).toFixed(1) + '%;width:' + sz.toFixed(0) + 'px;height:' + sz.toFixed(0) + 'px;' +
-        'background:' + c + ';opacity:.8;filter:drop-shadow(0 0 5px ' + c + ');' +
-        'animation-duration:' + (3 + Math.random() * 4).toFixed(1) + 's,' + (10 + Math.random() * 10).toFixed(1) + 's;animation-delay:-' + (Math.random() * 8).toFixed(1) + 's,-' + (Math.random() * 12).toFixed(1) + 's';
-      bg.appendChild(d);
+    for (var i = 0; i < n; i++) bg.appendChild(mkStar(i, Math.random() * 96, Math.random() * 94, 8, 11));
+    /* ชั้นหน้า (ธีมสว่าง): เฉพาะแถบขอบซ้าย/ขวา เพื่อไม่ทับข้อความ */
+    clearStars(sky);
+    var m = small ? 6 : 12;
+    for (var j = 0; j < m; j++) {
+      var left = (j % 2 === 0) ? 0.6 + Math.random() * 2.8 : 96.4 + Math.random() * 2.8;
+      sky.appendChild(mkStar(j + 3, left, 6 + (j / m) * 84 + Math.random() * 5, 9, 9));
     }
+  }
+  /* จรวด: คำนวณจุดเริ่ม/จุดจบ/มุมหัวจรวด ให้ชี้ไปตามทิศที่บินจริงตามขนาดหน้าจอ */
+  var ROUTES = {
+    r1: { a: [-0.05, 1.06], b: [1.05, -0.12] },
+    r2: { a: [1.05, 0.96], b: [-0.06, -0.10] },
+    r3: { a: [-0.05, 0.62], b: [1.05, 0.02] }
+  };
+  var TIMING = { bg: { r1: [44, 9], r2: [61, 31] }, sky: { r1: [40, 4], r2: [57, 20], r3: [73, 38] } };
+  function setRockets() {
+    var W = window.innerWidth || 1280, H = window.innerHeight || 720;
+    [['bg', bg], ['sky', sky]].forEach(function (p) {
+      Array.prototype.slice.call(p[1].querySelectorAll('.qs-rk')).forEach(function (e) {
+        var mm = /\br([123])\b/.exec(e.className || ''), key = mm ? 'r' + mm[1] : '', R = ROUTES[key], T = TIMING[p[0]][key];
+        if (!R || !T) return;
+        var x0 = R.a[0] * W, y0 = R.a[1] * H, x1 = R.b[0] * W, y1 = R.b[1] * H;
+        var ang = Math.atan2(x1 - x0, -(y1 - y0)) * 180 / Math.PI;
+        e.style.setProperty('--x0', Math.round(x0) + 'px'); e.style.setProperty('--y0', Math.round(y0) + 'px');
+        e.style.setProperty('--x1', Math.round(x1) + 'px'); e.style.setProperty('--y1', Math.round(y1) + 'px');
+        e.style.setProperty('--a', ang.toFixed(1) + 'deg');
+        e.style.animation = 'qsRkV ' + T[0] + 's linear ' + T[1] + 's infinite';
+      });
+    });
   }
   paintStars();
   paintBigStars();
+  setRockets();
 
   /* ---------- น้องดุ๊กดิ๊ก (SVG ต้นฉบับ) ---------- */
   var SVG = [
@@ -191,7 +241,7 @@
   pet.id = 'qeSpacePet';
   pet.innerHTML = '<div class="qs-pop" role="dialog" aria-label="น้องดุ๊กดิ๊ก"><p class="qs-msg" aria-live="polite"></p>' +
     '<p class="qs-hint">💡 ลากน้องไปวางตรงไหนก็ได้ (หรือกดลูกศรเมื่อโฟกัสที่น้อง)</p>' +
-    '<div class="qs-row"><button type="button" data-qs="theme"></button><button type="button" data-qs="reset">📍 ตำแหน่งเดิม</button><button type="button" data-qs="hide">🙈 ซ่อนน้อง</button></div></div>' +
+    '<div class="qs-row"><button type="button" data-qs="theme"></button><button type="button" data-qs="fx"></button><button type="button" data-qs="reset">📍 ตำแหน่งเดิม</button><button type="button" data-qs="hide">🙈 ซ่อนน้อง</button></div></div>' +
     '<button type="button" class="qs-btn" aria-label="น้องดุ๊กดิ๊ก — คลิกเพื่อดูข้อความ / ลากเพื่อย้ายตำแหน่ง" title="น้องดุ๊กดิ๊ก — ลากเพื่อย้ายได้">' + SVG + '</button>';
   document.body.appendChild(pet);
 
@@ -204,7 +254,7 @@
   document.body.appendChild(chip);
 
   var pop = pet.querySelector('.qs-pop'), msg = pet.querySelector('.qs-msg'), btn = pet.querySelector('.qs-btn'),
-      btnTheme = pet.querySelector('[data-qs="theme"]');
+      btnTheme = pet.querySelector('[data-qs="theme"]'), btnFx = pet.querySelector('[data-qs="fx"]');
 
   /* ---------- ธีมสีของหน้าเว็บ: ใช้ชุดมืด “Neo” ของระบบเอง ตอนเปิดธีมอวกาศ ---------- */
   var APP_THEMES = ['calm', 'neo', 'holo', 'ember', 'classic'];
@@ -259,6 +309,7 @@
     clearTimeout(rzT);
     rzT = setTimeout(function () {
       place(posR, posB);
+      setRockets();
       if (Math.abs((window.innerWidth || 0) - lastW) > 40) { lastW = window.innerWidth; paintStars(); paintBigStars(); }
     }, 250);
   });
@@ -323,14 +374,18 @@
 
   /* ---------- การทำงาน ---------- */
   var popT = 0;
-  function labelTheme() { btnTheme.textContent = themeOn ? '🌌 ปิดธีม' : '🌌 เปิดธีม'; }
+  function labelBtns() {
+    btnTheme.textContent = themeOn ? '☀️ ธีมสว่าง' : '🌌 ธีมมืด';
+    btnFx.textContent = fxOn ? '✨ ปิดดาว/จรวด' : '✨ เปิดดาว/จรวด';
+  }
   function applyAll() {
     document.documentElement.classList.toggle('qe-space', themeOn);
+    document.documentElement.classList.toggle('qs-nofx', !fxOn);
     if (themeOn) { enforceDark(); watchBody(); }
     else { unwatchBody(); setBodyClasses(classesFor(appTheme())); }   // คืนธีมเดิมของระบบ
     pet.style.display = petOn ? 'block' : 'none';
     chip.style.display = petOn ? 'none' : 'block';
-    labelTheme();
+    labelBtns();
   }
   function closePop() { pop.classList.remove('on'); clearTimeout(popT); }
   function openPop(text) {
@@ -363,7 +418,10 @@
     if (!b) return;
     if (b.dataset.qs === 'theme') {
       themeOn = !themeOn; ls.set(K_THEME, themeOn ? 'on' : 'off'); applyAll();
-      openPop(themeOn ? 'ยินดีต้อนรับสู่อวกาศ 🌌' : 'กลับมาธีมเดิมแล้วนะ ☀️');
+      openPop(themeOn ? 'ยินดีต้อนรับสู่อวกาศ 🌌' : (fxOn ? 'กลับมาธีมสว่างแล้ว ☀️ ดาวกับจรวดยังบินอยู่นะ' : 'กลับมาธีมสว่างแล้ว ☀️'));
+    } else if (b.dataset.qs === 'fx') {
+      fxOn = !fxOn; ls.set(K_FX, fxOn ? 'on' : 'off'); applyAll();
+      openPop(fxOn ? 'ดาวกับจรวดกลับมาแล้ว 🚀✨' : 'พักดาวกับจรวดไว้ก่อนนะ 😌');
     } else if (b.dataset.qs === 'reset') {
       ls.del(K_POS); place(R0, B0); openPop('กลับมาที่เดิมแล้ว 📍');
     } else if (b.dataset.qs === 'hide') {
@@ -389,10 +447,11 @@
 
   applyAll();
 
-  /* ควบคุมจาก Console ได้: QE_SPACE.theme(false) / QE_SPACE.pet(false) / QE_SPACE.reset() */
+  /* ควบคุมจาก Console ได้: QE_SPACE.theme(false) / .pet(false) / .fx(false) / .reset() */
   window.QE_SPACE = {
     theme: function (on) { themeOn = on !== false; ls.set(K_THEME, themeOn ? 'on' : 'off'); applyAll(); },
     pet: function (on) { petOn = on !== false; ls.set(K_PET, petOn ? 'on' : 'off'); applyAll(); },
+    fx: function (on) { fxOn = on !== false; ls.set(K_FX, fxOn ? 'on' : 'off'); applyAll(); },
     reset: function () { ls.del(K_POS); place(R0, B0); }
   };
 })();
