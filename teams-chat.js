@@ -121,26 +121,43 @@
   var hdr = function () { return { apikey: key, Authorization: 'Bearer ' + key }; };
   var isOpen = function () { return panel.classList.contains('on'); };
 
-  /* ---------- ตำแหน่งปุ่ม: คอลัมน์เดียวกับปุ่ม Line Chat / AI (วงกลม 46px ชิดขอบขวา) วางต่อท้ายใต้ปุ่มล่างสุด ---------- */
+  /* ---------- ตำแหน่งปุ่ม: คอลัมน์เดียวกับปุ่ม Line Chat / AI วางไว้ "บนสุด" (Teams → LINE → AI จากบนลงล่าง)
+       และดันหน้าต่างแชต + ปุ่มกลับขึ้นบน ให้อยู่เหนือปุ่ม Teams เพื่อไม่ให้บังกัน ---------- */
+  var posCss = document.createElement('style');
+  posCss.id = 'qeTeamsPosCss';
+  document.head.appendChild(posCss);
+  var lastPos = '';
   function place() {
     try {
-      var W = window.innerWidth, H = window.innerHeight, ref = null, cands = [document.querySelector('.qeai-fab'), document.getElementById('qeChatFab')];
-      cands.forEach(function (el) {
+      var de = document.documentElement, cw = de.clientWidth || window.innerWidth, ch = de.clientHeight || window.innerHeight, ref = null;
+      [document.querySelector('.qeai-fab'), document.getElementById('qeChatFab')].forEach(function (el) {
         if (!el || !el.offsetWidth) return;
         var r = el.getBoundingClientRect();
-        if (r.width && (!ref || r.bottom > ref.bottom)) ref = r;       // ปุ่มที่อยู่ต่ำสุดในคอลัมน์
+        if (r.width && (!ref || r.top < ref.top)) ref = r;            // ปุ่มที่อยู่สูงสุดในคอลัมน์
       });
       if (!ref) return;
-      var size = fab.offsetWidth || 46;
-      fab.style.right = Math.max(4, Math.round(W - ref.right)) + 'px';
-      fab.style.bottom = Math.max(6, Math.round(H - ref.bottom - 8 - size)) + 'px';
+      var fr = fab.getBoundingClientRect(), z = (fab.offsetWidth && fr.width) ? fr.width / fab.offsetWidth : 1;   // รองรับ zoom ของหน้า
+      if (!(z > 0.2 && z < 5)) z = 1;
+      var size = fab.offsetHeight || 46;
+      var right = Math.max(4, Math.round((cw - ref.right) / z));
+      var bottom = Math.max(6, Math.round((ch - ref.top + 8) / z));   // ขอบล่างของ Teams อยู่เหนือปุ่มบนสุด 8px
+      var panelBottom = bottom + size + 8;
+      fab.style.right = right + 'px';
+      fab.style.bottom = bottom + 'px';
+      var sig = right + '|' + bottom;
+      if (sig === lastPos) return;
+      lastPos = sig;
+      posCss.textContent =
+        'html body .qet-panel{bottom:' + panelBottom + 'px!important;right:' + right + 'px!important;height:min(610px,calc(100vh - ' + (panelBottom + 30) + 'px))!important}' +
+        'html body .qec-panel{bottom:' + panelBottom + 'px!important;height:min(610px,calc(100vh - ' + (panelBottom + 30) + 'px))!important}' +
+        'html body .ux33-top{bottom:' + panelBottom + 'px!important}';
     } catch (e) {}
   }
   var plT = 0;
   function placeSoon() { if (plT) return; plT = setTimeout(function () { plT = 0; place(); }, 120); }
   window.addEventListener('resize', placeSoon);
-  setInterval(place, 3000);
-  setTimeout(place, 400);
+  setInterval(place, 2000);
+  setTimeout(place, 300);
 
   /* ---------- วาดข้อความ ---------- */
   var data = [], pending = [], lastSig = '';
