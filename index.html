@@ -12581,7 +12581,7 @@ function stamp(v){try{return new Intl.DateTimeFormat('th-TH',{hour:'2-digit',min
 function setStatus(s){g('qeChatStatus').textContent=s||'';}
 function drawRooms(){g('qeChatRooms').innerHTML=rooms.map(r=>'<button type="button" class="qec-room '+(r[0]===room?'on':'')+'" data-r="'+r[0]+'">'+r[1]+'</button>').join('');}
 function draw(list){const box=g('qeChatMessages'),who=me();if(!list.length){box.innerHTML='<div class="qec-empty">ยังไม่มีข้อความในห้องนี้</div>';return;}box.innerHTML=list.map(m=>'<div class="qec-row '+(m.sender_name===who?'me':'')+'"><div class="qec-meta">'+E(m.sender_name)+' · '+E(stamp(m.created_at))+'</div><div class="qec-bubble">'+E(m.message)+'</div></div>').join('');box.scrollTop=box.scrollHeight;}
-async function load(silent){if(!base||!key){setStatus('ไม่พบการตั้งค่า Supabase');return;}if(busy)return;busy=true;try{const url=base+'/rest/v1/chat_messages?select=id,room_key,sender_name,message,created_at&room_key=eq.'+encodeURIComponent(room)+'&deleted_at=is.null&order=created_at.asc&limit=100';const res=await fetch(url,{headers:headers()});const data=await res.json();if(!res.ok)throw new Error(data.message||'โหลดข้อความไม่สำเร็จ');const latest=data.length?Number(data[data.length-1].id):0;const isOpen=g('qeChatPanel').classList.contains('on');if(seen[room]==null){seen[room]=latest;saveSeen();}if(isOpen){seen[room]=Math.max(+seen[room]||0,latest);saveSeen();unread=0;}else{const who=me();unread=data.filter(m=>Number(m.id)>(+seen[room]||0)&&m.sender_name!==who).length;}badge();lastIds[room]=latest;draw(data);if(!silent)setStatus('เชื่อมต่อแล้ว · '+data.length+' ข้อความ');}catch(e){setStatus('ผิดพลาด: '+(e.message||e));}finally{busy=false;}}
+async function load(silent){if(!base||!key){setStatus('ไม่พบการตั้งค่า Supabase');return;}if(busy)return;busy=true;try{const url=base+'/rest/v1/chat_messages?select=id,room_key,sender_name,message,created_at&room_key=eq.'+encodeURIComponent(room)+'&deleted_at=is.null&order=created_at.desc&limit=100';const res=await fetch(url,{headers:headers()});const data=await res.json();if(!res.ok)throw new Error(data.message||'โหลดข้อความไม่สำเร็จ');data.reverse();const latest=data.length?Number(data[data.length-1].id):0;const isOpen=g('qeChatPanel').classList.contains('on');if(seen[room]==null){seen[room]=latest;saveSeen();}if(isOpen){seen[room]=Math.max(+seen[room]||0,latest);saveSeen();unread=0;}else{const who=me();unread=data.filter(m=>Number(m.id)>(+seen[room]||0)&&m.sender_name!==who).length;}badge();lastIds[room]=latest;draw(data);if(!silent)setStatus('เชื่อมต่อแล้ว · '+data.length+' ข้อความ');}catch(e){setStatus('ผิดพลาด: '+(e.message||e));}finally{busy=false;}}
 async function send() {
   const input = g("qeChatInput");
   const text = input.value.trim();
@@ -16014,4 +16014,6 @@ html{scroll-padding-top:64px}
 <!-- ===== end v64 ===== -->
 <!-- ===== Space theme + น้องดุ๊กดิ๊ก (ไฟล์ space-theme.js ต้องอยู่โฟลเดอร์เดียวกัน) ===== -->
 <script src="space-theme.js" defer></script>
+<!-- ===== Teams Chat (ไฟล์ teams-chat.js ต้องอยู่โฟลเดอร์เดียวกัน) ===== -->
+<script src="teams-chat.js" defer></script>
 </body></html>
