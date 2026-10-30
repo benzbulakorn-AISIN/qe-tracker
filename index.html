@@ -8,6 +8,7 @@
 <!-- v62 (27-Oct-2026): Time-saving & Ergonomics layer — ดู Change log ในบล็อก qeV62Css ท้ายไฟล์ -->
 <!-- v66 (30-Oct-2026): หน้า 🗓️ ประชุม — เส้นเวลาปัจจุบัน (Now line) + ไทม์ไลน์รายวัน + ไฮไลต์ประชุมที่กำลังเกิด/ผ่านไปแล้ว — ดูบล็อก "v66" ในสคริปต์ mtgAddon -->
 <!-- v67 (30-Oct-2026): หน้า “งานของฉัน” — แผนงานประจำวัน (ตารางรายชั่วโมง 07:30–16:30 + OT, ขั้น 30 น./1 ชม., ดึงประชุมของฉัน, งานอื่นอยู่ด้านล่าง) — ดูบล็อก “v67” ในสคริปต์ myWorkNavAddon -->
+<!-- v69 (30-Oct-2026): Main QE Jobs › New project — (1) สลับลำดับรุ่นในตาราง PV (▲▼ / ลากที่ ⠿ / ปุ่มเรียงตามวันที่) (2) หน้า Follow-up: ติ๊กเลือกหลายรายการแล้วลบทีเดียว (3) รูปในหน้า Organization ซิงก์ให้ทุกคนเห็น (คีย์ qe_org_photo_*) -->
 <!-- v68 (30-Oct-2026): หน้า Main QE Jobs › 6 Organization — ปุ่ม 📷 ที่วงกลมของแต่ละคน อัปโหลดรูปได้ (ย่อ/ตัดเป็นสี่เหลี่ยมจัตุรัส 160px · เก็บเฉพาะเครื่องนี้ ux_org_photos_v1 · ไม่ซิงก์ Cloud) -->
 <!-- v65 (29-Oct-2026): Meeting safety — Cloud merge รายประชุม · อีเมลอัตโนมัติไม่ลบ (ติดป้ายแทน) · ถังขยะประชุม 30 วัน · เตือน .ics แบบ Busy/Tentative -->
 <!-- v63 (28-Oct-2026): Smart Import · Month/Year filter · Share to LINE/Teams · AI General+QE — ดู Change log ในบล็อก qeV63Js ท้ายไฟล์ -->
@@ -6756,6 +6757,20 @@ const CSS=`
 .mj-pv td.mn,.mj-pv th.mn{background:#002060;color:#fff;font-weight:800;white-space:nowrap;border-right:1px solid rgba(255,255,255,.25)}
 .mj-pv th.mn{font-size:12px;line-height:1.3}
 .mj-pv td.mn{cursor:pointer}
+
+/* v69: สลับลำดับรุ่น (ตาราง PV) */
+.pv-ord{display:inline-flex;align-items:center;gap:3px;margin-right:9px;vertical-align:middle}
+.pv-ord button,.pv-grip{margin:0;padding:0;width:22px;height:24px;border-radius:6px;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.14);color:#fff;font-size:11px;line-height:1;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;opacity:.8}
+.pv-ord button:hover:not(:disabled),.pv-grip:hover{opacity:1;background:rgba(255,255,255,.34)}
+.pv-ord button:focus-visible{outline:2px solid #fff;outline-offset:1px}
+.pv-ord button:disabled{opacity:.25;cursor:default}
+.pv-grip{cursor:grab;font-size:14px;-webkit-user-select:none;user-select:none}
+.pv-grip:active{cursor:grabbing}
+.mj-pv tr.pv-dragging td{opacity:.45}
+.mj-pv tr.pv-drop-t td{box-shadow:inset 0 3px 0 var(--pri)}
+.mj-pv tr.pv-drop-b td{box-shadow:inset 0 -3px 0 var(--pri)}
+@media print{.pv-ord{display:none!important}}
+body.qe-ro .pv-ord,body.qe-ro [data-mje="pv-sort"],body.qe-ro .og-cam{display:none!important}
 .mj-pv td.mn:hover{filter:brightness(1.25)}
 .mj-pv th.ed{cursor:pointer}
 .mj-pv th.ed:hover{background:var(--soft2)}
@@ -7296,9 +7311,9 @@ function pvCellHtml(c,mi,ci){
 function pvTable(){
   const PV=S.newproj.pv;
   let h=`<div class="mj-tw"><table class="mj-tbl mj-pv"><thead><tr><th class="mn" rowspan="2">Model<br><span style="opacity:.8;font-weight:600">/ Stage</span></th>`+PV.stages.map((s,i)=>`<th colspan="${s.span}" class="ed" data-mje="pv-stage" data-i="${i}" title="คลิกเพื่อแก้ไขชื่อ Stage">${E(s.t)}</th>`).join('')+`</tr><tr>`+PV.codes.map((c,ci)=>`<th class="ed" data-mje="pv-code" data-ci="${ci}" title="คลิกเพื่อแก้ไข / ลบคอลัมน์">${E(c)}</th>`).join('')+`</tr></thead><tbody>`;
-  PV.models.forEach((m,mi)=>{ h+=`<tr><td class="mn" data-mje="pv-model" data-id="${m.id}" title="คลิกเพื่อเปิด QE Follow-up"><span>${E(m.name)}</span><span class="npf-open">เปิด Follow-up</span></td>`+m.cells.map((c,ci)=>pvCellHtml(c,mi,ci)).join('')+`</tr>`; });
+  PV.models.forEach((m,mi)=>{ h+=`<tr data-pvid="${E(m.id)}"><td class="mn" data-mje="pv-model" data-id="${m.id}" title="คลิกเพื่อเปิด QE Follow-up"><span class="pv-ord"><span class="pv-grip" draggable="true" data-pvid="${E(m.id)}" title="ลากเพื่อสลับตำแหน่ง" aria-hidden="true">⠿</span><button type="button" data-mje="pv-up" data-id="${E(m.id)}" title="เลื่อนขึ้น" aria-label="เลื่อน ${E(m.name)} ขึ้น"${mi===0?' disabled':''}>▲</button><button type="button" data-mje="pv-dn" data-id="${E(m.id)}" title="เลื่อนลง" aria-label="เลื่อน ${E(m.name)} ลง"${mi===PV.models.length-1?' disabled':''}>▼</button></span><span>${E(m.name)}</span><span class="npf-open">เปิด Follow-up</span></td>`+m.cells.map((c,ci)=>pvCellHtml(c,mi,ci)).join('')+`</tr>`; });
   const st=k=>`<span class="mj-st ${k}">${E(KIND[k].s)}</span>`;
-  return h+`</tbody></table></div><div class="mje-addrow"><button type="button" class="btn-g" data-mje="pv-addmodel">＋ เพิ่มรุ่น</button><button type="button" class="btn-g" data-mje="pv-addcol">＋ เพิ่มคอลัมน์ PV</button></div>`+
+  return h+`</tbody></table></div><div class="mje-addrow"><button type="button" class="btn-g" data-mje="pv-addmodel">＋ เพิ่มรุ่น</button><button type="button" class="btn-g" data-mje="pv-addcol">＋ เพิ่มคอลัมน์ PV</button><button type="button" class="btn-g" data-mje="pv-sort" title="เรียงรุ่นตามวันที่ ก่อน → หลัง อัตโนมัติ">↕ เรียงตามวันที่…</button></div>`+
     `<div class="mj-leg"><span>${st('done')} เสร็จแล้ว</span><span>${st('plan')} เป็นไปตามแผน</span><span>${st('warn')} ผ่านแบบมีเงื่อนไข</span><span>${st('delay')} ล่าช้า</span><span>${st('na')} ไม่เกี่ยวข้อง</span><span>B / M / E = ต้น / กลาง / ปลายเดือน</span><span>Rev.N = จำนวนครั้งที่เลื่อนแผน (ตัวขีดฆ่า = วันที่เดิม)</span></div>`;
 }
 function tabNew(){
@@ -7896,6 +7911,50 @@ function pvModelModal(id){
     onSave(v){ const n=v.name.trim(); if(!n) return 'กรุณาใส่ชื่อรุ่น';
       change(T_NP,isNew?`เพิ่มรุ่น ${n} ใน PV table`:`เปลี่ยนชื่อรุ่น ${m.name} → ${n}`,()=>{ if(isNew) S.newproj.pv.models.push({id:uid(),name:n,cells:S.newproj.pv.codes.map(()=>({v:'',k:'plan',hist:[],note:''}))}); else S.newproj.pv.models.find(x=>x.id===id).name=n; }); }});
 }
+/* ---------- v69: สลับลำดับรุ่นในตาราง PV ---------- */
+function pvMoveTo(id,to){
+  const L=S.newproj.pv.models, i=L.findIndex(x=>x.id===id); if(i<0) return;
+  to=Math.max(0,Math.min(L.length-1,to)); if(to===i) return;
+  const nm=L[i].name;
+  change(T_NP,`ย้ายรุ่น ${nm} → ลำดับที่ ${to+1}`,()=>{ const a=S.newproj.pv.models, k=a.findIndex(y=>y.id===id); if(k<0) return; const x=a.splice(k,1)[0]; a.splice(Math.max(0,Math.min(a.length,to)),0,x); });
+}
+function pvMove(id,d){ const i=S.newproj.pv.models.findIndex(x=>x.id===id); if(i>=0) pvMoveTo(id,i+d); }
+function pvDateKey(str){
+  const s0=String(str||'').trim(); if(!s0||/^[—–-]+$/.test(s0)) return null;
+  const p=parseD(s0);
+  if(p.mode!=='t'){ const day=p.mode==='B'?5:p.mode==='M'?15:p.mode==='E'?25:(p.mode==='mo'?15:p.d); return (2000+p.yy)*372+p.mi*31+day; }
+  const m=s0.match(/([A-Za-z]{3})[A-Za-z]*[\'’\-\s]*(\d{2}|\d{4})\b/); if(!m) return null;
+  const mi=MON.findIndex(x=>x.toLowerCase()===m[1].toLowerCase()); if(mi<0) return null;
+  let yy=+m[2]; if(yy>=2000) yy-=2000;
+  const w=s0.match(/W\s*([1-5])/i);
+  return (2000+yy)*372+mi*31+(w?(+w[1]-1)*7+4:15);
+}
+function pvSortKey(m,by){
+  const PV=S.newproj.pv; let from=0,to=m.cells.length;
+  if(by==='sop'){ let c=0; for(const st of PV.stages){ if(/sop/i.test(st.t)){ from=c; to=c+st.span; break; } c+=st.span; } }
+  const pick=(a,b)=>{ const ks=[]; m.cells.forEach((c,i)=>{ if(i>=a&&i<b&&c.k!=='na'){ const k=pvDateKey(c.v); if(k!=null) ks.push(k); } }); return ks.length?Math.min.apply(null,ks):null; };
+  let k=pick(from,to); if(k==null&&by==='sop') k=pick(0,m.cells.length);   // ไม่มีวัน SOP → ใช้วันแรกสุดแทน
+  return k;
+}
+function pvSortModal(){
+  modal({title:'↕ เรียงรุ่นตามวันที่',
+    fields:[{n:'by',l:'เรียงตาม',t:'select',v:'first',opts:[['first','วันแรกสุดของรุ่น (รุ่นที่เริ่มก่อน → หลัง)'],['sop','วัน SOP (ก่อน → หลัง)']]}],
+    html:'<div class="mje-hint">รุ่นที่ยังไม่มีวันที่จะอยู่ท้ายสุด · ผลลัพธ์ปรับต่อด้วย ▲▼ / ลาก ⠿ ได้ · กด ↩ ย้อนกลับ เพื่อคืนลำดับเดิม</div>',
+    save:'↕ เรียงเลย',
+    onSave(v){ const by=v.by==='sop'?'sop':'first';
+      const cur=S.newproj.pv.models, arr=cur.map((m,i)=>({m:m,i:i,k:pvSortKey(m,by)}));
+      arr.sort((a,b)=>(a.k==null?1:0)-(b.k==null?1:0)||(a.k==null?0:a.k-b.k)||a.i-b.i);
+      if(arr.every((x,i)=>x.i===i)){ toast('ลำดับตรงกับวันที่อยู่แล้ว — ไม่มีอะไรเปลี่ยน'); return; }
+      change(T_NP,`เรียงรุ่นตามวันที่ (${by==='sop'?'วัน SOP':'วันแรกสุด'}) ก่อน → หลัง`,()=>{ S.newproj.pv.models=arr.map(x=>x.m); });
+      toast('↕ เรียงรุ่นตามวันที่แล้ว'); }});
+}
+let pvDragId='';
+document.addEventListener('dragstart',e=>{ const g=e.target&&e.target.closest?e.target.closest('.pv-grip'):null; if(!g) return; pvDragId=g.dataset.pvid||''; try{ e.dataTransfer.effectAllowed='move'; e.dataTransfer.setData('text/plain','pv:'+pvDragId); }catch(err){} const tr=g.closest('tr'); if(tr) tr.classList.add('pv-dragging'); });
+document.addEventListener('dragover',e=>{ if(!pvDragId) return; const tr=e.target&&e.target.closest?e.target.closest('.mj-pv tbody tr[data-pvid]'):null; if(!tr) return; e.preventDefault(); try{ e.dataTransfer.dropEffect='move'; }catch(err){} const r=tr.getBoundingClientRect(), top=e.clientY<r.top+r.height/2; document.querySelectorAll('.mj-pv tr.pv-drop-t,.mj-pv tr.pv-drop-b').forEach(x=>x.classList.remove('pv-drop-t','pv-drop-b')); tr.classList.add(top?'pv-drop-t':'pv-drop-b'); });
+document.addEventListener('drop',e=>{ if(!pvDragId) return; const tr=e.target&&e.target.closest?e.target.closest('.mj-pv tbody tr[data-pvid]'):null; const id=pvDragId; pvDragId=''; document.querySelectorAll('.mj-pv tr.pv-dragging,.mj-pv tr.pv-drop-t,.mj-pv tr.pv-drop-b').forEach(x=>x.classList.remove('pv-dragging','pv-drop-t','pv-drop-b')); if(!tr) return; e.preventDefault();
+  const L=S.newproj.pv.models, from=L.findIndex(x=>x.id===id), over=L.findIndex(x=>x.id===tr.dataset.pvid); if(from<0||over<0||from===over) return;
+  const r=tr.getBoundingClientRect(), after=e.clientY>=r.top+r.height/2; let to=over+(after?1:0); if(from<to) to--; pvMoveTo(id,to); });
+document.addEventListener('dragend',()=>{ pvDragId=''; document.querySelectorAll('.mj-pv tr.pv-dragging,.mj-pv tr.pv-drop-t,.mj-pv tr.pv-drop-b').forEach(x=>x.classList.remove('pv-dragging','pv-drop-t','pv-drop-b')); });
 function pvAddColModal(){
   const PV=S.newproj.pv, last=PV.stages[PV.stages.length-1];
   modal({title:'เพิ่มคอลัมน์ PV',fields:[{n:'c',l:'ชื่อคอลัมน์',v:'',ph:'เช่น PV10'},{n:'where',l:'อยู่ใน Stage',t:'select',opts:[['last','ต่อท้าย Stage “'+(last?last.t:'')+'”'],['new','สร้าง Stage ใหม่']],v:'last'},{n:'st',l:'ชื่อ Stage ใหม่ (ใช้เมื่อเลือกสร้าง Stage ใหม่)',v:''}],
@@ -8050,6 +8109,9 @@ function onClick(e){
     case 'pv-code': pvCodeModal(num('ci')); break;
     case 'pv-model': pvModelModal(id); break;
     case 'pv-addmodel': pvModelModal(null); break;
+    case 'pv-up': pvMove(id,-1); break;
+    case 'pv-dn': pvMove(id,1); break;
+    case 'pv-sort': pvSortModal(); break;
     case 'pv-addcol': pvAddColModal(); break;
     case 'pvc': pvCellModal(num('mi'),num('ci')); break;
     case 'lk-edit': lkModal(b.dataset.k); break;
@@ -8069,11 +8131,23 @@ function onClick(e){
 /* ===================== ORGANIZATION · ผังองค์กร QE Electronics + ตารางไลน์ (ตามไฟล์ Quality Engineering Organization_Section QE Electronics part.xlsx) ===================== */
 const T_ORG='Organization';
 /* v34: ไม่ฝังรูปพนักงานในไฟล์ (ข้อมูลส่วนบุคคล)
-   v68: อัปโหลดรูปเองได้ — เก็บเฉพาะเครื่องนี้ใน localStorage คีย์ ux_org_photos_v1 (ขึ้นต้น ux_ = ไม่ซิงก์ Cloud, ไม่อยู่ในไฟล์ที่เผยแพร่)
-        key: 'dept' · 'sect' · 'm:<id สมาชิก>'  ค่า: data URL JPEG 160×160 */
-const ORG_PH_K='ux_org_photos_v1';
-function orgPhotos(){ try{ const o=JSON.parse(localStorage.getItem(ORG_PH_K)||'{}'); return (o&&typeof o==='object'&&!Array.isArray(o))?o:{}; }catch(e){ return {}; } }
-const orgPhoto=k=>{ const v=orgPhotos()[k]; return (typeof v==='string'&&/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+\/=]+$/.test(v))?v:''; };
+   v68: อัปโหลดรูปในวงกลมได้ — v69: ซิงก์ให้ทุกคนเห็น
+        เก็บทีละรูปในคีย์ qe_org_photo_<dept|sect|m_<id สมาชิก>> (ขึ้นต้น qe_ = ระบบซิงก์ Cloud เดิมส่งต่อให้ทุกเครื่องเอง)
+        ค่า: data URL JPEG ~160×160 (ราว 3–9 KB ต่อรูป) */
+const ORG_PH_P='qe_org_photo_', ORG_PH_OLD='ux_org_photos_v1';
+const orgPhK=key=>ORG_PH_P+String(key).toLowerCase().replace(/[^a-z0-9_-]+/g,'_');
+const ORG_PH_RE=/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+\/=]+$/;
+const orgPhoto=k=>{ try{ const v=localStorage.getItem(orgPhK(k)); return (typeof v==='string'&&v.length<120000&&ORG_PH_RE.test(v))?v:''; }catch(e){ return ''; } };
+let orgPhMig=false;
+function orgPhMigrate(){   /* รูปที่อัปโหลดไว้ตอน v68 (เก็บเฉพาะเครื่อง ux_org_photos_v1) → ย้ายเข้าคีย์ที่ซิงก์ (ทำครั้งเดียวเมื่อเปิดหน้า Organization) */
+  if(orgPhMig) return 0; orgPhMig=true; let n=0;
+  try{ const raw=localStorage.getItem(ORG_PH_OLD); if(!raw) return 0; const o=JSON.parse(raw)||{};
+    Object.keys(o).forEach(k=>{ const v=o[k]; if(typeof v==='string'&&ORG_PH_RE.test(v)&&!localStorage.getItem(orgPhK(k))){ localStorage.setItem(orgPhK(k),v); n++; } });
+    localStorage.removeItem(ORG_PH_OLD); }catch(e){}
+  return n;
+}
+const orgPhSig=()=>{ try{ const out=[]; for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k&&k.indexOf(ORG_PH_P)===0){ const v=localStorage.getItem(k)||''; out.push(k+':'+v.length+':'+v.slice(-24)); } } return out.sort().join('|'); }catch(e){ return ''; } };
+let orgPhLast=null;
 const ORG_DEF={"title": "Quality Engineering Organization: Section QE Electronics part.", "timing": "Feb-26", "updBy": "Bulakorn_Ko", "impl": "01-Feb-26", "chart": {"gm": "Ms.Charinya Udomsri (Pik)", "pgm": "Mr.Eiichi Toda", "dept": {"unit": "Quality Assurance Electronic & Powertrain & Chassis", "role": "Dept. Mgr.", "name": "(Vacancy)", "rep": "Mr. Jumnean Chiwirach (Jay)"}, "sect": {"unit": "Quality Engineering Electronics", "role": "Sect. Mgr.", "name": "(Vacancy)", "rep": "Mr. Bulakorn Kongnarong (Benz)", "mail": "bulakorn_ko@siamaisin.co.th", "eid": "", "tel": ""}}, "members": [{"id": "q1", "unit": "QE Electronics#1 (Main Hub type)", "name": "Mana Kumkrai", "nick": "Mana", "short": "Mana K.", "mail": "mana_ku@siamaisin.co.th", "eid": "", "tel": "", "color": "#22d3ee"}, {"id": "q2", "unit": "QE Electronics#2 (Main Direct type)", "name": "Chonlakarn Harikunsawad", "nick": "Earn", "short": "Chonlakarn H.(Earn)", "mail": "Chonlakarn_ha@siamaisin.co.th", "eid": "", "tel": "", "color": "#f59e0b"}, {"id": "q3", "unit": "QE Electronics#3 (Main Wire type)", "name": "Natcha Choomas", "nick": "Natcha", "short": "Natcha C.(Cha)", "mail": "natcha_ch@siamaisin.co.th", "eid": "", "tel": "", "color": "#34d399"}], "lines": [{"id": "ol1", "qe": "q1", "part": "Wire type/ All model", "line": "AS-186", "name": "Harness Sub-Assy", "grp": "SEMI 1"}, {"id": "ol2", "qe": "q1", "part": "Wire type/ All model", "line": "AS-270", "name": "Clamp (F/G)", "grp": "SEMI 1"}, {"id": "ol3", "qe": "q1", "part": "Wire type/ All model", "line": "AS-272", "name": "Clamp (F/G)", "grp": "SEMI 1"}, {"id": "ol4", "qe": "q1", "part": "Hub type/ All model", "line": "AS-144", "name": "Detector Sub-Assy", "grp": "SEMI 2"}, {"id": "ol5", "qe": "q1", "part": "Hub type/ All model", "line": "AS-232", "name": "Detector Sub-Assy", "grp": "SEMI 2"}, {"id": "ol6", "qe": "q1", "part": "Hub type/ All model", "line": "AS-142", "name": "Hub (F/G)", "grp": "SEMI 2"}, {"id": "ol7", "qe": "q1", "part": "Hub type/ All model", "line": "AS-248", "name": "Hub (F/G)", "grp": "SEMI 2"}, {"id": "ol8", "qe": "q2", "part": "Wire type/ All model", "line": "AS-187", "name": "Harness Sub-Assy", "grp": "SEMI 1"}, {"id": "ol9", "qe": "q2", "part": "Wire type/ All model", "line": "AS-252", "name": "Clamp (F/G)", "grp": "SEMI 1"}, {"id": "ol10", "qe": "q2", "part": "Wire type/ All model", "line": "AS-254", "name": "Clamp (F/G)", "grp": "SEMI 1"}, {"id": "ol11", "qe": "q2", "part": "Wire type/ All model", "line": "AS-271", "name": "Clamp (F/G)", "grp": "SEMI 1"}, {"id": "ol12", "qe": "q2", "part": "Wire type/ All model", "line": "AS-273", "name": "Clamp (F/G)", "grp": "SEMI 1"}, {"id": "ol13", "qe": "q2", "part": "Direct type/ All model", "line": "AS-286", "name": "Holder Sub-Assy", "grp": "SEMI 2"}, {"id": "ol14", "qe": "q2", "part": "Direct type/ All model", "line": "AS-285", "name": "Direct (F/G)", "grp": "SEMI 1"}, {"id": "ol15", "qe": "q3", "part": "Wire type, Direct type/ All model", "line": "AS-181", "name": "Injection", "grp": "SEMI 1"}, {"id": "ol16", "qe": "q3", "part": "Wire type/ All model", "line": "AS-219", "name": "Harness Sub-Assy", "grp": "SEMI 1"}, {"id": "ol17", "qe": "q3", "part": "Wire type/ All model", "line": "AS-131", "name": "Clamp (F/G)", "grp": "SEMI 1"}, {"id": "ol18", "qe": "q3", "part": "Wire type/ All model", "line": "AS-251", "name": "Clamp (F/G)", "grp": "SEMI 1"}, {"id": "ol19", "qe": "q3", "part": "Wire type/ All model", "line": "AS-253", "name": "Clamp (F/G)", "grp": "SEMI 1"}, {"id": "ol20", "qe": "q3", "part": "Wire type/ All model", "line": "AS-185", "name": "IC forming", "grp": "SEMI 2"}, {"id": "ol21", "qe": "q3", "part": "Wire type/ All model", "line": "AS-151", "name": "Clamp (F/G)", "grp": "SEMI 2"}, {"id": "ol22", "qe": "q3", "part": "Direct (MPU) Service part", "line": "AS-99", "name": "Sub-Assy", "grp": "SEMI 1"}, {"id": "ol23", "qe": "q1", "part": "Direct (MPU) Service part", "line": "AS-108", "name": "Direct (F/G)", "grp": "SEMI 1"}, {"id": "ol24", "qe": "q2", "part": "Direct (MPU) Service part", "line": "AS-110", "name": "Direct (F/G)", "grp": "SEMI 1"}]};
 const orgDefaults=()=>JSON.parse(JSON.stringify(ORG_DEF));
 function normOrg(o){
@@ -8115,6 +8189,7 @@ function orgStats(){
   return {per:per,total:O.lines.length,svc:O.lines.filter(orgIsSvc).length,groups:orgGroups().map(g=>({g:g,n:O.lines.filter(l=>l.grp===g).length})),none:O.lines.filter(l=>!orgMem(l.qe)).length};
 }
 function orgTree(){
+  if(!orgPhMig){ const n=orgPhMigrate(); if(n) setTimeout(()=>toast('\uD83D\uDCF7 ย้ายรูป '+n+' รูปเข้าระบบซิงก์แล้ว — กด \uD83D\uDCBE บันทึก เพื่อให้ทุกคนเห็น'),400); }
   const O=S.org, C=O.chart, st=orgStats(), D=C.dept, X=C.sect;
   const node=(n,unit,body)=>`<div class="og-node"><div class="og-nh"><span>${unit}</span><button type="button" class="mje-ic" data-mje="org-node" data-n="${n}" title="แก้ไข" style="color:#fff;border-color:rgba(255,255,255,.45)">✎</button></div><div class="og-nb">${body}</div></div>`;
   return `<div class="og-tree">`+
@@ -8189,10 +8264,11 @@ function ogPhInput(){
   return f;
 }
 function orgPhotoSave(key,data){
-  const o=orgPhotos(); if(data) o[key]=data; else delete o[key];
-  try{ if(Object.keys(o).length) localStorage.setItem(ORG_PH_K,JSON.stringify(o)); else localStorage.removeItem(ORG_PH_K); }
+  try{ if(data) localStorage.setItem(orgPhK(key),data); else localStorage.removeItem(orgPhK(key)); }
   catch(e){ toast('⚠ พื้นที่เบราว์เซอร์เต็ม — บันทึกรูปไม่ได้',true); return false; }
-  toast(data?'\uD83D\uDCF7 เพิ่มรูปแล้ว (เก็บเฉพาะเครื่องนี้)':'ลบรูปแล้ว'); show(); return true;
+  let manual=false; try{ manual=localStorage.getItem('ux_savemode')==='manual'; }catch(e){}
+  toast(data?(manual?'\uD83D\uDCF7 เพิ่มรูปแล้ว — กด \uD83D\uDCBE บันทึก มุมซ้ายล่าง เพื่อให้ทุกคนเห็น':'\uD83D\uDCF7 เพิ่มรูปแล้ว — กำลังซิงก์ให้ทุกคน'):(manual?'ลบรูปแล้ว — กด \uD83D\uDCBE บันทึก เพื่อให้ทุกคนเห็น':'ลบรูปแล้ว — กำลังซิงก์ให้ทุกคน'));
+  orgPhLast=orgPhSig(); show(); return true;
 }
 function orgPhotoProcess(file,key){
   if(!/^image\//i.test(file.type||'')&&!/\.(jpe?g|png|webp|gif|bmp)$/i.test(file.name||'')){ toast('ไฟล์นี้ไม่ใช่รูปภาพ — เลือกไฟล์ JPG / PNG',true); return; }
@@ -8216,7 +8292,7 @@ function orgPhotoMenu(btn,key){
   ogPhClose(); ogPhKey=key;
   if(!orgPhoto(key)){ orgPhotoPick(key); return; }                       // ยังไม่มีรูป: เปิดตัวเลือกไฟล์ทันที (คลิกเดียว)
   const m=document.createElement('div'); m.id='ogPhMenu'; m.className='og-menu'; m.setAttribute('role','menu');
-  m.innerHTML='<button type="button" role="menuitem" data-a="pick">\uD83D\uDCF7 เปลี่ยนรูป…</button><button type="button" role="menuitem" data-a="del" class="d">\uD83D\uDDD1 ลบรูป</button><small>เก็บเฉพาะเครื่องนี้ · ไม่ขึ้น Cloud</small>';
+  m.innerHTML='<button type="button" role="menuitem" data-a="pick">\uD83D\uDCF7 เปลี่ยนรูป…</button><button type="button" role="menuitem" data-a="del" class="d">\uD83D\uDDD1 ลบรูป</button><small>ทุกคนในทีมจะเห็นรูปนี้ (ซิงก์ผ่าน Cloud)</small>';
   document.body.appendChild(m);
   const r=btn.getBoundingClientRect(), mw=m.offsetWidth||180, mh=m.offsetHeight||110;
   m.style.left=Math.max(6,Math.min(r.left,window.innerWidth-mw-6))+'px';
@@ -8224,6 +8300,12 @@ function orgPhotoMenu(btn,key){
   m.addEventListener('click',e=>{ const b=e.target.closest('button[data-a]'); if(!b) return; const k=ogPhKey; ogPhClose(); if(b.dataset.a==='pick') orgPhotoPick(k); else orgPhotoSave(k,''); });
   setTimeout(()=>{ document.addEventListener('mousedown',ogPhOut,true); document.addEventListener('keydown',ogPhEsc,true); const f=m.querySelector('button'); if(f) f.focus(); },0);
 }
+/* v69: รูปที่เพื่อนอัปโหลด (มากับการซิงก์) → วาดหน้า Organization ใหม่เอง โดยไม่ต้องรีเฟรช */
+setInterval(()=>{ try{
+  if(document.hidden||ui.tab!=='org') return; const root=R(); if(!root||root.style.display!=='block') return;
+  if(g('ogPhMenu')||MO) return; const a=document.activeElement; if(a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)&&root.contains(a)) return;
+  const sg=orgPhSig(); if(orgPhLast===null){ orgPhLast=sg; return; } if(sg!==orgPhLast){ orgPhLast=sg; show(); }
+}catch(e){} },2500);
 function orgMemberModal(id){
   const O=S.org, isNew=!id, m=isNew?null:O.members.find(x=>x.id===id); if(!isNew&&!m) return;
   const cnt=m?O.lines.filter(l=>l.qe===m.id).length:0;
@@ -8417,6 +8499,7 @@ function ownerNames(S){
 
 /* ---------- สถานะหน้าจอ ---------- */
 let state=null, B=null, W=null, C=null, ov=null, mo=null, hooked=false;
+const sel=new Set(); let lastSel='';   // v69: รายการที่ติ๊กเลือกไว้ (เพื่อลบหลายรายการ)
 const Q=sel=>ov?ov.querySelector(sel):null;
 
 function loadState(persist){
@@ -8491,6 +8574,12 @@ const CSS=`
 .nf-act button{padding:3px 8px;font-size:12px;border-radius:7px;background:transparent;border:1px solid var(--line);color:var(--mut);cursor:pointer}
 .nf-act button:hover{border-color:var(--pri);color:var(--txt)}
 .nf-empty{padding:22px;color:var(--mut);text-align:center}
+.nf-t th.nf-ck0,.nf-t td.nf-ck0{width:38px;min-width:38px;padding:4px 6px;cursor:pointer}
+.nf-ck0 input{width:17px;height:17px;margin:0;accent-color:var(--pri);cursor:pointer}
+.nf-t tr.nf-selr td{background:color-mix(in srgb,var(--dang) 10%,transparent)}
+.nf-selbar{display:inline-flex;align-items:center;gap:8px;padding:3px 6px 3px 12px;border:1px solid var(--dang);border-radius:99px;background:color-mix(in srgb,var(--dang) 9%,transparent);font-size:12.5px}
+.nf-selbar .nf-dng{background:var(--dang);border-color:var(--dang);color:#fff;animation:none}
+.nf-dl{margin:8px 0 0;padding:8px 10px;max-height:240px;overflow:auto;border:1px solid var(--line);border-radius:10px;font-size:12.5px;line-height:1.7;text-align:left}
 /* Stage table */
 .nf-stw{overflow:auto;border:1px solid var(--line);border-radius:12px}
 .nf-pv{width:100%;border-collapse:separate;border-spacing:0;min-width:820px;box-shadow:none;border-radius:0;background:transparent}
@@ -8632,7 +8721,7 @@ function rowHtml(c,it){
   const b=baseItem(c,it.id), ch=k=>b&&String(it[k]||'')!==String(b[k]||'')?' nf-chg':'';
   const old=(it.pr&&it.pr.length)?it.pr[0].f:'';
   const tip=(it.pr||[]).map((p,i)=>`Rev.${i+1}: ${fmtS(p.f)} → ${fmtS(p.t)}${p.why?' ('+p.why+')':''}`).join('\n');
-  return `<tr data-id="${E(it.id)}" class="${b?'':'nf-new'}"><td>${E(it.no)}</td><td class="task"><b>${E(it.task)}</b>${it.note?`<small>${E(it.note)}</small>`:''}</td><td>${E(it.format||'-')}</td>`+
+  return `<tr data-id="${E(it.id)}" class="${b?'':'nf-new'}${sel.has(it.id)?' nf-selr':''}"><td class="nf-ck0"><input type="checkbox" class="nf-rowck" data-id="${E(it.id)}" aria-label="เลือกรายการ ${E(it.no)} เพื่อลบ"${sel.has(it.id)?' checked':''}></td><td>${E(it.no)}</td><td class="task"><b>${E(it.task)}</b>${it.note?`<small>${E(it.note)}</small>`:''}</td><td>${E(it.format||'-')}</td>`+
     `<td><select class="nf-in nf-stg${ch('stage')}" data-nf="stage" data-id="${E(it.id)}"><option value="">—</option>${C.codes.map(s=>`<option value="${E(s)}"${it.stage===s?' selected':''}>${E(s)}</option>`).join('')}</select></td>`+
     `<td><input class="nf-in nf-own${ch('owner')}" list="nfOwners" data-nf="owner" data-id="${E(it.id)}" value="${E(it.owner)}" placeholder="พิมพ์ / เลือกชื่อ" autocomplete="off"></td>`+
     `<td class="${isLate(it)?'nf-late':''}"><input type="date" class="nf-in${ch('target')}" data-nf="target" data-id="${E(it.id)}" value="${E(it.target)}" title="Plan date">${old?`<span class="nf-old" title="${E(tip)}">${fmtS(old)}</span>`:''}</td>`+
@@ -8643,15 +8732,51 @@ function rowHtml(c,it){
 }
 function renderTable(){
   const el=Q('#nfTbl'); if(!el) return; const rows=visible();
-  el.innerHTML=`<div class="nf-tw"><table class="nf-t"><thead><tr><th>No.</th><th style="text-align:left">Follow-up item</th><th>Format</th><th>Stage</th><th>Owner</th><th>Plan</th><th>Actual</th><th>Status</th><th>Rev.</th><th>Tracker</th><th></th></tr></thead><tbody>`+
-    (rows.length?rows.map(it=>rowHtml(state.tab,it)).join(''):`<tr><td colspan="11" class="nf-empty">${catItems(state.tab).length?'ไม่พบรายการ (ลองล้างตัวกรอง/คำค้น)':`ยังไม่มีหัวข้อในชุดนี้ — <button type="button" class="nf-b" data-a="tplrest" style="margin-left:6px">♻ เรียก Default list (${TPL[state.tab].length} หัวข้อ)</button>`}</td></tr>`)+`</tbody></table></div>`;
+  { const vis=new Set(rows.map(r=>r.id)); Array.from(sel).forEach(id=>{ if(!vis.has(id)) sel.delete(id); }); }   // เลือกค้างไว้เฉพาะแถวที่มองเห็น
+  el.innerHTML=`<div class="nf-tw"><table class="nf-t"><thead><tr><th class="nf-ck0"><input type="checkbox" id="nfAll" aria-label="เลือกทั้งหมดที่แสดงอยู่" title="เลือก / ไม่เลือก ทุกแถวที่แสดงอยู่"></th><th>No.</th><th style="text-align:left">Follow-up item</th><th>Format</th><th>Stage</th><th>Owner</th><th>Plan</th><th>Actual</th><th>Status</th><th>Rev.</th><th>Tracker</th><th></th></tr></thead><tbody>`+
+    (rows.length?rows.map(it=>rowHtml(state.tab,it)).join(''):`<tr><td colspan="12" class="nf-empty">${catItems(state.tab).length?'ไม่พบรายการ (ลองล้างตัวกรอง/คำค้น)':`ยังไม่มีหัวข้อในชุดนี้ — <button type="button" class="nf-b" data-a="tplrest" style="margin-left:6px">♻ เรียก Default list (${TPL[state.tab].length} หัวข้อ)</button>`}</td></tr>`)+`</tbody></table></div>`;
+  updSelBar();
+}
+/* ---------- v69: เลือกหลายรายการ → ลบทีเดียว (ฉบับร่างเหมือนลบทีละรายการ: กด 💾 บันทึก ถึงจะยืนยัน · ↩ ยกเลิกการแก้ไข = คืนทั้งหมด) ---------- */
+function syncSelDom(){
+  if(!ov) return;
+  ov.querySelectorAll('#nfTbl tr[data-id]').forEach(tr=>{ const on=sel.has(tr.dataset.id), cb=tr.querySelector('.nf-rowck'); tr.classList.toggle('nf-selr',on); if(cb) cb.checked=on; });
+  updSelBar();
+}
+function updSelBar(){
+  if(!ov) return;
+  const bar=Q('#nfSelBar'), n=sel.size;
+  if(bar) bar.innerHTML=n?`<span class="nf-selbar"><b>เลือกแล้ว ${n} รายการ</b><button type="button" class="nf-b nf-dng" data-a="delsel">🗑 ลบที่เลือก (${n})</button><button type="button" class="nf-b" data-a="selclr">ล้างการเลือก</button></span>`:'';
+  const all=Q('#nfAll'); if(all){ const vis=visible(), c=vis.filter(r=>sel.has(r.id)).length; all.checked=vis.length>0&&c===vis.length; all.indeterminate=c>0&&c<vis.length; }
+}
+function selClick(e){
+  const t=e.target; if(!t||!t.closest||!ov) return false;
+  if(t.closest('#nfAll')){ const on=t.closest('#nfAll').checked; visible().forEach(r=>{ on?sel.add(r.id):sel.delete(r.id); }); lastSel=''; syncSelDom(); return true; }
+  const td=t.closest('td.nf-ck0'); if(!td) return false;
+  const tr=td.closest('tr[data-id]'); if(!tr) return false;
+  const id=tr.dataset.id, cb=td.querySelector('.nf-rowck'), on=(t===cb)?cb.checked:!sel.has(id);
+  if(e.shiftKey&&lastSel&&lastSel!==id){ const ids=visible().map(x=>x.id), a=ids.indexOf(lastSel), b=ids.indexOf(id);
+    if(a>=0&&b>=0){ const lo=Math.min(a,b), hi=Math.max(a,b); for(let i=lo;i<=hi;i++){ on?sel.add(ids[i]):sel.delete(ids[i]); } } else { on?sel.add(id):sel.delete(id); } }
+  else { on?sel.add(id):sel.delete(id); }
+  lastSel=id; syncSelDom(); return true;
+}
+function delSel(){
+  const vis=new Set(visible().map(x=>x.id)), rs=Array.from(sel).filter(id=>vis.has(id)).map(id=>wItem(id)).filter(Boolean);
+  if(!rs.length){ toast('ยังไม่ได้เลือกรายการ'); return; }
+  const list=rs.slice(0,40).map(r=>`<div>• <b>${E(r.it.no)}</b> ${E(r.it.task)}</div>`).join('')+(rs.length>40?`<div>… และอีก ${rs.length-40} รายการ</div>`:'');
+  openMo(`<h3>🗑 ลบ ${rs.length} รายการ?</h3><div class="nf-sub">รายการเหล่านี้จะถูกลบออกเมื่อกด 💾 บันทึก (กด ↩ ยกเลิกการแก้ไข เพื่อกลับคืนทั้งหมด)</div><div class="nf-dl">${list}</div><div class="nf-mact"><button class="nf-b nf-p" data-mo="ok" style="animation:none">ลบ ${rs.length} รายการ</button><button class="nf-b" data-mo="cancel">ยกเลิก</button></div>`,m=>{
+    m.querySelector('[data-mo="ok"]').addEventListener('click',()=>{
+      const ids=new Set(rs.map(r=>r.it.id)); CATS.forEach(c=>{ W.cats[c]=W.cats[c].filter(x=>!ids.has(x.id)); });
+      sel.clear(); lastSel=''; closeMo(); renderAll(); toast('🗑 ลบ '+ids.size+' รายการแล้ว (ฉบับร่าง) — กด 💾 บันทึก เพื่อยืนยัน');
+    });
+  });
 }
 function renderTools(){
   const el=Q('#nfTools'); if(!el) return;
   el.innerHTML=`<input id="nfSearch" placeholder="🔎 ค้นหาหัวข้อ / Owner / Note" value="${E(state.search)}" autocomplete="off">`+
     `<select id="nfFSt"><option value="all">ทุกสถานะ</option>${Object.keys(ST).map(s=>`<option value="${s}"${state.status===s?' selected':''}>${ST[s]}</option>`).join('')}</select>`+
     `<select id="nfFStage"><option value="all">ทุก Stage</option><option value="none"${state.stage==='none'?' selected':''}>ไม่ระบุ Stage</option>${C.codes.map(c=>`<option value="${E(c)}"${state.stage===c?' selected':''}>${E(c)}</option>`).join('')}</select>`+
-    `<span class="nf-grow"></span><button class="nf-b" data-a="bulkown" title="ตั้ง Owner / สถานะ ให้ทุกแถวที่แสดงอยู่ในครั้งเดียว">👤 ตั้งทั้งชุด (Owner / สถานะ)</button><button class="nf-b nf-p" data-a="add" style="animation:none">＋ เพิ่มแผน</button>`;
+    `<span class="nf-grow"></span><span id="nfSelBar"></span><button class="nf-b" data-a="bulkown" title="ตั้ง Owner / สถานะ ให้ทุกแถวที่แสดงอยู่ในครั้งเดียว">👤 ตั้งทั้งชุด (Owner / สถานะ)</button><button class="nf-b nf-p" data-a="add" style="animation:none">＋ เพิ่มแผน</button>`;
 }
 /* Timeline: ◆ Plan · ● Actual · ◇ Plan เดิม (ก่อนเลื่อน) · แท็ก Stage จากตารางด้านบน */
 function renderTL(){ const sn=snapScroll(); renderTL0(); if(sn){ const e=ov&&ov.querySelector('.nf-tlw'); if(e&&sn.els['.nf-tlw'][0]){ e.scrollTop=sn.els['.nf-tlw'][0][0]; e.scrollLeft=sn.els['.nf-tlw'][0][1]; } if(ov) ov.scrollTop=sn.top; } }
@@ -8970,6 +9095,7 @@ function exportJson(){
 
 /* ---------- ปุ่ม / คีย์ลัด ---------- */
 function onClick(e){
+  if(selClick(e)) return;
   const b=e.target.closest('[data-a]'); if(!b) return; const a=b.dataset.a;
   if(a==='close') closeOv(false);
   else if(a==='save') onSave();
@@ -8991,6 +9117,8 @@ function onClick(e){
   else if(a==='done'){ const r=wItem(b.dataset.id); if(r){ r.it.status='done'; if(!r.it.actual) r.it.actual=todayISO(); renderAll(); } }
   else if(a==='edit') editItem(b.dataset.id);
   else if(a==='del') delItem(b.dataset.id);
+  else if(a==='delsel') delSel();
+  else if(a==='selclr'){ sel.clear(); lastSel=''; syncSelDom(); }
 }
 document.addEventListener('input',e=>{ if(!ov) return; const t=e.target; if(t.id==='nfSearch'){ state.search=t.value; renderTable(); renderTL(); } });
 document.addEventListener('change',e=>{ if(!ov) return; const t=e.target; if(t.id==='nfFSt'){ state.status=t.value; renderTable(); renderTL(); } else if(t.id==='nfFStage'){ state.stage=t.value; renderStage(); renderTable(); renderTL(); } });
@@ -9011,7 +9139,7 @@ function hook(){
   };
 }
 function openProj(name){
-  hook(); state={name:name,tab:'Supplier',search:'',status:'all',stage:'all',ins:{}};
+  hook(); state={name:name,tab:'Supplier',search:'',status:'all',stage:'all',ins:{}}; sel.clear(); lastSel='';
   loadState(true); if(ov) ov.remove(); buildOverlay(); renderAll();
 }
 function closeOv(force){
@@ -9027,6 +9155,7 @@ function closeOv(force){
 /* ดักคลิกชื่อรุ่น (ตาราง PV) / กล่องรุ่น (Schedule) ก่อนตัวจัดการเดิมของหน้า Main QE Jobs */
 window.addEventListener('click',function(e){
   const t=e.target; if(!t||!t.closest) return;
+  if(t.closest('.pv-ord')){ if(!t.closest('button[data-mje]')) e.stopPropagation(); return; }   // v69: ▲▼ ทำงานตามปกติ · คลิกที่ ⠿ / ช่องว่างในชุดปุ่ม ไม่เปิด Follow-up และไม่เปิดหน้าต่างแก้ชื่อรุ่น
   const td=t.closest('#viewMainJobs .mj-pv td.mn');
   const chip=td?null:t.closest('#viewMainJobs .mj-mchip');
   if(!td&&!chip) return;
