@@ -5428,7 +5428,7 @@ function ovCard(t,b,s,col){
   const o=t.ov, K=o.items.length, D=o.docs.length, at=`data-t="${E(t.id)}" data-b="${E(b.id)}"`;
   const pct=s.n?s.ox/s.n*100:null, now=dn(today);
   const collapsed=!!(ui.ovc&&ui.ovc[b.id]);
-  let h=`<div class="ov-card" style="--lc:${col}"><div class="ov-ch"><button type="button" class="ms-fold ov-fold" data-act="ovfold" ${at} title="ย่อ / ขยาย">${collapsed?'▸':'▾'}</button><span class="ov-line">${E(b.line||'—')}</span>${b.ref?`<span class="ov-ref">ID ${E(b.ref)}</span>`:''}${b.title?`<b class="ov-ttl">${E(b.title)}</b>`:''}`+
+  let h=`<div class="ov-card" id="ov-block-${E(b.id)}" data-ov-line="${E(b.line||'')}" style="--lc:${col}"><div class="ov-ch"><button type="button" class="ms-fold ov-fold" data-act="ovfold" ${at} title="ย่อ / ขยาย">${collapsed?'▸':'▾'}</button><span class="ov-line">${E(b.line||'—')}</span>${b.ref?`<span class="ov-ref">ID ${E(b.ref)}</span>`:''}${b.title?`<b class="ov-ttl">${E(b.title)}</b>`:''}`+
     `<span class="ov-mode">${b.mode==='ba'?'Before → After':'สถานะปัจจุบัน'}</span>`;
   if(s.n) h+=s.xx?`<span class="ov-st" style="--sc:#ef4444" title="จำนวนจุดตรวจ Sensor ที่ยังไม่ผ่าน (X) จากทั้งหมด ${s.n} จุดที่ประเมินแล้ว">Sensor X ${s.xx}/${s.n}${s.sdue?' · Due '+fmtS(s.sdue):''}</span>`:`<span class="ov-st" style="--sc:#22c55e" title="Touch sensor / Fiber sensor ผ่านทุกจุดที่ประเมิน (${s.n} จุด)">✓ Sensor ผ่านครบ ${s.ox}/${s.n}</span>`;
   if(b.mode==='ba'&&s.bx) h+=`<span class="ov-st" style="--sc:#3b82f6" title="X ก่อนแก้ → X หลังแก้">Before ${s.bx} → After ${s.ax}</span>`;
@@ -5475,18 +5475,17 @@ function ovSection(t){
   stats.forEach(s=>{ Object.keys(T).forEach(k=>{ if(k==='due'||k==='sdue'){ if(s[k]&&(!T[k]||s[k]<T[k])) T[k]=s[k]; } else T[k]+=s[k]; }); });
   const f=lines.indexOf(ui.ovf)>=0?ui.ovf:'', now=dn(today);
   let h=`<div class="ms-card hs-card ov-sec" id="ovSec"><h3>🧾 Overall status — รายไลน์ × Jig (Before → After)</h3>`+
-    `<div class="ms-sub">ดูสถานะ Touch sensor / Fiber sensor ของแต่ละ Jig และความพร้อมของเอกสาร / Pokayoke รายไลน์ · <b>คลิกวงกลมสถานะเพื่อแก้ไข</b> (จุดเหลืองมุมขวา = มีหมายเหตุ) · ช่องที่เป็น <b>X</b> แสดงเป็น <b>X → X</b> (ปัจจุบัน → หลังแก้) <b>คลิกวงกลมขวา</b>เพื่อเปลี่ยนเป็น <b>O</b> เมื่อแก้ไขเสร็จ · ใต้ทุกช่อง X มี <b>Due date</b> (ตัวแดง = เลยกำหนด) · กรอบเขียว = ปรับปรุงแล้ว (X → O)</div>`;
+    `<div class="ov-quick" aria-label="วิธีอ่านสถานะ"><span><i class="oq ok">O</i>ผ่าน</span><span><i class="oq ng">X</i>ไม่ผ่าน</span><span><i class="oq wait">●</i>มีงานค้าง</span><span><i class="oq note">•</i>มีหมายเหตุ</span><small>คลิกสถานะเพื่อแก้ไข · วันที่สีแดง = เลยกำหนด</small></div>`;
   h+=`<div class="hs-st4">`+
     `<div class="hs-sc" style="--sc:#ef4444"><b>${T.xx}</b><div>✗ Sensor ยังไม่ผ่าน<small>จาก ${T.n} จุดที่ประเมิน${T.bx?` · Before ${T.bx} → After ${T.ax}`:''}${T.sdue?` · Due ถัดไป ${fmtS(T.sdue)}`:''}</small></div></div>`+
     `<div class="hs-sc" style="--sc:#22c55e"><b>${T.ox}</b><div>✓ Sensor ผ่านแล้ว<small>${T.imp?`ปรับปรุงแล้ว ${T.imp} จุด`:'ยังไม่มีจุดที่ปรับปรุงเพิ่ม'}${T.dimp?` · เอกสารเสร็จ ${T.dimp}`:''}${T.reg?` · แย่ลง ${T.reg}`:''}</small></div></div>`+
     `<div class="hs-sc" style="--sc:#f59e0b"><b>${T.dx}</b><div>📄 เอกสาร / Pokayoke ค้าง<small>${T.due?`กำหนดถัดไป ${fmtS(T.due)} · ${dn(T.due)<now?'เลย '+(now-dn(T.due))+' วัน':'อีก '+(dn(T.due)-now)+' วัน'}`:'ไม่มีกำหนดค้าง'}</small></div></div>`+
     `<div class="hs-sc" style="--sc:#8b5cf6"><b>${T.jigs}</b><div>🧩 Jig ที่ตรวจสอบ<small>${o.blocks.length} ตาราง · ${lines.length} ไลน์</small></div></div></div>`;
-  h+=`<div class="ms-sub" style="margin:-4px 0 8px">จุดสีท้ายชื่อไลน์: <b style="color:#22c55e">เขียว</b> = Sensor และเอกสารครบ · <b style="color:#f59e0b">เหลือง</b> = Sensor ผ่านแล้ว แต่เอกสาร/Pokayoke ยังค้าง · <b style="color:#ef4444">แดง</b> = มี Sensor ที่ยังไม่ผ่าน</div>`;
-  h+=`<div class="hs-leg">${['O','X','NA','E'].map(k=>`<span><i style="background:${OVS[k].c}">${OVS[k].s}</i>${OVS[k].n}</span>`).join('')}<span><i style="background:rgba(34,197,94,.2);color:#22c55e;box-shadow:inset 0 0 0 1.5px #22c55e">↗</i>ปรับปรุงแล้ว (X → O)</span></div>`;
-  h+=`<div class="ov-fl"><button type="button" class="ot-chip${f===''?' on':''}" data-act="ovf" data-v="">ทั้งหมด (${o.blocks.length})</button>`+
+  h+=`<div class="ov-color-key"><span class="green">● พร้อม</span><span class="amber">● เอกสารค้าง</span><span class="red">● Sensor ไม่ผ่าน</span><span class="improve">↗ X → O ปรับปรุงแล้ว</span></div>`;
+  h+=`<div class="ov-toolbar"><div class="ov-linebar" role="navigation" aria-label="เลือกไลน์"><button type="button" class="ot-chip${f===''?' on':''}" data-act="ovf" data-v="">ทั้งหมด (${o.blocks.length})</button>`+
     lines.map(l=>{ const bs=o.blocks.map((b,i)=>b.line===l?stats[i]:null).filter(Boolean), sx=bs.reduce((a,s)=>a+s.xx,0), dx=bs.reduce((a,s)=>a+s.dx,0), col=sx?'#ef4444':dx?'#f59e0b':'#22c55e';
       return `<button type="button" class="ot-chip${f===l?' on':''}" data-act="ovf" data-v="${E(l)}" style="${f===l?'':`border-color:${lc(l)}`}" title="${sx?'Sensor ยังไม่ผ่าน '+sx+' จุด':'Sensor ผ่านครบ'}${dx?' · เอกสารค้าง '+dx:''}">${E(l)} (${bs.length})<i class="hs-dot" style="background:${col}"></i></button>`; }).join('')+
-    `<span class="grow"></span><button type="button" class="btn-g" data-act="ovz" data-t="${E(t.id)}" style="padding:6px 12px;font-size:12px" title="ตั้ง Due date ให้ทุกช่อง X พร้อมกัน">📅 ตั้ง Due ทุกช่อง X</button><button type="button" class="btn-g" data-act="ovall" data-v="open" style="padding:6px 12px;font-size:12px">▾ ขยายทั้งหมด</button><button type="button" class="btn-g" data-act="ovall" data-v="close" style="padding:6px 12px;font-size:12px">▸ ย่อทั้งหมด</button><button type="button" class="btn-g" data-act="ovcsv" style="padding:6px 12px;font-size:12px">⬇ CSV Overall</button></div>`;
+    `</div><div class="ov-actions"><button type="button" class="btn-g" data-act="ovz" data-t="${E(t.id)}" style="padding:6px 12px;font-size:12px" title="ตั้ง Due date ให้ทุกช่อง X พร้อมกัน">📅 ตั้ง Due ทุกช่อง X</button><button type="button" class="btn-g" data-act="ovall" data-v="open" style="padding:6px 12px;font-size:12px">▾ ขยายทั้งหมด</button><button type="button" class="btn-g" data-act="ovall" data-v="close" style="padding:6px 12px;font-size:12px">▸ ย่อทั้งหมด</button><button type="button" class="btn-g" data-act="ovcsv" style="padding:6px 12px;font-size:12px">⬇ CSV Overall</button></div></div>`;
   let shown=0;
   o.blocks.forEach((b,i)=>{ if(f&&b.line!==f) return; shown++; h+=ovCard(t,b,stats[i],lc(b.line)); });
   if(!shown) h+=`<div class="ms-sub" style="padding:14px 4px">ยังไม่มีตาราง — กด “＋ เพิ่มตาราง”</div>`;
@@ -5790,7 +5789,7 @@ function onClick(e){
     case 'haddt': openTopic(null,t.dataset.a); break;
     case 'ovgo': { const el=g('ovSec'); if(el) el.scrollIntoView({behavior:'smooth',block:'start'}); break; }
     case 'ovnew': { const tp=fT(t.dataset.t); if(tp){ tp.ov=sanOv({blocks:[],mig:1}); touch(); render(); } break; }
-    case 'ovf': ui.ovf=t.dataset.v; render(); break;
+    case 'ovf': { const line=t.dataset.v; ui.ovf=line; render(); requestAnimationFrame(()=>{ const el=line?document.querySelector('#ovSec .ov-card[data-ov-line="'+CSS.escape(line)+'"]'):document.querySelector('#ovSec .ov-card'); if(el) el.scrollIntoView({behavior:'smooth',block:'start'}); }); break; }
     case 'ovc': ovOpenCell(t.dataset.t,t.dataset.b,t.dataset.p,t.dataset.j,+t.dataset.k,t.dataset.s); break;
     case 'ovd': ovOpenDoc(t.dataset.t,t.dataset.b,+t.dataset.k,+t.dataset.i,t.dataset.s); break;
     case 'ovz': ovOpenBulk(t.dataset.t); break;
@@ -16329,5 +16328,18 @@ html{scroll-padding-top:64px}
  #qeDash .qd-card.w12{grid-column:span 12!important}
  #qeDash *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
 }
+</style>
+
+<style id="qeOverallUXV2">
+#viewHoshin .ov-quick{display:flex;align-items:center;gap:6px 12px;flex-wrap:wrap;margin:6px 0 10px;padding:7px 9px;border:1px solid var(--line);border-radius:10px;background:color-mix(in srgb,var(--card,#fff) 94%,var(--pri,#5b5ce2) 6%);font-size:10.5px;color:var(--txt)}
+#viewHoshin .ov-quick span{display:inline-flex;align-items:center;gap:4px;font-weight:700;white-space:nowrap}#viewHoshin .ov-quick small{margin-left:auto;color:var(--mut);font-size:9.5px}
+#viewHoshin .oq{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:6px;color:#fff;font-style:normal;font-size:11px;font-weight:900}#viewHoshin .oq.ok{background:#22c55e}#viewHoshin .oq.ng{background:#ef4444}#viewHoshin .oq.wait{background:#f59e0b}#viewHoshin .oq.note{background:#facc15;color:#713f12}
+#viewHoshin .ov-color-key{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 7px;font-size:10px;font-weight:750;color:var(--mut)}#viewHoshin .ov-color-key .green{color:#16a34a}#viewHoshin .ov-color-key .amber{color:#d97706}#viewHoshin .ov-color-key .red{color:#dc2626}#viewHoshin .ov-color-key .improve{color:#059669}
+#viewHoshin .ov-toolbar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;margin:6px 0 12px}
+#viewHoshin .ov-linebar{display:flex;flex-wrap:nowrap;gap:5px;overflow-x:auto;min-width:0;padding:3px 2px 5px;scrollbar-width:thin;scroll-snap-type:x proximity}
+#viewHoshin .ov-linebar .ot-chip{flex:0 0 auto;scroll-snap-align:start;padding:5px 9px!important;font-size:10.5px!important;min-height:28px;white-space:nowrap}
+#viewHoshin .ov-actions{display:flex;gap:5px;flex-wrap:nowrap;white-space:nowrap}#viewHoshin .ov-actions .btn-g{padding:5px 9px!important;font-size:10.5px!important;min-height:28px}
+#viewHoshin .ov-card{scroll-margin-top:84px}#viewHoshin .ov-card:target{box-shadow:0 0 0 3px var(--ring),0 5px 18px var(--sh)}
+@media(max-width:900px){#viewHoshin .ov-toolbar{grid-template-columns:1fr}#viewHoshin .ov-actions{overflow-x:auto;padding-bottom:3px}#viewHoshin .ov-quick small{width:100%;margin-left:0}}
 </style>
 </body></html>
