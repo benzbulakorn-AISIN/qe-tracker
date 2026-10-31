@@ -7,6 +7,7 @@
 <title>QE Elec. Daily Job Tracker</title>
 <!-- v62 (27-Oct-2026): Time-saving & Ergonomics layer — ดู Change log ในบล็อก qeV62Css ท้ายไฟล์ -->
 <!-- v70 (31-Oct-2026): Hoshin › Overall status — (1) ย้ายปุ่ม ตั้ง Due/ขยาย/ย่อ/CSV ขึ้นแถวบน ไม่ซ้อนปุ่มเลขไลน์ (2) กรองตามชื่อผู้รับผิดชอบ / แสดงทั้งหมด (3) ตาราง รายละเอียดรายไลน์ มีคอลัมน์ผู้รับผิดชอบ และ Due ดึงจาก Overall status -->
+<!-- v71 (31-Oct-2026): Hoshin ใช้ Due จาก Overall status ในป้าย/ภาพรวม, Timeline แก้วันที่ตรงจุด, ตารางสรุป Filter ตามคน, ส่งเข้า Tracker -->
 <!-- v66 (30-Oct-2026): หน้า 🗓️ ประชุม — เส้นเวลาปัจจุบัน (Now line) + ไทม์ไลน์รายวัน + ไฮไลต์ประชุมที่กำลังเกิด/ผ่านไปแล้ว — ดูบล็อก "v66" ในสคริปต์ mtgAddon -->
 <!-- v67 (30-Oct-2026): หน้า “งานของฉัน” — แผนงานประจำวัน (ตารางรายชั่วโมง 07:30–16:30 + OT, ขั้น 30 น./1 ชม., ดึงประชุมของฉัน, งานอื่นอยู่ด้านล่าง) — ดูบล็อก “v67” ในสคริปต์ myWorkNavAddon -->
 <!-- v69 (30-Oct-2026): Main QE Jobs › New project — (1) สลับลำดับรุ่นในตาราง PV (▲▼ / ลากที่ ⠿ / ปุ่มเรียงตามวันที่) (2) หน้า Follow-up: ติ๊กเลือกหลายรายการแล้วลบทีเดียว (3) รูปในหน้า Organization ซิงก์ให้ทุกคนเห็น (คีย์ qe_org_photo_*) -->
@@ -5118,7 +5119,7 @@ function sanitize(Yr,y){
 }
 
 /* ---------- คำนวณ ---------- */
-const effDue=(t,l)=>l.due||t.due||'';
+const effDue=(t,l)=>{ const D=ovEffDue(t,l); return D.d||t.due||''; };
 function tStat(t){ const c={ok:0,part:0,ng:0,chk:0}; t.lines.forEach(l=>{ c[l.st]++; }); const n=t.lines.length; return {c:c,n:n,pct:n?c.ok/n*100:null}; }
 function lateInfo(t){ let n=0,max=0; const now=dn(today); t.lines.forEach(l=>{ if(l.st==='ok') return; const d=effDue(t,l); if(!d) return; const k=now-dn(d); if(k>0){ n++; if(k>max) max=k; } }); return {n:n,max:max}; }
 function tState(t){
@@ -5149,7 +5150,7 @@ function nextDeadline(y){
   const cons=(date,label,t)=>{ const d=dn(date)-now; if(d>=0&&(!best||d<best.d)) best={d:d,date:date,label:label,t:t}; };
   ordered(y).forEach(t=>{ const s=tStat(t); if(s.n&&s.c.ok===s.n) return;
     if(t.due) cons(t.due,t.short,t);
-    t.lines.forEach(l=>{ if(l.st!=='ok'&&l.due) cons(l.due,t.short+' · '+l.line,t); });
+    t.lines.forEach(l=>{ const d=l.st!=='ok'&&effDue(t,l); if(d) cons(d,t.short+' · '+l.line,t); });
     (t.plan||[]).forEach(m=>cons(m.d,t.short+' · '+m.l,t)); });
   return best;
 }
@@ -5210,7 +5211,7 @@ function viewDash(y){
   });
   h+=`</div>`;
   // roadmap + follow-up
-  h+=`<div class="ms-card hs-card"><h3>🗺️ ไทม์ไลน์กำหนดเสร็จ</h3><div class="hs-timeline-key" aria-label="คำอธิบายไทม์ไลน์"><span class="hs-key k-done"><b>✓</b> เสร็จจริง</span><span class="hs-key k-watch"><b>●</b> ใกล้กำหนด</span><span class="hs-key k-delay"><b>◆</b> Delay</span><span class="hs-key k-topic"><b>◆</b> กำหนดหัวข้อ <small>เลข = ไลน์ค้าง</small></span><span class="hs-key k-line"><b>●</b> กำหนดเฉพาะไลน์</span><span class="hs-key k-ms"><b>◇</b> Milestone</span><span class="hs-key k-today"><b>┆</b> วันนี้</span><small class="hs-key-help">คลิก Follow-up หรือ Milestone เพื่อเปิดหัวข้อและแก้ไขแผน</small></div>${roadmap(y)}</div>`+
+  h+=`<div class="ms-card hs-card"><h3>🗺️ ไทม์ไลน์กำหนดเสร็จ</h3><div class="hs-timeline-key" aria-label="คำอธิบายไทม์ไลน์"><span class="hs-key k-done"><b>✓</b> เสร็จจริง</span><span class="hs-key k-watch"><b>●</b> ใกล้กำหนด</span><span class="hs-key k-delay"><b>◆</b> Delay</span><span class="hs-key k-topic"><b>◆</b> กำหนดหัวข้อ <small>เลข = ไลน์ค้าง</small></span><span class="hs-key k-line"><b>●</b> กำหนดเฉพาะไลน์</span><span class="hs-key k-ms"><b>◇</b> Milestone</span><span class="hs-key k-today"><b>┆</b> วันนี้</span><small class="hs-key-help">คลิกจุดวันที่หรือ Milestone เพื่อแก้ไขวันที่ตรงจุด</small></div>${roadmap(y)}</div>`+
     `<div class="ms-card hs-card"><h3>📌 ต้องติดตาม</h3><div class="ms-sub">เลยกำหนด และครบกำหนดภายใน 30 วัน · คลิกเพื่อเปิดหัวข้อ</div>`+followUp(D,N)+`</div>`;
   // matrix
   h+=`<div class="ms-card hs-card"><h3>🧩 ภาพรวมรายไลน์ × หัวข้อ</h3><div class="ms-sub">ดูไลน์เดียวครบทุกกิจกรรมว่าติดตรงไหน · คลิกช่องเพื่อดู/แก้ไข</div><div class="hs-leg">${ORD.map(k=>`<span><i style="background:${ST[k].c}">${ST[k].s}</i>${ST[k].n}</span>`).join('')}<span><i style="background:transparent;color:var(--mut);border:1px dashed var(--line)">–</i>ไม่อยู่ในหัวข้อนี้</span></div>${matrix(y,ord,N)}</div>`;
@@ -5239,7 +5240,7 @@ function matrix(y,ord,N){
 }
 function roadmap(y){
   const ord=ordered(y), now=dn(today); const pts=[now];
-  ord.forEach(t=>{ if(t.due) pts.push(dn(t.due)); (t.plan||[]).forEach(m=>pts.push(dn(m.d))); t.lines.forEach(l=>{ if(l.due&&l.st!=='ok') pts.push(dn(l.due)); }); });
+  ord.forEach(t=>{ if(t.due) pts.push(dn(t.due)); (t.plan||[]).forEach(m=>pts.push(dn(m.d))); t.lines.forEach(l=>{ const d=l.st!=='ok'&&effDue(t,l); if(d) pts.push(dn(d)); }); });
   const mn=Math.min.apply(null,pts), mxv=Math.max.apply(null,pts), sd=new Date(mn*864e5), ed=new Date(mxv*864e5);
   const start=Date.UTC(sd.getUTCFullYear(),sd.getUTCMonth(),1)/864e5, end=Date.UTC(ed.getUTCFullYear(),ed.getUTCMonth()+1,1)/864e5;
   const W=1000,L0=190,R0=W-40,laneH=72,top=40,H=top+Math.max(1,ord.length)*laneH+16, X=d=>L0+(d-start)/(end-start)*(R0-L0);
@@ -5255,20 +5256,20 @@ function roadmap(y){
     const a=y.acts.find(x=>x.id===t.act)||{color:'#8b5cf6'}, cy=top+i*laneH+laneH/2, st=tState(t);
     s+=`<line x1="${L0}" x2="${R0}" y1="${cy}" y2="${cy}" stroke="var(--line)" stroke-width="2"/>`+
        `<circle cx="14" cy="${cy}" r="6" fill="${E(a.color)}"/><text x="28" y="${cy+4}" class="lb">${E(clipT(t.short,22))}${st.k==='done'?' ✓':''}</text>`;
-    const dots={}; t.lines.forEach(l=>{ if(l.st==='ok'||!l.due) return; (dots[l.due]=dots[l.due]||[]).push(l.line); });
+    const dots={}; t.lines.forEach(l=>{ if(l.st==='ok') return; const d=effDue(t,l); if(!d) return; const q=dots[d]||(dots[d]={lines:[],ids:[]}); q.lines.push(l.line); q.ids.push(l.id); });
     let di=0;
-    Object.keys(dots).sort().forEach(d=>{ if(d===t.due) return; const x=X(dn(d)), over=dn(d)<now, up=(di++%2===1);
-      s+=`<circle cx="${x.toFixed(1)}" cy="${cy}" r="9" fill="${over?'#ef4444':'#f59e0b'}"><title>${E(dots[d].join(', '))} · ${fmtD(d)}</title></circle><text x="${x.toFixed(1)}" y="${cy+3.5}" text-anchor="middle" class="in">${dots[d].length}</text><text x="${x.toFixed(1)}" y="${up?cy-17:cy+25}" text-anchor="middle" class="ms">${fmtS(d)}</text>`; });
+    Object.keys(dots).sort().forEach(d=>{ if(d===t.due) return; const q=dots[d], x=X(dn(d)), over=dn(d)<now, up=(di++%2===1);
+      s+=`<g class="hsx-point" data-hsx-edit="line" data-t="${E(t.id)}" data-lids="${E(q.ids.join(','))}" data-d="${E(d)}" tabindex="0" role="button" aria-label="แก้ Due date ${E(q.lines.join(', '))}"><circle cx="${x.toFixed(1)}" cy="${cy}" r="9" fill="${over?'#ef4444':'#f59e0b'}"><title>${E(q.lines.join(', '))} · ${fmtD(d)} · คลิกเพื่อแก้วันที่</title></circle><text x="${x.toFixed(1)}" y="${cy+3.5}" text-anchor="middle" class="in">${q.lines.length}</text><text x="${x.toFixed(1)}" y="${up?cy-17:cy+25}" text-anchor="middle" class="ms">${fmtS(d)}</text></g>`; });
     let j=0;
-    (t.plan||[]).forEach(m=>{ const x=X(dn(m.d)), same=m.d===t.due, above=same?true:(j++%2===0), past=dn(m.d)<now;
-      if(!same) s+=`<rect data-act="hnav" data-v="${E(t.id)}" style="cursor:pointer" x="${(x-6).toFixed(1)}" y="${cy-6}" width="12" height="12" transform="rotate(45 ${x.toFixed(1)} ${cy})" fill="var(--card)" stroke="${past?'#ef4444':E(a.color)}" stroke-width="2.4" opacity="1"><title>${E(m.l)} · ${fmtD(m.d)}</title></rect>`;
+    (t.plan||[]).forEach((m,mi)=>{ const x=X(dn(m.d)), same=m.d===t.due, above=same?true:(j++%2===0), past=dn(m.d)<now, at=`data-hsx-edit="plan" data-t="${E(t.id)}" data-i="${mi}"`;
+      if(!same) s+=`<rect class="hsx-point" ${at} tabindex="0" role="button" style="cursor:pointer" x="${(x-6).toFixed(1)}" y="${cy-6}" width="12" height="12" transform="rotate(45 ${x.toFixed(1)} ${cy})" fill="var(--card)" stroke="${past?'#ef4444':E(a.color)}" stroke-width="2.4" opacity="1"><title>${E(m.l)} · ${fmtD(m.d)} · คลิกเพื่อแก้วันที่</title></rect>`;
       const ly=above?cy-26:cy+22;
-      s+=`<text data-act="hnav" data-v="${E(t.id)}" style="cursor:pointer;fill:${past?'#ef4444':'var(--txt)'};font-weight:${past?'800':'600'}" x="${x.toFixed(1)}" y="${ly}" text-anchor="middle" class="ms">${E(clipT(m.l.replace(/^Plan\s*/i,''),18))}</text><text x="${x.toFixed(1)}" y="${ly+11}" text-anchor="middle" class="ms" style="font-weight:500" opacity="${past?.55:1}">${fmtS(m.d)}</text>`; });
-    if(t.due){ const x=X(dn(t.due)), done=st.k==='done', over=!done&&dn(t.due)<now, fill=done?'#22c55e':over?'#ef4444':E(a.color);
+      s+=`<text class="ms hsx-point" ${at} tabindex="0" role="button" style="cursor:pointer;fill:${past?'#ef4444':'var(--txt)'};font-weight:${past?'800':'600'}" x="${x.toFixed(1)}" y="${ly}" text-anchor="middle">${E(clipT(m.l.replace(/^Plan\s*/i,''),18))}</text><text class="ms hsx-point" ${at} style="cursor:pointer;font-weight:500" x="${x.toFixed(1)}" y="${ly+11}" text-anchor="middle" opacity="${past?.55:1}">${fmtS(m.d)}</text>`; });
+    if(t.due){ const x=X(dn(t.due)), done=st.k==='done', over=!done&&dn(t.due)<now, fill=done?'#22c55e':over?'#ef4444':E(a.color), at=`data-hsx-edit="topic" data-t="${E(t.id)}" data-d="${E(t.due)}"`;
       const open=t.lines.filter(l=>l.st!=='ok'&&effDue(t,l)===t.due).length, hasMs=(t.plan||[]).some(m=>m.d===t.due);
-      s+=`<rect x="${(x-11).toFixed(1)}" y="${cy-11}" width="22" height="22" rx="3" transform="rotate(45 ${x.toFixed(1)} ${cy})" fill="${fill}"><title>${E(t.short)} · ${E(t.dueNote||'กำหนดเสร็จ')} ${fmtD(t.due)}</title></rect>`+
+      s+=`<g class="hsx-point" ${at} tabindex="0" role="button" aria-label="แก้กำหนดเสร็จหัวข้อ ${E(t.short)}"><rect x="${(x-11).toFixed(1)}" y="${cy-11}" width="22" height="22" rx="3" transform="rotate(45 ${x.toFixed(1)} ${cy})" fill="${fill}"><title>${E(t.short)} · ${E(t.dueNote||'กำหนดเสร็จ')} ${fmtD(t.due)} · คลิกเพื่อแก้วันที่</title></rect>`+
          `<text x="${x.toFixed(1)}" y="${cy+4}" text-anchor="middle" class="in">${open||'✓'}</text>`+
-         (hasMs?'':`<text x="${x.toFixed(1)}" y="${cy+28}" text-anchor="middle" class="ms">${fmtS(t.due)}</text>`); }
+         (hasMs?'':`<text x="${x.toFixed(1)}" y="${cy+28}" text-anchor="middle" class="ms">${fmtS(t.due)}</text>`)+`</g>`; }
     else if(st.k==='done') s+=`<text x="${L0+10}" y="${cy-8}" class="ms" style="fill:#22c55e">✓ เสร็จแล้ว (ไม่มีกำหนดค้าง)</text>`;
   });
   const tx=X(now);
@@ -6462,14 +6463,13 @@ if(window.SPDB) window.SPDB.bind();
 })();
 </script>
 <script>
-/* ===== Hoshin add-on v1 : เรียงลำดับตาราง (สถานะ / ชื่อไลน์ / QE / PE / กำหนด) + คลิกแก้ไขวันที่ Milestone ===== */
+/* ===== Hoshin add-on v71 : Filter ตามคน + แก้ Due/Milestone จาก Timeline + ส่งเข้า Tracker ===== */
 (function(){
 'use strict';
 if(window.__hsAddon) return; window.__hsAddon=true;
-const g=id=>document.getElementById(id);
-const view=()=>g('viewHoshin');
+const g=id=>document.getElementById(id), view=()=>g('viewHoshin');
 if(!view()||!window.HS||typeof window.HS.get!=='function'||typeof window.HS.restore!=='function'){
-  console.warn('[Hoshin add-on] ไม่พบ #viewHoshin / window.HS — วางโค้ดนี้ไว้ท้ายไฟล์ index.html (เหนือบรรทัดปิด body)'); return;
+  console.warn('[Hoshin v71] ไม่พบ #viewHoshin / window.HS'); return;
 }
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const pad=n=>String(n).padStart(2,'0');
@@ -6481,206 +6481,86 @@ const say=(m,c)=>{ try{ if(typeof toast==='function') toast(m,c); else console.l
 const nat=(a,b)=>String(a).localeCompare(String(b),'th',{numeric:true,sensitivity:'base'});
 const RANK={'✗':0,'▲':1,'…':2,'✓':3};
 const rankOf=s=>{ s=String(s||'').trim().charAt(0); return Object.prototype.hasOwnProperty.call(RANK,s)?RANK[s]:99; };
+const lineKey=s=>String(s||'').trim().toUpperCase();
 
-/* ---------- สไตล์ (ใช้ตัวแปรสีของธีมเดิม) ---------- */
 const st=document.createElement('style'); st.id='hsxStyle'; st.textContent=`
-.hsx-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin:0 0 10px;padding:8px 12px;border:1px dashed var(--line);border-radius:12px;background:var(--soft);font-size:12.5px;color:var(--mut)}
-.hsx-bar b{color:var(--txt);font-size:12.5px}
-.hsx-bar select.hsx-sel{width:auto;min-width:200px;padding:6px 10px;font-size:12.5px}
-.hsx-bar .btn-g{padding:6px 12px;font-size:12px}
-.hsx-bar.on{border-style:solid;border-color:var(--pri)}
-.hsx-hint{font-size:12px;color:var(--mut);font-weight:500}
-th.hsx-th{cursor:pointer;user-select:none}
-th.hsx-th:hover{color:var(--txt);background:var(--soft2)}
-.hsx-ar{font-style:normal;font-size:11px;margin-left:5px;opacity:.35}
-.hsx-ar.on{opacity:1;color:var(--pri);font-weight:800}
-.hs-m.hsx-edit{cursor:pointer;position:relative;padding-right:30px;transition:transform .12s,box-shadow .12s,border-color .12s}
-.hs-m.hsx-edit::after{content:"✎";position:absolute;right:10px;top:8px;font-size:12px;opacity:.5}
-.hs-m.hsx-edit:hover,.hs-m.hsx-edit:focus-visible{border-color:var(--pri);box-shadow:0 8px 20px var(--shp);transform:translateY(-2px);outline:none}
-.hs-m.hsx-edit:hover::after,.hs-m.hsx-edit:focus-visible::after{opacity:1;color:var(--pri)}
-.hsx-addm{margin-top:10px;padding:5px 12px;font-size:12px}
-.hsx-ov{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:16px;z-index:40}
-.hsx-ov.on{display:flex}
-.hsx-mod{background:var(--pop,#fff);color:var(--txt);border:1px solid var(--line);border-radius:14px;padding:22px;width:100%;max-width:460px;max-height:92vh;overflow:auto;box-shadow:0 18px 50px rgba(0,0,0,.45)}
-.hsx-mod h3{margin:0 0 4px;font-size:18px}
-.hsx-mod .sub{color:var(--mut);font-size:13px;margin-bottom:6px}
-.hsx-mod label{display:block;font-size:12px;color:var(--mut);margin:12px 0 4px}
-.hsx-qk{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
-.hsx-qk button{padding:5px 11px;font-size:12px}
-.hsx-df{font-size:12px;margin-top:8px;color:var(--mut);line-height:1.6}
-.hsx-df b{color:var(--txt)}
-.hsx-act{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.hsx-bar,.hsx-filter{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin:0 0 10px;padding:8px 12px;border:1px dashed var(--line);border-radius:12px;background:var(--soft);font-size:12.5px;color:var(--mut)}
+.hsx-bar b,.hsx-filter b{color:var(--txt);font-size:12.5px}.hsx-bar select,.hsx-filter select{width:auto;min-width:180px;padding:6px 10px;font-size:12.5px}.hsx-bar .btn-g,.hsx-filter .btn-g{padding:6px 12px;font-size:12px}.hsx-bar.on,.hsx-filter.on{border-style:solid;border-color:var(--pri)}
+.hsx-hint{font-size:12px;color:var(--mut);font-weight:500}th.hsx-th{cursor:pointer;user-select:none}th.hsx-th:hover{color:var(--txt);background:var(--soft2)}.hsx-ar{font-style:normal;font-size:11px;margin-left:5px;opacity:.35}.hsx-ar.on{opacity:1;color:var(--pri);font-weight:800}
+.hs-m.hsx-edit{cursor:pointer;position:relative;padding-right:30px;transition:transform .12s,box-shadow .12s,border-color .12s}.hs-m.hsx-edit::after{content:"✎";position:absolute;right:10px;top:8px;font-size:12px;opacity:.5}.hs-m.hsx-edit:hover,.hs-m.hsx-edit:focus-visible{border-color:var(--pri);box-shadow:0 8px 20px var(--shp);transform:translateY(-2px);outline:none}.hs-m.hsx-edit:hover::after,.hs-m.hsx-edit:focus-visible::after{opacity:1;color:var(--pri)}.hsx-addm{margin-top:10px;padding:5px 12px;font-size:12px}
+.hsx-point{cursor:pointer}.hsx-point:hover,.hsx-point:focus{filter:drop-shadow(0 0 5px var(--pri));outline:none}.hsx-point:hover text{font-weight:900;text-decoration:underline}
+.hsx-ov{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:16px;z-index:40}.hsx-ov.on{display:flex}.hsx-mod{background:var(--pop,#fff);color:var(--txt);border:1px solid var(--line);border-radius:14px;padding:22px;width:100%;max-width:500px;max-height:92vh;overflow:auto;box-shadow:0 18px 50px rgba(0,0,0,.45)}.hsx-mod h3{margin:0 0 4px;font-size:18px}.hsx-mod .sub{color:var(--mut);font-size:13px;margin-bottom:6px}.hsx-mod label{display:block;font-size:12px;color:var(--mut);margin:12px 0 4px}.hsx-qk{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.hsx-qk button{padding:5px 11px;font-size:12px}.hsx-df{font-size:12px;margin-top:8px;color:var(--mut);line-height:1.6}.hsx-df b{color:var(--txt)}.hsx-act{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}.hsx-check{display:flex!important;gap:8px;align-items:flex-start;color:var(--txt)!important;cursor:pointer;line-height:1.45}.hsx-check input{width:16px;height:16px;margin-top:2px}.hsx-send[disabled]{opacity:.5;cursor:not-allowed}
 `;
 document.head.appendChild(st);
 
-/* ---------- สถานะการเรียง (จำไว้ในเครื่อง) ---------- */
 const LS='qe_hoshin_sort_v1';
-let S={mx:null,dt:null};
-try{ const x=JSON.parse(localStorage.getItem(LS)||'null'); if(x&&typeof x==='object'){ S.mx=x.mx||null; S.dt=x.dt||null; } }catch(e){}
+let S={mx:null,dt:null,mxp:'',mxr:'all'};
+try{ const x=JSON.parse(localStorage.getItem(LS)||'null'); if(x&&typeof x==='object') Object.assign(S,x); }catch(e){}
 const saveS=()=>{ try{ localStorage.setItem(LS,JSON.stringify(S)); }catch(e){} };
 const DIRS={text:['A → Z','Z → A'],num:['น้อย → มาก','มาก → น้อย'],st:['✗ NG ก่อน','✓ OK ก่อน'],date:['เร็ว → ช้า','ช้า → เร็ว']};
 const defDir=c=>c.t==='num'?-1:1;
 
 function makeSorter(o){
   const tb=o.tb, body=tb.tBodies[0], ths=Array.from(tb.tHead.rows[0].cells), rows=o.rows, cols=o.cols, key=o.key;
-  rows.forEach((r,i)=>{ r.dataset.hsxO=String(i); });
-  const firstTxt=o.num?rows.map(r=>r.cells[0].textContent):[];
+  rows.forEach((r,i)=>{ r.dataset.hsxO=String(i); }); const firstTxt=o.num?rows.map(r=>r.cells[0].textContent):[];
   const bar=document.createElement('div'); bar.className='hsx-bar';
-  bar.innerHTML='<b>↕ เรียงตาม</b><select class="hsx-sel"></select><button type="button" class="btn-g hsx-dir"></button><button type="button" class="btn-g hsx-clr">✕ ล้างการเรียง</button><span class="hsx-hint">หรือคลิกหัวคอลัมน์ในตาราง</span>';
-  const sel=bar.querySelector('.hsx-sel'), dirB=bar.querySelector('.hsx-dir'), clr=bar.querySelector('.hsx-clr');
-  sel.innerHTML='<option value="">ลำดับเดิม</option>'+cols.map(c=>c?`<option value="${esc(c.k)}">${esc(c.lab)}</option>`:'').join('');
-  o.anchor.parentNode.insertBefore(bar,o.anchor);
+  bar.innerHTML='<b>↕ เรียงตาม</b><select></select><button type="button" class="btn-g hsx-dir"></button><button type="button" class="btn-g hsx-clr">✕ ล้างการเรียง</button><span class="hsx-hint">หรือคลิกหัวคอลัมน์ในตาราง</span>';
+  const sel=bar.querySelector('select'),dirB=bar.querySelector('.hsx-dir'),clr=bar.querySelector('.hsx-clr');
+  sel.innerHTML='<option value="">ลำดับเดิม</option>'+cols.map(c=>c?`<option value="${esc(c.k)}">${esc(c.lab)}</option>`:'').join(''); o.anchor.parentNode.insertBefore(bar,o.anchor);
   const colOf=k=>cols.find(c=>c&&c.k===k)||null;
-  cols.forEach((c,i)=>{
-    if(!c) return; const th=ths[i]; th.classList.add('hsx-th'); th.title=(th.title?th.title+' · ':'')+'คลิกเพื่อเรียงลำดับ';
-    const ar=document.createElement('i'); ar.className='hsx-ar'; ar.textContent='↕'; th.insertBefore(ar,th.querySelector('small')); c.ar=ar;
-    th.addEventListener('click',()=>toggle(c));
-  });
-  function toggle(c){
-    const s=S[key];
-    if(!s||s.k!==c.k) S[key]={k:c.k,d:defDir(c)};
-    else if(s.d===defDir(c)) S[key]={k:c.k,d:-defDir(c)};
-    else S[key]=null;
-    saveS(); apply();
-  }
-  sel.addEventListener('change',()=>{ const c=colOf(sel.value); S[key]=c?{k:c.k,d:defDir(c)}:null; saveS(); apply(); });
-  dirB.addEventListener('click',()=>{ const s=S[key]; if(!s) return; S[key]={k:s.k,d:-s.d}; saveS(); apply(); });
-  clr.addEventListener('click',()=>{ S[key]=null; saveS(); apply(); });
-  function apply(){
-    const s=S[key], c=s?colOf(s.k):null, ci=c?cols.indexOf(c):-1;
-    const arr=rows.slice();
-    if(!c) arr.sort((a,b)=>a.dataset.hsxO-b.dataset.hsxO);
-    else arr.sort((a,b)=>{
-      const va=o.val(a,c,ci), vb=o.val(b,c,ci); let r=0;
-      if(c.t==='st'){ const na=va>=99, nb=vb>=99; if(na!==nb) return na?1:-1; r=(va-vb)*s.d; }
-      else if(c.t==='num') r=(va-vb)*s.d;
-      else { const na=!va, nb=!vb; if(na!==nb) return na?1:-1; r=(c.t==='date'?(va<vb?-1:va>vb?1:0):nat(va,vb))*s.d; }
-      if(r) return r;
-      return nat(o.line(a),o.line(b))||(a.dataset.hsxO-b.dataset.hsxO);
-    });
-    arr.forEach(r=>body.appendChild(r));
-    if(o.num) arr.forEach((r,i)=>{ r.cells[0].textContent=c?String(i+1):firstTxt[rows.indexOf(r)]; });
-    cols.forEach(cc=>{ if(!cc) return; const on=!!c&&cc===c; cc.ar.className='hsx-ar'+(on?' on':''); cc.ar.textContent=on?(s.d===1?'▲':'▼'):'↕'; });
-    sel.value=c?c.k:''; dirB.style.display=clr.style.display=c?'':'none';
-    if(c) dirB.textContent=DIRS[c.t][s.d===1?0:1];
-    bar.classList.toggle('on',!!c);
-  }
+  cols.forEach((c,i)=>{ if(!c) return; const th=ths[i]; th.classList.add('hsx-th'); th.title=(th.title?th.title+' · ':'')+'คลิกเพื่อเรียงลำดับ'; const ar=document.createElement('i'); ar.className='hsx-ar'; ar.textContent='↕'; const sm=th.querySelector('small'); th.insertBefore(ar,sm||null); c.ar=ar; th.addEventListener('click',()=>toggle(c)); });
+  function toggle(c){ const q=S[key]; if(!q||q.k!==c.k) S[key]={k:c.k,d:defDir(c)}; else if(q.d===defDir(c)) S[key]={k:c.k,d:-defDir(c)}; else S[key]=null; saveS(); apply(); }
+  sel.addEventListener('change',()=>{ const c=colOf(sel.value); S[key]=c?{k:c.k,d:defDir(c)}:null; saveS(); apply(); }); dirB.addEventListener('click',()=>{ const q=S[key]; if(!q)return; S[key]={k:q.k,d:-q.d}; saveS(); apply(); }); clr.addEventListener('click',()=>{S[key]=null;saveS();apply();});
+  function apply(){ const q=S[key],c=q?colOf(q.k):null,ci=c?cols.indexOf(c):-1,arr=rows.slice(); if(!c)arr.sort((a,b)=>a.dataset.hsxO-b.dataset.hsxO); else arr.sort((a,b)=>{const va=o.val(a,c,ci),vb=o.val(b,c,ci);let r=0;if(c.t==='st'){const na=va>=99,nb=vb>=99;if(na!==nb)return na?1:-1;r=(va-vb)*q.d;}else if(c.t==='num')r=(va-vb)*q.d;else{const na=!va,nb=!vb;if(na!==nb)return na?1:-1;r=(c.t==='date'?(va<vb?-1:va>vb?1:0):nat(va,vb))*q.d;}return r||nat(o.line(a),o.line(b))||(a.dataset.hsxO-b.dataset.hsxO);}); arr.forEach(r=>body.appendChild(r)); if(o.num)arr.forEach((r,i)=>{r.cells[0].textContent=c?String(i+1):firstTxt[rows.indexOf(r)];}); cols.forEach(cc=>{if(!cc)return;const on=!!c&&cc===c;cc.ar.className='hsx-ar'+(on?' on':'');cc.ar.textContent=on?(q.d===1?'▲':'▼'):'↕';});sel.value=c?c.k:'';dirB.style.display=clr.style.display=c?'':'none';if(c)dirB.textContent=DIRS[c.t][q.d===1?0:1];bar.classList.toggle('on',!!c); }
   apply();
 }
 
-/* ---------- ตารางภาพรวม: ไลน์ × หัวข้อ ---------- */
 function enhMatrix(){
   const tb=view().querySelector('table.hs-mx'); if(!tb||tb.dataset.hsx||!tb.tHead||!tb.tBodies[0]) return; tb.dataset.hsx='1';
-  const ths=Array.from(tb.tHead.rows[0].cells), n=ths.length; if(n<4) return;
-  const rows=Array.from(tb.tBodies[0].rows).filter(r=>r.cells.length===n); if(rows.length<2) return;
+  const ths=Array.from(tb.tHead.rows[0].cells),n=ths.length;if(n<4)return;const rows=Array.from(tb.tBodies[0].rows).filter(r=>r.cells.length===n);if(!rows.length)return;
   const lab=th=>(th.firstChild&&th.firstChild.nodeType===3?th.firstChild.textContent:th.textContent).trim().replace(/\s+/g,' ');
-  const cols=ths.map((th,i)=>{
-    if(i===0) return {k:'line',t:'text',lab:'ไลน์'};
-    if(i>=n-3) return [{k:'ng',t:'num',lab:'NG รวม'},{k:'qe',t:'text',lab:'QE'},{k:'pe',t:'text',lab:'PE'}][i-(n-3)];
-    let tid=''; for(const r of rows){ const e=r.cells[i].querySelector('.hs-c[data-t]'); if(e){ tid=e.dataset.t; break; } }
-    return tid?{k:'t:'+tid,t:'st',lab:lab(th)}:null;
-  });
-  makeSorter({tb:tb,key:'mx',cols:cols,rows:rows,anchor:tb.parentElement,
-    line:r=>r.cells[0].textContent,
-    val:(r,c,i)=>{ const cell=r.cells[i];
-      if(c.t==='st'){ const e=cell.querySelector('.hs-c[data-t]'); return e?rankOf(e.textContent):99; }
-      if(c.t==='num') return parseFloat(cell.textContent)||0;
-      return cell.textContent.trim(); }});
+  const cols=ths.map((th,i)=>{if(i===0)return{k:'line',t:'text',lab:'ไลน์'};if(i>=n-3)return[{k:'ng',t:'num',lab:'NG รวม'},{k:'qe',t:'text',lab:'QE'},{k:'pe',t:'text',lab:'PE'}][i-(n-3)];let tid='';for(const r of rows){const e=r.cells[i].querySelector('.hs-c[data-t]');if(e){tid=e.dataset.t;break;}}return tid?{k:'t:'+tid,t:'st',lab:lab(th)}:null;});
+  const anchor=tb.parentElement; makeSorter({tb,key:'mx',cols,rows,anchor,line:r=>r.cells[0].textContent,val:(r,c,i)=>{const cell=r.cells[i];if(c.t==='st'){const e=cell.querySelector('.hs-c[data-t]');return e?rankOf(e.textContent):99;}if(c.t==='num')return parseFloat(cell.textContent)||0;return cell.textContent.trim();}});
+  const people=[...new Set(rows.flatMap(r=>[r.cells[n-2].textContent.trim(),r.cells[n-1].textContent.trim()]).filter(Boolean))].sort(nat);
+  const bar=document.createElement('div');bar.className='hsx-filter';bar.innerHTML='<b>👤 Filter ตามคน</b><select class="hsx-person"><option value="">ทุกคน</option>'+people.map(p=>`<option value="${esc(p)}">${esc(p)}</option>`).join('')+'</select><select class="hsx-role"><option value="all">QE หรือ PE</option><option value="qe">เฉพาะ QE</option><option value="pe">เฉพาะ PE</option></select><button type="button" class="btn-g hsx-fclr">✕ ล้าง Filter</button><span class="hsx-hint hsx-count"></span>';
+  anchor.parentNode.insertBefore(bar,anchor);const ps=bar.querySelector('.hsx-person'),rs=bar.querySelector('.hsx-role'),ct=bar.querySelector('.hsx-count');ps.value=people.includes(S.mxp)?S.mxp:'';rs.value=/^(qe|pe)$/.test(S.mxr)?S.mxr:'all';
+  const apply=()=>{S.mxp=ps.value;S.mxr=rs.value;saveS();let shown=0;rows.forEach(r=>{const qe=r.cells[n-2].textContent.trim(),pe=r.cells[n-1].textContent.trim(),ok=!S.mxp||(S.mxr==='qe'?qe===S.mxp:S.mxr==='pe'?pe===S.mxp:qe===S.mxp||pe===S.mxp);r.hidden=!ok;if(ok)shown++;});ct.textContent=`แสดง ${shown} / ${rows.length} ไลน์`;bar.classList.toggle('on',!!S.mxp);};
+  ps.addEventListener('change',apply);rs.addEventListener('change',apply);bar.querySelector('.hsx-fclr').addEventListener('click',()=>{ps.value='';rs.value='all';apply();});apply();
 }
 
-/* ---------- ตารางรายละเอียดรายไลน์ (หน้าหัวข้อ) ---------- */
-function curYear(){ const b=view().querySelector('.ms-yr.on[data-y]'); return b?b.dataset.y:''; }
-function getTopic(tid){ try{ const y=window.HS.get().years[curYear()]; return (y&&y.topics.find(t=>t.id===tid))||null; }catch(e){ return null; } }
-function enhDetail(){
-  const tb=view().querySelector('table.hs-tbl'); if(!tb||tb.dataset.hsx||!tb.tHead||!tb.tBodies[0]) return; tb.dataset.hsx='1';
-  const ths=Array.from(tb.tHead.rows[0].cells), rows=Array.from(tb.tBodies[0].rows).filter(r=>r.dataset.l); if(rows.length<2) return;
-  const map={'ไลน์':{k:'line',t:'text'},'สถานะ':{k:'st',t:'st'},'QE':{k:'qe',t:'text'},'PE':{k:'pe',t:'text'},'ผู้รับผิดชอบ':{k:'qe',t:'text'},'กำหนด':{k:'due',t:'date'}}, used={};
-  const cols=ths.map(th=>{ const tx=th.textContent.trim(), m=map[tx]; if(!m||used[m.k]) return null; used[m.k]=1; return Object.assign({lab:tx},m); });
-  if(!cols.some(Boolean)) return;
-  const li=cols.findIndex(c=>c&&c.k==='line');
-  makeSorter({tb:tb,key:'dt',cols:cols,rows:rows,anchor:tb.closest('.hs-tw')||tb.parentElement,num:true,
-    line:r=>r.cells[li>=0?li:1].textContent,
-    val:(r,c,i)=>{
-      if(c.t==='st'){ const p=r.cells[i].querySelector('.hs-pill'); return p?rankOf(p.textContent):99; }
-      if(c.t==='date'){ const cd=r.cells[i]&&r.cells[i].dataset.due; if(cd!==undefined) return cd; const t=getTopic(r.dataset.t), l=t&&t.lines.find(x=>x.id===r.dataset.l); return (l&&(l.due||t.due))||''; }
-      return r.cells[i].textContent.trim(); }});
-}
+function curYear(){const b=view().querySelector('.ms-yr.on[data-y]');return b?b.dataset.y:'';}
+function getTopic(tid){try{const y=window.HS.get().years[curYear()];return(y&&y.topics.find(t=>t.id===tid))||null;}catch(e){return null;}}
+function enhDetail(){const tb=view().querySelector('table.hs-tbl');if(!tb||tb.dataset.hsx||!tb.tHead||!tb.tBodies[0])return;tb.dataset.hsx='1';const ths=Array.from(tb.tHead.rows[0].cells),rows=Array.from(tb.tBodies[0].rows).filter(r=>r.dataset.l);if(!rows.length)return;const map={'ไลน์':{k:'line',t:'text'},'สถานะ':{k:'st',t:'st'},'QE':{k:'qe',t:'text'},'PE':{k:'pe',t:'text'},'ผู้รับผิดชอบ':{k:'qe',t:'text'},'กำหนด':{k:'due',t:'date'}},used={};const cols=ths.map(th=>{const tx=th.textContent.trim(),m=map[tx];if(!m||used[m.k])return null;used[m.k]=1;return Object.assign({lab:tx},m);});if(!cols.some(Boolean))return;const li=cols.findIndex(c=>c&&c.k==='line');makeSorter({tb,key:'dt',cols,rows,anchor:tb.closest('.hs-tw')||tb.parentElement,num:true,line:r=>r.cells[li>=0?li:1].textContent,val:(r,c,i)=>{if(c.t==='st'){const p=r.cells[i].querySelector('.hs-pill');return p?rankOf(p.textContent):99;}if(c.t==='date'){const t=getTopic(r.dataset.t),l=t&&t.lines.find(x=>x.id===r.dataset.l);return(l&&(pendingDue(t,l.line)||l.due||t.due))||'';}return r.cells[i].textContent.trim();}});}
 
-/* ---------- Milestone: คลิกแก้ไขชื่อ / วันที่ ---------- */
-let ovEl=null, ovCx=null;
-function openOv(html){
-  if(!ovEl){
-    ovEl=document.createElement('div'); ovEl.className='hsx-ov'; ovEl.innerHTML='<div class="hsx-mod" id="hsxMod"></div>'; document.body.appendChild(ovEl);
-    ovEl.addEventListener('click',e=>{ if(e.target===ovEl) closeOv(); });
-    document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&ovEl.classList.contains('on')) closeOv(); });
-  }
-  g('hsxMod').innerHTML=html; ovEl.classList.add('on');
-}
-function closeOv(){ if(ovEl) ovEl.classList.remove('on'); ovCx=null; }
-function diffTxt(d){
-  if(!isoOK(d)) return '<span style="color:var(--t-dang)">กรุณาเลือกวันที่</span>';
-  const k=dn(d)-dn(todayS());
-  return `<b>${fmtD(d)}</b> · ${k<0?'ผ่านมาแล้ว '+(-k)+' วัน':k===0?'วันนี้':'อีก '+k+' วัน'}`;
-}
-function openMs(tid,i){
-  const t=getTopic(tid); if(!t){ alert('ไม่พบหัวข้อ — ลองเปิดหน้าหัวข้อใหม่อีกครั้ง'); return; }
-  const m=i>=0&&t.plan?t.plan[i]:null; ovCx={tid:tid,i:i,y:curYear()};
-  openOv(`<h3>${m?'✏️ แก้ไข Milestone':'➕ เพิ่ม Milestone'}</h3><div class="sub">หัวข้อ: ${esc(t.short||t.name)}</div>`+
-    `<label>ชื่อ Milestone</label><input id="hsxL" value="${esc(m?m.l:'')}" placeholder="เช่น Plan PV4" autocomplete="off">`+
-    `<label>วันที่</label><input id="hsxD" type="date" value="${esc(m?m.d:'')}">`+
-    `<div class="hsx-qk"><span class="hsx-hint" style="align-self:center">เลื่อนวันที่:</span><button type="button" class="btn-g" data-sh="-7">−1 สัปดาห์</button><button type="button" class="btn-g" data-sh="7">+1 สัปดาห์</button><button type="button" class="btn-g" data-sh="14">+2 สัปดาห์</button><button type="button" class="btn-g" data-sh="30">+1 เดือน</button></div>`+
-    `<div class="hsx-df" id="hsxDf">${m?'ค่าเดิม: '+diffTxt(m.d)+'<br>':''}ค่าใหม่: <span id="hsxNew">${diffTxt(m?m.d:'')}</span></div>`+
-    `<div class="hsx-act"><button type="button" class="btn-p" data-hs="save">บันทึก</button>${m?'<button type="button" class="btn-d" data-hs="del">🗑 ลบ</button>':''}<button type="button" class="btn-g" data-hs="cancel">ยกเลิก</button></div>`);
-  const D=g('hsxD'), upd=()=>{ g('hsxNew').innerHTML=diffTxt(D.value); };
-  D.addEventListener('input',upd); D.addEventListener('change',upd);
-  g('hsxMod').querySelectorAll('[data-sh]').forEach(b=>b.addEventListener('click',()=>{
-    const base=isoOK(D.value)?D.value:todayS(), d=new Date(base+'T00:00:00'); d.setDate(d.getDate()+(+b.dataset.sh));
-    D.value=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); upd(); }));
-  g('hsxMod').querySelectorAll('[data-hs]').forEach(b=>b.addEventListener('click',()=>{ const a=b.dataset.hs; if(a==='cancel') closeOv(); else if(a==='save') saveMs(); else if(a==='del') delMs(); }));
-  setTimeout(()=>{ const L=g('hsxL'); if(L){ L.focus(); L.select(); } },30);
-}
-function commit(mut){
-  const c=ovCx; if(!c) return false;
-  const store=window.HS.get(), Y=store.years[c.y], t=Y&&Y.topics.find(x=>x.id===c.tid); if(!t) return false;
-  if(!Array.isArray(t.plan)) t.plan=[];
-  mut(t, c);
-  t.plan.sort((a,b)=>a.d<b.d?-1:a.d>b.d?1:0);
-  window.HS.restore({years:{[c.y]:Y}},false);          // บันทึก (localStorage + Cloud DB) และวาดหน้าใหม่ด้วยฟังก์ชันของระบบเอง
-  return true;
-}
-function saveMs(){
-  const l=g('hsxL').value.trim(), d=g('hsxD').value;
-  if(!l){ alert('กรุณาใส่ชื่อ Milestone'); g('hsxL').focus(); return; }
-  if(!isoOK(d)){ alert('กรุณาเลือกวันที่'); g('hsxD').focus(); return; }
-  const isNew=ovCx.i<0;
-  if(commit((t,c)=>{ if(c.i>=0&&t.plan[c.i]) t.plan[c.i]={l:l,d:d}; else t.plan.push({l:l,d:d}); })){ closeOv(); say(isNew?'✅ เพิ่ม Milestone แล้ว':'✅ อัปเดต Milestone แล้ว'); }
-}
-function delMs(){
-  const t=getTopic(ovCx.tid), m=t&&t.plan[ovCx.i]; if(!m) return closeOv();
-  const nm=m.l, c=ovCx;
-  const run=()=>{ ovCx=c; if(commit((tp,cc)=>{ tp.plan.splice(cc.i,1); })){ closeOv(); say('🗑 ลบ Milestone แล้ว'); } };
-  if(typeof window.ask==='function'){ closeOv(); window.ask('ลบ Milestone “'+nm+'”?','รายการนี้จะถูกลบออกจากแผนงานและไทม์ไลน์',run); }
-  else if(confirm('ลบ Milestone “'+nm+'” ?')) run();
-}
-function enhMilestones(){
-  const eb=view().querySelector('[data-act="hedt"][data-t]'), tid=eb?eb.dataset.t:''; if(!tid) return;
-  Array.from(view().querySelectorAll('.hs-box')).forEach(box=>{
-    const h4=box.querySelector('h4'), wrap=box.querySelector('.hs-ms');
-    if(!h4||!wrap||!/Milestone/i.test(h4.textContent)||box.dataset.hsx) return; box.dataset.hsx='1';
-    h4.insertAdjacentHTML('beforeend',' <span class="hsx-hint">· คลิกที่รายการเพื่อแก้ไขวันที่</span>');
-    Array.from(wrap.querySelectorAll('.hs-m')).forEach((chip,i)=>{
-      chip.classList.add('hsx-edit'); chip.tabIndex=0; chip.setAttribute('role','button'); chip.title='คลิกเพื่อแก้ไขชื่อ / วันที่';
-      const go=()=>openMs(tid,i);
-      chip.addEventListener('click',go); chip.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); go(); } });
-    });
-    const add=document.createElement('button'); add.type='button'; add.className='btn-g hsx-addm'; add.textContent='＋ เพิ่ม Milestone'; add.addEventListener('click',()=>openMs(tid,-1)); box.appendChild(add);
-  });
-}
+function pendingDue(t,line){const key=lineKey(line);let best='';const keep=d=>{if(isoOK(d)&&(!best||d<best))best=d;};if(!t||!t.ov)return'';(t.ov.blocks||[]).forEach(b=>{if(lineKey(b.line)!==key)return;const K=(t.ov.items||[]).length;(b.procs||[]).forEach(p=>(p.jigs||[]).forEach(j=>{for(let k=0;k<K;k++){const cur=b.mode==='ba'?(j.a?j.a[k]:''):((j.a&&j.a[k])||j.b[k]);if(cur==='X')keep(j.d&&j.d[k]);}}));(b.dm?(b.dc||[]).slice(0,1):(b.dc||[])).forEach(r=>(r||[]).forEach(c=>{if(c&&(c.a||c.s)==='X')keep(c.d);}));});return best;}
+function effDue(t,l){return pendingDue(t,l&&l.line)||(l&&l.due)||t.due||'';}
+function trackerDue(t){if(t.due)return t.due;return(t.lines||[]).filter(l=>l.st!=='ok').map(l=>effDue(t,l)).filter(isoOK).sort()[0]||'';}
 
-/* ---------- ทำงานทุกครั้งที่ระบบวาดหน้า Hoshin ใหม่ ---------- */
-function run(){ try{ enhMatrix(); }catch(e){ console.error('[hsx matrix]',e); } try{ enhDetail(); }catch(e){ console.error('[hsx detail]',e); } try{ enhMilestones(); }catch(e){ console.error('[hsx milestone]',e); } }
-new MutationObserver(run).observe(view(),{childList:true});
-run();
+let ovEl=null,ovCx=null;
+function openOv(html){if(!ovEl){ovEl=document.createElement('div');ovEl.className='hsx-ov';ovEl.innerHTML='<div class="hsx-mod" id="hsxMod"></div>';document.body.appendChild(ovEl);ovEl.addEventListener('click',e=>{if(e.target===ovEl)closeOv();});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&ovEl.classList.contains('on'))closeOv();});}g('hsxMod').innerHTML=html;ovEl.classList.add('on');}
+function closeOv(){if(ovEl)ovEl.classList.remove('on');ovCx=null;}
+function diffTxt(d){if(!isoOK(d))return'<span style="color:var(--t-dang)">กรุณาเลือกวันที่</span>';const k=dn(d)-dn(todayS());return`<b>${fmtD(d)}</b> · ${k<0?'ผ่านมาแล้ว '+(-k)+' วัน':k===0?'วันนี้':'อีก '+k+' วัน'}`;}
+function dateQuick(){return'<div class="hsx-qk"><span class="hsx-hint" style="align-self:center">เลื่อนวันที่:</span><button type="button" class="btn-g" data-sh="-7">−1 สัปดาห์</button><button type="button" class="btn-g" data-sh="7">+1 สัปดาห์</button><button type="button" class="btn-g" data-sh="14">+2 สัปดาห์</button><button type="button" class="btn-g" data-sh="30">+1 เดือน</button></div>';}
+function bindDateInput(){const D=g('hsxD'),upd=()=>{g('hsxNew').innerHTML=diffTxt(D.value);};D.addEventListener('input',upd);D.addEventListener('change',upd);g('hsxMod').querySelectorAll('[data-sh]').forEach(b=>b.addEventListener('click',()=>{const base=isoOK(D.value)?D.value:todayS(),d=new Date(base+'T00:00:00');d.setDate(d.getDate()+(+b.dataset.sh));D.value=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());upd();}));}
+function commit(mut){const c=ovCx;if(!c)return false;const store=window.HS.get(),Y=store.years[c.y],t=Y&&Y.topics.find(x=>x.id===c.tid);if(!t)return false;if(!Array.isArray(t.plan))t.plan=[];mut(t,c);t.plan.sort((a,b)=>a.d<b.d?-1:a.d>b.d?1:0);window.HS.restore({years:{[c.y]:Y}},false);return true;}
+function openMs(tid,i){const t=getTopic(tid);if(!t)return;const m=i>=0&&t.plan?t.plan[i]:null;ovCx={kind:'plan',tid,i,y:curYear()};openOv(`<h3>${m?'✏️ แก้ไข Milestone':'➕ เพิ่ม Milestone'}</h3><div class="sub">หัวข้อ: ${esc(t.short||t.name)}</div><label>ชื่อ Milestone</label><input id="hsxL" value="${esc(m?m.l:'')}" placeholder="เช่น Plan PV4" autocomplete="off"><label>วันที่</label><input id="hsxD" type="date" value="${esc(m?m.d:'')}">${dateQuick()}<div class="hsx-df">${m?'ค่าเดิม: '+diffTxt(m.d)+'<br>':''}ค่าใหม่: <span id="hsxNew">${diffTxt(m?m.d:'')}</span></div><div class="hsx-act"><button type="button" class="btn-p" data-hs="mssave">บันทึก</button>${m?'<button type="button" class="btn-d" data-hs="msdel">🗑 ลบ</button>':''}<button type="button" class="btn-g" data-hs="cancel">ยกเลิก</button></div>`);bindDateInput();setTimeout(()=>{const L=g('hsxL');if(L){L.focus();L.select();}},30);}
+function openDue(el){const tid=el.dataset.t,t=getTopic(tid);if(!t)return;const kind=el.dataset.hsxEdit,old=el.dataset.d||'',ids=(el.dataset.lids||'').split(',').filter(Boolean),lines=(t.lines||[]).filter(l=>ids.includes(l.id));ovCx={kind,tid,y:curYear(),old,ids};const topic=kind==='topic';openOv(`<h3>📅 ${topic?'แก้กำหนดเสร็จของหัวข้อ':'แก้ Due date ของจุดไลน์'}</h3><div class="sub">${esc(t.short||t.name)}${topic?'':' · '+esc(lines.map(l=>l.line).join(', '))}</div><label>วันที่ใหม่</label><input id="hsxD" type="date" value="${esc(old)}">${dateQuick()}<div class="hsx-df">ค่าเดิม: ${diffTxt(old)}<br>ค่าใหม่: <span id="hsxNew">${diffTxt(old)}</span></div>${topic?'<label class="hsx-check"><input id="hsxProp" type="checkbox" checked><span>อัปเดตวันที่ค้างรายไลน์และช่อง X ใน Overall status ที่ยังใช้วันเดิมด้วย</span></label>':'<div class="hsx-hint" style="margin-top:10px">ระบบจะอัปเดตวันที่ของไลน์ และช่อง X ใน Overall status ที่สร้างจุดนี้พร้อมกัน</div>'}<div class="hsx-act"><button type="button" class="btn-p" data-hs="duesave">บันทึกวันที่</button><button type="button" class="btn-g" data-hs="cancel">ยกเลิก</button></div>`);bindDateInput();setTimeout(()=>g('hsxD')&&g('hsxD').focus(),30);}
+function updatePending(t,line,old,d,allOldOnly){if(!t.ov)return;const key=lineKey(line),K=(t.ov.items||[]).length;(t.ov.blocks||[]).forEach(b=>{if(lineKey(b.line)!==key)return;(b.procs||[]).forEach(p=>(p.jigs||[]).forEach(j=>{j.d=j.d||new Array(K).fill('');for(let k=0;k<K;k++){const cur=b.mode==='ba'?(j.a?j.a[k]:''):((j.a&&j.a[k])||j.b[k]);if(cur==='X'&&(!allOldOnly||!j.d[k]||j.d[k]===old))j.d[k]=d;}}));(b.dm?(b.dc||[]).slice(0,1):(b.dc||[])).forEach(r=>(r||[]).forEach(c=>{if(c&&(c.a||c.s)==='X'&&(!allOldOnly||!c.d||c.d===old))c.d=d;}));});}
+function saveDue(){const d=g('hsxD').value;if(!isoOK(d)){alert('กรุณาเลือกวันที่');return;}const c=ovCx;if(commit((t,x)=>{if(x.kind==='topic'){const old=t.due;t.due=d;if(g('hsxProp')&&g('hsxProp').checked)(t.lines||[]).filter(l=>l.st!=='ok').forEach(l=>{if(l.due===old)l.due=d;updatePending(t,l.line,old,d,true);});}else{(t.lines||[]).filter(l=>x.ids.includes(l.id)).forEach(l=>{l.due=d;updatePending(t,l.line,x.old,d,true);});}})){closeOv();say('✅ อัปเดต Due date แล้ว');}}
+function saveMs(){const l=g('hsxL').value.trim(),d=g('hsxD').value;if(!l){alert('กรุณาใส่ชื่อ Milestone');return;}if(!isoOK(d)){alert('กรุณาเลือกวันที่');return;}const isNew=ovCx.i<0;if(commit((t,c)=>{if(c.i>=0&&t.plan[c.i])t.plan[c.i]={l,d};else t.plan.push({l,d});})){closeOv();say(isNew?'✅ เพิ่ม Milestone แล้ว':'✅ อัปเดต Milestone แล้ว');}}
+function delMs(){const c=ovCx,t=getTopic(c.tid),m=t&&t.plan[c.i];if(!m)return closeOv();const run=()=>{ovCx=c;if(commit((tp,x)=>tp.plan.splice(x.i,1))){closeOv();say('🗑 ลบ Milestone แล้ว');}};if(typeof window.ask==='function'){closeOv();window.ask('ลบ Milestone “'+m.l+'”?','รายการนี้จะถูกลบออกจากแผนงานและไทม์ไลน์',run);}else if(confirm('ลบ Milestone “'+m.l+'” ?'))run();}
+function modalClick(e){const b=e.target.closest('[data-hs]');if(!b||!ovCx)return;const a=b.dataset.hs;if(a==='cancel')closeOv();else if(a==='mssave')saveMs();else if(a==='msdel')delMs();else if(a==='duesave')saveDue();}
+document.addEventListener('click',e=>{if(ovEl&&ovEl.contains(e.target))modalClick(e);});
+
+function enhMilestones(){const eb=view().querySelector('[data-act="hedt"][data-t]'),tid=eb?eb.dataset.t:'';if(!tid)return;Array.from(view().querySelectorAll('.hs-box')).forEach(box=>{const h4=box.querySelector('h4'),wrap=box.querySelector('.hs-ms');if(!h4||!wrap||!/Milestone/i.test(h4.textContent)||box.dataset.hsx)return;box.dataset.hsx='1';h4.insertAdjacentHTML('beforeend',' <span class="hsx-hint">· คลิกรายการเพื่อแก้ชื่อ/วันที่</span>');Array.from(wrap.querySelectorAll('.hs-m')).forEach((chip,i)=>{chip.classList.add('hsx-edit');chip.tabIndex=0;chip.setAttribute('role','button');chip.title='คลิกเพื่อแก้ไขชื่อ / วันที่';const go=()=>openMs(tid,i);chip.addEventListener('click',go);chip.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go();}});});const add=document.createElement('button');add.type='button';add.className='btn-g hsx-addm';add.textContent='＋ เพิ่ม Milestone';add.addEventListener('click',()=>openMs(tid,-1));box.appendChild(add);});}
+function enhSend(){const eb=view().querySelector('[data-act="hedt"][data-t]'),bar=view().querySelector('.hs-tb .bt');if(!eb||!bar||bar.querySelector('.hsx-send'))return;const t=getTopic(eb.dataset.t);if(!t)return;const due=trackerDue(t),b=document.createElement('button');b.type='button';b.className='btn-g hsx-send';b.dataset.t=t.id;b.innerHTML='📤 ส่งเข้า Tracker';b.title=due?'กรอกหัวข้อ Hoshin นี้ในฟอร์ม Tracker (Due '+fmtD(due)+')':'ต้องกำหนด Due date ก่อนส่งเข้า Tracker';b.disabled=!due;const back=bar.querySelector('[data-act="hnav"][data-v="dash"]');bar.insertBefore(b,back||null);}
+function sendTracker(tid){const t=getTopic(tid),due=t&&trackerDue(t);if(!t||!due){say('กรุณากำหนด Due date ก่อนส่งเข้า Tracker','var(--t-warn)');return;}try{const qes=[...new Set((t.lines||[]).map(l=>String(l.qe||'').trim()).filter(Boolean))],owner=qes.length===1?qes[0]:qes.length?'QE All':'';showTab('T');resetForm();setD('dd','mm','yy',todayS(),false);setD('dd2','mm2','yy2',due,true);g('owner').value=owner;g('issue').value='[Hoshin] '+(t.name||t.short);const open=(t.lines||[]).filter(l=>l.st!=='ok');g('cm').value='ติดตาม Hoshin: '+(t.short||t.name)+(open.length?' · คงค้าง '+open.length+' ไลน์'+(open.length<=8?' ('+open.map(l=>l.line).join(', ')+')':''):'');g('status').value='In Progress';g('f').scrollIntoView({behavior:'smooth',block:'center'});say('📝 ใส่ข้อมูล Hoshin ในฟอร์ม Tracker แล้ว — ตรวจสอบและกด “เพิ่มรายการ”');}catch(e){console.error(e);say('ไม่สามารถเปิดฟอร์ม Tracker ได้','var(--t-dang)');}}
+
+view().addEventListener('click',e=>{const send=e.target.closest('.hsx-send[data-t]');if(send){e.preventDefault();e.stopPropagation();if(!send.disabled)sendTracker(send.dataset.t);return;}const p=e.target.closest('[data-hsx-edit]');if(!p)return;e.preventDefault();e.stopPropagation();if(p.dataset.hsxEdit==='plan')openMs(p.dataset.t,+p.dataset.i);else openDue(p);},true);
+view().addEventListener('keydown',e=>{const p=e.target.closest('[data-hsx-edit]');if(p&&(e.key==='Enter'||e.key===' ')){e.preventDefault();if(p.dataset.hsxEdit==='plan')openMs(p.dataset.t,+p.dataset.i);else openDue(p);}});
+
+function run(){try{enhMatrix();}catch(e){console.error('[hsx matrix]',e);}try{enhDetail();}catch(e){console.error('[hsx detail]',e);}try{enhMilestones();}catch(e){console.error('[hsx milestone]',e);}try{enhSend();}catch(e){console.error('[hsx tracker]',e);}}
+new MutationObserver(run).observe(view(),{childList:true});run();
 })();
 </script>
 
