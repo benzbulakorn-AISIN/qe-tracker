@@ -1,5 +1,242 @@
+<!--
+  QE Elec. Daily Job Tracker — Change log v77 (31-Oct-2026) · Round 1: P0 Security/Data → P1 Usability
+  1) Data safety: versioned, reversible v76→v77 migration; automatic pre-migration and pre-write snapshots in IndexedDB; no existing user-data schema is overwritten.
+  2) Storage reliability: centralized localStorage guard records QuotaExceeded/write/remove/clear failures even when legacy catch blocks are silent; failures remain visible in System Health.
+  3) Observability: global error + unhandledrejection capture and a one-click “สุขภาพระบบ” panel showing version, storage usage, sync state, last backup, and error count.
+  4) Recovery: one-click safe JSON Export plus explicit rollback to the pre-v77 snapshot. Secrets/auth/config keys are intentionally excluded from backups/exports.
+  5) Single Source of Truth: Tracker current Due date and overdue status are exposed through window.QEData and reused by Tracker, Main QE Jobs, Today/My Work summaries.
+  Security boundary: client-side viewer/PIN remains UX-only. Real authorization still requires Supabase Auth + server-side RLS + immutable audit logging.
+-->
 <!DOCTYPE html>
-<html lang="th"><head><script id="qwBoot">try{var __s=JSON.parse(localStorage.getItem('ux_auth_sess')||'null');if(__s&&__s.role==='viewer'&&__s.exp>Date.now())window.__QE_RO=true;}catch(e){}try{if(localStorage.getItem('issue_tracker_cal')===null)localStorage.setItem('issue_tracker_cal','closed');if(localStorage.getItem('issue_tracker_own')===null)localStorage.setItem('issue_tracker_own','closed');}catch(e){}</script><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<html lang="th"><head>
+<meta name="qe-app-version" content="77">
+<script id="qeV77Core">
+/* v77 safety/observability core — deliberately loaded before every legacy script. */
+(function(){
+'use strict';
+if (window.QE77) return;
+var APP='QE Elec. Daily Job Tracker', VER='77', DB_NAME='qe_tracker_v77_safety', STORE='snapshots';
+var MIG_KEY='qe_v77_migration', ERR_KEY='qe_v77_errors', MAX_ERR=50, restoring=false;
+var native={
+  get:Storage.prototype.getItem,
+  set:Storage.prototype.setItem,
+  remove:Storage.prototype.removeItem,
+  clear:Storage.prototype.clear
+};
+var state={errors:[],migration:'กำลังตรวจสอบ',migrationBackupId:'',storageFailure:false,lastSnapshot:'',lastSnapshotReason:''};
+try{ state.errors=JSON.parse(native.get.call(sessionStorage,ERR_KEY)||'[]'); if(!Array.isArray(state.errors)) state.errors=[]; }catch(_){ state.errors=[]; }
+
+/* Only user-created business data is backed up. Auth tokens, PINs, API/config secrets and LINE settings are excluded. */
+function isDataKey(k){
+  return /^(issue_tracker_(v2|trash|title)|daily_checklist_(v1|notes|conf)|qe_missions_v1|qe_hoshin_v1|qe_mainjobs_(data|log)_v2|qe_glossary_v1|qe_mtg_d_.+|qe_plan_.+)$/i.test(String(k||''));
+}
+function iso(){ return new Date().toISOString(); }
+function text(v,n){ return String(v==null?'':v).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g,'').slice(0,n||1000); }
+function errName(e){ return text(e&&e.name||'Error',80); }
+function errMessage(e){ return text(e&&e.message||e||'Unknown error',500); }
+function isQuota(e){ return !!e&&(e.name==='QuotaExceededError'||e.name==='NS_ERROR_DOM_QUOTA_REACHED'||e.code===22||e.code===1014); }
+function persistErrors(){ try{ native.set.call(sessionStorage,ERR_KEY,JSON.stringify(state.errors.slice(-MAX_ERR))); }catch(_){/* non-fatal: best-effort diagnostic path */} }
+function record(kind,e,detail){
+  var row={at:iso(),kind:text(kind,60),name:errName(e),message:errMessage(e),detail:text(detail,300)};
+  var sig=row.kind+'|'+row.name+'|'+row.message+'|'+row.detail;
+  var last=state.errors[state.errors.length-1];
+  if(last&&(last.kind+'|'+last.name+'|'+last.message+'|'+last.detail)===sig){ last.count=(last.count||1)+1; last.at=row.at; }
+  else state.errors.push(row);
+  if(state.errors.length>MAX_ERR) state.errors=state.errors.slice(-MAX_ERR);
+  if(isQuota(e)||kind==='storage') state.storageFailure=true;
+  persistErrors();
+  try{ window.dispatchEvent(new CustomEvent('qe77:healthchange',{detail:{kind:kind}})); }catch(_){/* non-fatal: best-effort diagnostic path */}
+  try{ console.error('[QE v77 '+kind+']',e,detail||''); }catch(_){/* non-fatal: best-effort diagnostic path */}
+  return row;
+}
+
+function openDb(){
+  return new Promise(function(resolve,reject){
+    if(!window.indexedDB){ reject(new Error('IndexedDB is not available')); return; }
+    var q=indexedDB.open(DB_NAME,1);
+    q.onupgradeneeded=function(){ var db=q.result; if(!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE,{keyPath:'id'}); };
+    q.onsuccess=function(){ resolve(q.result); };
+    q.onerror=function(){ reject(q.error||new Error('Cannot open backup database')); };
+  });
+}
+function idbPut(row){
+  return openDb().then(function(db){ return new Promise(function(resolve,reject){
+    var tx=db.transaction(STORE,'readwrite'); tx.objectStore(STORE).put(row);
+    tx.oncomplete=function(){ db.close(); resolve(row); };
+    tx.onerror=function(){ var e=tx.error||new Error('Cannot save snapshot'); db.close(); reject(e); };
+    tx.onabort=tx.onerror;
+  }); }).then(function(row){ pruneSnapshots(); return row; });
+}
+function idbGet(id){
+  return openDb().then(function(db){ return new Promise(function(resolve,reject){
+    var q=db.transaction(STORE,'readonly').objectStore(STORE).get(id);
+    q.onsuccess=function(){ db.close(); resolve(q.result||null); };
+    q.onerror=function(){ var e=q.error||new Error('Cannot read snapshot'); db.close(); reject(e); };
+  }); });
+}
+function idbList(){
+  return openDb().then(function(db){ return new Promise(function(resolve,reject){
+    var q=db.transaction(STORE,'readonly').objectStore(STORE).getAll();
+    q.onsuccess=function(){ db.close(); resolve((q.result||[]).sort(function(a,b){return String(b.createdAt).localeCompare(String(a.createdAt));})); };
+    q.onerror=function(){ var e=q.error||new Error('Cannot list snapshots'); db.close(); reject(e); };
+  }); });
+}
+function pruneSnapshots(){
+  openDb().then(function(db){
+    var tx=db.transaction(STORE,'readwrite'), st=tx.objectStore(STORE), q=st.getAll();
+    q.onsuccess=function(){
+      var all=(q.result||[]).sort(function(a,b){return String(b.createdAt).localeCompare(String(a.createdAt));});
+      all.slice(40).forEach(function(x){ st.delete(x.id); });
+    };
+    tx.oncomplete=function(){db.close();}; tx.onerror=function(){db.close();};
+  }).catch(function(){/* non-fatal: best-effort async cleanup */});
+}
+function collectData(){
+  var data={}, bytes=0;
+  for(var i=0;i<localStorage.length;i++){
+    var k=localStorage.key(i); if(!isDataKey(k)) continue;
+    var v=native.get.call(localStorage,k); if(v==null) continue;
+    data[k]=v; bytes+=(String(k).length+String(v).length)*2;
+  }
+  return {data:data,bytes:bytes};
+}
+function snapshot(reason,onlyKey,onlyValue){
+  var c=onlyKey?{data:{},bytes:0}:collectData();
+  if(onlyKey){ c.data[onlyKey]=onlyValue; c.bytes=(String(onlyKey).length+String(onlyValue||'').length)*2; }
+  var at=iso(), id=(reason==='pre-migration-v77'?'pre-migration-v77':'snap')+'|'+Date.now()+'|'+Math.random().toString(36).slice(2,8);
+  var row={id:id,app:APP,schema:77,createdAt:at,reason:text(reason,100),bytes:c.bytes,data:c.data};
+  return idbPut(row).then(function(){ state.lastSnapshot=at; state.lastSnapshotReason=row.reason; try{window.dispatchEvent(new Event('qe77:healthchange'));}catch(_){/* non-fatal: best-effort diagnostic path */} return row; });
+}
+
+/* Queue a copy of the old value before a critical write. Throttling prevents keystroke-heavy screens from filling IndexedDB. */
+var lastKeySnap={};
+function beforeChange(k,oldValue,reason){
+  if(restoring||!isDataKey(k)||oldValue==null) return;
+  var now=Date.now(); if(lastKeySnap[k]&&now-lastKeySnap[k]<30000) return; lastKeySnap[k]=now;
+  snapshot(reason||('before-write:'+k),k,oldValue).catch(function(e){record('backup',e,k);});
+}
+Storage.prototype.setItem=function(k,v){
+  if(this===localStorage){
+    var old=null; try{old=native.get.call(this,k);}catch(e){record('storage-read',e,k);}
+    if(old!==String(v)) beforeChange(String(k),old,'before-write:'+String(k));
+  }
+  try{ return native.set.call(this,k,v); }
+  catch(e){ if(this===localStorage) record('storage',e,'setItem '+String(k)+(isQuota(e)?' · quota exceeded':'')); throw e; }
+};
+Storage.prototype.removeItem=function(k){
+  if(this===localStorage){ var old=null; try{old=native.get.call(this,k);}catch(e){record('storage-read',e,k);} beforeChange(String(k),old,'before-remove:'+String(k)); }
+  try{ return native.remove.call(this,k); }
+  catch(e){ if(this===localStorage) record('storage',e,'removeItem '+String(k)); throw e; }
+};
+Storage.prototype.clear=function(){
+  if(this===localStorage&&!restoring) snapshot('before-localStorage-clear').catch(function(e){record('backup',e,'clear');});
+  try{ return native.clear.call(this); }
+  catch(e){ if(this===localStorage) record('storage',e,'clear'); throw e; }
+};
+
+function currentDue(item){
+  if(!item||typeof item!=='object') return '';
+  var r=Array.isArray(item.revs)?item.revs:[];
+  var d=r.length&&r[r.length-1]&&r[r.length-1].date;
+  return text(d||item.due||'',10);
+}
+function isOverdue(item,today){ var d=currentDue(item), t=text(today||new Date().toISOString().slice(0,10),10); return !!(item&&item.status!=='Done'&&d&&d<t); }
+window.QEData=Object.freeze({currentDue:currentDue,isOverdue:isOverdue,isDone:function(x){return !!x&&x.status==='Done';}});
+
+function migration(){
+  var raw=null; try{raw=native.get.call(localStorage,MIG_KEY);}catch(e){record('migration',e,'read marker');}
+  if(raw){
+    try{ var m=JSON.parse(raw); if(m&&m.version===77){ state.migration='พร้อมใช้งาน'; state.migrationBackupId=m.backupId||''; return Promise.resolve(m); } }catch(_){/* non-fatal: best-effort diagnostic path */}
+  }
+  state.migration='กำลังสำรองข้อมูลก่อนเริ่ม v77';
+  return snapshot('pre-migration-v77').then(function(row){
+    var mark={version:77,from:76,at:iso(),backupId:row.id,reversible:true,structureChanged:false};
+    native.set.call(localStorage,MIG_KEY,JSON.stringify(mark));
+    state.migration='พร้อมใช้งาน · ย้อนกลับได้'; state.migrationBackupId=row.id; return mark;
+  }).catch(function(e){ state.migration='ไม่สำเร็จ — ข้อมูลเดิมไม่ถูกแก้ไข'; record('migration',e,'pre-v77 backup failed'); return null; });
+}
+function bytesNow(){
+  var n=0; try{ for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i),v=native.get.call(localStorage,k)||'';n+=(String(k).length+v.length)*2;} }catch(e){record('storage-read',e,'measure');}
+  return n;
+}
+function fmtBytes(n){ n=Number(n)||0; if(n<1024)return n+' B'; if(n<1048576)return (n/1024).toFixed(1)+' KB'; return (n/1048576).toFixed(2)+' MB'; }
+function syncInfo(){
+  var e=document.getElementById('spStatus'), stateName=e&&e.dataset?e.dataset.state:'';
+  var txt=e?text(e.textContent.replace(/\s+/g,' ').trim(),300):'ยังไม่พบตัวแสดง Sync';
+  return {state:stateName||'unknown',text:txt};
+}
+function level(){ var s=syncInfo().state; if(state.storageFailure||state.errors.length) return 'bad'; if(s==='ok')return'ok'; if(s==='busy')return'busy'; return'warn'; }
+function exportNow(){
+  var c=collectData(), payload={app:APP,version:77,exportedAt:iso(),source:'QE77 System Health',bytes:c.bytes,data:c.data};
+  var blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}), a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download='qe_tracker_v77_backup_'+iso().slice(0,10).replace(/-/g,'')+'.json'; a.click();
+  setTimeout(function(){URL.revokeObjectURL(a.href);},1000);
+  try{native.set.call(localStorage,'issue_tracker_lastbackup',iso());}catch(e){record('storage',e,'mark export');}
+  return payload;
+}
+function rollback(){
+  var id=state.migrationBackupId; if(!id) return Promise.reject(new Error('ไม่พบ pre-v77 snapshot'));
+  return idbGet(id).then(function(row){
+    if(!row||!row.data) throw new Error('pre-v77 snapshot อ่านไม่ได้');
+    restoring=true;
+    try{ Object.keys(row.data).forEach(function(k){ if(isDataKey(k)) native.set.call(localStorage,k,row.data[k]); }); }
+    finally{restoring=false;}
+    snapshot('after-rollback-v77').catch(function(){/* non-fatal: best-effort async cleanup */});
+    return Object.keys(row.data).length;
+  });
+}
+function clearErrors(){state.errors=[];state.storageFailure=false;persistErrors();try{window.dispatchEvent(new Event('qe77:healthchange'));}catch(_){/* non-fatal: best-effort diagnostic path */}}
+
+window.addEventListener('error',function(ev){
+  var target=ev&&ev.target;
+  if(target&&target!==window){ record('resource',new Error('โหลด resource ไม่สำเร็จ'),target.src||target.href||target.tagName); return; }
+  record('runtime',ev.error||new Error(ev.message||'Script error'),(ev.filename||'')+':'+(ev.lineno||0));
+},true);
+window.addEventListener('unhandledrejection',function(ev){record('promise',ev.reason||new Error('Unhandled promise rejection'),'');});
+
+function el(tag,cls,txt){var n=document.createElement(tag);if(cls)n.className=cls;if(txt!=null)n.textContent=txt;return n;}
+function addRow(grid,label,value,id){var d=el('div','qe77-hrow'),a=el('span','qe77-hlabel',label),b=el('strong','qe77-hvalue',value);if(id)b.id=id;d.appendChild(a);d.appendChild(b);grid.appendChild(d);}
+function renderHealth(){
+  var btn=document.getElementById('qe77HealthBtn'); if(!btn)return;
+  var lv=level(), si=syncInfo(), errN=state.errors.reduce(function(n,x){return n+(x.count||1);},0);
+  btn.className='qe77-health-btn '+lv; btn.querySelector('.qe77-health-txt').textContent=state.storageFailure?'Storage เต็ม/เขียนไม่ได้':(si.state==='ok'?'Sync พร้อม':si.state==='busy'?'กำลัง Sync':'สุขภาพระบบ');
+  btn.querySelector('.qe77-health-count').textContent=errN?String(errN):''; btn.querySelector('.qe77-health-count').hidden=!errN;
+  var open=document.getElementById('qe77HealthDialog'); if(!open||open.hidden)return;
+  var set=function(id,v){var e=document.getElementById(id);if(e)e.textContent=v;};
+  set('qe77V','v'+VER); set('qe77Storage',fmtBytes(bytesNow())); set('qe77Sync',si.text||si.state); set('qe77Migration',state.migration); set('qe77Err',errN+' รายการ');
+  var lb=null;try{lb=native.get.call(localStorage,'issue_tracker_lastbackup');}catch(_){/* non-fatal: best-effort diagnostic path */} set('qe77Backup',lb?new Date(lb).toLocaleString('th-TH'):(state.lastSnapshot?new Date(state.lastSnapshot).toLocaleString('th-TH')+' · '+state.lastSnapshotReason:'ยังไม่มี'));
+  var log=document.getElementById('qe77ErrLog'); if(log){log.textContent='';state.errors.slice(-8).reverse().forEach(function(x){var p=el('p','',new Date(x.at).toLocaleTimeString('th-TH')+' · '+x.kind+' · '+x.message+(x.count>1?' ×'+x.count:''));log.appendChild(p);});if(!state.errors.length)log.appendChild(el('p','','ไม่พบ error ใน session นี้'));}
+  if(navigator.storage&&navigator.storage.estimate) navigator.storage.estimate().then(function(q){set('qe77Quota',fmtBytes(q.usage||0)+' / '+fmtBytes(q.quota||0));}).catch(function(){set('qe77Quota','ไม่รองรับ');});
+  idbList().then(function(rows){set('qe77Snapshots',rows.length+' ชุด · ล่าสุด '+(rows[0]?new Date(rows[0].createdAt).toLocaleString('th-TH'):'—'));}).catch(function(){set('qe77Snapshots','อ่านไม่ได้');});
+}
+function buildUI(){
+  if(document.getElementById('qe77HealthBtn')) return;
+  var btn=el('button','qe77-health-btn busy'); btn.id='qe77HealthBtn';btn.type='button';btn.setAttribute('aria-haspopup','dialog');btn.setAttribute('aria-controls','qe77HealthDialog');
+  btn.appendChild(el('span','qe77-dot','●'));btn.appendChild(el('span','qe77-health-txt','กำลังตรวจสอบ'));var ct=el('span','qe77-health-count','');ct.hidden=true;btn.appendChild(ct);document.body.appendChild(btn);
+  var ov=el('div','qe77-health-ov');ov.id='qe77HealthDialog';ov.hidden=true;ov.setAttribute('role','dialog');ov.setAttribute('aria-modal','true');ov.setAttribute('aria-labelledby','qe77HealthTitle');
+  var box=el('section','qe77-health-panel'), head=el('div','qe77-health-head'), title=el('div',''); title.appendChild(el('h2','', 'ระบบสุขภาพ · System Health'));title.querySelector('h2').id='qe77HealthTitle';title.appendChild(el('p','','P0 Data safety + Reliability · ข้อมูลจริงไม่ถูกเปลี่ยนโครงสร้างใน v77'));
+  var x=el('button','qe77-x','✕');x.type='button';x.setAttribute('aria-label','ปิด');head.appendChild(title);head.appendChild(x);box.appendChild(head);
+  var grid=el('div','qe77-health-grid');addRow(grid,'เวอร์ชัน','', 'qe77V');addRow(grid,'Local storage','', 'qe77Storage');addRow(grid,'Browser storage / quota','กำลังอ่าน', 'qe77Quota');addRow(grid,'Sync ล่าสุด','', 'qe77Sync');addRow(grid,'Migration','', 'qe77Migration');addRow(grid,'Backup ล่าสุด','', 'qe77Backup');addRow(grid,'Safety snapshots','กำลังอ่าน', 'qe77Snapshots');addRow(grid,'Error session นี้','', 'qe77Err');box.appendChild(grid);
+  var note=el('p','qe77-health-note','Backup/Export ไม่รวม Auth token, PIN, Supabase/LINE config หรือ secret โดยตั้งใจ');box.appendChild(note);
+  var actions=el('div','qe77-health-actions');
+  [['qe77Export','💾 Export JSON','primary'],['qe77Rollback','↩ Rollback ก่อน v77',''],['qe77ClearErr','ล้างรายการ Error',''],['qe77Close','ปิด','']].forEach(function(a){var b=el('button','qe77-a '+a[2],a[1]);b.type='button';b.id=a[0];actions.appendChild(b);});box.appendChild(actions);
+  var det=el('details','qe77-errors'),sum=el('summary','','Error ล่าสุด (ไม่แสดงข้อมูลลับ)'),log=el('div','qe77-error-log');log.id='qe77ErrLog';det.appendChild(sum);det.appendChild(log);box.appendChild(det);ov.appendChild(box);document.body.appendChild(ov);
+  function close(){ov.hidden=true;btn.focus();}function open(){ov.hidden=false;renderHealth();setTimeout(function(){x.focus();},0);}btn.addEventListener('click',open);x.addEventListener('click',close);document.getElementById('qe77Close').addEventListener('click',close);ov.addEventListener('click',function(e){if(e.target===ov)close();});document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!ov.hidden)close();});
+  document.getElementById('qe77Export').addEventListener('click',function(){exportNow();renderHealth();});
+  document.getElementById('qe77ClearErr').addEventListener('click',function(){clearErrors();renderHealth();});
+  document.getElementById('qe77Rollback').addEventListener('click',function(){
+    if(!confirm('Rollback จะนำข้อมูลธุรกิจจาก snapshot ก่อนเปิด v77 กลับมา โดยไม่แตะ Auth/PIN/config\n\nต้องการทำต่อหรือไม่?'))return;
+    rollback().then(function(n){alert('Rollback สำเร็จ '+n+' ชุดข้อมูล · ระบบจะ Reload');location.reload();}).catch(function(e){record('rollback',e,'');alert('Rollback ไม่สำเร็จ: '+errMessage(e));renderHealth();});
+  });
+  var sp=document.getElementById('spStatus');if(sp&&window.MutationObserver)new MutationObserver(renderHealth).observe(sp,{attributes:true,childList:true,subtree:true,characterData:true});
+  window.addEventListener('qe77:healthchange',renderHealth);renderHealth();
+}
+
+document.addEventListener('DOMContentLoaded',function(){buildUI();migration().then(renderHealth);});
+window.QE77={version:VER,recordError:record,snapshot:snapshot,exportJSON:exportNow,rollback:rollback,health:function(){return {version:VER,errors:state.errors.slice(),storageBytes:bytesNow(),sync:syncInfo(),migration:state.migration};},isDataKey:isDataKey,nativeStorage:native};
+})();
+</script>
+<script id="qwBoot">try{var __s=JSON.parse(localStorage.getItem('ux_auth_sess')||'null');if(__s&&__s.role==='viewer'&&__s.exp>Date.now())window.__QE_RO=true;}catch(e){}try{if(localStorage.getItem('issue_tracker_cal')===null)localStorage.setItem('issue_tracker_cal','closed');if(localStorage.getItem('issue_tracker_own')===null)localStorage.setItem('issue_tracker_own','closed');}catch(e){}</script><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="referrer" content="no-referrer">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -1063,6 +1300,27 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none!importa
 .ov-qe{display:inline-flex;align-items:center;gap:5px;padding:3px 11px;border-radius:999px;font-size:12px;font-weight:700;background:color-mix(in srgb,#6366f1 16%,transparent);border:1px solid #6366f1;color:var(--txt);white-space:nowrap}
 .ov-qe b{font-weight:800}
 .ov-qe.none{background:transparent;border:1px dashed var(--line);color:var(--mut);font-weight:600}
+</style>
+<style id="qeV77HealthCss">
+/* v77 System Health: compact, high-contrast, no nested panel scrollbar at 1366×768. */
+body{padding-bottom:78px!important}
+.qe77-health-btn{position:fixed;right:16px;bottom:14px;z-index:10020;min-height:42px;max-width:min(280px,calc(100vw - 32px));display:inline-flex;align-items:center;gap:8px;border:2px solid rgba(255,255,255,.88);border-radius:999px;padding:8px 13px;background:#854d0e;color:#fff;box-shadow:0 8px 28px rgba(15,23,42,.28);font-size:13px;font-weight:800;line-height:1.2;cursor:pointer;white-space:nowrap}
+.qe77-health-btn.ok{background:#0f766e}.qe77-health-btn.busy{background:#854d0e}.qe77-health-btn.warn{background:#9a3412}.qe77-health-btn.bad{background:#b91c1c}
+.qe77-health-btn:focus-visible,.qe77-a:focus-visible,.qe77-x:focus-visible{outline:3px solid #facc15;outline-offset:2px}
+.qe77-dot{font-size:13px}.qe77-health-count{min-width:22px;padding:2px 6px;border-radius:99px;background:#fff;color:#7f1d1d;text-align:center;font-variant-numeric:tabular-nums}
+.qe77-health-ov[hidden]{display:none!important}.qe77-health-ov{position:fixed;inset:0;z-index:10030;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(2,6,23,.74);overflow:auto}
+.qe77-health-panel{width:min(720px,100%);margin:auto;border:1px solid #cbd5e1;border-radius:16px;padding:20px;background:#fff;color:#172033;box-shadow:0 24px 70px rgba(0,0,0,.45)}
+body.neo .qe77-health-panel{background:#0f172a;color:#f8fafc;border-color:#475569}
+.qe77-health-head{display:flex;align-items:flex-start;gap:16px;margin-bottom:14px}.qe77-health-head>div{min-width:0;flex:1}.qe77-health-head h2{margin:0;font-size:21px;line-height:1.3}.qe77-health-head p{margin:4px 0 0;color:#475569;font-size:12.5px;line-height:1.5}body.neo .qe77-health-head p{color:#cbd5e1}
+.qe77-x{flex:0 0 auto;width:38px;height:38px;border:1px solid #94a3b8;border-radius:10px;background:#f8fafc;color:#0f172a;font-size:18px;cursor:pointer}body.neo .qe77-x{background:#1e293b;color:#f8fafc;border-color:#64748b}
+.qe77-health-grid{display:grid;grid-template-columns:1fr 1fr;border:1px solid #cbd5e1;border-radius:12px;overflow:hidden}body.neo .qe77-health-grid{border-color:#475569}
+.qe77-hrow{display:grid;grid-template-columns:minmax(125px,.8fr) minmax(0,1.2fr);gap:8px;padding:10px 12px;border-bottom:1px solid #e2e8f0;min-width:0}.qe77-hrow:nth-child(odd){border-right:1px solid #e2e8f0}.qe77-hrow:nth-last-child(-n+2){border-bottom:0}body.neo .qe77-hrow{border-color:#334155}
+.qe77-hlabel{color:#475569;font-size:12px;font-weight:700}body.neo .qe77-hlabel{color:#cbd5e1}.qe77-hvalue{min-width:0;overflow-wrap:anywhere;font-size:12.5px;font-weight:800}
+.qe77-health-note{margin:12px 0 0;padding:9px 11px;border-left:4px solid #0369a1;border-radius:8px;background:#e0f2fe;color:#0c4a6e;font-size:12px;line-height:1.5}body.neo .qe77-health-note{background:#0c4a6e;color:#e0f2fe;border-color:#38bdf8}
+.qe77-health-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}.qe77-a{min-height:38px;border:1px solid #64748b;border-radius:9px;padding:8px 12px;background:#f8fafc;color:#172033;font-weight:750;cursor:pointer}.qe77-a.primary{background:#1d4ed8;color:#fff;border-color:#1d4ed8}body.neo .qe77-a{background:#1e293b;color:#f8fafc;border-color:#64748b}body.neo .qe77-a.primary{background:#2563eb;border-color:#60a5fa}
+.qe77-errors{margin-top:12px;border-top:1px solid #cbd5e1;padding-top:10px}.qe77-errors summary{cursor:pointer;font-weight:800;font-size:12.5px}.qe77-error-log{margin-top:8px}.qe77-error-log p{margin:5px 0;padding:7px 9px;border-radius:7px;background:#f1f5f9;color:#334155;font:12px/1.45 ui-monospace,SFMono-Regular,Consolas,monospace;overflow-wrap:anywhere}body.neo .qe77-error-log p{background:#1e293b;color:#e2e8f0}
+@media(max-width:720px){.qe77-health-grid{grid-template-columns:1fr}.qe77-hrow,.qe77-hrow:nth-child(odd){border-right:0;border-bottom:1px solid #e2e8f0}.qe77-hrow:last-child{border-bottom:0}.qe77-health-panel{padding:16px}.qe77-health-actions>.qe77-a{flex:1 1 46%}}
+@media(max-width:420px){.qe77-health-btn{right:10px;bottom:10px}.qe77-health-txt{max-width:180px;overflow:hidden;text-overflow:ellipsis}.qe77-health-actions>.qe77-a{flex-basis:100%}}
 </style>
 </head>
 <body class="calm">
@@ -2607,8 +2865,8 @@ buildSel('ad2','am2','ay2',true);
 setD('dd','mm','yy',today,false);
 
 /* ---------- Due date helper ---------- */
-const curDue=r=>(r.revs&&r.revs.length)?r.revs[r.revs.length-1].date:r.due;
-const isLate=r=>r.status!=='Done'&&curDue(r)&&curDue(r)<today;
+const curDue=r=>window.QEData.currentDue(r);
+const isLate=r=>window.QEData.isOverdue(r,today);
 
 /* ---------- ฟอร์ม ---------- */
 $('f').addEventListener('submit',e=>{
@@ -8477,7 +8735,7 @@ function insTagOf(P,c,it){ const L=(P.ins&&P.ins[c])||[], x=L.find(i=>i.id===it.
 /* ---------- Tracker หน้าแรก (ตัวแปรของสคริปต์ Tracker) ---------- */
 function trackerOk(){ try{ return typeof data!=='undefined'&&Array.isArray(data)&&typeof save==='function'; }catch(e){ return false; } }
 function trackerLinked(it){ try{ return !!(it&&it.tk&&trackerOk()&&data.some(x=>x.id===it.tk)); }catch(e){ return false; } }
-const curDueOf=r=>(r.revs&&r.revs.length)?r.revs[r.revs.length-1].date:r.due;
+const curDueOf=r=>window.QEData.currentDue(r);
 function ownerNames(S){
   const set=new Set();
   try{ if(trackerOk()) data.forEach(x=>{ if(x.owner) set.add(String(x.owner).trim()); }); }catch(e){}
@@ -13827,7 +14085,7 @@ function collect(){
   M.td=null;
   try{ const S=window.__TODAY&&window.__TODAY.collect(); if(S){
     const rows=[];
-    (S.tr||[]).forEach(x=>rows.push({k:'Tracker',t:clip(DEDUP(x.d.issue),70),o:NM(x.d.owner||'–'),d:(x.d.revs&&x.d.revs.length?x.d.revs[x.d.revs.length-1].date:x.d.due)||'',n:x.n}));
+    (S.tr||[]).forEach(x=>rows.push({k:'Tracker',t:clip(DEDUP(x.d.issue),70),o:NM(x.d.owner||'–'),d:window.QEData.currentDue(x.d),n:x.n}));
     (S.qp||[]).forEach(x=>rows.push({k:'Q-patrol',t:x.it.line+' · '+({meeting:'Meeting',pre:'Pre Q-Patrol',patrol:'Q-Patrol'}[x.e.type]||x.e.label||'Activity')+' – '+clip(x.it.topic,40),o:NM(x.it.inc||'–'),d:x.e.pd,n:x.n}));
     (S.fu||[]).forEach(x=>rows.push({k:'Follow-up',t:clip(x.name+' · '+x.cat+' · '+(x.it.task||''),70),o:x.it.owner||'–',d:x.it.target,n:x.n}));
     (S.hs||[]).forEach(x=>rows.push({k:'Hoshin',t:clip((x.ms?x.label:(x.lines||[]).join(', '))+' ('+((x.t&&(x.t.short||x.t.name))||'')+')',70),o:x.ms?'–':uniq(((x.t&&x.t.lines)||[]).filter(l=>(x.lines||[]).indexOf(l.line)>=0).map(l=>NM(l.qe))).join(' / ')||'–',d:x.date,n:x.n}));
@@ -13841,7 +14099,7 @@ function collect(){
 
   /* ---------- 📊 Tracker ---------- */
   const raw=J('issue_tracker_v2'); const tr=Array.isArray(raw)?raw.filter(x=>x&&typeof x==='object'):[];
-  const cur=d=>(Array.isArray(d.revs)&&d.revs.length&&d.revs[d.revs.length-1].date)?d.revs[d.revs.length-1].date:(d.due||'');
+  const cur=d=>window.QEData.currentDue(d);
   const T1=tr.map(d=>({date:d.date||'',due:cur(d),owner:NM(d.owner||'–'),issue:clip(DEDUP(d.issue),90),cm:clip(DEDUP(d.cm),110),done:d.status==='Done',
     revs:Array.isArray(d.revs)?d.revs.length:0,why:(Array.isArray(d.revs)?d.revs:[]).map(r=>clip(r.reason,50)).filter(Boolean),
     hist:[d.due].concat((Array.isArray(d.revs)?d.revs:[]).map(r=>r.date)).filter(isD),blocked:!!d.blocked&&d.status!=='Done',blocker:clip(d.blocker||'',70)}));
@@ -16201,10 +16459,17 @@ html{scroll-padding-top:64px}
 })();
 </script>
 <!-- ===== end v64 ===== -->
-<!-- ===== Space theme + น้องดุ๊กดิ๊ก (ไฟล์ space-theme.js ต้องอยู่โฟลเดอร์เดียวกัน) ===== -->
-<script src="space-theme.js" defer></script>
-<!-- ===== Teams Chat (ไฟล์ teams-chat.js ต้องอยู่โฟลเดอร์เดียวกัน) ===== -->
-<script src="teams-chat.js" defer></script>
+<!-- v77: optional companion add-ons load only from an HTTP(S) deployment; local single-file mode remains error-free. -->
+<script id="qeV77OptionalAddons">
+(function(){
+  if(!/^https?:$/i.test(location.protocol)) return;
+  ['space-theme.js','teams-chat.js'].forEach(function(src){
+    var s=document.createElement('script'); s.src=src; s.defer=true;
+    s.addEventListener('error',function(){ if(window.QE77) QE77.recordError('optional-addon',new Error('โหลด '+src+' ไม่สำเร็จ'),src); });
+    document.head.appendChild(s);
+  });
+})();
+</script>
 <!-- ===== QE Executive Dashboard v1 ===== -->
 <style id="qeDashCss">
 #qeDash{position:fixed;inset:0;z-index:2147483000;background:rgba(15,23,42,.58);backdrop-filter:blur(5px);display:none;padding:18px;overflow:auto}
