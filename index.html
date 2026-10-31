@@ -11,6 +11,7 @@
 <!-- v72 (31-Oct-2026): รวม Due ล่าสุดของ Hoshin ทุกหน้า/ตัวเลข, Timeline คลิกแก้วันที่และป้ายไม่ซ้อน, ส่ง Tracker ไม่ซ้ำ, Matrix Filter ตามคน, Dashboard contrast ชัดเจน -->
 <!-- v73 (31-Oct-2026): Hoshin one-screen layout — ย่อ Timeline ให้เห็นครบทุกหัวข้อ, รวมกำหนดถัดไปกับ Matrix แบบเคียงกัน, ตารางไม่ตกขอบที่ 1366px ทั้งธีมสว่าง/มืด -->
 <!-- v74 (31-Oct-2026): Hoshin Timeline แบบ compact 5 แถว — ป้ายสั้นไม่ชนจุด/ไม่ซ้อน, hover ดูรายละเอียดเต็ม, คลิกแก้วันที่ได้, เห็นครบในจอ laptop -->
+<!-- v75 (31-Oct-2026): Hoshin Timeline — ป้ายวันนี้มีพื้นหลังทึบและเส้นเริ่มใต้ป้าย; แบ่งกรอบ/พื้นหลังสลับสีชัดเจนครบ 5 หัวข้อ โดยคงความสูง compact และการคลิกแก้ Milestone/Due date -->
 <!-- v66 (30-Oct-2026): หน้า 🗓️ ประชุม — เส้นเวลาปัจจุบัน (Now line) + ไทม์ไลน์รายวัน + ไฮไลต์ประชุมที่กำลังเกิด/ผ่านไปแล้ว — ดูบล็อก "v66" ในสคริปต์ mtgAddon -->
 <!-- v67 (30-Oct-2026): หน้า “งานของฉัน” — แผนงานประจำวัน (ตารางรายชั่วโมง 07:30–16:30 + OT, ขั้น 30 น./1 ชม., ดึงประชุมของฉัน, งานอื่นอยู่ด้านล่าง) — ดูบล็อก “v67” ในสคริปต์ myWorkNavAddon -->
 <!-- v69 (30-Oct-2026): Main QE Jobs › New project — (1) สลับลำดับรุ่นในตาราง PV (▲▼ / ลากที่ ⠿ / ปุ่มเรียงตามวันที่) (2) หน้า Follow-up: ติ๊กเลือกหลายรายการแล้วลบทีเดียว (3) รูปในหน้า Organization ซิงก์ให้ทุกคนเห็น (คีย์ qe_org_photo_*) -->
@@ -5288,10 +5289,19 @@ function roadmap(y){
     cur=new Date(b*864e5); k++;
   }
   s+=`<line x1="${R0}" x2="${R0}" y1="${top-6}" y2="${H-bottom+2}" stroke="var(--line)" stroke-width="1" stroke-opacity=".75"/>`;
+  /* v75: full-row frames are drawn first, then the today line, then labels/points.
+     This keeps every topic visually grouped while the line stays behind all editable labels. */
+  ord.forEach((t,i)=>{
+    const a=y.acts.find(x=>x.id===t.act)||{color:'#8b5cf6'}, laneY=top+i*laneH;
+    s+=`<rect class="hsx-lane${i%2?' alt':''}" x="2" y="${laneY+1}" width="${W-4}" height="${laneH-2}" rx="8"/>`+
+       `<rect class="hsx-lane-accent" x="2" y="${laneY+1}" width="5" height="${laneH-2}" rx="2.5" fill="${E(a.color)}"/>`;
+  });
+  const tx=X(now), todayBadgeX=clamp(tx,L0+45,R0-45);
+  s+=`<line class="hsx-today-line" x1="${tx.toFixed(1)}" x2="${tx.toFixed(1)}" y1="${top-1}" y2="${H-bottom+2}" stroke="var(--pri)" stroke-width="2" stroke-dasharray="5 4"/>`;
   ord.forEach((t,i)=>{
     const a=y.acts.find(x=>x.id===t.act)||{color:'#8b5cf6'}, cy=top+i*laneH+laneH/2, st=tState(t), ev=[];
     s+=`<line x1="${L0}" x2="${R0}" y1="${cy}" y2="${cy}" stroke="var(--line)" stroke-width="1.5"/>`+
-       `<circle cx="14" cy="${cy}" r="5.5" fill="${E(a.color)}"/><text x="27" y="${cy+4}" class="lb">${E(t.short)}${st.k==='done'?' ✓':''}</text>`;
+       `<circle cx="15" cy="${cy}" r="5.5" fill="${E(a.color)}"/><text x="28" y="${cy+4}" class="lb">${E(t.short)}${st.k==='done'?' ✓':''}</text>`;
     const dots={}; (t.lines||[]).forEach(l=>{ if(l.st==='ok') return; const d=effDue(t,l); if(!d) return; const q=dots[d]||(dots[d]={lines:[],ids:[]}); q.lines.push(l.line); q.ids.push(l.id); });
     Object.keys(dots).sort().forEach(d=>{ if(d===t.due) return; const q=dots[d], n=q.lines.length; ev.push({kind:'line',d:d,x:X(dn(d)),label:q.lines.join(', '),short:`${fmtS(d)} · ${n} ไลน์`,ids:q.ids,n:n,over:dn(d)<now}); });
     (t.plan||[]).forEach((m,mi)=>ev.push({kind:'plan',d:m.d,x:X(dn(m.d)),label:m.l,short:`${fmtS(m.d)} · ${msShort(m.l,mi)}`,i:mi,over:dn(m.d)<now}));
@@ -5313,10 +5323,10 @@ function roadmap(y){
     });
     if(!ev.length&&st.k==='done') s+=`<text x="${L0+10}" y="${cy-8}" class="ms" style="fill:#22c55e;font-size:10.5px">✓ เสร็จแล้ว (ไม่มีกำหนดค้าง)</text>`;
   });
-  const tx=X(now), ta=tx>R0-78?'end':tx<L0+78?'start':'middle', txx=tx>R0-78?tx-5:tx<L0+78?tx+5:tx;
-  s+=`<line x1="${tx.toFixed(1)}" x2="${tx.toFixed(1)}" y1="${top-6}" y2="${H-bottom+2}" stroke="var(--pri)" stroke-width="2" stroke-dasharray="5 4"/>`+
-     `<rect x="${(tx-3).toFixed(1)}" y="25" width="6" height="9" rx="3" fill="var(--pri)"/>`+
-     `<text x="${txx.toFixed(1)}" y="32" text-anchor="${ta}" class="td" style="font-size:10.5px">วันนี้ ${fmtS(today)}</text>`;
+  /* v75: opaque today badge; the dashed line starts exactly below it and cannot cross the date text. */
+  s+=`<g class="hsx-today" aria-label="วันนี้ ${fmtS(today)}">`+
+     `<rect x="${(todayBadgeX-45).toFixed(1)}" y="21" width="90" height="18" rx="7" fill="var(--pop)" stroke="var(--pri)" stroke-width="1.5"/>`+
+     `<text x="${todayBadgeX.toFixed(1)}" y="33" text-anchor="middle" class="td" style="font-size:10.5px">วันนี้ ${fmtS(today)}</text></g>`;
   return s+'</svg>';
 }
 
@@ -16432,5 +16442,15 @@ html{scroll-padding-top:64px}
 #viewHoshin .hs-card:has(.hs-rm74) .hs-key b{font-size:13px}
 #viewHoshin .hs-card:has(.hs-rm74) .hs-key-help{font-size:9px}
 @media(max-width:900px){#viewHoshin .hs-rm74{min-width:760px!important}}
+</style>
+
+<style id="qeV75HoshinTimelineFrames">
+/* v75: clear compact row frames in light/dark themes; no stored data or edit actions changed */
+#viewHoshin .hs-rm74 .hsx-lane{fill:var(--card,#fff);fill-opacity:.9;stroke:color-mix(in srgb,var(--line,#cbd5e1) 96%,var(--txt,#172033) 4%);stroke-width:1.35}
+#viewHoshin .hs-rm74 .hsx-lane.alt{fill:var(--soft,#f8fafc);fill-opacity:.97}
+#viewHoshin .hs-rm74 .hsx-lane-accent{opacity:.96}
+#viewHoshin .hs-rm74 .hsx-today-line{opacity:.88}
+#viewHoshin .hs-rm74 .hsx-today rect{filter:drop-shadow(0 1px 2px color-mix(in srgb,var(--txt,#172033) 22%,transparent))}
+#viewHoshin .hs-rm74 .hsx-today text{fill:var(--pri,#2563eb);font-weight:900;paint-order:stroke;stroke:var(--pop,#fff);stroke-width:1.8px;stroke-linejoin:round}
 </style>
 </body></html>
