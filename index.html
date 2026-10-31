@@ -5209,7 +5209,7 @@ function viewDash(y){
   });
   h+=`</div>`;
   // roadmap + follow-up
-  h+=`<div class="ms-card hs-card"><h3>🗺️ ไทม์ไลน์กำหนดเสร็จ</h3><div class="ms-sub">สีเขียว ✓ = เสร็จจริง · สีส้ม = ใกล้กำหนด/ต้องติดตาม · สีแดง = Delay หรือเลยกำหนด · ◆ = กำหนดเสร็จของหัวข้อ (ตัวเลขคือจำนวนไลน์ที่ยังไม่เสร็จ) · ● = กำหนดเฉพาะไลน์ · ◇ = Milestone · เส้นประสีน้ำเงิน = วันนี้ · คลิกรายการ Follow-up หรือ Milestone เพื่อเปิดหัวข้อและแก้ไขแผน</div>${roadmap(y)}</div>`+
+  h+=`<div class="ms-card hs-card"><h3>🗺️ ไทม์ไลน์กำหนดเสร็จ</h3><div class="hs-timeline-key" aria-label="คำอธิบายไทม์ไลน์"><span class="hs-key k-done"><b>✓</b> เสร็จจริง</span><span class="hs-key k-watch"><b>●</b> ใกล้กำหนด</span><span class="hs-key k-delay"><b>◆</b> Delay</span><span class="hs-key k-topic"><b>◆</b> กำหนดหัวข้อ <small>เลข = ไลน์ค้าง</small></span><span class="hs-key k-line"><b>●</b> กำหนดเฉพาะไลน์</span><span class="hs-key k-ms"><b>◇</b> Milestone</span><span class="hs-key k-today"><b>┆</b> วันนี้</span><small class="hs-key-help">คลิก Follow-up หรือ Milestone เพื่อเปิดหัวข้อและแก้ไขแผน</small></div>${roadmap(y)}</div>`+
     `<div class="ms-card hs-card"><h3>📌 ต้องติดตาม</h3><div class="ms-sub">เลยกำหนด และครบกำหนดภายใน 30 วัน · คลิกเพื่อเปิดหัวข้อ</div>`+followUp(D,N)+`</div>`;
   // matrix
   h+=`<div class="ms-card hs-card"><h3>🧩 ภาพรวมรายไลน์ × หัวข้อ</h3><div class="ms-sub">ดูไลน์เดียวครบทุกกิจกรรมว่าติดตรงไหน · คลิกช่องเพื่อดู/แก้ไข</div><div class="hs-leg">${ORD.map(k=>`<span><i style="background:${ST[k].c}">${ST[k].s}</i>${ST[k].n}</span>`).join('')}<span><i style="background:transparent;color:var(--mut);border:1px dashed var(--line)">–</i>ไม่อยู่ในหัวข้อนี้</span></div>${matrix(y,ord,N)}</div>`;
@@ -16285,5 +16285,49 @@ html{scroll-padding-top:64px}
 #viewHoshin .hs-m.delay{border:2px solid #ef4444!important;background:#fff1f2!important;color:#991b1b!important;box-shadow:0 0 0 2px rgba(239,68,68,.08)}
 #viewHoshin .hs-m.delay small{color:#dc2626!important;font-weight:800}
 #viewHoshin .hs-card>.ms-sub{line-height:1.65;padding:8px 10px;border-radius:10px;background:color-mix(in srgb,var(--card,#fff) 82%,var(--pri,#5b5ce2) 18%);color:var(--txt,#172033)!important;font-weight:650}
+</style>
+
+<style id="qeDashboardPrintV2">
+/* Compact visual legend for Hoshin timeline */
+#viewHoshin .hs-timeline-key{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:7px 0 10px;padding:7px 9px;border:1px solid var(--line);border-radius:11px;background:color-mix(in srgb,var(--card,#fff) 92%,var(--pri,#5b5ce2) 8%);font-size:10.5px;line-height:1.25;color:var(--txt,#172033)}
+#viewHoshin .hs-key{display:inline-flex;align-items:center;gap:4px;padding:4px 7px;border-radius:999px;background:var(--card,#fff);border:1px solid var(--line);white-space:nowrap;font-weight:700}
+#viewHoshin .hs-key b{font-size:15px;line-height:1}.hs-key small{font-size:9px;font-weight:500;opacity:.78}
+#viewHoshin .k-done b{color:#10b981}#viewHoshin .k-watch b{color:#f59e0b}#viewHoshin .k-delay b{color:#ef4444}#viewHoshin .k-topic b{color:#8b5cf6}#viewHoshin .k-line b{color:#f59e0b}#viewHoshin .k-ms b{color:#6366f1}#viewHoshin .k-today b{color:#2563eb}
+#viewHoshin .hs-key-help{font-size:9.5px;color:var(--mut,#64748b);margin-left:auto}
+/* Dashboard contrast: never inherit white text from themes except header and status badges */
+#qeDash .qd-body,#qeDash .qd-body *{color:var(--txt,#172033)}
+#qeDash .qd-body .qd-state,#qeDash .qd-body .qd-state *{color:#fff!important}
+#qeDash .qd-body .qd-state.na{color:#334155!important}
+#qeDash .qd-body .qd-sub,#qeDash .qd-body .qd-note,#qeDash .qd-body .qd-mdetail,#qeDash .qd-body .qd-kpi span,#qeDash .qd-body .qd-guide small{color:#526079!important}
+#qeDash .qd-body svg text{fill:var(--txt,#172033)!important;color:var(--txt,#172033)!important}
+#qeDash .qd-body .qd-field select,#qeDash .qd-body .qd-field input{color:#172033!important;background:#fff!important;-webkit-text-fill-color:#172033!important}
+#qeDash .qd-head,#qeDash .qd-head *{color:#fff!important;-webkit-text-fill-color:#fff!important}
+/* Print only the actual dashboard, preserve its layout, and keep colors */
+@media print{
+ @page{size:A4 landscape;margin:8mm}
+ html,body{background:#fff!important;overflow:visible!important;height:auto!important}
+ body>*:not(#qeDash){display:none!important}
+ #qeDash{display:block!important;position:static!important;inset:auto!important;width:100%!important;height:auto!important;overflow:visible!important;padding:0!important;background:#fff!important;backdrop-filter:none!important}
+ #qeDash .qd-shell{display:block!important;max-width:none!important;width:100%!important;margin:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;overflow:visible!important;background:#fff!important;color:#172033!important}
+ #qeDash .qd-head{position:static!important;background:#3346a8!important;color:#fff!important;padding:10px 14px!important;border-radius:0!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+ #qeDash .qd-title h2{font-size:20px!important}#qeDash .qd-title p{font-size:9px!important}
+ #qeDash .qd-actions{display:none!important}
+ #qeDash .qd-body{padding:10px!important;background:#fff!important;color:#172033!important}
+ #qeDash .qd-filters{display:none!important}
+ #qeDash .qd-guide{margin-bottom:8px!important;padding:6px 8px!important;background:#f8fafc!important;break-inside:avoid;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+ #qeDash .qd-kpis{grid-template-columns:repeat(6,1fr)!important;gap:6px!important;break-inside:avoid}
+ #qeDash .qd-kpi{padding:8px!important;border-radius:8px!important;box-shadow:none!important;min-width:0!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+ #qeDash .qd-kpi b{font-size:18px!important}#qeDash .qd-kpi span{font-size:8px!important}
+ #qeDash .qd-modules{grid-template-columns:repeat(3,1fr)!important;gap:6px!important;margin-top:8px!important;break-inside:avoid}
+ #qeDash .qd-module{padding:8px!important;border-radius:8px!important;box-shadow:none!important;gap:6px!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+ #qeDash .qd-mi{font-size:16px!important}#qeDash .qd-mname{font-size:10px!important}#qeDash .qd-mdetail{font-size:8px!important}#qeDash .qd-state{font-size:8px!important;padding:3px 5px!important}
+ #qeDash .qd-grid{display:grid!important;grid-template-columns:repeat(12,1fr)!important;gap:8px!important;margin-top:8px!important}
+ #qeDash .qd-card{padding:9px!important;border-radius:8px!important;box-shadow:none!important;break-inside:avoid;page-break-inside:avoid;background:#fff!important}
+ #qeDash .qd-card h3{font-size:11px!important}.qd-sub{font-size:8px!important;margin-bottom:5px!important}
+ #qeDash .qd-chart{min-height:180px!important}.qd-chart svg{height:180px!important;min-width:0!important}
+ #qeDash .qd-tablewrap{max-height:none!important;overflow:visible!important}.qd-table{font-size:8px!important}.qd-table th,.qd-table td{padding:4px!important}
+ #qeDash .qd-card.w12{grid-column:span 12!important}
+ #qeDash *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+}
 </style>
 </body></html>
