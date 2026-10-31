@@ -9,6 +9,7 @@
 <!-- v70 (31-Oct-2026): Hoshin › Overall status — (1) ย้ายปุ่ม ตั้ง Due/ขยาย/ย่อ/CSV ขึ้นแถวบน ไม่ซ้อนปุ่มเลขไลน์ (2) กรองตามชื่อผู้รับผิดชอบ / แสดงทั้งหมด (3) ตาราง รายละเอียดรายไลน์ มีคอลัมน์ผู้รับผิดชอบ และ Due ดึงจาก Overall status -->
 <!-- v71 (31-Oct-2026): Hoshin ใช้ Due จาก Overall status ในป้าย/ภาพรวม, Timeline แก้วันที่ตรงจุด, ตารางสรุป Filter ตามคน, ส่งเข้า Tracker -->
 <!-- v72 (31-Oct-2026): รวม Due ล่าสุดของ Hoshin ทุกหน้า/ตัวเลข, Timeline คลิกแก้วันที่และป้ายไม่ซ้อน, ส่ง Tracker ไม่ซ้ำ, Matrix Filter ตามคน, Dashboard contrast ชัดเจน -->
+<!-- v73 (31-Oct-2026): Hoshin one-screen layout — ย่อ Timeline ให้เห็นครบทุกหัวข้อ, รวมกำหนดถัดไปกับ Matrix แบบเคียงกัน, ตารางไม่ตกขอบที่ 1366px ทั้งธีมสว่าง/มืด -->
 <!-- v66 (30-Oct-2026): หน้า 🗓️ ประชุม — เส้นเวลาปัจจุบัน (Now line) + ไทม์ไลน์รายวัน + ไฮไลต์ประชุมที่กำลังเกิด/ผ่านไปแล้ว — ดูบล็อก "v66" ในสคริปต์ mtgAddon -->
 <!-- v67 (30-Oct-2026): หน้า “งานของฉัน” — แผนงานประจำวัน (ตารางรายชั่วโมง 07:30–16:30 + OT, ขั้น 30 น./1 ชม., ดึงประชุมของฉัน, งานอื่นอยู่ด้านล่าง) — ดูบล็อก “v67” ในสคริปต์ myWorkNavAddon -->
 <!-- v69 (30-Oct-2026): Main QE Jobs › New project — (1) สลับลำดับรุ่นในตาราง PV (▲▼ / ลากที่ ⠿ / ปุ่มเรียงตามวันที่) (2) หน้า Follow-up: ติ๊กเลือกหลายรายการแล้วลบทีเดียว (3) รูปในหน้า Organization ซิงก์ให้ทุกคนเห็น (คีย์ qe_org_photo_*) -->
@@ -5212,11 +5213,12 @@ function viewDash(y){
     h+=`<button type="button" class="btn-g hs-add" data-act="haddt" data-a="${E(a.id)}">＋ เพิ่มหัวข้อ</button></div>`;
   });
   h+=`</div>`;
-  // roadmap + follow-up
-  h+=`<div class="ms-card hs-card"><h3>🗺️ ไทม์ไลน์กำหนดเสร็จ</h3><div class="hs-timeline-key" aria-label="คำอธิบายไทม์ไลน์"><span class="hs-key k-done"><b>✓</b> เสร็จจริง</span><span class="hs-key k-watch"><b>●</b> ใกล้กำหนด</span><span class="hs-key k-delay"><b>◆</b> Delay</span><span class="hs-key k-topic"><b>◆</b> กำหนดหัวข้อ <small>เลข = ไลน์ค้าง</small></span><span class="hs-key k-line"><b>●</b> กำหนดเฉพาะไลน์</span><span class="hs-key k-ms"><b>◇</b> Milestone</span><span class="hs-key k-today"><b>┆</b> วันนี้</span><small class="hs-key-help">คลิกจุดวันที่หรือ Milestone เพื่อแก้ไขวันที่ตรงจุด</small></div>${roadmap(y)}</div>`+
-    `<div class="ms-card hs-card"><h3>📌 ต้องติดตาม</h3><div class="ms-sub">เลยกำหนด และครบกำหนดภายใน 30 วัน · คลิกเพื่อเปิดหัวข้อ</div>`+followUp(D,N)+`</div>`;
-  // matrix
-  h+=`<div class="ms-card hs-card"><h3>🧩 ภาพรวมรายไลน์ × หัวข้อ</h3><div class="ms-sub">ดูไลน์เดียวครบทุกกิจกรรมว่าติดตรงไหน · คลิกช่องเพื่อดู/แก้ไข</div><div class="hs-leg">${ORD.map(k=>`<span><i style="background:${ST[k].c}">${ST[k].s}</i>${ST[k].n}</span>`).join('')}<span><i style="background:transparent;color:var(--mut);border:1px dashed var(--line)">–</i>ไม่อยู่ในหัวข้อนี้</span></div>${matrix(y,ord,N)}</div>`;
+  // v73: compact roadmap + one-screen follow-up/matrix workspace
+  h+=`<div class="ms-card hs-card hs-v73-timeline"><h3>🗺️ ไทม์ไลน์กำหนดเสร็จ</h3><div class="hs-timeline-key" aria-label="คำอธิบายไทม์ไลน์"><span class="hs-key k-done"><b>✓</b> เสร็จจริง</span><span class="hs-key k-watch"><b>●</b> ใกล้กำหนด</span><span class="hs-key k-delay"><b>◆</b> Delay</span><span class="hs-key k-topic"><b>◆</b> กำหนดหัวข้อ <small>เลข = ไลน์ค้าง</small></span><span class="hs-key k-line"><b>●</b> กำหนดเฉพาะไลน์</span><span class="hs-key k-ms"><b>◇</b> Milestone</span><span class="hs-key k-today"><b>┆</b> วันนี้</span><small class="hs-key-help">คลิกจุดวันที่หรือ Milestone เพื่อแก้ไขวันที่ตรงจุด</small></div>${roadmap(y)}</div>`;
+  h+=`<div class="hs-v73-summary">`+
+    `<section class="ms-card hs-card hs-v73-follow"><h3>📌 กำหนดถัดไป</h3><div class="ms-sub">เลยกำหนด + ภายใน 30 วัน · คลิกเพื่อเปิดหัวข้อ</div>`+followUp(D,N)+`</section>`+
+    `<section class="ms-card hs-card hs-v73-matrix"><h3>🧩 ภาพรวมรายไลน์ × หัวข้อ</h3><div class="ms-sub">สรุปสถานะและผู้รับผิดชอบในตารางเดียว · คลิกช่องเพื่อดู/แก้ไข</div><div class="hs-leg">${ORD.map(k=>`<span><i style="background:${ST[k].c}">${ST[k].s}</i>${ST[k].n}</span>`).join('')}<span><i style="background:transparent;color:var(--mut);border:1px dashed var(--line)">–</i>ไม่อยู่ในหัวข้อนี้</span></div>${matrix(y,ord,N)}</section>`+
+    `</div>`;
   h+=`<div style="margin:4px 0 24px"><button type="button" class="btn-g" data-act="hadda">＋ เพิ่มกิจกรรม</button></div>`;
   return h;
 }
@@ -5245,7 +5247,8 @@ function roadmap(y){
   ord.forEach(t=>{ if(t.due) pts.push(dn(t.due)); (t.plan||[]).forEach(m=>pts.push(dn(m.d))); (t.lines||[]).forEach(l=>{ const d=l.st!=='ok'&&effDue(t,l); if(d) pts.push(dn(d)); }); });
   const mn=Math.min.apply(null,pts), mxv=Math.max.apply(null,pts), sd=new Date(mn*864e5), ed=new Date(mxv*864e5);
   const start=Date.UTC(sd.getUTCFullYear(),sd.getUTCMonth(),1)/864e5, end=Date.UTC(ed.getUTCFullYear(),ed.getUTCMonth()+1,1)/864e5;
-  const W=1120,L0=215,R0=W-35,laneH=200,top=52,H=top+Math.max(1,ord.length)*laneH+20, X=d=>L0+(d-start)/(end-start)*(R0-L0);
+  /* v73: compact lanes; four collision-aware label rows remain independently clickable */
+  const W=1120,L0=180,R0=W-24,laneH=96,top=38,H=top+Math.max(1,ord.length)*laneH+16, X=d=>L0+(d-start)/(end-start)*(R0-L0);
   const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
   let s=`<svg class="ms-trend hs-rm hs-rm72" viewBox="0 0 ${W} ${H}" role="img" aria-label="ไทม์ไลน์กำหนดเสร็จของแต่ละหัวข้อ">`;
   let cur=new Date(start*864e5), k=0;
@@ -5264,22 +5267,22 @@ function roadmap(y){
     (t.plan||[]).forEach((m,mi)=>ev.push({kind:'plan',d:m.d,x:X(dn(m.d)),label:m.l.replace(/^Plan\s*/i,''),sub:fmtS(m.d),i:mi,over:dn(m.d)<now}));
     if(t.due){ const open=(t.lines||[]).filter(l=>l.st!=='ok'&&effDue(t,l)===t.due).length; ev.push({kind:'topic',d:t.due,x:X(dn(t.due)),label:t.dueNote||'กำหนดหัวข้อ',sub:fmtS(t.due),n:open,done:st.k==='done',over:st.k!=='done'&&dn(t.due)<now}); }
     ev.sort((x,z)=>dn(x.d)-dn(z.d)||({line:0,plan:1,topic:2}[x.kind]-({line:0,plan:1,topic:2}[z.kind])));
-    const slots=[-42,42,-82,82], last=new Array(slots.length).fill(-1e9), gap=112;
+    const slots=[-16,16,-36,36], last=new Array(slots.length).fill(-1e9), gap=100;
     ev.forEach((e,ei)=>{
       let best=0,bestCost=Infinity,bestX=e.x;
-      for(let q=0;q<slots.length;q++){ const nx=Math.max(clamp(e.x,L0+58,R0-58),last[q]+gap), overflow=Math.max(0,nx-(R0-58)), cost=overflow*10000+Math.abs(nx-e.x)+Math.abs(slots[q])*.04; if(cost<bestCost){bestCost=cost;best=q;bestX=nx;} }
-      const lx=clamp(bestX,L0+58,R0-58), ly=cy+slots[best]; last[best]=lx;
+      for(let q=0;q<slots.length;q++){ const nx=Math.max(clamp(e.x,L0+48,R0-48),last[q]+gap), overflow=Math.max(0,nx-(R0-48)), cost=overflow*10000+Math.abs(nx-e.x)+Math.abs(slots[q])*.04; if(cost<bestCost){bestCost=cost;best=q;bestX=nx;} }
+      const lx=clamp(bestX,L0+48,R0-48), ly=cy+slots[best]; last[best]=lx;
       const at=e.kind==='plan'?`data-hsx-edit="plan" data-t="${E(t.id)}" data-i="${e.i}"`:`data-hsx-edit="${e.kind}" data-t="${E(t.id)}" data-d="${E(e.d)}"${e.kind==='line'?` data-lids="${E(e.ids.join(','))}"`:''}`;
       const aria=e.kind==='plan'?`แก้ Milestone ${e.label}`:e.kind==='topic'?`แก้กำหนดเสร็จหัวข้อ ${t.short}`:`แก้ Due date ${e.label}`;
       const stroke=e.over?'#ef4444':e.kind==='line'?'#f59e0b':E(a.color), fill=e.kind==='topic'?(e.done?'#22c55e':e.over?'#ef4444':E(a.color)):'var(--card)';
       s+=`<g class="hsx-point hsx-${e.kind}" ${at} tabindex="0" role="button" aria-label="${E(aria)}">`+
          `<title>${E(e.label)} · ${fmtD(e.d)} · คลิกเพื่อแก้ไขวันที่</title>`+
-         `<line x1="${e.x.toFixed(1)}" y1="${cy}" x2="${lx.toFixed(1)}" y2="${(ly+(slots[best]<0?15:-15)).toFixed(1)}" stroke="${stroke}" stroke-width="1.2" stroke-dasharray="3 3" opacity=".7"/>`;
+         `<line x1="${e.x.toFixed(1)}" y1="${cy}" x2="${lx.toFixed(1)}" y2="${(ly+(slots[best]<0?11:-11)).toFixed(1)}" stroke="${stroke}" stroke-width="1.1" stroke-dasharray="3 3" opacity=".7"/>`;
       if(e.kind==='line') s+=`<circle cx="${e.x.toFixed(1)}" cy="${cy}" r="10" fill="${e.over?'#ef4444':'#f59e0b'}"/><text x="${e.x.toFixed(1)}" y="${cy+4}" text-anchor="middle" class="in">${e.n}</text>`;
       else { const r=e.kind==='topic'?11:7; s+=`<rect x="${(e.x-r).toFixed(1)}" y="${cy-r}" width="${r*2}" height="${r*2}" rx="${e.kind==='topic'?3:1}" transform="rotate(45 ${e.x.toFixed(1)} ${cy})" fill="${fill}" stroke="${stroke}" stroke-width="${e.kind==='topic'?0:2.5}"/>`; if(e.kind==='topic') s+=`<text x="${e.x.toFixed(1)}" y="${cy+4}" text-anchor="middle" class="in">${e.n||'✓'}</text>`; }
-      s+=`<rect class="hsx-labg" x="${(lx-52).toFixed(1)}" y="${(ly-15).toFixed(1)}" width="104" height="30" rx="8" fill="var(--card)" stroke="${stroke}" stroke-width="1.4"/>`+
-         `<text class="ms hsx-lab1" x="${lx.toFixed(1)}" y="${(ly-2).toFixed(1)}" text-anchor="middle">${E(clipT(e.label,16))}</text>`+
-         `<text class="ms hsx-lab2" x="${lx.toFixed(1)}" y="${(ly+10).toFixed(1)}" text-anchor="middle">${e.sub}</text></g>`;
+      s+=`<rect class="hsx-labg" x="${(lx-44).toFixed(1)}" y="${(ly-11).toFixed(1)}" width="88" height="22" rx="6" fill="var(--card)" stroke="${stroke}" stroke-width="1.25"/>`+
+         `<text class="ms hsx-lab1" x="${lx.toFixed(1)}" y="${(ly-1).toFixed(1)}" text-anchor="middle">${E(clipT(e.label,14))}</text>`+
+         `<text class="ms hsx-lab2" x="${lx.toFixed(1)}" y="${(ly+8).toFixed(1)}" text-anchor="middle">${e.sub}</text></g>`;
     });
     if(!ev.length&&st.k==='done') s+=`<text x="${L0+10}" y="${cy-8}" class="ms" style="fill:#22c55e">✓ เสร็จแล้ว (ไม่มีกำหนดค้าง)</text>`;
   });
@@ -16322,5 +16325,66 @@ html{scroll-padding-top:64px}
 #viewHoshin .hs-mx th:first-child,#viewHoshin .hs-mx td:first-child{position:sticky;left:0;z-index:3;background:var(--pop,var(--card,#fff));box-shadow:1px 0 0 var(--line)}
 #viewHoshin .hsx-filter select{max-width:min(260px,72vw)}
 #viewHoshin .hs-tb .bd{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center}
+</style>
+
+
+<style id="qeV73HoshinCompact">
+/* v73 · Hoshin one-screen layout (presentation only; stored user data and actions are unchanged) */
+#viewHoshin .hs-v73-timeline{padding:12px 14px;margin-bottom:12px;overflow:hidden!important}
+#viewHoshin .hs-v73-timeline>h3{margin-bottom:2px}
+#viewHoshin .hs-v73-timeline .hs-timeline-key{margin:4px 0 5px;padding:4px 6px;gap:3px 5px;font-size:9.5px}
+#viewHoshin .hs-v73-timeline .hs-key{padding:2px 5px;gap:3px}
+#viewHoshin .hs-v73-timeline .hs-key b{font-size:12px}
+#viewHoshin .hs-v73-timeline .hs-key-help{font-size:9px}
+#viewHoshin .hs-rm72{display:block;width:100%;min-width:0!important;max-width:none!important;height:auto;max-height:540px;margin:0 auto}
+#viewHoshin .hs-rm72 text{font-size:10px}
+#viewHoshin .hs-rm72 text.lb{font-size:10.5px}
+#viewHoshin .hs-rm72 .hsx-lab1{font-size:9px;font-weight:800}
+#viewHoshin .hs-rm72 .hsx-lab2{font-size:8px;font-weight:650}
+
+#viewHoshin .hs-v73-summary{display:grid;grid-template-columns:minmax(250px,.72fr) minmax(620px,1.8fr);gap:12px;margin:0 0 16px;align-items:stretch}
+#viewHoshin .hs-v73-summary>.hs-card{margin:0;min-width:0;padding:12px;overflow:hidden}
+#viewHoshin .hs-v73-summary .ms-sub{margin-bottom:6px;padding:5px 7px!important;font-size:10.5px;line-height:1.35!important}
+#viewHoshin .hs-v73-follow .hs-fc{grid-template-columns:1fr;gap:8px}
+#viewHoshin .hs-v73-follow .hs-fh{margin:0 0 3px;font-size:10.5px}
+#viewHoshin .hs-v73-follow .hs-fol{gap:4px;max-height:174px;overflow:auto;padding-right:2px}
+#viewHoshin .hs-v73-follow .hs-fi{grid-template-columns:38px minmax(0,1fr);gap:6px;padding:4px 6px;border-left-width:3px;border-radius:8px;min-height:42px}
+#viewHoshin .hs-v73-follow .hs-fd b{font-size:15px}
+#viewHoshin .hs-v73-follow .hs-fd small,#viewHoshin .hs-v73-follow .hs-fx .l2{font-size:9.5px}
+#viewHoshin .hs-v73-follow .hs-fx{font-size:10.5px;line-height:1.2}
+#viewHoshin .hs-v73-follow .hs-badge{padding:1px 5px;font-size:9.5px}
+
+#viewHoshin .hs-v73-matrix .hs-leg{gap:4px 8px;margin:0 0 5px;font-size:9.5px;line-height:1.2}
+#viewHoshin .hs-v73-matrix .hs-leg i{width:17px;height:16px;font-size:10px;border-radius:5px}
+#viewHoshin .hs-v73-matrix .hsx-bar,#viewHoshin .hs-v73-matrix .hsx-filter{gap:4px 6px;margin:0 0 5px;padding:4px 6px;border-radius:8px;font-size:10px}
+#viewHoshin .hs-v73-matrix .hsx-bar b,#viewHoshin .hs-v73-matrix .hsx-filter b{font-size:10.5px}
+#viewHoshin .hs-v73-matrix .hsx-bar select,#viewHoshin .hs-v73-matrix .hsx-filter select{min-width:0;width:auto;max-width:150px;padding:3px 6px;font-size:10px;min-height:26px}
+#viewHoshin .hs-v73-matrix .hsx-bar .btn-g,#viewHoshin .hs-v73-matrix .hsx-filter .btn-g{padding:3px 7px;font-size:9.5px;min-height:26px}
+#viewHoshin .hs-v73-matrix .hsx-hint{font-size:9.5px}
+#viewHoshin .hs-v73-matrix .ms-ng{max-height:362px;overflow:auto;border:1px solid var(--line);border-radius:9px}
+#viewHoshin .hs-v73-matrix .hs-mx{table-layout:fixed;width:100%;min-width:0!important;font-size:10.5px}
+#viewHoshin .hs-v73-matrix .hs-mx th,#viewHoshin .hs-v73-matrix .hs-mx td{padding:3px 2px;font-size:10px;line-height:1.15;min-width:0;overflow:hidden}
+#viewHoshin .hs-v73-matrix .hs-mx th{font-size:9.5px;overflow-wrap:anywhere;word-break:normal}
+#viewHoshin .hs-v73-matrix .hs-mx th small{font-size:8.5px}
+#viewHoshin .hs-v73-matrix .hs-mx th:nth-child(1),#viewHoshin .hs-v73-matrix .hs-mx td:nth-child(1){width:8%}
+#viewHoshin .hs-v73-matrix .hs-mx th:nth-child(n+2):nth-child(-n+6),#viewHoshin .hs-v73-matrix .hs-mx td:nth-child(n+2):nth-child(-n+6){width:13.2%}
+#viewHoshin .hs-v73-matrix .hs-mx th:nth-child(7),#viewHoshin .hs-v73-matrix .hs-mx td:nth-child(7){width:8%}
+#viewHoshin .hs-v73-matrix .hs-mx th:nth-child(8),#viewHoshin .hs-v73-matrix .hs-mx td:nth-child(8),#viewHoshin .hs-v73-matrix .hs-mx th:nth-child(9),#viewHoshin .hs-v73-matrix .hs-mx td:nth-child(9){width:9%}
+#viewHoshin .hs-v73-matrix .hs-mx td.ln{font-size:10px;text-overflow:ellipsis}
+#viewHoshin .hs-v73-matrix .hs-mx td.ow{font-size:9px;white-space:nowrap;text-overflow:ellipsis}
+#viewHoshin .hs-v73-matrix .hs-c{width:26px;height:21px;border-radius:6px;font-size:11px}
+#viewHoshin .hs-v73-matrix .hs-ngc{min-width:20px;padding:1px 4px;font-size:10px}
+
+@media(max-width:1100px){
+ #viewHoshin .hs-v73-summary{grid-template-columns:1fr}
+ #viewHoshin .hs-v73-follow .hs-fc{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #viewHoshin .hs-v73-follow .hs-fol{max-height:190px}
+}
+@media(max-width:700px){
+ #viewHoshin .hs-v73-timeline{overflow-x:auto!important}
+ #viewHoshin .hs-rm72{min-width:760px!important}
+ #viewHoshin .hs-v73-follow .hs-fc{grid-template-columns:1fr}
+ #viewHoshin .hs-v73-matrix .hs-mx{min-width:700px!important}
+}
 </style>
 </body></html>
