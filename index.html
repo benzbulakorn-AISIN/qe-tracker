@@ -16453,4 +16453,35 @@ html{scroll-padding-top:64px}
 #viewHoshin .hs-rm74 .hsx-today rect{filter:drop-shadow(0 1px 2px color-mix(in srgb,var(--txt,#172033) 22%,transparent))}
 #viewHoshin .hs-rm74 .hsx-today text{fill:var(--pri,#2563eb);font-weight:900;paint-order:stroke;stroke:var(--pop,#fff);stroke-width:1.8px;stroke-linejoin:round}
 </style>
+
+
+<style id="qeV76HoshinPageScroll">
+/* v76: Hoshin uses the page scrollbar vertically. Keep horizontal scrolling only where a wide table needs it. */
+#viewHoshin .hs-fol{
+  max-height:none!important;
+  overflow:visible!important;
+  padding-right:0!important;
+}
+#viewHoshin .hs-v73-matrix .ms-ng,
+#viewHoshin .hs-tw{
+  max-height:none!important;
+  overflow:visible!important;
+}
+#viewHoshin .ov-scroll{
+  max-height:none!important;
+  overflow-x:auto!important;
+  overflow-y:hidden!important;
+  overscroll-behavior-x:contain;
+}
+/* Narrow screens may scroll wide tables sideways, but rows still grow to their full height. */
+@media(max-width:820px){
+  #viewHoshin .hs-v73-matrix .ms-ng,
+  #viewHoshin .hs-tw{
+    max-height:none!important;
+    overflow-x:auto!important;
+    overflow-y:hidden!important;
+    overscroll-behavior-x:contain;
+  }
+}
+</style>
 </body></html>
