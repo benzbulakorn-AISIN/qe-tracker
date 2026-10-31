@@ -8,6 +8,7 @@
 <!-- v62 (27-Oct-2026): Time-saving & Ergonomics layer — ดู Change log ในบล็อก qeV62Css ท้ายไฟล์ -->
 <!-- v70 (31-Oct-2026): Hoshin › Overall status — (1) ย้ายปุ่ม ตั้ง Due/ขยาย/ย่อ/CSV ขึ้นแถวบน ไม่ซ้อนปุ่มเลขไลน์ (2) กรองตามชื่อผู้รับผิดชอบ / แสดงทั้งหมด (3) ตาราง รายละเอียดรายไลน์ มีคอลัมน์ผู้รับผิดชอบ และ Due ดึงจาก Overall status -->
 <!-- v71 (31-Oct-2026): Hoshin ใช้ Due จาก Overall status ในป้าย/ภาพรวม, Timeline แก้วันที่ตรงจุด, ตารางสรุป Filter ตามคน, ส่งเข้า Tracker -->
+<!-- v72 (31-Oct-2026): รวม Due ล่าสุดของ Hoshin ทุกหน้า/ตัวเลข, Timeline คลิกแก้วันที่และป้ายไม่ซ้อน, ส่ง Tracker ไม่ซ้ำ, Matrix Filter ตามคน, Dashboard contrast ชัดเจน -->
 <!-- v66 (30-Oct-2026): หน้า 🗓️ ประชุม — เส้นเวลาปัจจุบัน (Now line) + ไทม์ไลน์รายวัน + ไฮไลต์ประชุมที่กำลังเกิด/ผ่านไปแล้ว — ดูบล็อก "v66" ในสคริปต์ mtgAddon -->
 <!-- v67 (30-Oct-2026): หน้า “งานของฉัน” — แผนงานประจำวัน (ตารางรายชั่วโมง 07:30–16:30 + OT, ขั้น 30 น./1 ชม., ดึงประชุมของฉัน, งานอื่นอยู่ด้านล่าง) — ดูบล็อก “v67” ในสคริปต์ myWorkNavAddon -->
 <!-- v69 (30-Oct-2026): Main QE Jobs › New project — (1) สลับลำดับรุ่นในตาราง PV (▲▼ / ลากที่ ⠿ / ปุ่มเรียงตามวันที่) (2) หน้า Follow-up: ติ๊กเลือกหลายรายการแล้วลบทีเดียว (3) รูปในหน้า Organization ซิงก์ให้ทุกคนเห็น (คีย์ qe_org_photo_*) -->
@@ -5119,14 +5120,15 @@ function sanitize(Yr,y){
 }
 
 /* ---------- คำนวณ ---------- */
-const effDue=(t,l)=>{ const D=ovEffDue(t,l); return D.d||t.due||''; };
+const effDue=(t,l)=>{ const D=ovEffDue(t,l); return D.d||''; };
+function topicEffDue(t){ const a=(t.lines||[]).filter(l=>l.st!=='ok').map(l=>effDue(t,l)).filter(isoOK).sort(); return a[0]||t.due||''; }
 function tStat(t){ const c={ok:0,part:0,ng:0,chk:0}; t.lines.forEach(l=>{ c[l.st]++; }); const n=t.lines.length; return {c:c,n:n,pct:n?c.ok/n*100:null}; }
 function lateInfo(t){ let n=0,max=0; const now=dn(today); t.lines.forEach(l=>{ if(l.st==='ok') return; const d=effDue(t,l); if(!d) return; const k=now-dn(d); if(k>0){ n++; if(k>max) max=k; } }); return {n:n,max:max}; }
 function tState(t){
   const s=tStat(t); if(!s.n) return {k:'na',lab:'ยังไม่มีข้อมูล'};
   if(s.c.ok===s.n) return {k:'done',lab:'✓ เสร็จแล้ว'};
   const L=lateInfo(t); if(L.n) return {k:'late',lab:`เลยกำหนด ${L.n} ไลน์ · สูงสุด ${L.max} วัน`};
-  if(t.due){ const d=dn(t.due)-dn(today); if(d<0) return {k:'late',lab:`เลยกำหนด ${-d} วัน`}; if(d<=14) return {k:'soon',lab:`ครบกำหนดอีก ${d} วัน`}; return {k:'ok',lab:`กำหนด ${fmtS(t.due)} · อีก ${d} วัน`}; }
+  { const due=topicEffDue(t); if(due){ const d=dn(due)-dn(today); if(d<0) return {k:'late',lab:`เลยกำหนด ${-d} วัน`}; if(d<=14) return {k:'soon',lab:`ครบกำหนดอีก ${d} วัน`}; return {k:'ok',lab:`กำหนด ${fmtS(due)} · อีก ${d} วัน`}; } }
   return {k:'open',lab:'ยังไม่ระบุกำหนด'};
 }
 const stColor=k=>({done:'#22c55e',late:'#ef4444',soon:'#f59e0b',ok:'#3b82f6',open:'#94a3b8',na:'#94a3b8'}[k]||'#94a3b8');
@@ -5149,8 +5151,8 @@ function nextDeadline(y){
   const now=dn(today); let best=null;
   const cons=(date,label,t)=>{ const d=dn(date)-now; if(d>=0&&(!best||d<best.d)) best={d:d,date:date,label:label,t:t}; };
   ordered(y).forEach(t=>{ const s=tStat(t); if(s.n&&s.c.ok===s.n) return;
-    if(t.due) cons(t.due,t.short,t);
     t.lines.forEach(l=>{ const d=l.st!=='ok'&&effDue(t,l); if(d) cons(d,t.short+' · '+l.line,t); });
+    if(!(t.lines||[]).some(l=>l.st!=='ok')&&t.due) cons(t.due,t.short,t);
     (t.plan||[]).forEach(m=>cons(m.d,t.short+' · '+m.l,t)); });
   return best;
 }
@@ -5205,7 +5207,7 @@ function viewDash(y){
     const ts=y.topics.filter(t=>t.act===a.id), s=agg(ts);
     h+=`<div class="hs-act" style="--ac:${E(a.color)}"><div class="hs-ah"><span class="hs-ai">${E(a.icon)}</span><div style="min-width:0"><small>กิจกรรมที่ ${ai+1}</small><b>${E(a.name)}</b></div><div class="hs-ap"><b style="color:${pctColor(s.pct)}">${s.pct==null?'–':Math.round(s.pct)+'%'}</b><span>OK</span></div></div>`;
     ts.forEach(t=>{ const st=tStat(t), ss=tState(t);
-      h+=`<button type="button" class="hs-tr" data-act="hnav" data-v="${E(t.id)}"><div class="hs-trh"><b>${E(N[t.id])} · ${E(t.short)}</b>${badge(ss)}</div>${stackBar(st.c,st.n)}<div class="hs-trc">${counts(st.c)}<em>${st.n} ไลน์${t.due?' · กำหนด '+fmtS(t.due):''}</em></div></button>`; });
+      { const td=topicEffDue(t); h+=`<button type="button" class="hs-tr" data-act="hnav" data-v="${E(t.id)}"><div class="hs-trh"><b>${E(N[t.id])} · ${E(t.short)}</b>${badge(ss)}</div>${stackBar(st.c,st.n)}<div class="hs-trc">${counts(st.c)}<em>${st.n} ไลน์${td?' · กำหนด '+fmtS(td):''}</em></div></button>`; } });
     if(!ts.length) h+=`<div class="ms-sub">ยังไม่มีหัวข้อในกิจกรรมนี้</div>`;
     h+=`<button type="button" class="btn-g hs-add" data-act="haddt" data-a="${E(a.id)}">＋ เพิ่มหัวข้อ</button></div>`;
   });
@@ -5239,41 +5241,50 @@ function matrix(y,ord,N){
   return h+`</tbody></table></div>`;
 }
 function roadmap(y){
-  const ord=ordered(y), now=dn(today); const pts=[now];
-  ord.forEach(t=>{ if(t.due) pts.push(dn(t.due)); (t.plan||[]).forEach(m=>pts.push(dn(m.d))); t.lines.forEach(l=>{ const d=l.st!=='ok'&&effDue(t,l); if(d) pts.push(dn(d)); }); });
+  const ord=ordered(y), now=dn(today), pts=[now];
+  ord.forEach(t=>{ if(t.due) pts.push(dn(t.due)); (t.plan||[]).forEach(m=>pts.push(dn(m.d))); (t.lines||[]).forEach(l=>{ const d=l.st!=='ok'&&effDue(t,l); if(d) pts.push(dn(d)); }); });
   const mn=Math.min.apply(null,pts), mxv=Math.max.apply(null,pts), sd=new Date(mn*864e5), ed=new Date(mxv*864e5);
   const start=Date.UTC(sd.getUTCFullYear(),sd.getUTCMonth(),1)/864e5, end=Date.UTC(ed.getUTCFullYear(),ed.getUTCMonth()+1,1)/864e5;
-  const W=1000,L0=190,R0=W-40,laneH=72,top=40,H=top+Math.max(1,ord.length)*laneH+16, X=d=>L0+(d-start)/(end-start)*(R0-L0);
-  let s=`<svg class="ms-trend hs-rm" viewBox="0 0 ${W} ${H}" role="img" aria-label="ไทม์ไลน์กำหนดเสร็จของแต่ละหัวข้อ">`;
+  const W=1120,L0=215,R0=W-35,laneH=200,top=52,H=top+Math.max(1,ord.length)*laneH+20, X=d=>L0+(d-start)/(end-start)*(R0-L0);
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  let s=`<svg class="ms-trend hs-rm hs-rm72" viewBox="0 0 ${W} ${H}" role="img" aria-label="ไทม์ไลน์กำหนดเสร็จของแต่ละหัวข้อ">`;
   let cur=new Date(start*864e5), k=0;
   while(Date.UTC(cur.getUTCFullYear(),cur.getUTCMonth(),1)/864e5<end){
     const a=Date.UTC(cur.getUTCFullYear(),cur.getUTCMonth(),1)/864e5, b=Date.UTC(cur.getUTCFullYear(),cur.getUTCMonth()+1,1)/864e5;
-    s+=`<rect x="${X(a).toFixed(1)}" y="${top-8}" width="${(X(b)-X(a)).toFixed(1)}" height="${H-top+8-8}" fill="var(--soft)" fill-opacity="${k%2?0:.55}"/>`+
-       `<text x="${((X(a)+X(b))/2).toFixed(1)}" y="${top-16}" text-anchor="middle" class="lb">${TM[cur.getUTCMonth()]}${cur.getUTCMonth()===0||k===0?' '+String(cur.getUTCFullYear()+543).slice(2):''}</text>`;
+    s+=`<rect x="${X(a).toFixed(1)}" y="${top-10}" width="${(X(b)-X(a)).toFixed(1)}" height="${H-top-2}" fill="var(--soft)" fill-opacity="${k%2?0:.55}"/>`+
+       `<text x="${((X(a)+X(b))/2).toFixed(1)}" y="${top-18}" text-anchor="middle" class="lb">${TM[cur.getUTCMonth()]}${cur.getUTCMonth()===0||k===0?' '+String(cur.getUTCFullYear()+543).slice(2):''}</text>`;
     cur=new Date(b*864e5); k++;
   }
   ord.forEach((t,i)=>{
-    const a=y.acts.find(x=>x.id===t.act)||{color:'#8b5cf6'}, cy=top+i*laneH+laneH/2, st=tState(t);
+    const a=y.acts.find(x=>x.id===t.act)||{color:'#8b5cf6'}, cy=top+i*laneH+laneH/2, st=tState(t), ev=[];
     s+=`<line x1="${L0}" x2="${R0}" y1="${cy}" y2="${cy}" stroke="var(--line)" stroke-width="2"/>`+
-       `<circle cx="14" cy="${cy}" r="6" fill="${E(a.color)}"/><text x="28" y="${cy+4}" class="lb">${E(clipT(t.short,22))}${st.k==='done'?' ✓':''}</text>`;
-    const dots={}; t.lines.forEach(l=>{ if(l.st==='ok') return; const d=effDue(t,l); if(!d) return; const q=dots[d]||(dots[d]={lines:[],ids:[]}); q.lines.push(l.line); q.ids.push(l.id); });
-    let di=0;
-    Object.keys(dots).sort().forEach(d=>{ if(d===t.due) return; const q=dots[d], x=X(dn(d)), over=dn(d)<now, up=(di++%2===1);
-      s+=`<g class="hsx-point" data-hsx-edit="line" data-t="${E(t.id)}" data-lids="${E(q.ids.join(','))}" data-d="${E(d)}" tabindex="0" role="button" aria-label="แก้ Due date ${E(q.lines.join(', '))}"><circle cx="${x.toFixed(1)}" cy="${cy}" r="9" fill="${over?'#ef4444':'#f59e0b'}"><title>${E(q.lines.join(', '))} · ${fmtD(d)} · คลิกเพื่อแก้วันที่</title></circle><text x="${x.toFixed(1)}" y="${cy+3.5}" text-anchor="middle" class="in">${q.lines.length}</text><text x="${x.toFixed(1)}" y="${up?cy-17:cy+25}" text-anchor="middle" class="ms">${fmtS(d)}</text></g>`; });
-    let j=0;
-    (t.plan||[]).forEach((m,mi)=>{ const x=X(dn(m.d)), same=m.d===t.due, above=same?true:(j++%2===0), past=dn(m.d)<now, at=`data-hsx-edit="plan" data-t="${E(t.id)}" data-i="${mi}"`;
-      if(!same) s+=`<rect class="hsx-point" ${at} tabindex="0" role="button" style="cursor:pointer" x="${(x-6).toFixed(1)}" y="${cy-6}" width="12" height="12" transform="rotate(45 ${x.toFixed(1)} ${cy})" fill="var(--card)" stroke="${past?'#ef4444':E(a.color)}" stroke-width="2.4" opacity="1"><title>${E(m.l)} · ${fmtD(m.d)} · คลิกเพื่อแก้วันที่</title></rect>`;
-      const ly=above?cy-26:cy+22;
-      s+=`<text class="ms hsx-point" ${at} tabindex="0" role="button" style="cursor:pointer;fill:${past?'#ef4444':'var(--txt)'};font-weight:${past?'800':'600'}" x="${x.toFixed(1)}" y="${ly}" text-anchor="middle">${E(clipT(m.l.replace(/^Plan\s*/i,''),18))}</text><text class="ms hsx-point" ${at} style="cursor:pointer;font-weight:500" x="${x.toFixed(1)}" y="${ly+11}" text-anchor="middle" opacity="${past?.55:1}">${fmtS(m.d)}</text>`; });
-    if(t.due){ const x=X(dn(t.due)), done=st.k==='done', over=!done&&dn(t.due)<now, fill=done?'#22c55e':over?'#ef4444':E(a.color), at=`data-hsx-edit="topic" data-t="${E(t.id)}" data-d="${E(t.due)}"`;
-      const open=t.lines.filter(l=>l.st!=='ok'&&effDue(t,l)===t.due).length, hasMs=(t.plan||[]).some(m=>m.d===t.due);
-      s+=`<g class="hsx-point" ${at} tabindex="0" role="button" aria-label="แก้กำหนดเสร็จหัวข้อ ${E(t.short)}"><rect x="${(x-11).toFixed(1)}" y="${cy-11}" width="22" height="22" rx="3" transform="rotate(45 ${x.toFixed(1)} ${cy})" fill="${fill}"><title>${E(t.short)} · ${E(t.dueNote||'กำหนดเสร็จ')} ${fmtD(t.due)} · คลิกเพื่อแก้วันที่</title></rect>`+
-         `<text x="${x.toFixed(1)}" y="${cy+4}" text-anchor="middle" class="in">${open||'✓'}</text>`+
-         (hasMs?'':`<text x="${x.toFixed(1)}" y="${cy+28}" text-anchor="middle" class="ms">${fmtS(t.due)}</text>`)+`</g>`; }
-    else if(st.k==='done') s+=`<text x="${L0+10}" y="${cy-8}" class="ms" style="fill:#22c55e">✓ เสร็จแล้ว (ไม่มีกำหนดค้าง)</text>`;
+       `<circle cx="14" cy="${cy}" r="6" fill="${E(a.color)}"/><text x="28" y="${cy+4}" class="lb">${E(clipT(t.short,24))}${st.k==='done'?' ✓':''}</text>`;
+    const dots={}; (t.lines||[]).forEach(l=>{ if(l.st==='ok') return; const d=effDue(t,l); if(!d) return; const q=dots[d]||(dots[d]={lines:[],ids:[]}); q.lines.push(l.line); q.ids.push(l.id); });
+    Object.keys(dots).sort().forEach(d=>{ if(d===t.due) return; const q=dots[d]; ev.push({kind:'line',d:d,x:X(dn(d)),label:q.lines.join(', '),sub:fmtS(d),ids:q.ids,n:q.lines.length,over:dn(d)<now}); });
+    (t.plan||[]).forEach((m,mi)=>ev.push({kind:'plan',d:m.d,x:X(dn(m.d)),label:m.l.replace(/^Plan\s*/i,''),sub:fmtS(m.d),i:mi,over:dn(m.d)<now}));
+    if(t.due){ const open=(t.lines||[]).filter(l=>l.st!=='ok'&&effDue(t,l)===t.due).length; ev.push({kind:'topic',d:t.due,x:X(dn(t.due)),label:t.dueNote||'กำหนดหัวข้อ',sub:fmtS(t.due),n:open,done:st.k==='done',over:st.k!=='done'&&dn(t.due)<now}); }
+    ev.sort((x,z)=>dn(x.d)-dn(z.d)||({line:0,plan:1,topic:2}[x.kind]-({line:0,plan:1,topic:2}[z.kind])));
+    const slots=[-42,42,-82,82], last=new Array(slots.length).fill(-1e9), gap=112;
+    ev.forEach((e,ei)=>{
+      let best=0,bestCost=Infinity,bestX=e.x;
+      for(let q=0;q<slots.length;q++){ const nx=Math.max(clamp(e.x,L0+58,R0-58),last[q]+gap), overflow=Math.max(0,nx-(R0-58)), cost=overflow*10000+Math.abs(nx-e.x)+Math.abs(slots[q])*.04; if(cost<bestCost){bestCost=cost;best=q;bestX=nx;} }
+      const lx=clamp(bestX,L0+58,R0-58), ly=cy+slots[best]; last[best]=lx;
+      const at=e.kind==='plan'?`data-hsx-edit="plan" data-t="${E(t.id)}" data-i="${e.i}"`:`data-hsx-edit="${e.kind}" data-t="${E(t.id)}" data-d="${E(e.d)}"${e.kind==='line'?` data-lids="${E(e.ids.join(','))}"`:''}`;
+      const aria=e.kind==='plan'?`แก้ Milestone ${e.label}`:e.kind==='topic'?`แก้กำหนดเสร็จหัวข้อ ${t.short}`:`แก้ Due date ${e.label}`;
+      const stroke=e.over?'#ef4444':e.kind==='line'?'#f59e0b':E(a.color), fill=e.kind==='topic'?(e.done?'#22c55e':e.over?'#ef4444':E(a.color)):'var(--card)';
+      s+=`<g class="hsx-point hsx-${e.kind}" ${at} tabindex="0" role="button" aria-label="${E(aria)}">`+
+         `<title>${E(e.label)} · ${fmtD(e.d)} · คลิกเพื่อแก้ไขวันที่</title>`+
+         `<line x1="${e.x.toFixed(1)}" y1="${cy}" x2="${lx.toFixed(1)}" y2="${(ly+(slots[best]<0?15:-15)).toFixed(1)}" stroke="${stroke}" stroke-width="1.2" stroke-dasharray="3 3" opacity=".7"/>`;
+      if(e.kind==='line') s+=`<circle cx="${e.x.toFixed(1)}" cy="${cy}" r="10" fill="${e.over?'#ef4444':'#f59e0b'}"/><text x="${e.x.toFixed(1)}" y="${cy+4}" text-anchor="middle" class="in">${e.n}</text>`;
+      else { const r=e.kind==='topic'?11:7; s+=`<rect x="${(e.x-r).toFixed(1)}" y="${cy-r}" width="${r*2}" height="${r*2}" rx="${e.kind==='topic'?3:1}" transform="rotate(45 ${e.x.toFixed(1)} ${cy})" fill="${fill}" stroke="${stroke}" stroke-width="${e.kind==='topic'?0:2.5}"/>`; if(e.kind==='topic') s+=`<text x="${e.x.toFixed(1)}" y="${cy+4}" text-anchor="middle" class="in">${e.n||'✓'}</text>`; }
+      s+=`<rect class="hsx-labg" x="${(lx-52).toFixed(1)}" y="${(ly-15).toFixed(1)}" width="104" height="30" rx="8" fill="var(--card)" stroke="${stroke}" stroke-width="1.4"/>`+
+         `<text class="ms hsx-lab1" x="${lx.toFixed(1)}" y="${(ly-2).toFixed(1)}" text-anchor="middle">${E(clipT(e.label,16))}</text>`+
+         `<text class="ms hsx-lab2" x="${lx.toFixed(1)}" y="${(ly+10).toFixed(1)}" text-anchor="middle">${e.sub}</text></g>`;
+    });
+    if(!ev.length&&st.k==='done') s+=`<text x="${L0+10}" y="${cy-8}" class="ms" style="fill:#22c55e">✓ เสร็จแล้ว (ไม่มีกำหนดค้าง)</text>`;
   });
   const tx=X(now);
-  s+=`<line x1="${tx.toFixed(1)}" x2="${tx.toFixed(1)}" y1="${top-8}" y2="${H-14}" stroke="var(--pri)" stroke-width="2" stroke-dasharray="5 4"/><text x="${tx.toFixed(1)}" y="${H-2}" text-anchor="middle" class="td">วันนี้ ${fmtS(today)}</text>`;
+  s+=`<line x1="${tx.toFixed(1)}" x2="${tx.toFixed(1)}" y1="${top-10}" y2="${H-16}" stroke="var(--pri)" stroke-width="2" stroke-dasharray="5 4"/><text x="${tx.toFixed(1)}" y="${H-2}" text-anchor="middle" class="td">วันนี้ ${fmtS(today)}</text>`;
   return s+'</svg>';
 }
 
@@ -5302,14 +5313,14 @@ function fmtCell(v){
   return /Not specified|No control/i.test(v)?e.replace(/([^\n]*(Not specified|No control)[^\n]*)/gi,'<span class="hs-bad">$1</span>'):e;
 }
 function viewTopic(y,t){
-  const N=numbering(y), a=y.acts.find(x=>x.id===t.act)||{icon:'📌',color:'#8b5cf6',name:''}, ai=y.acts.indexOf(a), s=tStat(t), ss=tState(t);
+  const N=numbering(y), a=y.acts.find(x=>x.id===t.act)||{icon:'📌',color:'#8b5cf6',name:''}, ai=y.acts.indexOf(a), s=tStat(t), ss=tState(t), td=topicEffDue(t);
   let h=`<div class="hs-tb" style="--ac:${E(a.color)}"><div><div class="ey">${E(a.icon)} กิจกรรมที่ ${ai+1} · ${E(a.name)}</div><h2>${E(t.icon)} ${E(N[t.id])} · ${E(t.name)}</h2><div class="bd">${badge(ss)}`+
-    (t.due?`<span>📅 ${E(t.dueNote||'กำหนดเสร็จ')}: <b style="color:var(--txt)">${fmtD(t.due)}</b></span>`:'')+(t.upd?`<span>🕒 ข้อมูลอัปเดต ${fmtD(t.upd)}</span>`:'')+`</div>`+
+    (t.due?`<span>📅 ${E(t.dueNote||'กำหนดเสร็จ')}: <b style="color:var(--txt)">${fmtD(t.due)}</b></span>`:'')+(td&&td!==t.due?`<span title="วันที่ติดตามที่มีผลจริงจากไลน์ / Overall status">🔗 Due ติดตามล่าสุด: <b style="color:var(--txt)">${fmtD(td)}</b></span>`:'')+(t.upd?`<span>🕒 ข้อมูลอัปเดต ${fmtD(t.upd)}</span>`:'')+`</div>`+
     `<div class="bt"><button type="button" class="btn-p" data-act="haddl" data-t="${E(t.id)}">＋ เพิ่มไลน์</button><button type="button" class="btn-g" data-act="hedt" data-t="${E(t.id)}">✎ แก้ไขหัวข้อ</button>${t.ov?'<button type="button" class="btn-g" data-act="ovgo">🧾 Overall status ↓</button>':`<button type="button" class="btn-g" data-act="ovnew" data-t="${E(t.id)}">＋ Overall status</button>`}<button type="button" class="btn-g" data-act="hnav" data-v="dash">← ภาพรวม</button></div></div>`+
     `<div style="text-align:center">${gauge(s.pct,128,pctColor(s.pct))}<div class="ms-mut">OK ${s.c.ok} / ${s.n} ไลน์</div></div></div>`;
   h+=`<div class="hs-st4">`+ORD.filter(k=>s.c[k]||k==='ok'||k==='ng').map(k=>`<div class="hs-sc" style="--sc:${ST[k].c}"><b>${s.c[k]}</b><div>${ST[k].s} ${ST[k].n}<small>${E(t.leg&&t.leg[k]||'')}${s.n?` · ${Math.round(s.c[k]/s.n*100)}%`:''}</small></div></div>`).join('')+`</div>`;
   // board
-  h+=`<div class="ms-card hs-card"><h3>🗂️ สถานะรายไลน์</h3><div class="ms-sub">คลิกแท่งสถานะเพื่อสลับ · คลิกการ์ดเพื่อแก้ไขรายละเอียด</div>`+(t.lines.length?`<div class="hs-board">`+t.lines.slice().sort((x,y2)=>lineNo(x.line)-lineNo(y2.line)).map(l=>`<button type="button" class="hs-tile" style="--sc:${ST[l.st].c}" data-act="hln" data-t="${E(t.id)}" data-l="${E(l.id)}"><i>${ST[l.st].s}</i><b>${E(l.line)}</b><span>${E(ST[l.st].n)}</span>${l.st!=='ok'&&ovEffDue(t,l).d?`<span>\uD83D\uDCC5 ${fmtS(ovEffDue(t,l).d)}</span>`:''}</button>`).join('')+`</div>`:`<div class="ms-sub">ยังไม่มีไลน์ — กด “＋ เพิ่มไลน์”</div>`)+`</div>`;
+  h+=`<div class="ms-card hs-card"><h3>🗂️ สถานะรายไลน์</h3><div class="ms-sub">คลิกแท่งสถานะเพื่อสลับ · คลิกการ์ดเพื่อแก้ไขรายละเอียด</div>`+(t.lines.length?`<div class="hs-board">`+t.lines.slice().sort((x,y2)=>lineNo(x.line)-lineNo(y2.line)).map(l=>{ const d=effDue(t,l); return `<button type="button" class="hs-tile" style="--sc:${ST[l.st].c}" data-act="hln" data-t="${E(t.id)}" data-l="${E(l.id)}"><i>${ST[l.st].s}</i><b>${E(l.line)}</b><span>${E(ST[l.st].n)}</span>${l.st!=='ok'&&d?`<span>\uD83D\uDCC5 ${fmtS(d)}</span>`:''}</button>`; }).join('')+`</div>`:`<div class="ms-sub">ยังไม่มีไลน์ — กด “＋ เพิ่มไลน์”</div>`)+`</div>`;
   if(t.viz==='sensor') h+=sensorChart(t);
   // info
   const now=dn(today), nextI=(t.plan||[]).findIndex(m=>dn(m.d)>=now);
@@ -5388,7 +5399,7 @@ function ovFillDue(t,blocks){
   const o=t.ov, K=o.items.length;
   (blocks||o.blocks).forEach(b=>{
     let docD=''; (b.dm?b.dc.slice(0,1):b.dc).forEach(r=>r.forEach(c=>{ if((c.a||c.s)==='X'&&c.d&&(!docD||c.d<docD)) docD=c.d; }));
-    const ln=t.lines.find(l=>ovLineKey(l.line)===ovLineKey(b.line)), lineD=(ln&&ln.due)||t.due||'';
+    const ln=t.lines.find(l=>ovLineKey(l.line)===ovLineKey(b.line)), rawL=(ln&&ln.due)||'', lineD=(rawL&&t.due&&dn(rawL)<dn(today)&&dn(t.due)>=dn(today))?t.due:(rawL||t.due||'');
     ovSetDue(b,K,lineD||docD,docD||lineD,false);       // Sensor → กำหนดเสร็จของไลน์/หัวข้อ · เอกสาร → วันที่ค้างของเอกสารในตารางนั้น
   });
 }
@@ -5491,13 +5502,23 @@ function ovPersonBar(t,cls){
     `<button type="button" class="ot-chip${F.q===''?' on':''}" data-act="ovq" data-v="">แสดงทั้งหมด (${tot})</button>`+
     names.map(n=>`<button type="button" class="ot-chip${F.q===n?' on':''}" data-act="ovq" data-v="${E(n)}" title="${F.q===n?'คลิกอีกครั้งเพื่อแสดงทั้งหมด':'แสดงเฉพาะงานของ '+(n===OVNONE?'ไลน์ที่ยังไม่ระบุผู้รับผิดชอบ':n)}">${n===OVNONE?'ยังไม่ระบุ':E(n)} (${F.m.get(n)})</button>`).join('')+`</div>`;
 }
-/* Due date ของไลน์ — ดึงจาก Overall status (ช่อง X ที่ใกล้ที่สุด) ก่อน แล้วค่อยใช้ Due ของไลน์/หัวข้อ */
+/* Due date ของไลน์ — Overall status ที่ยังเป็น X มาก่อน; ข้อมูลเก่าใช้ Due หัวข้อแทน Due ไลน์ที่หมดอายุแล้ว */
 function ovEffDue(t,l){
   const key=ovLineKey(l.line); let d='', hasB=false;
   if(t.ov){ const K=t.ov.items.length; t.ov.blocks.forEach(b=>{ if(ovLineKey(b.line)!==key) return; hasB=true; const s=ovBlockStats(b,K); [s.sdue,s.due].forEach(x=>{ if(x&&(!d||x<d)) d=x; }); }); }
   if(d) return {d:d,src:'ov'};
-  if(hasB&&l.st==='ok') return {d:'',src:''};                // Overall status ไม่มีช่อง X ค้าง + ไลน์ OK = ไม่มีกำหนดค้าง
-  return {d:l.due||'',src:l.due?'line':''};
+  if(hasB&&l.st==='ok') return {d:'',src:''};
+  /* v72 legacy repair: เมื่อ Due ไลน์เดิมเลยกำหนด แต่ Due หัวข้อถูกเลื่อนไปอนาคต ให้ถือ Due หัวข้อเป็นค่าที่แก้ล่าสุด */
+  if(l.due&&t.due&&dn(l.due)<dn(today)&&dn(t.due)>=dn(today)) return {d:t.due,src:'topic'};
+  if(l.due) return {d:l.due,src:'line'};
+  return {d:t.due||'',src:t.due?'topic':''};
+}
+function ovSyncPendingDue(t,line,oldDates,d){
+  if(!t||!t.ov) return; const key=ovLineKey(line), olds=new Set((oldDates||[]).filter(Boolean)), K=t.ov.items.length;
+  t.ov.blocks.forEach(b=>{ if(ovLineKey(b.line)!==key) return;
+    b.procs.forEach(p=>p.jigs.forEach(j=>{ j.d=j.d||new Array(K).fill(''); for(let k=0;k<K;k++){ const cur=b.mode==='ba'?(j.a?j.a[k]:''):((j.a&&j.a[k])||j.b[k]); if(cur==='X'&&(!j.d[k]||olds.has(j.d[k]))) j.d[k]=d; } }));
+    (b.dm?b.dc.slice(0,1):b.dc).forEach(r=>r.forEach(c=>{ if((c.a||c.s)==='X'&&(!c.d||olds.has(c.d))) c.d=d; }));
+  });
 }
 function ovSection(t){
   const o=t.ov; if(!o) return '';
@@ -5671,7 +5692,9 @@ function saveLine(){
   const name=g('hlLine').value.trim(); if(!name){ alert('กรุณาใส่ชื่อไลน์'); return; }
   const v={}; document.querySelectorAll('#hsMod .hlv').forEach(el=>{ v[el.dataset.k]=el.value; });
   const o={id:cx.id,line:name,st:cx.st,qe:g('hlQe').value.trim(),pe:g('hlPe').value.trim(),due:iso(g('hlDue').value),v:v};
-  const i=t.lines.findIndex(x=>x.id===cx.id); if(i>=0) t.lines[i]=o; else t.lines.push(o);
+  const i=t.lines.findIndex(x=>x.id===cx.id), prev=i>=0?t.lines[i]:null, oldEff=prev?effDue(t,prev):'';
+  if(i>=0) t.lines[i]=o; else t.lines.push(o);
+  if(o.due&&(!prev||o.due!==prev.due)) ovSyncPendingDue(t,o.line,[prev&&prev.due,oldEff,t.due],o.due);
   closeMod(); touch(); render();
 }
 function openTopic(tid,actId){
@@ -5681,6 +5704,7 @@ function openTopic(tid,actId){
   openMod(`<h3>${isNew?'➕ เพิ่มหัวข้อ':'✎ แก้ไขหัวข้อ'}</h3><div class="hs-fld"><div class="full"><label>ชื่อหัวข้อ</label><input id="htName" value="${E(t.name)}"></div><div><label>ชื่อสั้น (ใช้ในแท็บ / ตาราง)</label><input id="htShort" value="${E(t.short)}"></div><div><label>ไอคอน</label><input id="htIcon" value="${E(t.icon)}"></div>`+
     `<div><label>กิจกรรม</label><select id="htAct">${y.acts.map((a,i)=>`<option value="${E(a.id)}"${a.id===t.act?' selected':''}>${i+1}. ${E(clipT(a.name,40))}</option>`).join('')}</select></div><div><label>ข้อมูลอัปเดตเมื่อ</label><input id="htUpd" type="date" value="${E(t.upd)}"></div>`+
     `<div><label>กำหนดเสร็จของหัวข้อ</label><input id="htDue" type="date" value="${E(t.due)}"></div><div><label>คำอธิบายกำหนดเสร็จ</label><input id="htDueNote" value="${E(t.dueNote)}" placeholder="เช่น All line complete"></div>`+
+    `<div class="full"><label style="display:flex;gap:8px;align-items:flex-start;color:var(--txt);cursor:pointer"><input id="htPropDue" type="checkbox" checked style="width:16px;height:16px;margin-top:2px"> ใช้ Due ใหม่นี้กับไลน์ที่ยังไม่เสร็จและช่อง X ใน Overall status ที่ยังอ้างวันที่เดิม</label></div>`+
     `<div class="full"><label>สรุป / Conclusion</label><textarea id="htConcl" rows="3">${E(t.concl)}</textarea></div><div class="full"><label>Temporary action (เว้นว่างได้)</label><textarea id="htTemp" rows="3">${E(t.temp)}</textarea></div>`+
     `<div class="full"><label>Milestone — 1 บรรทัดต่อ 1 รายการ รูปแบบ  ชื่อ | YYYY-MM-DD</label><textarea id="htPlan" rows="4" placeholder="Plan PV4 | 2026-10-22">${E((t.plan||[]).map(m=>m.l+' | '+m.d).join('\n'))}</textarea></div>`+
     `<div class="full"><label>ความหมายของสถานะ (ไม่บังคับ)</label>`+ORD.map(k=>`<div style="display:grid;grid-template-columns:90px 1fr;gap:8px;align-items:center;margin:4px 0"><b style="color:${ST[k].c};font-size:12px">${ST[k].s} ${ST[k].n.split(' ')[0]}</b><input class="htLeg" data-k="${k}" value="${E((t.leg&&t.leg[k])||'')}"></div>`).join('')+`</div></div>`+
@@ -5689,8 +5713,10 @@ function openTopic(tid,actId){
 function saveTopic(){
   const y=Y(); const t=cx.isNew?cx.draft:fT(cx.tid); if(!t) return closeMod();
   const nm=g('htName').value.trim(); if(!nm){ alert('กรุณาใส่ชื่อหัวข้อ'); return; }
+  const oldDue=t.due;
   t.name=nm; t.short=g('htShort').value.trim()||nm; t.icon=g('htIcon').value.trim()||'📌'; t.act=g('htAct').value; t.upd=iso(g('htUpd').value);
   t.due=iso(g('htDue').value); t.dueNote=g('htDueNote').value.trim(); t.concl=g('htConcl').value; t.temp=g('htTemp').value;
+  if(t.due!==oldDue&&g('htPropDue')&&g('htPropDue').checked){ (t.lines||[]).filter(l=>l.st!=='ok').forEach(l=>{ const oldEff=effDue(t,l); if(!l.due||l.due===oldDue||dn(l.due)<dn(today)) l.due=t.due; ovSyncPendingDue(t,l.line,[oldDue,oldEff],t.due); }); }
   t.plan=g('htPlan').value.split('\n').map(s=>s.trim()).filter(Boolean).map(s=>{ const i=s.lastIndexOf('|'); return i<0?null:{l:s.slice(0,i).trim(),d:s.slice(i+1).trim()}; }).filter(m=>m&&isoOK(m.d));
   t.leg={}; document.querySelectorAll('#hsMod .htLeg').forEach(el=>{ if(el.value.trim()) t.leg[el.dataset.k]=el.value.trim(); });
   if(cx.isNew){ y.topics.push(t); ui.view='topic'; ui.topic=t.id; }
@@ -5873,7 +5899,7 @@ function bind(){
   g('hsFile').addEventListener('change',e=>{ const f=e.target.files[0]; if(f) importFile(f); e.target.value=''; });
 }
 bind();
-window.HS={show:()=>{ ensureYear(); render(); },get:()=>store,records:records,loadRemote:loadRemote,restore:restore};
+window.HS={show:()=>{ ensureYear(); render(); },get:()=>store,records:records,loadRemote:loadRemote,restore:restore,effectiveDue:(t,l)=>effDue(t,l),topicDue:t=>topicEffDue(t)};
 })();
 </script>
 
@@ -6463,13 +6489,13 @@ if(window.SPDB) window.SPDB.bind();
 })();
 </script>
 <script>
-/* ===== Hoshin add-on v71 : Filter ตามคน + แก้ Due/Milestone จาก Timeline + ส่งเข้า Tracker ===== */
+/* ===== Hoshin add-on v72 : Due เดียวกันทุกหน้า + Filter ตามคน + Timeline editable + ส่ง Tracker ไม่ซ้ำ ===== */
 (function(){
 'use strict';
 if(window.__hsAddon) return; window.__hsAddon=true;
 const g=id=>document.getElementById(id), view=()=>g('viewHoshin');
 if(!view()||!window.HS||typeof window.HS.get!=='function'||typeof window.HS.restore!=='function'){
-  console.warn('[Hoshin v71] ไม่พบ #viewHoshin / window.HS'); return;
+  console.warn('[Hoshin v72] ไม่พบ #viewHoshin / window.HS'); return;
 }
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const pad=n=>String(n).padStart(2,'0');
@@ -6488,8 +6514,8 @@ const st=document.createElement('style'); st.id='hsxStyle'; st.textContent=`
 .hsx-bar b,.hsx-filter b{color:var(--txt);font-size:12.5px}.hsx-bar select,.hsx-filter select{width:auto;min-width:180px;padding:6px 10px;font-size:12.5px}.hsx-bar .btn-g,.hsx-filter .btn-g{padding:6px 12px;font-size:12px}.hsx-bar.on,.hsx-filter.on{border-style:solid;border-color:var(--pri)}
 .hsx-hint{font-size:12px;color:var(--mut);font-weight:500}th.hsx-th{cursor:pointer;user-select:none}th.hsx-th:hover{color:var(--txt);background:var(--soft2)}.hsx-ar{font-style:normal;font-size:11px;margin-left:5px;opacity:.35}.hsx-ar.on{opacity:1;color:var(--pri);font-weight:800}
 .hs-m.hsx-edit{cursor:pointer;position:relative;padding-right:30px;transition:transform .12s,box-shadow .12s,border-color .12s}.hs-m.hsx-edit::after{content:"✎";position:absolute;right:10px;top:8px;font-size:12px;opacity:.5}.hs-m.hsx-edit:hover,.hs-m.hsx-edit:focus-visible{border-color:var(--pri);box-shadow:0 8px 20px var(--shp);transform:translateY(-2px);outline:none}.hs-m.hsx-edit:hover::after,.hs-m.hsx-edit:focus-visible::after{opacity:1;color:var(--pri)}.hsx-addm{margin-top:10px;padding:5px 12px;font-size:12px}
-.hsx-point{cursor:pointer}.hsx-point:hover,.hsx-point:focus{filter:drop-shadow(0 0 5px var(--pri));outline:none}.hsx-point:hover text{font-weight:900;text-decoration:underline}
-.hsx-ov{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:16px;z-index:40}.hsx-ov.on{display:flex}.hsx-mod{background:var(--pop,#fff);color:var(--txt);border:1px solid var(--line);border-radius:14px;padding:22px;width:100%;max-width:500px;max-height:92vh;overflow:auto;box-shadow:0 18px 50px rgba(0,0,0,.45)}.hsx-mod h3{margin:0 0 4px;font-size:18px}.hsx-mod .sub{color:var(--mut);font-size:13px;margin-bottom:6px}.hsx-mod label{display:block;font-size:12px;color:var(--mut);margin:12px 0 4px}.hsx-qk{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.hsx-qk button{padding:5px 11px;font-size:12px}.hsx-df{font-size:12px;margin-top:8px;color:var(--mut);line-height:1.6}.hsx-df b{color:var(--txt)}.hsx-act{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}.hsx-check{display:flex!important;gap:8px;align-items:flex-start;color:var(--txt)!important;cursor:pointer;line-height:1.45}.hsx-check input{width:16px;height:16px;margin-top:2px}.hsx-send[disabled]{opacity:.5;cursor:not-allowed}
+.hsx-point{cursor:pointer;pointer-events:all}.hsx-point *{pointer-events:visiblePainted}.hsx-point:hover,.hsx-point:focus-visible{filter:drop-shadow(0 0 5px var(--pri));outline:none}.hsx-point:hover .hsx-labg,.hsx-point:focus-visible .hsx-labg{stroke-width:2.6}.hsx-point:hover .hsx-lab1,.hsx-point:focus-visible .hsx-lab1{font-weight:900;text-decoration:underline}.hs-rm72 .hsx-lab1{font-size:11.5px;font-weight:800;fill:var(--txt)}.hs-rm72 .hsx-lab2{font-size:10px;font-weight:650;fill:var(--mut)}
+.hsx-ov{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:16px;z-index:40}.hsx-ov.on{display:flex}.hsx-mod{background:var(--pop,#fff);color:var(--txt);border:1px solid var(--line);border-radius:14px;padding:22px;width:100%;max-width:500px;max-height:92vh;overflow:auto;box-shadow:0 18px 50px rgba(0,0,0,.45)}.hsx-mod h3{margin:0 0 4px;font-size:18px}.hsx-mod .sub{color:var(--mut);font-size:13px;margin-bottom:6px}.hsx-mod label{display:block;font-size:12px;color:var(--mut);margin:12px 0 4px}.hsx-qk{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.hsx-qk button{padding:5px 11px;font-size:12px}.hsx-df{font-size:12px;margin-top:8px;color:var(--mut);line-height:1.6}.hsx-df b{color:var(--txt)}.hsx-act{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}.hsx-check{display:flex!important;gap:8px;align-items:flex-start;color:var(--txt)!important;cursor:pointer;line-height:1.45}.hsx-check input{width:16px;height:16px;margin-top:2px}.hsx-send[disabled]{opacity:.5;cursor:not-allowed}.hsx-send.sent{color:var(--t-ok);border-color:var(--ok);background:color-mix(in srgb,var(--ok) 10%,var(--card))}#viewHoshin .hs-tb .bt{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 `;
 document.head.appendChild(st);
 
@@ -6521,20 +6547,21 @@ function enhMatrix(){
   const lab=th=>(th.firstChild&&th.firstChild.nodeType===3?th.firstChild.textContent:th.textContent).trim().replace(/\s+/g,' ');
   const cols=ths.map((th,i)=>{if(i===0)return{k:'line',t:'text',lab:'ไลน์'};if(i>=n-3)return[{k:'ng',t:'num',lab:'NG รวม'},{k:'qe',t:'text',lab:'QE'},{k:'pe',t:'text',lab:'PE'}][i-(n-3)];let tid='';for(const r of rows){const e=r.cells[i].querySelector('.hs-c[data-t]');if(e){tid=e.dataset.t;break;}}return tid?{k:'t:'+tid,t:'st',lab:lab(th)}:null;});
   const anchor=tb.parentElement; makeSorter({tb,key:'mx',cols,rows,anchor,line:r=>r.cells[0].textContent,val:(r,c,i)=>{const cell=r.cells[i];if(c.t==='st'){const e=cell.querySelector('.hs-c[data-t]');return e?rankOf(e.textContent):99;}if(c.t==='num')return parseFloat(cell.textContent)||0;return cell.textContent.trim();}});
-  const people=[...new Set(rows.flatMap(r=>[r.cells[n-2].textContent.trim(),r.cells[n-1].textContent.trim()]).filter(Boolean))].sort(nat);
-  const bar=document.createElement('div');bar.className='hsx-filter';bar.innerHTML='<b>👤 Filter ตามคน</b><select class="hsx-person"><option value="">ทุกคน</option>'+people.map(p=>`<option value="${esc(p)}">${esc(p)}</option>`).join('')+'</select><select class="hsx-role"><option value="all">QE หรือ PE</option><option value="qe">เฉพาะ QE</option><option value="pe">เฉพาะ PE</option></select><button type="button" class="btn-g hsx-fclr">✕ ล้าง Filter</button><span class="hsx-hint hsx-count"></span>';
+  const splitPeople=x=>String(x||'').split(/\s*(?:\/|,|&|\+)\s*/).map(v=>v.trim()).filter(Boolean);
+  const people=[...new Set(rows.flatMap(r=>splitPeople(r.cells[n-2].textContent).concat(splitPeople(r.cells[n-1].textContent))))].sort(nat);
+  const bar=document.createElement('div');bar.className='hsx-filter';bar.innerHTML='<b>👤 Filter ตามคน</b><select class="hsx-person" aria-label="เลือกชื่อผู้รับผิดชอบ"><option value="">แสดงทั้งหมด</option>'+people.map(p=>`<option value="${esc(p)}">${esc(p)}</option>`).join('')+'</select><select class="hsx-role" aria-label="เลือกบทบาท"><option value="all">QE หรือ PE</option><option value="qe">เฉพาะ QE</option><option value="pe">เฉพาะ PE</option></select><button type="button" class="btn-g hsx-fclr">แสดงทั้งหมด</button><span class="hsx-hint hsx-count"></span>';
   anchor.parentNode.insertBefore(bar,anchor);const ps=bar.querySelector('.hsx-person'),rs=bar.querySelector('.hsx-role'),ct=bar.querySelector('.hsx-count');ps.value=people.includes(S.mxp)?S.mxp:'';rs.value=/^(qe|pe)$/.test(S.mxr)?S.mxr:'all';
-  const apply=()=>{S.mxp=ps.value;S.mxr=rs.value;saveS();let shown=0;rows.forEach(r=>{const qe=r.cells[n-2].textContent.trim(),pe=r.cells[n-1].textContent.trim(),ok=!S.mxp||(S.mxr==='qe'?qe===S.mxp:S.mxr==='pe'?pe===S.mxp:qe===S.mxp||pe===S.mxp);r.hidden=!ok;if(ok)shown++;});ct.textContent=`แสดง ${shown} / ${rows.length} ไลน์`;bar.classList.toggle('on',!!S.mxp);};
+  const apply=()=>{S.mxp=ps.value;S.mxr=rs.value;saveS();let shown=0;rows.forEach(r=>{const qe=splitPeople(r.cells[n-2].textContent),pe=splitPeople(r.cells[n-1].textContent),ok=!S.mxp||(S.mxr==='qe'?qe.includes(S.mxp):S.mxr==='pe'?pe.includes(S.mxp):qe.includes(S.mxp)||pe.includes(S.mxp));r.hidden=!ok;if(ok)shown++;});ct.textContent=`แสดง ${shown} / ${rows.length} ไลน์`;bar.classList.toggle('on',!!S.mxp);};
   ps.addEventListener('change',apply);rs.addEventListener('change',apply);bar.querySelector('.hsx-fclr').addEventListener('click',()=>{ps.value='';rs.value='all';apply();});apply();
 }
 
 function curYear(){const b=view().querySelector('.ms-yr.on[data-y]');return b?b.dataset.y:'';}
 function getTopic(tid){try{const y=window.HS.get().years[curYear()];return(y&&y.topics.find(t=>t.id===tid))||null;}catch(e){return null;}}
-function enhDetail(){const tb=view().querySelector('table.hs-tbl');if(!tb||tb.dataset.hsx||!tb.tHead||!tb.tBodies[0])return;tb.dataset.hsx='1';const ths=Array.from(tb.tHead.rows[0].cells),rows=Array.from(tb.tBodies[0].rows).filter(r=>r.dataset.l);if(!rows.length)return;const map={'ไลน์':{k:'line',t:'text'},'สถานะ':{k:'st',t:'st'},'QE':{k:'qe',t:'text'},'PE':{k:'pe',t:'text'},'ผู้รับผิดชอบ':{k:'qe',t:'text'},'กำหนด':{k:'due',t:'date'}},used={};const cols=ths.map(th=>{const tx=th.textContent.trim(),m=map[tx];if(!m||used[m.k])return null;used[m.k]=1;return Object.assign({lab:tx},m);});if(!cols.some(Boolean))return;const li=cols.findIndex(c=>c&&c.k==='line');makeSorter({tb,key:'dt',cols,rows,anchor:tb.closest('.hs-tw')||tb.parentElement,num:true,line:r=>r.cells[li>=0?li:1].textContent,val:(r,c,i)=>{if(c.t==='st'){const p=r.cells[i].querySelector('.hs-pill');return p?rankOf(p.textContent):99;}if(c.t==='date'){const t=getTopic(r.dataset.t),l=t&&t.lines.find(x=>x.id===r.dataset.l);return(l&&(pendingDue(t,l.line)||l.due||t.due))||'';}return r.cells[i].textContent.trim();}});}
+function enhDetail(){const tb=view().querySelector('table.hs-tbl');if(!tb||tb.dataset.hsx||!tb.tHead||!tb.tBodies[0])return;tb.dataset.hsx='1';const ths=Array.from(tb.tHead.rows[0].cells),rows=Array.from(tb.tBodies[0].rows).filter(r=>r.dataset.l);if(!rows.length)return;const map={'ไลน์':{k:'line',t:'text'},'สถานะ':{k:'st',t:'st'},'QE':{k:'qe',t:'text'},'PE':{k:'pe',t:'text'},'ผู้รับผิดชอบ':{k:'qe',t:'text'},'กำหนด':{k:'due',t:'date'}},used={};const cols=ths.map(th=>{const tx=th.textContent.trim(),m=map[tx];if(!m||used[m.k])return null;used[m.k]=1;return Object.assign({lab:tx},m);});if(!cols.some(Boolean))return;const li=cols.findIndex(c=>c&&c.k==='line');makeSorter({tb,key:'dt',cols,rows,anchor:tb.closest('.hs-tw')||tb.parentElement,num:true,line:r=>r.cells[li>=0?li:1].textContent,val:(r,c,i)=>{if(c.t==='st'){const p=r.cells[i].querySelector('.hs-pill');return p?rankOf(p.textContent):99;}if(c.t==='date'){const t=getTopic(r.dataset.t),l=t&&t.lines.find(x=>x.id===r.dataset.l);return(l&&effDue(t,l))||'';}return r.cells[i].textContent.trim();}});}
 
 function pendingDue(t,line){const key=lineKey(line);let best='';const keep=d=>{if(isoOK(d)&&(!best||d<best))best=d;};if(!t||!t.ov)return'';(t.ov.blocks||[]).forEach(b=>{if(lineKey(b.line)!==key)return;const K=(t.ov.items||[]).length;(b.procs||[]).forEach(p=>(p.jigs||[]).forEach(j=>{for(let k=0;k<K;k++){const cur=b.mode==='ba'?(j.a?j.a[k]:''):((j.a&&j.a[k])||j.b[k]);if(cur==='X')keep(j.d&&j.d[k]);}}));(b.dm?(b.dc||[]).slice(0,1):(b.dc||[])).forEach(r=>(r||[]).forEach(c=>{if(c&&(c.a||c.s)==='X')keep(c.d);}));});return best;}
-function effDue(t,l){return pendingDue(t,l&&l.line)||(l&&l.due)||t.due||'';}
-function trackerDue(t){if(t.due)return t.due;return(t.lines||[]).filter(l=>l.st!=='ok').map(l=>effDue(t,l)).filter(isoOK).sort()[0]||'';}
+function effDue(t,l){try{if(window.HS&&typeof window.HS.effectiveDue==='function')return window.HS.effectiveDue(t,l)||'';}catch(e){}return pendingDue(t,l&&l.line)||((l&&l.due)||t.due||'');}
+function trackerDue(t){return(t.lines||[]).filter(l=>l.st!=='ok').map(l=>effDue(t,l)).filter(isoOK).sort()[0]||t.due||'';}
 
 let ovEl=null,ovCx=null;
 function openOv(html){if(!ovEl){ovEl=document.createElement('div');ovEl.className='hsx-ov';ovEl.innerHTML='<div class="hsx-mod" id="hsxMod"></div>';document.body.appendChild(ovEl);ovEl.addEventListener('click',e=>{if(e.target===ovEl)closeOv();});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&ovEl.classList.contains('on'))closeOv();});}g('hsxMod').innerHTML=html;ovEl.classList.add('on');}
@@ -6546,15 +6573,20 @@ function commit(mut){const c=ovCx;if(!c)return false;const store=window.HS.get()
 function openMs(tid,i){const t=getTopic(tid);if(!t)return;const m=i>=0&&t.plan?t.plan[i]:null;ovCx={kind:'plan',tid,i,y:curYear()};openOv(`<h3>${m?'✏️ แก้ไข Milestone':'➕ เพิ่ม Milestone'}</h3><div class="sub">หัวข้อ: ${esc(t.short||t.name)}</div><label>ชื่อ Milestone</label><input id="hsxL" value="${esc(m?m.l:'')}" placeholder="เช่น Plan PV4" autocomplete="off"><label>วันที่</label><input id="hsxD" type="date" value="${esc(m?m.d:'')}">${dateQuick()}<div class="hsx-df">${m?'ค่าเดิม: '+diffTxt(m.d)+'<br>':''}ค่าใหม่: <span id="hsxNew">${diffTxt(m?m.d:'')}</span></div><div class="hsx-act"><button type="button" class="btn-p" data-hs="mssave">บันทึก</button>${m?'<button type="button" class="btn-d" data-hs="msdel">🗑 ลบ</button>':''}<button type="button" class="btn-g" data-hs="cancel">ยกเลิก</button></div>`);bindDateInput();setTimeout(()=>{const L=g('hsxL');if(L){L.focus();L.select();}},30);}
 function openDue(el){const tid=el.dataset.t,t=getTopic(tid);if(!t)return;const kind=el.dataset.hsxEdit,old=el.dataset.d||'',ids=(el.dataset.lids||'').split(',').filter(Boolean),lines=(t.lines||[]).filter(l=>ids.includes(l.id));ovCx={kind,tid,y:curYear(),old,ids};const topic=kind==='topic';openOv(`<h3>📅 ${topic?'แก้กำหนดเสร็จของหัวข้อ':'แก้ Due date ของจุดไลน์'}</h3><div class="sub">${esc(t.short||t.name)}${topic?'':' · '+esc(lines.map(l=>l.line).join(', '))}</div><label>วันที่ใหม่</label><input id="hsxD" type="date" value="${esc(old)}">${dateQuick()}<div class="hsx-df">ค่าเดิม: ${diffTxt(old)}<br>ค่าใหม่: <span id="hsxNew">${diffTxt(old)}</span></div>${topic?'<label class="hsx-check"><input id="hsxProp" type="checkbox" checked><span>อัปเดตวันที่ค้างรายไลน์และช่อง X ใน Overall status ที่ยังใช้วันเดิมด้วย</span></label>':'<div class="hsx-hint" style="margin-top:10px">ระบบจะอัปเดตวันที่ของไลน์ และช่อง X ใน Overall status ที่สร้างจุดนี้พร้อมกัน</div>'}<div class="hsx-act"><button type="button" class="btn-p" data-hs="duesave">บันทึกวันที่</button><button type="button" class="btn-g" data-hs="cancel">ยกเลิก</button></div>`);bindDateInput();setTimeout(()=>g('hsxD')&&g('hsxD').focus(),30);}
 function updatePending(t,line,old,d,allOldOnly){if(!t.ov)return;const key=lineKey(line),K=(t.ov.items||[]).length;(t.ov.blocks||[]).forEach(b=>{if(lineKey(b.line)!==key)return;(b.procs||[]).forEach(p=>(p.jigs||[]).forEach(j=>{j.d=j.d||new Array(K).fill('');for(let k=0;k<K;k++){const cur=b.mode==='ba'?(j.a?j.a[k]:''):((j.a&&j.a[k])||j.b[k]);if(cur==='X'&&(!allOldOnly||!j.d[k]||j.d[k]===old))j.d[k]=d;}}));(b.dm?(b.dc||[]).slice(0,1):(b.dc||[])).forEach(r=>(r||[]).forEach(c=>{if(c&&(c.a||c.s)==='X'&&(!allOldOnly||!c.d||c.d===old))c.d=d;}));});}
-function saveDue(){const d=g('hsxD').value;if(!isoOK(d)){alert('กรุณาเลือกวันที่');return;}const c=ovCx;if(commit((t,x)=>{if(x.kind==='topic'){const old=t.due;t.due=d;if(g('hsxProp')&&g('hsxProp').checked)(t.lines||[]).filter(l=>l.st!=='ok').forEach(l=>{if(l.due===old)l.due=d;updatePending(t,l.line,old,d,true);});}else{(t.lines||[]).filter(l=>x.ids.includes(l.id)).forEach(l=>{l.due=d;updatePending(t,l.line,x.old,d,true);});}})){closeOv();say('✅ อัปเดต Due date แล้ว');}}
+function saveDue(){const d=g('hsxD').value;if(!isoOK(d)){alert('กรุณาเลือกวันที่');return;}const c=ovCx;if(commit((t,x)=>{if(x.kind==='topic'){const old=t.due;t.due=d;if(g('hsxProp')&&g('hsxProp').checked)(t.lines||[]).filter(l=>l.st!=='ok').forEach(l=>{if(!l.due||l.due===old||dn(l.due)<dn(todayS()))l.due=d;updatePending(t,l.line,old,d,true);});}else{(t.lines||[]).filter(l=>x.ids.includes(l.id)).forEach(l=>{l.due=d;updatePending(t,l.line,x.old,d,true);});}})){closeOv();say('✅ อัปเดต Due date แล้ว');}}
 function saveMs(){const l=g('hsxL').value.trim(),d=g('hsxD').value;if(!l){alert('กรุณาใส่ชื่อ Milestone');return;}if(!isoOK(d)){alert('กรุณาเลือกวันที่');return;}const isNew=ovCx.i<0;if(commit((t,c)=>{if(c.i>=0&&t.plan[c.i])t.plan[c.i]={l,d};else t.plan.push({l,d});})){closeOv();say(isNew?'✅ เพิ่ม Milestone แล้ว':'✅ อัปเดต Milestone แล้ว');}}
 function delMs(){const c=ovCx,t=getTopic(c.tid),m=t&&t.plan[c.i];if(!m)return closeOv();const run=()=>{ovCx=c;if(commit((tp,x)=>tp.plan.splice(x.i,1))){closeOv();say('🗑 ลบ Milestone แล้ว');}};if(typeof window.ask==='function'){closeOv();window.ask('ลบ Milestone “'+m.l+'”?','รายการนี้จะถูกลบออกจากแผนงานและไทม์ไลน์',run);}else if(confirm('ลบ Milestone “'+m.l+'” ?'))run();}
 function modalClick(e){const b=e.target.closest('[data-hs]');if(!b||!ovCx)return;const a=b.dataset.hs;if(a==='cancel')closeOv();else if(a==='mssave')saveMs();else if(a==='msdel')delMs();else if(a==='duesave')saveDue();}
 document.addEventListener('click',e=>{if(ovEl&&ovEl.contains(e.target))modalClick(e);});
 
 function enhMilestones(){const eb=view().querySelector('[data-act="hedt"][data-t]'),tid=eb?eb.dataset.t:'';if(!tid)return;Array.from(view().querySelectorAll('.hs-box')).forEach(box=>{const h4=box.querySelector('h4'),wrap=box.querySelector('.hs-ms');if(!h4||!wrap||!/Milestone/i.test(h4.textContent)||box.dataset.hsx)return;box.dataset.hsx='1';h4.insertAdjacentHTML('beforeend',' <span class="hsx-hint">· คลิกรายการเพื่อแก้ชื่อ/วันที่</span>');Array.from(wrap.querySelectorAll('.hs-m')).forEach((chip,i)=>{chip.classList.add('hsx-edit');chip.tabIndex=0;chip.setAttribute('role','button');chip.title='คลิกเพื่อแก้ไขชื่อ / วันที่';const go=()=>openMs(tid,i);chip.addEventListener('click',go);chip.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go();}});});const add=document.createElement('button');add.type='button';add.className='btn-g hsx-addm';add.textContent='＋ เพิ่ม Milestone';add.addEventListener('click',()=>openMs(tid,-1));box.appendChild(add);});}
-function enhSend(){const eb=view().querySelector('[data-act="hedt"][data-t]'),bar=view().querySelector('.hs-tb .bt');if(!eb||!bar||bar.querySelector('.hsx-send'))return;const t=getTopic(eb.dataset.t);if(!t)return;const due=trackerDue(t),b=document.createElement('button');b.type='button';b.className='btn-g hsx-send';b.dataset.t=t.id;b.innerHTML='📤 ส่งเข้า Tracker';b.title=due?'กรอกหัวข้อ Hoshin นี้ในฟอร์ม Tracker (Due '+fmtD(due)+')':'ต้องกำหนด Due date ก่อนส่งเข้า Tracker';b.disabled=!due;const back=bar.querySelector('[data-act="hnav"][data-v="dash"]');bar.insertBefore(b,back||null);}
-function sendTracker(tid){const t=getTopic(tid),due=t&&trackerDue(t);if(!t||!due){say('กรุณากำหนด Due date ก่อนส่งเข้า Tracker','var(--t-warn)');return;}try{const qes=[...new Set((t.lines||[]).map(l=>String(l.qe||'').trim()).filter(Boolean))],owner=qes.length===1?qes[0]:qes.length?'QE All':'';showTab('T');resetForm();setD('dd','mm','yy',todayS(),false);setD('dd2','mm2','yy2',due,true);g('owner').value=owner;g('issue').value='[Hoshin] '+(t.name||t.short);const open=(t.lines||[]).filter(l=>l.st!=='ok');g('cm').value='ติดตาม Hoshin: '+(t.short||t.name)+(open.length?' · คงค้าง '+open.length+' ไลน์'+(open.length<=8?' ('+open.map(l=>l.line).join(', ')+')':''):'');g('status').value='In Progress';g('f').scrollIntoView({behavior:'smooth',block:'center'});say('📝 ใส่ข้อมูล Hoshin ในฟอร์ม Tracker แล้ว — ตรวจสอบและกด “เพิ่มรายการ”');}catch(e){console.error(e);say('ไม่สามารถเปิดฟอร์ม Tracker ได้','var(--t-dang)');}}
+function trackerKey(t){return'hoshin:'+curYear()+':'+t.id;}
+function trackerIssue(t){return'[Hoshin] '+(t.name||t.short);}
+function findTracker(t){const key=trackerKey(t),issue=trackerIssue(t),prefix='ติดตาม Hoshin: '+(t.short||t.name);try{return(Array.isArray(data)?data:[]).find(d=>d&&(d.hsk===key||(d.issue===issue&&String(d.cm||'').indexOf(prefix)===0)))||null;}catch(e){return null;}}
+function pendingOwners(t){const open=(t.lines||[]).filter(l=>l.st!=='ok'),m=new Map();open.forEach(l=>{const q=String(l.qe||'').trim()||'ยังไม่ระบุ QE';if(!m.has(q))m.set(q,[]);m.get(q).push(l.line||'–');});return{open:open,map:m,owner:[...m.keys()].join(' / ')};}
+function trackerCm(t,P){const groups=[...P.map.entries()].map(([q,ls])=>q+' ('+ls.join(', ')+')');return'ติดตาม Hoshin: '+(t.short||t.name)+(P.open.length?' · คงค้าง '+P.open.length+' ไลน์ · '+groups.join('; '):' · ครบทุกไลน์แล้ว');}
+function enhSend(){const eb=view().querySelector('[data-act="hedt"][data-t]'),bar=view().querySelector('.hs-tb .bt');if(!eb||!bar||bar.querySelector('.hsx-send'))return;const t=getTopic(eb.dataset.t);if(!t)return;const due=trackerDue(t),ex=findTracker(t),b=document.createElement('button');b.type='button';b.className='btn-g hsx-send'+(ex?' sent':'');b.dataset.t=t.id;b.innerHTML=ex?'✓ อัปเดตใน Tracker':'📤 ส่งเข้า Tracker';b.title=!due?'ต้องกำหนด Due date ก่อนส่งเข้า Tracker':ex?'มีรายการนี้ใน Tracker แล้ว — คลิกเพื่ออัปเดต Due / QE / ไลน์ค้าง โดยไม่สร้างซ้ำ':'สร้างรายการ Tracker พร้อม Due '+fmtD(due)+' และ QE ของไลน์ที่ค้าง';b.disabled=!due;const back=bar.querySelector('[data-act="hnav"][data-v="dash"]');bar.insertBefore(b,back||null);}
+function sendTracker(tid){const t=getTopic(tid),due=t&&trackerDue(t);if(!t||!due){say('กรุณากำหนด Due date ก่อนส่งเข้า Tracker','var(--t-warn)');return;}if(window.__QE_RO){say('โหมดดูอย่างเดียว — ไม่สามารถเพิ่ม Tracker ได้','var(--t-warn)');return;}try{const P=pendingOwners(t),owner=P.owner||'ยังไม่ระบุ QE',issue=trackerIssue(t),cm=trackerCm(t,P),key=trackerKey(t);let d=findTracker(t),created=false,changed=false;if(d){d.hsk=key;d.hsYear=curYear();d.hsTopic=t.id;d.hsLines=P.open.map(l=>l.id);d.owner=owner;d.issue=issue;d.cm=cm;d.revs=Array.isArray(d.revs)?d.revs:[];const current=(d.revs.length&&d.revs[d.revs.length-1].date)||d.due||'';if(current!==due){d.revs.push({date:due,reason:'อัปเดต Due ล่าสุดจาก Hoshin',at:todayS()});changed=true;}d.hsSentAt=new Date().toISOString();changed=true;}else{let id=Date.now();while(data.some(x=>x.id===id))id++;d={id:id,date:todayS(),due:due,owner:owner,issue:issue,cm:cm,status:'In Progress',revs:[],hsk:key,hsYear:curYear(),hsTopic:t.id,hsLines:P.open.map(l=>l.id),hsSentAt:new Date().toISOString()};data.unshift(d);created=true;changed=true;}if(changed){save();try{render();}catch(e){}const b=view().querySelector('.hsx-send[data-t="'+CSS.escape(t.id)+'"]');if(b){b.classList.add('sent');b.innerHTML='✓ อัปเดตใน Tracker';b.title='มีรายการนี้ใน Tracker แล้ว — คลิกเพื่ออัปเดตโดยไม่สร้างซ้ำ';}say(created?'✅ ส่งเข้า Tracker แล้ว · Due '+fmtD(due)+' · '+owner:'✅ อัปเดตรายการเดิมใน Tracker แล้ว (ไม่สร้างซ้ำ)');}}catch(e){console.error(e);say('ไม่สามารถบันทึกเข้า Tracker ได้','var(--t-dang)');}}
 
 view().addEventListener('click',e=>{const send=e.target.closest('.hsx-send[data-t]');if(send){e.preventDefault();e.stopPropagation();if(!send.disabled)sendTracker(send.dataset.t);return;}const p=e.target.closest('[data-hsx-edit]');if(!p)return;e.preventDefault();e.stopPropagation();if(p.dataset.hsxEdit==='plan')openMs(p.dataset.t,+p.dataset.i);else openDue(p);},true);
 view().addEventListener('keydown',e=>{const p=e.target.closest('[data-hsx-edit]');if(p&&(e.key==='Enter'||e.key===' ')){e.preventDefault();if(p.dataset.hsxEdit==='plan')openMs(p.dataset.t,+p.dataset.i);else openDue(p);}});
@@ -9681,7 +9713,7 @@ function collect(){
     const H=window.HS.get(), ys=Object.keys(H.years||{}).sort(), cy=String(new Date().getFullYear()), y=H.years[ys.indexOf(cy)>=0?cy:ys[ys.length-1]];
     if(y){ const map={};
       (y.topics||[]).forEach(t=>{
-        (t.lines||[]).forEach(l=>{ if(l.st==='ok') return; const d=l.due||t.due; if(!d||!mine(l.qe)) return; const n=dd(d); if(n>14) return;
+        (t.lines||[]).forEach(l=>{ if(l.st==='ok') return; const d=(window.HS&&typeof window.HS.effectiveDue==='function'?window.HS.effectiveDue(t,l):(l.due||t.due)); if(!d||!mine(l.qe)) return; const n=dd(d); if(n>14) return;
           const k=t.id+'|'+d, o=map[k]||(map[k]={t:t,date:d,n:n,lines:[],ms:false}); o.lines.push(l.line); });
         (t.plan||[]).forEach(m=>{ const n=dd(m.d); if(n<0||n>14) return; map[t.id+'|ms|'+m.d+'|'+m.l]={t:t,date:m.d,n:n,lines:[],ms:true,label:m.l}; });
       });
@@ -11396,7 +11428,7 @@ function refreshBadges(){
   setBadge('tabM',0);
   try{ const H=window.HS&&window.HS.get?window.HS.get():null; let n=0;
     if(H&&H.years){ const ys=Object.keys(H.years).sort(), y=H.years[ys.indexOf(t.slice(0,4))>=0?t.slice(0,4):ys[ys.length-1]];
-      if(y) (y.topics||[]).forEach(tp=>(tp.lines||[]).forEach(l=>{ const d=l.due||tp.due; if(l.st!=='ok'&&d&&d<t) n++; })); }
+      if(y) (y.topics||[]).forEach(tp=>(tp.lines||[]).forEach(l=>{ const d=(window.HS&&typeof window.HS.effectiveDue==='function'?window.HS.effectiveDue(tp,l):(l.due||tp.due)); if(l.st!=='ok'&&d&&d<t) n++; })); }
     setBadge('tabH',n,'',n?('ไลน์ที่เลยกำหนด '+n):''); }catch(e){ setBadge('tabH',0); }
   try{ if(window.__MY_WORK&&window.__MY_WORK.badge) window.__MY_WORK.badge(); }catch(e){}
   paintHealth(); syncBars();
@@ -13814,8 +13846,9 @@ function collect(){
       const acts={}; (y.acts||[]).forEach(a=>acts[a.id]=a);
       const tps=(y.topics||[]).map(t=>{ const L=Array.isArray(t.lines)?t.lines:[]; const c=k=>L.filter(l=>l.st===k).length;
         const ok=c('ok'),part=c('part'),chk=c('chk'),ng=L.length-ok-part-chk;
-        const lines=L.map(l=>({line:l.line,st:l.st||'ng',qe:NM(l.qe||''),pe:l.pe||'',due:isD(l.due)?l.due:(isD(t.due)?t.due:'')}));
-        return {name:t.short||t.name,full:t.name,icon:t.icon||'',act:acts[t.act]?acts[t.act].name:'',due:isD(t.due)?t.due:'',dueNote:t.dueNote||'',concl:clip(t.concl||'',220),
+        const lines=L.map(l=>{ let d=''; try{ d=window.HS&&typeof window.HS.effectiveDue==='function'?window.HS.effectiveDue(t,l):''; }catch(e){} if(!isD(d)) d=isD(l.due)?l.due:(isD(t.due)?t.due:''); return {line:l.line,st:l.st||'ng',qe:NM(l.qe||''),pe:l.pe||'',due:d}; });
+        const td=lines.filter(l=>l.st!=='ok'&&isD(l.due)).map(l=>l.due).sort()[0]||(isD(t.due)?t.due:'');
+        return {name:t.short||t.name,full:t.name,icon:t.icon||'',act:acts[t.act]?acts[t.act].name:'',due:td,dueNote:t.dueNote||'',concl:clip(t.concl||'',220),
           total:L.length,ok:ok,part:part,chk:chk,ng:ng,pct:pct(ok,L.length),lines:lines,nok:lines.filter(l=>l.st!=='ok'),plan:(t.plan||[]).filter(p=>isD(p.d)).map(p=>({d:p.d,l:p.l||''}))}; });
       const late=[]; tps.forEach(t=>t.nok.forEach(l=>{ if(l.due&&l.due<T) late.push(Object.assign({topic:t.name,late:days(T,l.due)},l)); }));
       const tot=tps.reduce((a,t)=>a+t.total,0), okT=tps.reduce((a,t)=>a+t.ok,0);
@@ -16142,7 +16175,7 @@ html{scroll-padding-top:64px}
 .qd-shell{background:var(--bg,var(--c-bg,var(--surface,#f6f8ff)))!important;color:var(--ink,var(--text,var(--c-text,#172033)))!important}.qd-body{background:linear-gradient(135deg,color-mix(in srgb,var(--pri,var(--primary,#5b5ce2)) 7%,transparent),color-mix(in srgb,var(--acc,var(--accent,#06b6d4)) 6%,transparent)),var(--bg,var(--c-bg,var(--surface,#f6f8ff)))}.qd-head{background:linear-gradient(125deg,var(--pri,var(--primary,#4f46e5)),var(--acc,var(--accent,#0ea5a8)))!important}.qd-guide{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:0 0 14px;padding:9px 12px;border:1px solid color-mix(in srgb,currentColor 14%,transparent);border-radius:12px;background:color-mix(in srgb,var(--card,#fff) 88%,transparent);font-size:11px}.qd-guide>b{font-size:12px}.qd-guide span{display:inline-flex;align-items:center;gap:5px}.qd-guide small{color:#64748b}.qd-gdot{width:9px;height:9px;border-radius:50%;display:inline-block}.qd-gdot.g{background:#10b981}.qd-gdot.y{background:#f59e0b}.qd-gdot.r{background:#ef4444}.qd-card,.qd-kpi,.qd-module{background:var(--card,var(--surface-2,#fff))!important;color:inherit}.qd-state[data-th="1"]{}@media(max-width:720px){.qd-guide{gap:8px}.qd-guide small{width:100%}}
 </style>
 <div id="qeDash" role="dialog" aria-modal="true" aria-labelledby="qdHeading" aria-hidden="true">
- <div class="qd-shell"><header class="qd-head"><div class="qd-title"><h2 id="qdHeading">📊 QE Executive Dashboard</h2><p>ภาพรวมทุกหมวดจากข้อมูลที่บันทึกในเบราว์เซอร์ · อัปเดตตามข้อมูลล่าสุด</p></div><div class="qd-actions"><button type="button" class="qd-btn" id="qdRefresh">↻ <span>รีเฟรช</span></button><button type="button" class="qd-btn" id="qdPrint">🖨 <span>พิมพ์ / PDF</span></button><button type="button" class="qd-btn qd-close" id="qdClose" aria-label="ปิด Dashboard">✕</button></div></header>
+ <div class="qd-shell"><header class="qd-head" style="background-color:#1e3a8a!important;background-image:linear-gradient(125deg,#1e3a8a,#4338ca 58%,#0f766e)!important;color:#fff!important;opacity:1!important;filter:none!important"><div class="qd-title"><h2 id="qdHeading" style="color:#fff!important;-webkit-text-fill-color:#fff!important;opacity:1!important">📊 QE Executive Dashboard</h2><p style="color:#e0e7ff!important;-webkit-text-fill-color:#e0e7ff!important;opacity:1!important">ภาพรวมทุกหมวดจากข้อมูลที่บันทึกในเบราว์เซอร์ · อัปเดตตามข้อมูลล่าสุด</p></div><div class="qd-actions"><button type="button" class="qd-btn" id="qdRefresh" style="background:#f8fafc!important;color:#1e3a8a!important;-webkit-text-fill-color:#1e3a8a!important;border-color:#c7d2fe!important;opacity:1!important">↻ <span style="color:inherit!important;-webkit-text-fill-color:inherit!important">รีเฟรช</span></button><button type="button" class="qd-btn" id="qdPrint" style="background:#f8fafc!important;color:#1e3a8a!important;-webkit-text-fill-color:#1e3a8a!important;border-color:#c7d2fe!important;opacity:1!important">🖨 <span style="color:inherit!important;-webkit-text-fill-color:inherit!important">พิมพ์ / PDF</span></button><button type="button" class="qd-btn qd-close" id="qdClose" aria-label="ปิด Dashboard" style="background:#f8fafc!important;color:#991b1b!important;-webkit-text-fill-color:#991b1b!important;border-color:#fecaca!important;opacity:1!important">✕</button></div></header>
  <main class="qd-body"><div class="qd-filters"><label class="qd-field">หมวดข้อมูล<select id="qdCategory"><option value="all">ทุกหมวด</option></select></label><label class="qd-field">ค้นหา<input id="qdSearch" type="search" placeholder="Owner, Issue, Category…"></label><span class="qd-note" id="qdStamp" aria-live="polite"></span></div><section class="qd-guide" aria-label="คำอธิบายสถานะ"><b>ความหมายสถานะ</b><span><i class="qd-gdot g"></i><strong>ปกติ</strong> เป็นไปตามเป้าหมาย</span><span><i class="qd-gdot y"></i><strong>เฝ้าระวัง</strong> มีงานใกล้กำหนดหรือควรติดตาม</span><span><i class="qd-gdot r"></i><strong>เร่งด่วน</strong> มีงานล่าช้า เลยกำหนด หรือไม่ผ่านเป้าหมาย</span><small>ตัวเลขและสถานะอ้างอิงจากหน้าต้นทาง คลิกการ์ดเพื่อเปิดดูรายละเอียด</small></section><section class="qd-kpis" id="qdKpis"></section><section class="qd-modules" id="qdModules" aria-label="สถานะแต่ละหน้า"></section><section class="qd-grid"><article class="qd-card w8"><h3>สถานะงานตามหมวด</h3><div class="qd-sub">Stacked bar เพื่อเปรียบเทียบปริมาณและสัดส่วน</div><div class="qd-chart" id="qdBar"></div></article><article class="qd-card"><h3>สัดส่วนสถานะ</h3><div class="qd-sub">ภาพรวม Done / In Progress / Delay / Blocked</div><div class="qd-chart" id="qdDonut"></div><div class="qd-legend" id="qdLegend"></div></article><article class="qd-card w8"><h3>Pareto ประเด็นที่ควรโฟกัส</h3><div class="qd-sub">เรียงสถานะของแต่ละหน้าตามลำดับ เร่งด่วน → เฝ้าระวัง → ปกติ</div><div class="qd-chart" id="qdPareto"></div></article><article class="qd-card"><h3>แนวโน้มตามกำหนด</h3><div class="qd-sub">จำนวนรายการที่มีวันที่ในแต่ละเดือน</div><div class="qd-chart" id="qdTrend"></div></article><article class="qd-card w12"><h3>รายละเอียดที่ต้องติดตาม</h3><div class="qd-sub">แสดงเฉพาะรายการที่มีสถานะชัดเจนและยังต้องติดตาม ไม่รวม Other / Not Start</div><div class="qd-tablewrap" id="qdTable"></div></article></section></main></div>
 </div>
 <script id="qeDashJs">
@@ -16154,7 +16187,12 @@ html{scroll-padding-top:64px}
  const dateVal=v=>{if(v==null)return null;const d=new Date(v);return isNaN(d)?null:d};
  function collect(){const out=[],seen=new Set(),keys=['issue_tracker_v2'];for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&!/auth|token|sess|config|theme|ui_|backup|trash/i.test(k))keys.push(k)}
   function walk(x,path,key){if(!x||typeof x!=='object'||seen.has(x))return;seen.add(x);if(Array.isArray(x)){x.forEach((v,i)=>walk(v,path,key));return}const e=x;const name=e.issue||e.title||e.name||e.topic||e.activity||e.subject||e.task||'';const st=e.status||e.state||e.result||'';const cat=e.category||e.type||e.mission||e.group||e.section||key||'Other';const owner=e.owner||e.assignee||e.pic||e.person||e.reporter||'';const due=e.dueDate||e.due||e.date||e.targetDate||e.deadline||e.planDate||'';if(name||st){const sig=[name,st,cat,owner,due].join('|');if(!seen.has(sig)){seen.add(sig);out.push({name:String(name||'(ไม่มีชื่อรายการ)'),status:normStatus(st),rawStatus:String(st||'Other'),category:String(cat||'Other'),owner:String(owner||'-'),due:String(due||''),date:dateVal(due)})}}Object.keys(e).forEach(k=>walk(e[k],path+'.'+k,k))}
-  [...new Set(keys)].forEach(k=>{try{const v=JSON.parse(localStorage.getItem(k));walk(v,k,k)}catch(e){}});return out}
+  [...new Set(keys)].forEach(k=>{try{const v=JSON.parse(localStorage.getItem(k));walk(v,k,k)}catch(e){}});
+  /* v72: Hoshin rows are added explicitly so Overdue / Delay uses the same latest Due rule as the Hoshin page. */
+  try{const H=window.HS&&window.HS.get?window.HS.get():null,ys=H&&H.years?Object.keys(H.years).sort():[],cy=String(new Date().getFullYear()),y=ys.length&&H.years[H.years[cy]?cy:ys[ys.length-1]],now=new Date(),isoNow=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+   if(y)(y.topics||[]).forEach(t=>(t.lines||[]).forEach(l=>{let due='';try{due=window.HS.effectiveDue(t,l)||''}catch(e){due=l.due||t.due||''}const status=l.st==='ok'?'done':(due&&due<isoNow?'delay':'progress'),raw=l.st==='ok'?'Done':status==='delay'?'Overdue':'In Progress',name=(t.short||t.name||'Hoshin')+' · '+(l.line||'Line'),sig=[name,raw,'Hoshin',l.qe||'',due].join('|');if(!seen.has(sig)){seen.add(sig);out.push({name:name,status:status,rawStatus:raw,category:'Hoshin',owner:String(l.qe||'-'),due:String(due||''),date:dateVal(due)})}}));
+  }catch(e){console.warn('dashboard Hoshin rows',e)}
+  return out}
  function svgEmpty(t){return'<div class="qd-empty">'+esc(t)+'</div>'}
  function summarize(rows){const s={done:0,progress:0,delay:0,blocked:0,other:0};rows.forEach(r=>s[r.status]++);return s}
  function moduleData(M){
@@ -16165,7 +16203,7 @@ html{scroll-padding-top:64px}
   list.push({icon:'🎯',name:'7 Mission',page:'7 Mission',level:M.ms&&M.ms.pct!=null?(M.ms.pct>=80?'G':M.ms.pct>=50?'Y':'R'):'N',detail:M.ms&&M.ms.pct!=null?'ผ่านเป้า '+M.ms.pct+'% · O '+M.ms.ok+' · X '+M.ms.ng:'ยังไม่มีผล Actual'});
   list.push({icon:'⏱',name:'OT Control',page:'7 Mission',level:M.ot&&M.ot.overall!=null?(M.ot.j==='X'?'R':'G'):'N',detail:M.ot&&M.ot.overall!=null?'เฉลี่ย '+Number(M.ot.overall).toFixed(2)+' ชม./คน/วัน · เป้า ≤ '+Number(M.ot.set.tgtDay||0).toFixed(2):'ยังไม่มีข้อมูล OT'});
   list.push({icon:'🌴',name:'แผนลา / อบรม',page:'7 Mission',level:M.lv&&M.lv.eV?(M.lv.conf?'Y':'G'):'N',detail:M.lv&&M.lv.eV?'ใช้พักร้อน '+Math.round(M.lv.uV/M.lv.eV*100)+'% · วันซ้อนเกินเกณฑ์ '+M.lv.conf:'ยังไม่มีข้อมูลแผนลา'});
-  list.push({icon:'🧭',name:'Hoshin',page:'Hoshin',level:M.hs?(M.hs.pct>=80?'G':M.hs.pct>=50?'Y':'R'):'N',detail:M.hs?'OK '+M.hs.ok+'/'+M.hs.total+' · '+pctv(M.hs.pct)+' · Partial '+M.hs.part:'ยังไม่มีข้อมูล'});
+  list.push({icon:'🧭',name:'Hoshin',page:'Hoshin',level:M.hs?(M.hs.late&&M.hs.late.length?'R':M.hs.pct>=80?'G':M.hs.pct>=50?'Y':'R'):'N',detail:M.hs?'OK '+M.hs.ok+'/'+M.hs.total+' · '+pctv(M.hs.pct)+' · Overdue '+((M.hs.late&&M.hs.late.length)||0)+' · Partial '+M.hs.part:'ยังไม่มีข้อมูล'});
   list.push({icon:'🧪',name:'PCR',page:'Main QE Jobs',level:M.pcr?(M.pcr.delay?'R':M.pcr.plan?'Y':'G'):'N',detail:M.pcr?'Done '+M.pcr.done+' · On-plan '+M.pcr.plan+' · Delay '+M.pcr.delay:'ยังไม่มีข้อมูล'});
   list.push({icon:'🔎',name:'Q-patrol audit',page:'Main QE Jobs',level:M.qp?(M.qp.delay?'R':M.qp.late&&M.qp.late.length?'Y':'G'):'N',detail:M.qp?'หัวข้อ '+M.qp.items.length+' · Delay '+M.qp.delay+' · กิจกรรมเลยกำหนด '+((M.qp.late&&M.qp.late.length)||0):'ยังไม่มีข้อมูล'});
   list.push({icon:'🏭',name:'PV / New Project',page:'Main QE Jobs',level:M.pv?(M.pv.delay&&M.pv.delay.length?'R':M.pv.next&&M.pv.next.length?'Y':'G'):'N',detail:M.pv?'Model '+M.pv.models.length+' · Delay '+((M.pv.delay&&M.pv.delay.length)||0)+' · ใกล้ถึงกำหนด '+((M.pv.next&&M.pv.next.length)||0):'ยังไม่มีข้อมูล'});
@@ -16266,5 +16304,23 @@ html{scroll-padding-top:64px}
 #viewHoshin .ov-own .ov-pe{display:block;margin-top:3px;font-size:11px;color:var(--mut);font-weight:600}
 #viewHoshin .ov-link{margin-left:4px;font-size:11px;opacity:.85;cursor:help}
 #viewHoshin .ov-card{margin-bottom:12px}
+</style>
+
+<style id="qeV72FinalFixes">
+/* v72: stable Executive Dashboard contrast in every app theme and OS color mode */
+#qeDash .qd-head{background-color:#1e3a8a!important;background-image:linear-gradient(125deg,#1e3a8a,#4338ca 58%,#0f766e)!important;color:#fff!important;opacity:1!important;filter:none!important;isolation:isolate}
+#qeDash .qd-title h2{color:#fff!important;-webkit-text-fill-color:#fff!important;text-shadow:0 1px 2px rgba(0,0,0,.45)!important;opacity:1!important}
+#qeDash .qd-title p{color:#e0e7ff!important;-webkit-text-fill-color:#e0e7ff!important;text-shadow:0 1px 2px rgba(0,0,0,.4)!important;opacity:1!important}
+#qeDash .qd-actions .qd-btn{background:#f8fafc!important;color:#1e3a8a!important;-webkit-text-fill-color:#1e3a8a!important;border:1px solid #c7d2fe!important;text-shadow:none!important;opacity:1!important}
+#qeDash .qd-actions .qd-btn span{color:inherit!important;-webkit-text-fill-color:inherit!important;text-shadow:none!important}
+#qeDash .qd-actions .qd-btn:hover{background:#e0e7ff!important}
+#qeDash .qd-actions .qd-close{color:#991b1b!important;-webkit-text-fill-color:#991b1b!important;border-color:#fecaca!important}
+#viewHoshin .hs-rm72{min-width:880px}
+#viewHoshin .hs-card:has(.hs-rm72){overflow-x:auto}
+#viewHoshin .hs-mx{min-width:820px}
+#viewHoshin .hs-mx th{position:sticky;top:0;z-index:2;background:var(--pop,var(--card,#fff))}
+#viewHoshin .hs-mx th:first-child,#viewHoshin .hs-mx td:first-child{position:sticky;left:0;z-index:3;background:var(--pop,var(--card,#fff));box-shadow:1px 0 0 var(--line)}
+#viewHoshin .hsx-filter select{max-width:min(260px,72vw)}
+#viewHoshin .hs-tb .bd{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center}
 </style>
 </body></html>
