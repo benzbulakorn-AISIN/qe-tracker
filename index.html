@@ -10,6 +10,7 @@
 <!-- v71 (31-Oct-2026): Hoshin ใช้ Due จาก Overall status ในป้าย/ภาพรวม, Timeline แก้วันที่ตรงจุด, ตารางสรุป Filter ตามคน, ส่งเข้า Tracker -->
 <!-- v72 (31-Oct-2026): รวม Due ล่าสุดของ Hoshin ทุกหน้า/ตัวเลข, Timeline คลิกแก้วันที่และป้ายไม่ซ้อน, ส่ง Tracker ไม่ซ้ำ, Matrix Filter ตามคน, Dashboard contrast ชัดเจน -->
 <!-- v73 (31-Oct-2026): Hoshin one-screen layout — ย่อ Timeline ให้เห็นครบทุกหัวข้อ, รวมกำหนดถัดไปกับ Matrix แบบเคียงกัน, ตารางไม่ตกขอบที่ 1366px ทั้งธีมสว่าง/มืด -->
+<!-- v74 (31-Oct-2026): Hoshin Timeline แบบ compact 5 แถว — ป้ายสั้นไม่ชนจุด/ไม่ซ้อน, hover ดูรายละเอียดเต็ม, คลิกแก้วันที่ได้, เห็นครบในจอ laptop -->
 <!-- v66 (30-Oct-2026): หน้า 🗓️ ประชุม — เส้นเวลาปัจจุบัน (Now line) + ไทม์ไลน์รายวัน + ไฮไลต์ประชุมที่กำลังเกิด/ผ่านไปแล้ว — ดูบล็อก "v66" ในสคริปต์ mtgAddon -->
 <!-- v67 (30-Oct-2026): หน้า “งานของฉัน” — แผนงานประจำวัน (ตารางรายชั่วโมง 07:30–16:30 + OT, ขั้น 30 น./1 ชม., ดึงประชุมของฉัน, งานอื่นอยู่ด้านล่าง) — ดูบล็อก “v67” ในสคริปต์ myWorkNavAddon -->
 <!-- v69 (30-Oct-2026): Main QE Jobs › New project — (1) สลับลำดับรุ่นในตาราง PV (▲▼ / ลากที่ ⠿ / ปุ่มเรียงตามวันที่) (2) หน้า Follow-up: ติ๊กเลือกหลายรายการแล้วลบทีเดียว (3) รูปในหน้า Organization ซิงก์ให้ทุกคนเห็น (คีย์ qe_org_photo_*) -->
@@ -5214,7 +5215,7 @@ function viewDash(y){
   });
   h+=`</div>`;
   // v73: compact roadmap + one-screen follow-up/matrix workspace
-  h+=`<div class="ms-card hs-card hs-v73-timeline"><h3>🗺️ ไทม์ไลน์กำหนดเสร็จ</h3><div class="hs-timeline-key" aria-label="คำอธิบายไทม์ไลน์"><span class="hs-key k-done"><b>✓</b> เสร็จจริง</span><span class="hs-key k-watch"><b>●</b> ใกล้กำหนด</span><span class="hs-key k-delay"><b>◆</b> Delay</span><span class="hs-key k-topic"><b>◆</b> กำหนดหัวข้อ <small>เลข = ไลน์ค้าง</small></span><span class="hs-key k-line"><b>●</b> กำหนดเฉพาะไลน์</span><span class="hs-key k-ms"><b>◇</b> Milestone</span><span class="hs-key k-today"><b>┆</b> วันนี้</span><small class="hs-key-help">คลิกจุดวันที่หรือ Milestone เพื่อแก้ไขวันที่ตรงจุด</small></div>${roadmap(y)}</div>`;
+  h+=`<div class="ms-card hs-card hs-v73-timeline"><h3>🗺️ ไทม์ไลน์กำหนดเสร็จ</h3><div class="hs-timeline-key" aria-label="คำอธิบายไทม์ไลน์"><span class="hs-key k-done"><b>✓</b> เสร็จจริง</span><span class="hs-key k-watch"><b>●</b> ใกล้กำหนด</span><span class="hs-key k-delay"><b>◆</b> Delay</span><span class="hs-key k-topic"><b>◆</b> กำหนดหัวข้อ <small>เลข = ไลน์ค้าง</small></span><span class="hs-key k-line"><b>●</b> กำหนดเฉพาะไลน์</span><span class="hs-key k-ms"><b>◇</b> Milestone</span><span class="hs-key k-today"><b>┆</b> วันนี้</span><small class="hs-key-help">วางเมาส์ดูรายละเอียดเต็ม · คลิกจุด/ป้ายเพื่อแก้ไข</small></div>${roadmap(y)}</div>`;
   h+=`<div class="hs-v73-summary">`+
     `<section class="ms-card hs-card hs-v73-follow"><h3>📌 กำหนดถัดไป</h3><div class="ms-sub">เลยกำหนด + ภายใน 30 วัน · คลิกเพื่อเปิดหัวข้อ</div>`+followUp(D,N)+`</section>`+
     `<section class="ms-card hs-card hs-v73-matrix"><h3>🧩 ภาพรวมรายไลน์ × หัวข้อ</h3><div class="ms-sub">สรุปสถานะและผู้รับผิดชอบในตารางเดียว · คลิกช่องเพื่อดู/แก้ไข</div><div class="hs-leg">${ORD.map(k=>`<span><i style="background:${ST[k].c}">${ST[k].s}</i>${ST[k].n}</span>`).join('')}<span><i style="background:transparent;color:var(--mut);border:1px dashed var(--line)">–</i>ไม่อยู่ในหัวข้อนี้</span></div>${matrix(y,ord,N)}</section>`+
@@ -5247,47 +5248,75 @@ function roadmap(y){
   ord.forEach(t=>{ if(t.due) pts.push(dn(t.due)); (t.plan||[]).forEach(m=>pts.push(dn(m.d))); (t.lines||[]).forEach(l=>{ const d=l.st!=='ok'&&effDue(t,l); if(d) pts.push(dn(d)); }); });
   const mn=Math.min.apply(null,pts), mxv=Math.max.apply(null,pts), sd=new Date(mn*864e5), ed=new Date(mxv*864e5);
   const start=Date.UTC(sd.getUTCFullYear(),sd.getUTCMonth(),1)/864e5, end=Date.UTC(ed.getUTCFullYear(),ed.getUTCMonth()+1,1)/864e5;
-  /* v73: compact lanes; four collision-aware label rows remain independently clickable */
-  const W=1120,L0=180,R0=W-24,laneH=96,top=38,H=top+Math.max(1,ord.length)*laneH+16, X=d=>L0+(d-start)/(end-start)*(R0-L0);
+  /* v74: 5 compact lanes fit in one laptop viewport. Labels use two collision-free tracks per lane. */
+  const W=1120,L0=205,R0=W-24,laneH=66,top=40,bottom=24,H=top+Math.max(1,ord.length)*laneH+bottom, X=d=>L0+(d-start)/(end-start)*(R0-L0);
   const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-  let s=`<svg class="ms-trend hs-rm hs-rm72" viewBox="0 0 ${W} ${H}" role="img" aria-label="ไทม์ไลน์กำหนดเสร็จของแต่ละหัวข้อ">`;
+  const msShort=(label,i)=>{
+    let q=String(label||'').replace(/^Plan\s*/i,'').replace(/\bAll\s+models?\b/ig,'All').replace(/[()]/g,' ').replace(/\s+/g,' ').trim();
+    if(q.length<=14) return q||('MS '+(i+1));
+    const ac=(q.match(/\b[A-Z]{2,}[A-Z0-9-]*\b/g)||[]).slice(0,2);
+    return ac.length?ac.join(' '):('MS '+(i+1));
+  };
+  const chipWidth=txt=>clamp(18+Array.from(String(txt)).reduce((n,c)=>n+(/[\u0E00-\u0E7F]/.test(c)?6.3:/[A-Z0-9]/.test(c)?6.2:5.2),0),76,124);
+  const place=(events)=>{
+    const tracks=[[],[]];
+    events.forEach((e,i)=>{ e.track=i%2; e.w=chipWidth(e.short); tracks[e.track].push(e); });
+    tracks.forEach(arr=>{
+      const gap=6,left=L0+4,right=R0-4;
+      arr.forEach((e,i)=>{
+        const lo=left+e.w/2, hi=right-e.w/2;
+        e.lx=clamp(e.x,lo,hi);
+        if(i){ const p=arr[i-1]; e.lx=Math.max(e.lx,p.lx+p.w/2+gap+e.w/2); }
+      });
+      for(let i=arr.length-1;i>=0;i--){
+        const e=arr[i], hi=i===arr.length-1?right-e.w/2:arr[i+1].lx-arr[i+1].w/2-gap-e.w/2;
+        e.lx=Math.min(e.lx,hi);
+      }
+      if(arr.length){
+        const miss=left-(arr[0].lx-arr[0].w/2);
+        if(miss>0) arr.forEach(e=>e.lx+=miss);
+      }
+    });
+  };
+  let s=`<svg class="ms-trend hs-rm hs-rm72 hs-rm74" viewBox="0 0 ${W} ${H}" role="img" aria-label="ไทม์ไลน์กำหนดเสร็จแบบย่อของแต่ละหัวข้อ วางเมาส์เพื่อดูรายละเอียดเต็มและคลิกเพื่อแก้ไข">`;
   let cur=new Date(start*864e5), k=0;
   while(Date.UTC(cur.getUTCFullYear(),cur.getUTCMonth(),1)/864e5<end){
-    const a=Date.UTC(cur.getUTCFullYear(),cur.getUTCMonth(),1)/864e5, b=Date.UTC(cur.getUTCFullYear(),cur.getUTCMonth()+1,1)/864e5;
-    s+=`<rect x="${X(a).toFixed(1)}" y="${top-10}" width="${(X(b)-X(a)).toFixed(1)}" height="${H-top-2}" fill="var(--soft)" fill-opacity="${k%2?0:.55}"/>`+
-       `<text x="${((X(a)+X(b))/2).toFixed(1)}" y="${top-18}" text-anchor="middle" class="lb">${TM[cur.getUTCMonth()]}${cur.getUTCMonth()===0||k===0?' '+String(cur.getUTCFullYear()+543).slice(2):''}</text>`;
+    const a=Date.UTC(cur.getUTCFullYear(),cur.getUTCMonth(),1)/864e5, b=Date.UTC(cur.getUTCFullYear(),cur.getUTCMonth()+1,1)/864e5, xa=X(a), xb=X(b);
+    s+=`<rect x="${xa.toFixed(1)}" y="${top-6}" width="${(xb-xa).toFixed(1)}" height="${H-top-bottom+8}" fill="var(--soft)" fill-opacity="${k%2?.18:.48}"/>`+
+       `<line x1="${xa.toFixed(1)}" x2="${xa.toFixed(1)}" y1="${top-6}" y2="${H-bottom+2}" stroke="var(--line)" stroke-width="1" stroke-opacity=".75"/>`+
+       `<text x="${((xa+xb)/2).toFixed(1)}" y="18" text-anchor="middle" class="lb">${TM[cur.getUTCMonth()]}${cur.getUTCMonth()===0||k===0?' '+String(cur.getUTCFullYear()+543).slice(2):''}</text>`;
     cur=new Date(b*864e5); k++;
   }
+  s+=`<line x1="${R0}" x2="${R0}" y1="${top-6}" y2="${H-bottom+2}" stroke="var(--line)" stroke-width="1" stroke-opacity=".75"/>`;
   ord.forEach((t,i)=>{
     const a=y.acts.find(x=>x.id===t.act)||{color:'#8b5cf6'}, cy=top+i*laneH+laneH/2, st=tState(t), ev=[];
-    s+=`<line x1="${L0}" x2="${R0}" y1="${cy}" y2="${cy}" stroke="var(--line)" stroke-width="2"/>`+
-       `<circle cx="14" cy="${cy}" r="6" fill="${E(a.color)}"/><text x="28" y="${cy+4}" class="lb">${E(clipT(t.short,24))}${st.k==='done'?' ✓':''}</text>`;
+    s+=`<line x1="${L0}" x2="${R0}" y1="${cy}" y2="${cy}" stroke="var(--line)" stroke-width="1.5"/>`+
+       `<circle cx="14" cy="${cy}" r="5.5" fill="${E(a.color)}"/><text x="27" y="${cy+4}" class="lb">${E(t.short)}${st.k==='done'?' ✓':''}</text>`;
     const dots={}; (t.lines||[]).forEach(l=>{ if(l.st==='ok') return; const d=effDue(t,l); if(!d) return; const q=dots[d]||(dots[d]={lines:[],ids:[]}); q.lines.push(l.line); q.ids.push(l.id); });
-    Object.keys(dots).sort().forEach(d=>{ if(d===t.due) return; const q=dots[d]; ev.push({kind:'line',d:d,x:X(dn(d)),label:q.lines.join(', '),sub:fmtS(d),ids:q.ids,n:q.lines.length,over:dn(d)<now}); });
-    (t.plan||[]).forEach((m,mi)=>ev.push({kind:'plan',d:m.d,x:X(dn(m.d)),label:m.l.replace(/^Plan\s*/i,''),sub:fmtS(m.d),i:mi,over:dn(m.d)<now}));
-    if(t.due){ const open=(t.lines||[]).filter(l=>l.st!=='ok'&&effDue(t,l)===t.due).length; ev.push({kind:'topic',d:t.due,x:X(dn(t.due)),label:t.dueNote||'กำหนดหัวข้อ',sub:fmtS(t.due),n:open,done:st.k==='done',over:st.k!=='done'&&dn(t.due)<now}); }
-    ev.sort((x,z)=>dn(x.d)-dn(z.d)||({line:0,plan:1,topic:2}[x.kind]-({line:0,plan:1,topic:2}[z.kind])));
-    const slots=[-16,16,-36,36], last=new Array(slots.length).fill(-1e9), gap=100;
-    ev.forEach((e,ei)=>{
-      let best=0,bestCost=Infinity,bestX=e.x;
-      for(let q=0;q<slots.length;q++){ const nx=Math.max(clamp(e.x,L0+48,R0-48),last[q]+gap), overflow=Math.max(0,nx-(R0-48)), cost=overflow*10000+Math.abs(nx-e.x)+Math.abs(slots[q])*.04; if(cost<bestCost){bestCost=cost;best=q;bestX=nx;} }
-      const lx=clamp(bestX,L0+48,R0-48), ly=cy+slots[best]; last[best]=lx;
-      const at=e.kind==='plan'?`data-hsx-edit="plan" data-t="${E(t.id)}" data-i="${e.i}"`:`data-hsx-edit="${e.kind}" data-t="${E(t.id)}" data-d="${E(e.d)}"${e.kind==='line'?` data-lids="${E(e.ids.join(','))}"`:''}`;
+    Object.keys(dots).sort().forEach(d=>{ if(d===t.due) return; const q=dots[d], n=q.lines.length; ev.push({kind:'line',d:d,x:X(dn(d)),label:q.lines.join(', '),short:`${fmtS(d)} · ${n} ไลน์`,ids:q.ids,n:n,over:dn(d)<now}); });
+    (t.plan||[]).forEach((m,mi)=>ev.push({kind:'plan',d:m.d,x:X(dn(m.d)),label:m.l,short:`${fmtS(m.d)} · ${msShort(m.l,mi)}`,i:mi,over:dn(m.d)<now}));
+    if(t.due){ const open=(t.lines||[]).filter(l=>l.st!=='ok'&&effDue(t,l)===t.due).length; ev.push({kind:'topic',d:t.due,x:X(dn(t.due)),label:t.dueNote||'กำหนดหัวข้อ',short:`${fmtS(t.due)} · เป้า ${open||'✓'}`,n:open,done:st.k==='done',over:st.k!=='done'&&dn(t.due)<now}); }
+    ev.sort((x,z)=>dn(x.d)-dn(z.d)||(({line:0,plan:1,topic:2}[x.kind])-({line:0,plan:1,topic:2}[z.kind])));
+    place(ev);
+    ev.forEach(e=>{
+      const ly=cy+(e.track===0?-23:23), at=e.kind==='plan'?`data-hsx-edit="plan" data-t="${E(t.id)}" data-i="${e.i}"`:`data-hsx-edit="${e.kind}" data-t="${E(t.id)}" data-d="${E(e.d)}"${e.kind==='line'?` data-lids="${E(e.ids.join(','))}"`:''}`;
       const aria=e.kind==='plan'?`แก้ Milestone ${e.label}`:e.kind==='topic'?`แก้กำหนดเสร็จหัวข้อ ${t.short}`:`แก้ Due date ${e.label}`;
+      const detail=e.kind==='plan'?`Milestone: ${e.label}\n${fmtD(e.d)}\nคลิกเพื่อแก้ไขชื่อหรือวันที่`:e.kind==='topic'?`กำหนดหัวข้อ: ${e.label}\n${t.name}\n${fmtD(e.d)} · ค้าง ${e.n||0} ไลน์\nคลิกเพื่อแก้ไขวันที่`:`กำหนดเฉพาะไลน์: ${e.label}\n${fmtD(e.d)} · ${e.n} ไลน์\nคลิกเพื่อแก้ไข Due date`;
       const stroke=e.over?'#ef4444':e.kind==='line'?'#f59e0b':E(a.color), fill=e.kind==='topic'?(e.done?'#22c55e':e.over?'#ef4444':E(a.color)):'var(--card)';
       s+=`<g class="hsx-point hsx-${e.kind}" ${at} tabindex="0" role="button" aria-label="${E(aria)}">`+
-         `<title>${E(e.label)} · ${fmtD(e.d)} · คลิกเพื่อแก้ไขวันที่</title>`+
-         `<line x1="${e.x.toFixed(1)}" y1="${cy}" x2="${lx.toFixed(1)}" y2="${(ly+(slots[best]<0?11:-11)).toFixed(1)}" stroke="${stroke}" stroke-width="1.1" stroke-dasharray="3 3" opacity=".7"/>`;
-      if(e.kind==='line') s+=`<circle cx="${e.x.toFixed(1)}" cy="${cy}" r="10" fill="${e.over?'#ef4444':'#f59e0b'}"/><text x="${e.x.toFixed(1)}" y="${cy+4}" text-anchor="middle" class="in">${e.n}</text>`;
-      else { const r=e.kind==='topic'?11:7; s+=`<rect x="${(e.x-r).toFixed(1)}" y="${cy-r}" width="${r*2}" height="${r*2}" rx="${e.kind==='topic'?3:1}" transform="rotate(45 ${e.x.toFixed(1)} ${cy})" fill="${fill}" stroke="${stroke}" stroke-width="${e.kind==='topic'?0:2.5}"/>`; if(e.kind==='topic') s+=`<text x="${e.x.toFixed(1)}" y="${cy+4}" text-anchor="middle" class="in">${e.n||'✓'}</text>`; }
-      s+=`<rect class="hsx-labg" x="${(lx-44).toFixed(1)}" y="${(ly-11).toFixed(1)}" width="88" height="22" rx="6" fill="var(--card)" stroke="${stroke}" stroke-width="1.25"/>`+
-         `<text class="ms hsx-lab1" x="${lx.toFixed(1)}" y="${(ly-1).toFixed(1)}" text-anchor="middle">${E(clipT(e.label,14))}</text>`+
-         `<text class="ms hsx-lab2" x="${lx.toFixed(1)}" y="${(ly+8).toFixed(1)}" text-anchor="middle">${e.sub}</text></g>`;
+         `<title>${E(detail)}</title>`+
+         `<line x1="${e.x.toFixed(1)}" y1="${cy}" x2="${e.lx.toFixed(1)}" y2="${(ly+(e.track===0?9:-9)).toFixed(1)}" stroke="${stroke}" stroke-width="1.1" stroke-dasharray="2.5 2.5" opacity=".72"/>`;
+      if(e.kind==='line') s+=`<circle cx="${e.x.toFixed(1)}" cy="${cy}" r="8.5" fill="${e.over?'#ef4444':'#f59e0b'}"/><text x="${e.x.toFixed(1)}" y="${cy+3.5}" text-anchor="middle" class="in" style="font-size:10px">${e.n}</text>`;
+      else { const r=e.kind==='topic'?9:6; s+=`<rect x="${(e.x-r).toFixed(1)}" y="${cy-r}" width="${r*2}" height="${r*2}" rx="${e.kind==='topic'?3:1}" transform="rotate(45 ${e.x.toFixed(1)} ${cy})" fill="${fill}" stroke="${stroke}" stroke-width="${e.kind==='topic'?0:2.2}"/>`; if(e.kind==='topic') s+=`<text x="${e.x.toFixed(1)}" y="${cy+3.5}" text-anchor="middle" class="in" style="font-size:10px">${e.n||'✓'}</text>`; }
+      s+=`<rect class="hsx-labg hsx-chip" x="${(e.lx-e.w/2).toFixed(1)}" y="${(ly-9).toFixed(1)}" width="${e.w.toFixed(1)}" height="18" rx="7" fill="var(--card)" stroke="${stroke}" stroke-width="1.25"/>`+
+         `<text class="ms hsx-lab1" x="${e.lx.toFixed(1)}" y="${(ly+3.5).toFixed(1)}" text-anchor="middle">${E(e.short)}</text></g>`;
     });
-    if(!ev.length&&st.k==='done') s+=`<text x="${L0+10}" y="${cy-8}" class="ms" style="fill:#22c55e">✓ เสร็จแล้ว (ไม่มีกำหนดค้าง)</text>`;
+    if(!ev.length&&st.k==='done') s+=`<text x="${L0+10}" y="${cy-8}" class="ms" style="fill:#22c55e;font-size:10.5px">✓ เสร็จแล้ว (ไม่มีกำหนดค้าง)</text>`;
   });
-  const tx=X(now);
-  s+=`<line x1="${tx.toFixed(1)}" x2="${tx.toFixed(1)}" y1="${top-10}" y2="${H-16}" stroke="var(--pri)" stroke-width="2" stroke-dasharray="5 4"/><text x="${tx.toFixed(1)}" y="${H-2}" text-anchor="middle" class="td">วันนี้ ${fmtS(today)}</text>`;
+  const tx=X(now), ta=tx>R0-78?'end':tx<L0+78?'start':'middle', txx=tx>R0-78?tx-5:tx<L0+78?tx+5:tx;
+  s+=`<line x1="${tx.toFixed(1)}" x2="${tx.toFixed(1)}" y1="${top-6}" y2="${H-bottom+2}" stroke="var(--pri)" stroke-width="2" stroke-dasharray="5 4"/>`+
+     `<rect x="${(tx-3).toFixed(1)}" y="25" width="6" height="9" rx="3" fill="var(--pri)"/>`+
+     `<text x="${txx.toFixed(1)}" y="32" text-anchor="${ta}" class="td" style="font-size:10.5px">วันนี้ ${fmtS(today)}</text>`;
   return s+'</svg>';
 }
 
@@ -16386,5 +16415,22 @@ html{scroll-padding-top:64px}
  #viewHoshin .hs-v73-follow .hs-fc{grid-template-columns:1fr}
  #viewHoshin .hs-v73-matrix .hs-mx{min-width:700px!important}
 }
+</style>
+
+<style id="qeV74CompactHoshinTimeline">
+/* v74: compact, collision-free Hoshin roadmap for a 1366x768 laptop viewport */
+#viewHoshin .hs-rm74{display:block;width:100%;max-width:1120px;min-width:760px;height:auto;margin:0 auto}
+#viewHoshin .hs-card:has(.hs-rm74){overflow-x:auto!important;overflow-y:hidden!important}
+#viewHoshin .hs-rm74 text.lb{font-size:11px}
+#viewHoshin .hs-rm74 .hsx-lab1{font-size:10.2px;font-weight:800;fill:var(--txt)}
+#viewHoshin .hs-rm74 .hsx-chip{fill:var(--card);filter:drop-shadow(0 1px 1px color-mix(in srgb,var(--txt) 14%,transparent))}
+#viewHoshin .hs-rm74 .hsx-point:hover .hsx-chip,#viewHoshin .hs-rm74 .hsx-point:focus-visible .hsx-chip{stroke-width:2.3;filter:drop-shadow(0 2px 4px color-mix(in srgb,var(--pri) 34%,transparent))}
+#viewHoshin .hs-rm74 .hsx-point:hover .hsx-lab1,#viewHoshin .hs-rm74 .hsx-point:focus-visible .hsx-lab1{text-decoration:none}
+#viewHoshin .hs-card:has(.hs-rm74)>h3{margin-bottom:2px}
+#viewHoshin .hs-card:has(.hs-rm74) .hs-timeline-key{margin:4px 0 5px;padding:5px 7px;gap:4px}
+#viewHoshin .hs-card:has(.hs-rm74) .hs-key{padding:3px 6px;font-size:9.8px}
+#viewHoshin .hs-card:has(.hs-rm74) .hs-key b{font-size:13px}
+#viewHoshin .hs-card:has(.hs-rm74) .hs-key-help{font-size:9px}
+@media(max-width:900px){#viewHoshin .hs-rm74{min-width:760px!important}}
 </style>
 </body></html>
