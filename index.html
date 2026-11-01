@@ -1,22 +1,26 @@
 <!--
-  QE Elec. Daily Job Tracker — Change log v77 (31-Oct-2026) · Round 1: P0 Security/Data → P1 Usability
-  1) Data safety: versioned, reversible v76→v77 migration; automatic pre-migration and pre-write snapshots in IndexedDB; no existing user-data schema is overwritten.
-  2) Storage reliability: centralized localStorage guard records QuotaExceeded/write/remove/clear failures even when legacy catch blocks are silent; failures remain visible in System Health.
-  3) Observability: global error + unhandledrejection capture and a one-click “สุขภาพระบบ” panel showing version, storage usage, sync state, last backup, and error count.
-  4) Recovery: one-click safe JSON Export plus explicit rollback to the pre-v77 snapshot. Secrets/auth/config keys are intentionally excluded from backups/exports.
-  5) Single Source of Truth: Tracker current Due date and overdue status are exposed through window.QEData and reused by Tracker, Main QE Jobs, Today/My Work summaries.
-  Security boundary: client-side viewer/PIN remains UX-only. Real authorization still requires Supabase Auth + server-side RLS + immutable audit logging.
+  QE Elec. Daily Job Tracker — Change log v78 (31-Oct-2026) · Round 2
+  1) System Health: normal state is a compact color dot; label appears on hover/focus or for a warning/error; click opens System Health; hidden for print/PDF.
+  2) Optional Supabase Auth (feature flag defaults OFF): Email/Password, real session/JWT, viewer/editor/admin from qe_user_roles; user JWT is sent to Supabase when ON.
+  3) Reversible v77→v78 migration: pre-v78 IndexedDB snapshot; rollback restores allow-listed business data only and excludes auth/config secrets.
+  4) Lightweight conflict handling compares updated_at and asks the user to keep Local or Cloud; no complex automatic merge.
+  5) Targeted XSS hardening for high-risk user/Cloud sinks via DOM/textContent or escaping.
+  6) Auth OFF preserves the current v77 flow. Never embed service_role and never manage RLS from HTML.
 -->
 <!DOCTYPE html>
 <html lang="th"><head>
-<meta name="qe-app-version" content="77">
-<script id="qeV77Core">
-/* v77 safety/observability core — deliberately loaded before every legacy script. */
+<meta name="qe-app-version" content="78">
+<script id="qeV78FeatureFlags">
+window.QE_AUTH_CONFIG=Object.freeze({enabled:false,supabaseUrl:'',publishableKey:'',roleTable:'qe_user_roles'});
+window.QE_ENABLE_OPTIONAL_ADDONS=false;
+</script>
+<script id="qeV78Core">
+/* v78 safety/observability core — loaded before legacy scripts. */
 (function(){
 'use strict';
-if (window.QE77) return;
-var APP='QE Elec. Daily Job Tracker', VER='77', DB_NAME='qe_tracker_v77_safety', STORE='snapshots';
-var MIG_KEY='qe_v77_migration', ERR_KEY='qe_v77_errors', MAX_ERR=50, restoring=false;
+if (window.QE78) return;
+var APP='QE Elec. Daily Job Tracker', VER='78', DB_NAME='qe_tracker_v78_safety', STORE='snapshots';
+var MIG_KEY='qe_v78_migration', ERR_KEY='qe_v78_errors', MAX_ERR=50, restoring=false;
 var native={
   get:Storage.prototype.getItem,
   set:Storage.prototype.setItem,
@@ -45,8 +49,8 @@ function record(kind,e,detail){
   if(state.errors.length>MAX_ERR) state.errors=state.errors.slice(-MAX_ERR);
   if(isQuota(e)||kind==='storage') state.storageFailure=true;
   persistErrors();
-  try{ window.dispatchEvent(new CustomEvent('qe77:healthchange',{detail:{kind:kind}})); }catch(_){/* non-fatal: best-effort diagnostic path */}
-  try{ console.error('[QE v77 '+kind+']',e,detail||''); }catch(_){/* non-fatal: best-effort diagnostic path */}
+  try{ window.dispatchEvent(new CustomEvent('qe78:healthchange',{detail:{kind:kind}})); }catch(_){/* non-fatal: best-effort diagnostic path */}
+  try{ console.error('[QE v78 '+kind+']',e,detail||''); }catch(_){/* non-fatal: best-effort diagnostic path */}
   return row;
 }
 
@@ -103,9 +107,9 @@ function collectData(){
 function snapshot(reason,onlyKey,onlyValue){
   var c=onlyKey?{data:{},bytes:0}:collectData();
   if(onlyKey){ c.data[onlyKey]=onlyValue; c.bytes=(String(onlyKey).length+String(onlyValue||'').length)*2; }
-  var at=iso(), id=(reason==='pre-migration-v77'?'pre-migration-v77':'snap')+'|'+Date.now()+'|'+Math.random().toString(36).slice(2,8);
-  var row={id:id,app:APP,schema:77,createdAt:at,reason:text(reason,100),bytes:c.bytes,data:c.data};
-  return idbPut(row).then(function(){ state.lastSnapshot=at; state.lastSnapshotReason=row.reason; try{window.dispatchEvent(new Event('qe77:healthchange'));}catch(_){/* non-fatal: best-effort diagnostic path */} return row; });
+  var at=iso(), id=(reason==='pre-migration-v78'?'pre-migration-v78':'snap')+'|'+Date.now()+'|'+Math.random().toString(36).slice(2,8);
+  var row={id:id,app:APP,schema:78,createdAt:at,reason:text(reason,100),bytes:c.bytes,data:c.data};
+  return idbPut(row).then(function(){ state.lastSnapshot=at; state.lastSnapshotReason=row.reason; try{window.dispatchEvent(new Event('qe78:healthchange'));}catch(_){/* non-fatal: best-effort diagnostic path */} return row; });
 }
 
 /* Queue a copy of the old value before a critical write. Throttling prevents keystroke-heavy screens from filling IndexedDB. */
@@ -146,14 +150,14 @@ window.QEData=Object.freeze({currentDue:currentDue,isOverdue:isOverdue,isDone:fu
 function migration(){
   var raw=null; try{raw=native.get.call(localStorage,MIG_KEY);}catch(e){record('migration',e,'read marker');}
   if(raw){
-    try{ var m=JSON.parse(raw); if(m&&m.version===77){ state.migration='พร้อมใช้งาน'; state.migrationBackupId=m.backupId||''; return Promise.resolve(m); } }catch(_){/* non-fatal: best-effort diagnostic path */}
+    try{ var m=JSON.parse(raw); if(m&&m.version===78){ state.migration='พร้อมใช้งาน'; state.migrationBackupId=m.backupId||''; return Promise.resolve(m); } }catch(_){/* non-fatal: best-effort diagnostic path */}
   }
-  state.migration='กำลังสำรองข้อมูลก่อนเริ่ม v77';
-  return snapshot('pre-migration-v77').then(function(row){
-    var mark={version:77,from:76,at:iso(),backupId:row.id,reversible:true,structureChanged:false};
+  state.migration='กำลังสำรองข้อมูลก่อนเริ่ม v78';
+  return snapshot('pre-migration-v78').then(function(row){
+    var mark={version:78,from:77,at:iso(),backupId:row.id,reversible:true,structureChanged:false};
     native.set.call(localStorage,MIG_KEY,JSON.stringify(mark));
     state.migration='พร้อมใช้งาน · ย้อนกลับได้'; state.migrationBackupId=row.id; return mark;
-  }).catch(function(e){ state.migration='ไม่สำเร็จ — ข้อมูลเดิมไม่ถูกแก้ไข'; record('migration',e,'pre-v77 backup failed'); return null; });
+  }).catch(function(e){ state.migration='ไม่สำเร็จ — ข้อมูลเดิมไม่ถูกแก้ไข'; record('migration',e,'pre-v78 backup failed'); return null; });
 }
 function bytesNow(){
   var n=0; try{ for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i),v=native.get.call(localStorage,k)||'';n+=(String(k).length+v.length)*2;} }catch(e){record('storage-read',e,'measure');}
@@ -167,15 +171,15 @@ function syncInfo(){
 }
 function level(){ var s=syncInfo().state; if(state.storageFailure||state.errors.length) return 'bad'; if(s==='ok')return'ok'; if(s==='busy')return'busy'; return'warn'; }
 function exportNow(){
-  var c=collectData(), payload={app:APP,version:77,exportedAt:iso(),source:'QE77 System Health',bytes:c.bytes,data:c.data};
+  var c=collectData(), payload={app:APP,version:78,exportedAt:iso(),source:'QE78 System Health',bytes:c.bytes,data:c.data};
   var blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}), a=document.createElement('a');
-  a.href=URL.createObjectURL(blob); a.download='qe_tracker_v77_backup_'+iso().slice(0,10).replace(/-/g,'')+'.json'; a.click();
+  a.href=URL.createObjectURL(blob); a.download='qe_tracker_v78_backup_'+iso().slice(0,10).replace(/-/g,'')+'.json'; a.click();
   setTimeout(function(){URL.revokeObjectURL(a.href);},1000);
   try{native.set.call(localStorage,'issue_tracker_lastbackup',iso());}catch(e){record('storage',e,'mark export');}
   return payload;
 }
 function rollback(){
-  var id=state.migrationBackupId; if(!id) return Promise.reject(new Error('ไม่พบ pre-v77 snapshot'));
+  var id=state.migrationBackupId; if(!id) return Promise.reject(new Error('ไม่พบ pre-v78 snapshot'));
   return idbGet(id).then(function(row){
     if(!row||!row.data) throw new Error('pre-v77 snapshot อ่านไม่ได้');
     restoring=true;
@@ -185,11 +189,11 @@ function rollback(){
     return Object.keys(row.data).length;
   });
 }
-function clearErrors(){state.errors=[];state.storageFailure=false;persistErrors();try{window.dispatchEvent(new Event('qe77:healthchange'));}catch(_){/* non-fatal: best-effort diagnostic path */}}
+function clearErrors(){state.errors=[];state.storageFailure=false;persistErrors();try{window.dispatchEvent(new Event('qe78:healthchange'));}catch(_){/* non-fatal: best-effort diagnostic path */}}
 
 window.addEventListener('error',function(ev){
   var target=ev&&ev.target;
-  if(target&&target!==window){ record('resource',new Error('โหลด resource ไม่สำเร็จ'),target.src||target.href||target.tagName); return; }
+  if(target&&target!==window){if(target.dataset&&target.dataset.qeOptional==='1')return;record('resource',new Error('โหลด resource ไม่สำเร็จ'),target.src||target.href||target.tagName);return;}
   record('runtime',ev.error||new Error(ev.message||'Script error'),(ev.filename||'')+':'+(ev.lineno||0));
 },true);
 window.addEventListener('unhandledrejection',function(ev){record('promise',ev.reason||new Error('Unhandled promise rejection'),'');});
@@ -214,29 +218,29 @@ function buildUI(){
   var btn=el('button','qe77-health-btn busy'); btn.id='qe77HealthBtn';btn.type='button';btn.setAttribute('aria-haspopup','dialog');btn.setAttribute('aria-controls','qe77HealthDialog');
   btn.appendChild(el('span','qe77-dot','●'));btn.appendChild(el('span','qe77-health-txt','กำลังตรวจสอบ'));var ct=el('span','qe77-health-count','');ct.hidden=true;btn.appendChild(ct);document.body.appendChild(btn);
   var ov=el('div','qe77-health-ov');ov.id='qe77HealthDialog';ov.hidden=true;ov.setAttribute('role','dialog');ov.setAttribute('aria-modal','true');ov.setAttribute('aria-labelledby','qe77HealthTitle');
-  var box=el('section','qe77-health-panel'), head=el('div','qe77-health-head'), title=el('div',''); title.appendChild(el('h2','', 'ระบบสุขภาพ · System Health'));title.querySelector('h2').id='qe77HealthTitle';title.appendChild(el('p','','P0 Data safety + Reliability · ข้อมูลจริงไม่ถูกเปลี่ยนโครงสร้างใน v77'));
+  var box=el('section','qe77-health-panel'), head=el('div','qe77-health-head'), title=el('div',''); title.appendChild(el('h2','', 'ระบบสุขภาพ · System Health'));title.querySelector('h2').id='qe77HealthTitle';title.appendChild(el('p','','P0 Auth/RLS readiness + Data safety · มี snapshot ก่อน v78 และย้อนกลับได้'));
   var x=el('button','qe77-x','✕');x.type='button';x.setAttribute('aria-label','ปิด');head.appendChild(title);head.appendChild(x);box.appendChild(head);
   var grid=el('div','qe77-health-grid');addRow(grid,'เวอร์ชัน','', 'qe77V');addRow(grid,'Local storage','', 'qe77Storage');addRow(grid,'Browser storage / quota','กำลังอ่าน', 'qe77Quota');addRow(grid,'Sync ล่าสุด','', 'qe77Sync');addRow(grid,'Migration','', 'qe77Migration');addRow(grid,'Backup ล่าสุด','', 'qe77Backup');addRow(grid,'Safety snapshots','กำลังอ่าน', 'qe77Snapshots');addRow(grid,'Error session นี้','', 'qe77Err');box.appendChild(grid);
   var note=el('p','qe77-health-note','Backup/Export ไม่รวม Auth token, PIN, Supabase/LINE config หรือ secret โดยตั้งใจ');box.appendChild(note);
   var actions=el('div','qe77-health-actions');
-  [['qe77Export','💾 Export JSON','primary'],['qe77Rollback','↩ Rollback ก่อน v77',''],['qe77ClearErr','ล้างรายการ Error',''],['qe77Close','ปิด','']].forEach(function(a){var b=el('button','qe77-a '+a[2],a[1]);b.type='button';b.id=a[0];actions.appendChild(b);});box.appendChild(actions);
+  [['qe77Export','💾 Export JSON','primary'],['qe77Rollback','↩ Rollback ก่อน v78',''],['qe77ClearErr','ล้างรายการ Error',''],['qe77Close','ปิด','']].forEach(function(a){var b=el('button','qe77-a '+a[2],a[1]);b.type='button';b.id=a[0];actions.appendChild(b);});box.appendChild(actions);
   var det=el('details','qe77-errors'),sum=el('summary','','Error ล่าสุด (ไม่แสดงข้อมูลลับ)'),log=el('div','qe77-error-log');log.id='qe77ErrLog';det.appendChild(sum);det.appendChild(log);box.appendChild(det);ov.appendChild(box);document.body.appendChild(ov);
   function close(){ov.hidden=true;btn.focus();}function open(){ov.hidden=false;renderHealth();setTimeout(function(){x.focus();},0);}btn.addEventListener('click',open);x.addEventListener('click',close);document.getElementById('qe77Close').addEventListener('click',close);ov.addEventListener('click',function(e){if(e.target===ov)close();});document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!ov.hidden)close();});
   document.getElementById('qe77Export').addEventListener('click',function(){exportNow();renderHealth();});
   document.getElementById('qe77ClearErr').addEventListener('click',function(){clearErrors();renderHealth();});
   document.getElementById('qe77Rollback').addEventListener('click',function(){
-    if(!confirm('Rollback จะนำข้อมูลธุรกิจจาก snapshot ก่อนเปิด v77 กลับมา โดยไม่แตะ Auth/PIN/config\n\nต้องการทำต่อหรือไม่?'))return;
+    if(!confirm('Rollback จะนำข้อมูลธุรกิจจาก snapshot ก่อนเปิด v78 กลับมา โดยไม่แตะ Auth/PIN/config\n\nต้องการทำต่อหรือไม่?'))return;
     rollback().then(function(n){alert('Rollback สำเร็จ '+n+' ชุดข้อมูล · ระบบจะ Reload');location.reload();}).catch(function(e){record('rollback',e,'');alert('Rollback ไม่สำเร็จ: '+errMessage(e));renderHealth();});
   });
   var sp=document.getElementById('spStatus');if(sp&&window.MutationObserver)new MutationObserver(renderHealth).observe(sp,{attributes:true,childList:true,subtree:true,characterData:true});
-  window.addEventListener('qe77:healthchange',renderHealth);renderHealth();
+  window.addEventListener('qe78:healthchange',renderHealth);renderHealth();
 }
 
 document.addEventListener('DOMContentLoaded',function(){buildUI();migration().then(renderHealth);});
-window.QE77={version:VER,recordError:record,snapshot:snapshot,exportJSON:exportNow,rollback:rollback,health:function(){return {version:VER,errors:state.errors.slice(),storageBytes:bytesNow(),sync:syncInfo(),migration:state.migration};},isDataKey:isDataKey,nativeStorage:native};
+window.QE78={version:VER,recordError:record,snapshot:snapshot,exportJSON:exportNow,rollback:rollback,health:function(){return {version:VER,errors:state.errors.slice(),storageBytes:bytesNow(),sync:syncInfo(),migration:state.migration};},isDataKey:isDataKey,nativeStorage:native}; window.QE77=window.QE78;
 })();
 </script>
-<script id="qwBoot">try{var __s=JSON.parse(localStorage.getItem('ux_auth_sess')||'null');if(__s&&__s.role==='viewer'&&__s.exp>Date.now())window.__QE_RO=true;}catch(e){}try{if(localStorage.getItem('issue_tracker_cal')===null)localStorage.setItem('issue_tracker_cal','closed');if(localStorage.getItem('issue_tracker_own')===null)localStorage.setItem('issue_tracker_own','closed');}catch(e){}</script><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<script id="qwBoot">try{if(!(window.QE_AUTH_CONFIG&&window.QE_AUTH_CONFIG.enabled)){var __s=JSON.parse(localStorage.getItem('ux_auth_sess')||'null');if(__s&&__s.role==='viewer'&&__s.exp>Date.now())window.__QE_RO=true;}}catch(e){}try{if(localStorage.getItem('issue_tracker_cal')===null)localStorage.setItem('issue_tracker_cal','closed');if(localStorage.getItem('issue_tracker_own')===null)localStorage.setItem('issue_tracker_own','closed');}catch(e){}</script><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="referrer" content="no-referrer">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -267,6 +271,31 @@ window.COUNTERMEASURE_CLOUD_DEFAULTS = Object.freeze({
   supabaseKey: 'sb_publishable_3pH_N9h366PvG0Tr9liQOA_NtNPnEaU',
   tableName: 'countermeasure_records'
 });
+</script>
+<script id="qeV78SupabaseAuth">
+(function(){'use strict';if(window.QEAuth)return;
+const SK='qe_supabase_auth_session_v1';let S=null,U=null,R='',started=false,resolveReady;const RP=new Promise(r=>resolveReady=r);
+const C=()=>{const a=window.QE_AUTH_CONFIG||{},c=window.COUNTERMEASURE_CLOUD_DEFAULTS||{};return{on:!!a.enabled,url:String(a.supabaseUrl||c.supabaseUrl||'').replace(/\/$/,''),key:String(a.publishableKey||c.supabaseKey||''),table:String(a.roleTable||'qe_user_roles')}};
+const on=()=>C().on;
+function dec(t){try{let x=String(t||'').split('.')[1];return x?JSON.parse(atob(x.replace(/-/g,'+').replace(/_/g,'/').padEnd(Math.ceil(x.length/4)*4,'='))):{}}catch(e){return{}}}
+function pub(){const k=C().key,p=dec(k);if(!k||k.length<20)throw Error('ยังไม่ได้ตั้งค่า Supabase publishable key');if(/service[_-]?role/i.test(k)||p.role==='service_role')throw Error('ห้ามใช้ service_role key ใน HTML');return k}
+function hdr(tok,x){return Object.assign({'Accept':'application/json','Content-Type':'application/json','apikey':pub()},tok?{'Authorization':'Bearer '+tok}:{},x||{})}
+async function req(path,opt){if(!/^https:\/\//.test(C().url))throw Error('Supabase URL ไม่ถูกต้อง');let r=await fetch(C().url+path,Object.assign({cache:'no-store',mode:'cors'},opt||{})),t=await r.text(),j={};try{j=t?JSON.parse(t):{}}catch(e){j={message:t}}if(!r.ok){let e=Error(j.error_description||j.message||('HTTP '+r.status));e.status=r.status;throw e}return j}
+function save(){try{S?sessionStorage.setItem(SK,JSON.stringify(S)):sessionStorage.removeItem(SK)}catch(e){}}
+function load(){try{return JSON.parse(sessionStorage.getItem(SK)||'null')}catch(e){return null}}
+function name(){return String(U&&U.email||'ผู้ใช้ Supabase')}
+function apply(){window.__QE_AUTH_ROLE=R;window.__QE_RO=R==='viewer';window.__QE_CAN_DELETE=R==='admin';try{localStorage.setItem('ux_me',name())}catch(e){}try{window.SPDB&&SPDB.collab&&SPDB.collab.setWho(name())}catch(e){}setTimeout(()=>{try{window.__QE_RO&&window.__QE_ROapply&&window.__QE_ROapply(name())}catch(e){}},50);window.dispatchEvent(new CustomEvent('qeauth:ready',{detail:{email:name(),role:R}}))}
+async function identity(){U=await req('/auth/v1/user',{headers:hdr(S.access_token)});let a=await req('/rest/v1/'+encodeURIComponent(C().table)+'?select=role&user_id=eq.'+encodeURIComponent(U.id)+'&limit=1',{headers:hdr(S.access_token)});R=Array.isArray(a)&&a[0]&&String(a[0].role||'').toLowerCase();if(!/^(viewer|editor|admin)$/.test(R))throw Error('บัญชีนี้ยังไม่มี role ใน '+C().table);apply();return true}
+async function login(e,p){let j=await req('/auth/v1/token?grant_type=password',{method:'POST',headers:hdr(''),body:JSON.stringify({email:String(e).trim(),password:String(p)})});S=Object.assign({},j,{expires_at:j.expires_at||Math.floor(Date.now()/1000)+(j.expires_in||3600)});save();return identity()}
+async function refresh(){let j=await req('/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:hdr(''),body:JSON.stringify({refresh_token:S.refresh_token})});S=Object.assign({},j,{expires_at:j.expires_at||Math.floor(Date.now()/1000)+(j.expires_in||3600)});save();return identity()}
+function inert(v,keep){[...document.body.children].forEach(x=>{if(x===keep||['SCRIPT','STYLE','LINK'].includes(x.tagName))return;v?x.setAttribute('inert',''):x.removeAttribute('inert')})}
+function css(){if(document.getElementById('qe78AuthCss'))return;let x=document.createElement('style');x.id='qe78AuthCss';x.textContent='.qe78-auth{position:fixed;inset:0;z-index:120000;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(2,6,23,.9)}.qe78-ac{width:min(430px,100%);padding:22px;border:1px solid #94a3b8;border-radius:16px;background:#fff;color:#172033;box-shadow:0 24px 70px #0008}.qe78-ac h1{font-size:21px;margin:0 0 5px}.qe78-ac p,.qe78-ac small{color:#475569;font-size:13px;line-height:1.55}.qe78-ac label{display:block;margin:10px 0 4px;font-weight:800}.qe78-ac input,.qe78-ac button{width:100%;min-height:42px;border:1px solid #64748b;border-radius:9px;padding:9px 11px;font-size:15px}.qe78-ac button{margin-top:14px;background:#1d4ed8;color:#fff;font-weight:800}.qe78-ae{margin-top:10px;padding:9px;border:1px solid #b91c1c;border-radius:8px;background:#fee2e2;color:#7f1d1d}@media(prefers-color-scheme:dark){.qe78-ac{background:#0f172a;color:#f8fafc}.qe78-ac p,.qe78-ac small{color:#cbd5e1}.qe78-ac input{background:#111827;color:#fff}}';document.head.appendChild(x)}
+function lock(msg){css();let o=document.getElementById('qe78Auth');if(!o){o=document.createElement('div');o.id='qe78Auth';o.className='qe78-auth';o.innerHTML='<section class="qe78-ac"><h1>🔐 เข้าสู่ระบบ QE Tracker</h1><p>ใช้ Email/Password ของ Supabase Auth · สิทธิ์จริงมาจาก qe_user_roles และ RLS</p><form><label>Email</label><input id="qe78Email" type="email" autocomplete="username" required><label>Password</label><input id="qe78Password" type="password" autocomplete="current-password" required><div id="qe78Err" class="qe78-ae" hidden></div><button>เข้าสู่ระบบ</button></form><small>ผู้ดูแลต้องสร้างบัญชีใน Supabase Authentication และกำหนด viewer/editor/admin ก่อน</small></section>';document.body.appendChild(o);o.querySelector('form').onsubmit=async e=>{e.preventDefault();let b=o.querySelector('button'),er=document.getElementById('qe78Err');b.disabled=true;er.hidden=true;try{await login(qe78Email.value,qe78Password.value);inert(false,o);document.body.style.overflow='';o.remove();resolveReady(true)}catch(x){er.textContent=String(x.message||x);er.hidden=false;qe78Password.value='';qe78Password.focus()}finally{b.disabled=false}}}if(msg){let e=document.getElementById('qe78Err');e.textContent=String(msg);e.hidden=false}inert(true,o);document.body.style.overflow='hidden';setTimeout(()=>qe78Email.focus(),0)}
+async function out(){try{S&&S.access_token&&await req('/auth/v1/logout',{method:'POST',headers:hdr(S.access_token)})}catch(e){}S=U=null;R='';save();lock('ออกจากระบบแล้ว')}
+function guard(){document.addEventListener('click',e=>{if(!on()||R!=='editor')return;let b=e.target.closest('button,[role=button]');if(!b)return;let a=[b.dataset.qeFn,b.dataset.a,b.dataset.x,b.dataset.mje].filter(Boolean).join(' ').toLowerCase(),t=b.textContent||'';if(/(^|[-_])(del|delete|purge)([-_]|$)/.test(a)||/ลบถาวร|ล้างถังขยะ|ลบที่เลือก/.test(t)){e.preventDefault();e.stopImmediatePropagation();try{toast('การลบต้องใช้บัญชี admin','var(--t-warn)')}catch(x){alert('การลบต้องใช้บัญชี admin')}}},true)}
+async function start(){if(started)return;started=true;if(!on()){resolveReady(true);return}guard();try{pub();S=load();if(S&&+S.expires_at*1000>Date.now()+60000)await identity();else if(S&&S.refresh_token)await refresh();else throw Error('กรุณาเข้าสู่ระบบ');resolveReady(true)}catch(e){S=U=null;R='';save();lock(e.message||e)}}
+window.addEventListener('DOMContentLoaded',start);window.QEAuth={enabled:on,ready:()=>on()?RP:Promise.resolve(true),accessToken:()=>S&&S.access_token||'',user:()=>U,role:()=>R,can:a=>a==='read'?!!R:a==='write'?(R==='editor'||R==='admin'):a==='delete'?R==='admin':false,login,signOut:out,start,headers:hdr};
+})();
 </script>
 <style>
   :root{--bg:#fce7f3;--card:#ffffff;--line:#f9a8d4;--txt:#3b0f2a;--mut:#8b4a6e;
@@ -1995,22 +2024,18 @@ window.qeBlk={
       key().length>20 && !/PASTE_|YOUR_|HERE/i.test(key()) && /^[A-Za-z_][A-Za-z0-9_]*$/.test(table());
   }
   function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-  function setStatus(state,msg){
-    if(state==='ok') lastOK=Date.now();
-    if(state==='ok'||state==='error') scheduleDirty();
-    const b=g('spStatus'),t=g('spStatusText'); if(b)b.dataset.state=state;
-    if(t)t.innerHTML='<b>Cloud DB:</b> '+msg;
-    if(g('spInfo')){ const u=usage(); g('spInfo').innerHTML='<div>'+msg+'</div>'+(lastSync?'<div>Sync ล่าสุด: '+esc(lastSync)+'</div>':'')+'<div>📡 ดึงข้อมูลจาก Cloud DB (เครื่องนี้): วันนี้ <b>'+fmtB(u.today.b)+'</b> ('+u.today.n+' คำขอ) · 7 วันล่าสุด <b>'+fmtB(u.week.b)+'</b>'+(u.paused?' · <b style="color:var(--t-warn)">พักซิงก์ชั่วคราว (โดนจำกัดโควตา)</b>':'')+'</div>'; }
-  }
-  function errText(e){ const raw=(e&&e.message)||e||'Unknown error', f=friendly(raw,e&&e.status); return esc(f)+(f!==String(raw)?' <small style="opacity:.7">('+esc(String(raw).slice(0,90))+')</small>':''); }
+  const plain=v=>String(v==null?'':v).replace(/<[^>]*>/g,'').replace(/[\u0000-\u001f\u007f]/g,' ').slice(0,700);
+  function setStatus(state,msg){if(state==='ok')lastOK=Date.now();if(state==='ok'||state==='error')scheduleDirty();const b=g('spStatus'),t=g('spStatusText'),x=plain(msg);if(b)b.dataset.state=state;if(t){t.textContent='';let z=document.createElement('b');z.textContent='Cloud DB:';t.append(z,document.createTextNode(' '+x));}const i=g('spInfo');if(i){const u=usage();i.textContent='';[x,lastSync?'Sync ล่าสุด: '+lastSync:'','📡 วันนี้ '+fmtB(u.today.b)+' ('+u.today.n+' คำขอ) · 7 วัน '+fmtB(u.week.b)].filter(Boolean).forEach(v=>{let d=document.createElement('div');d.textContent=v;i.appendChild(d)})}}
+  function errText(e){const r=String((e&&e.message)||e||'Unknown error'),f=friendly(r,e&&e.status);return plain(f)+(f!==r?' ('+plain(r).slice(0,90)+')':'')}
   function safeToApply(){
     const a=document.activeElement;
     return !(a&&(/^(INPUT|TEXTAREA|SELECT)$/i.test(a.tagName)||a.isContentEditable));
   }
   function authHeaders(extra){
-    const h=Object.assign({'Accept':'application/json','Content-Type':'application/json','apikey':key()},extra||{});
-    if(/^eyJ[A-Za-z0-9_-]+\./.test(key())) h.Authorization='Bearer '+key();
-    return h;
+    const pub=key(),on=!!(window.QEAuth&&QEAuth.enabled&&QEAuth.enabled()),p=(()=>{try{let x=pub.split('.')[1];return x?JSON.parse(atob(x.replace(/-/g,'+').replace(/_/g,'/').padEnd(Math.ceil(x.length/4)*4,'='))):{}}catch(e){return{}}})();
+    if(/service[_-]?role/i.test(pub)||p.role==='service_role')throw Error('ห้ามใช้ service_role key ใน HTML');
+    const h=Object.assign({'Accept':'application/json','Content-Type':'application/json','apikey':pub},extra||{}),tok=on?QEAuth.accessToken():(/^eyJ[A-Za-z0-9_-]+\./.test(pub)?pub:'');
+    if(on&&!tok)throw Error('Supabase Auth ยังไม่มี session');if(tok)h.Authorization='Bearer '+tok;return h;
   }
   /* ================= v24 · ลดการดึงข้อมูลจาก Supabase (egress) =================
      • ถามก่อนด้วยคำขอเล็ก ๆ (probe ~100 ไบต์) ว่ามีอะไรเปลี่ยนไหม — ดึงเฉพาะแถวที่เปลี่ยนจริง (ไม่ดึงทั้งตารางซ้ำ ๆ)
@@ -2263,17 +2288,11 @@ window.qeBlk={
     const local=recMap(appModel()),baseline=new Map(cache);
     try{
       const latest=await fetchRows(force?{force:true}:undefined);
-      const changed=[],removed=[],conf=[]; let auto=0;
-      if(force){
-        local.forEach(r=>changed.push(r));
-        latest.forEach((r,k)=>{if(!local.has(k))removed.push(r);});
-      }else{
-        local.forEach((r,k)=>{const old=baseline.get(k);if(!old||old.type!==r.type||old.json!==r.json){ let up=r; const rem=latest.get(k);
-          if(isMtg(r)&&isMtg(rem)&&hrec(rem)!==hrec(r)&&!(old&&hrec(rem)===hrec(old))){ const mp=mtgMerge(old&&old.payload,r.payload,rem.payload); up=Object.assign({},r,{payload:mp,json:cj(mp)}); auto++; }
-          else if(!old&&rem&&hrec(rem)!==hrec(r)){ conf.push({k:k,remote:rem,fields:[]}); }   // สองคนสร้างรายการ/วันเดียวกันใหม่พร้อมกัน → แจ้งว่าชนกัน (ไม่ทับเงียบ ๆ)
-          else if(old&&rem&&hrec(rem)!==hrec(old)&&hrec(rem)!==hrec(r)){ const cf=[]; if(mergeable(r)&&mergeable(rem)){ const mp=m3(old.payload,r.payload,rem.payload,'',cf); up=Object.assign({},r,{payload:mp,json:cj(mp)}); if(cf.length) conf.push({k:k,remote:rem,fields:cf}); else auto++; } else conf.push({k:k,remote:rem,fields:[]}); }
-          changed.push(up); }});
-        baseline.forEach((r,k)=>{if(!local.has(k))removed.push(r);});
+      const changed=[],removed=[],conf=[],cloudWins=[];let choseCloud=false;
+      if(force){local.forEach(r=>changed.push(r));latest.forEach((r,k)=>{if(!local.has(k))removed.push(r)})}else{
+        local.forEach((r,k)=>{const old=baseline.get(k);if(!old||old.type!==r.type||old.json!==r.json){const rem=latest.get(k);if(!old&&rem&&hrec(rem)!==hrec(r))conf.push({kind:'write',k,local:r,remote:rem,base:null});else if(old&&!rem)conf.push({kind:'remote-delete',k,local:r,remote:null,base:old});else if(old&&rem&&String(rem.updatedAt||'')!==String(old.updatedAt||'')&&hrec(rem)!==hrec(r))conf.push({kind:'write',k,local:r,remote:rem,base:old});else changed.push(r)}});
+        baseline.forEach((r,k)=>{if(!local.has(k)){const rem=latest.get(k);if(rem&&String(rem.updatedAt||'')!==String(r.updatedAt||''))conf.push({kind:'delete',k,local:null,remote:rem,base:r});else if(rem)removed.push(rem)}});
+        if(conf.length){const d=[];for(const c of conf){const keep=await chooseLightConflict(c);d.push(Object.assign({},c,{decision:keep?'local':'cloud'}));if(keep){if(c.kind==='delete'){if(c.remote)removed.push(c.remote)}else if(c.local)changed.push(c.local)}else{choseCloud=true;cloudWins.push(c)}}noteConflicts(d)}
       }
       if(newDev&&changed.length>=10&&!force){
         const okN=await uiConfirm('เครื่องนี้เพิ่งเริ่มใช้งาน และมี '+changed.length+' รายการที่ Cloud ไม่มี/ต่างจาก Cloud\n('+Object.keys(tally(changed)).map(k=>k+' '+tally(changed)[k]).join(' · ')+')\n\nอาจเป็นข้อมูลตั้งต้นของไฟล์ หรือข้อมูลเก่าในเครื่อง ไม่ใช่งานจริงของคุณ — ถ้าส่งขึ้นไปจะกลายเป็นข้อมูลกลางของทุกคน\n\nถ้าไม่แน่ใจ ให้กด “ยกเลิก” แล้วเปิดแผน 👥 เลือก “ใช้ของ Cloud”',{ok:'ส่งขึ้น Cloud จริง ๆ',cancel:'ยกเลิก',danger:true});
@@ -2288,13 +2307,12 @@ window.qeBlk={
         saveRestoreSet('ก่อนบันทึกที่ลบ '+G.n+' รายการ',removed); auditPost('guard-ok',{n:G.n,pct:G.pct,by:G.by});
       }
       if(changed.length)await upsertMany(changed);
-      noteConflicts(conf);
-      if(auto){ try{ if(typeof toast==='function') toast('🔀 รวมการแก้ไขของสองคนในรายการเดียวกันให้อัตโนมัติ '+auto+' รายการ (คนละฟิลด์)'); }catch(e){} }
       if(removed.length)await deleteMany(removed);
       try{ onSaved(changed,removed,force); }catch(e){}
-      const finalMap=await fetchRows();
+      const finalMap=await fetchRows();cloudWins.forEach(c=>{if(c.remote)finalMap.set(c.k,c.remote);else finalMap.delete(c.k)});
       lastSync=new Date().toLocaleString('th-TH'); saveBase(finalMap);
-      if(localMoved(local)){ cache=local; again=true; }
+      if(choseCloud){cache=finalMap;applyRemote(remoteModel(finalMap));appliedVer=rcVer;}
+      else if(localMoved(local)){cache=local;again=true;}
       else if(safeToApply()){cache=finalMap;applyRemote(remoteModel(finalMap));appliedVer=rcVer;}else cache=local;
       ready=true;setStatus('ok','เชื่อมต่อ <b>'+esc(table())+'</b> · บันทึกแล้ว '+esc(lastSync));
     }catch(e){setStatus('error','Sync ไม่สำเร็จ — '+errText(e));throw e;}
@@ -2309,15 +2327,9 @@ window.qeBlk={
   function loadBase(){ try{ const o=JSON.parse(localStorage.getItem(BASEK)||'null'); return (o&&o.v===1&&o.s===syncSig()&&o.m&&typeof o.m==='object')?o.m:null; }catch(e){ return null; } }
   function saveBase(map){ const m={}; map.forEach((r,k)=>{ m[k]=hrec(r); }); try{ localStorage.setItem(BASEK,JSON.stringify({v:1,s:syncSig(),m:m})); }catch(e){} }
   function readConf(){ try{ const a=JSON.parse(localStorage.getItem(CFK)||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
-  function noteConflicts(list){
-    if(!list||!list.length) return;
-    const cur=readConf(), at=new Date().toISOString();
-    list.forEach(c=>{ const r=c.remote; cur.push({at:at,key:String(c.k).replace(PREFIX,''),type:r.type,payload:r.payload,fields:c.fields||[]}); });
-    try{ localStorage.setItem(CFK,JSON.stringify(cur.slice(-60))); }catch(e){}
-    try{ auditPost('conflict',{n:list.length,by:tally(list.map(c=>c.remote))}); }catch(e){}
-    try{ if(typeof toast==='function') toast('⚠️ มี '+list.length+' รายการที่ถูกแก้ซ้ำฟิลด์เดียวกันพร้อมกัน — ใช้ของเครื่องนี้ (ดูของอีกฝั่งได้ที่ปุ่ม ⚠ ในหน้า Tracker)','var(--t-warn)'); }catch(e){}
-    try{ window.dispatchEvent(new Event('spdb-conflict')); }catch(e){}
-  }
+  async function chooseLightConflict(c){const r=c.remote||c.base||c.local||{},k=String(c.k||'').replace(PREFIX,''),ra=c.remote&&c.remote.updatedAt||'ถูกลบจาก Cloud',ba=c.base&&c.base.updatedAt||'ไม่มี baseline';return uiConfirm('⚠ พบ Conflict ก่อนเขียนทับ\n'+recLabel(r)+' · '+k+'\n\nupdated_at ที่เห็นครั้งก่อน: '+ba+'\nCloud ล่าสุด: '+ra+'\n\nเลือกฉบับที่จะเก็บ (ไม่มี merge อัตโนมัติ)',{ok:c.kind==='delete'?'ลบตามเครื่องนี้':'เก็บฉบับเครื่องนี้',cancel:'ใช้ฉบับ Cloud',danger:c.kind==='delete'})}
+  function noteConflicts(list){if(!list||!list.length)return;const cur=readConf(),at=new Date().toISOString();list.forEach(c=>{const r=c.remote||c.base||c.local||{};cur.push({at,key:String(c.k).replace(PREFIX,''),type:r.type||'',payload:r.payload||null,fields:['updated_at'],decision:c.decision||'cloud'})});try{localStorage.setItem(CFK,JSON.stringify(cur.slice(-60)))}catch(e){}try{auditPost('conflict',{n:list.length,decisions:list.map(c=>c.decision)})}catch(e){}try{toast('⚠️ ตรวจ Conflict '+list.length+' รายการแล้ว — ไม่มี merge อัตโนมัติ','var(--t-warn)')}catch(e){}window.dispatchEvent(new Event('spdb-conflict'))}
+
   /* ----- รวมการแก้ไข 3 ทาง ระดับ field (base = ค่าที่เห็นครั้งล่าสุดจากฐานข้อมูล, local = เครื่องนี้, remote = ฐานข้อมูลตอนนี้) ----- */
   const APPENDK=new Set(['hist','revs','pr','steps']), isO=x=>x&&typeof x==='object'&&!Array.isArray(x), eqv=(a,b)=>cj(a)===cj(b);
   function m3(b,l,r,path,cf){
@@ -2448,7 +2460,7 @@ window.qeBlk={
   }
   async function diag(){
     const out=g('spDiagOut'), L=[]; if(!out) return;
-    const add=(ok,t)=>{ L.push((ok===true?'✅ ':ok===false?'❌ ':'ℹ️ ')+t); out.style.display='block'; out.innerHTML=L.map(x=>'<div>'+esc(x)+'</div>').join(''); };
+    const add=(ok,t)=>{L.push((ok===true?'✅ ':ok===false?'❌ ':'ℹ️ ')+t);out.style.display='block';out.textContent='';L.forEach(x=>{let d=document.createElement('div');d.textContent=x;out.appendChild(d)})};
     readForm();
     if(!cfg.enabled){ add(false,'สวิตช์ “ใช้ Supabase เป็นฐานข้อมูลกลาง” ปิดอยู่'); return; }
     if(!valid()){ add(false,'ค่าที่ตั้งไว้ไม่ครบ (Project URL / key / ชื่อตาราง)'); return; }
@@ -2491,7 +2503,7 @@ window.qeBlk={
      • เครื่องใหม่: ไม่ส่งข้อมูลตั้งต้น/ของเก่าในเครื่องขึ้นไปทับ Cloud เงียบ ๆ
      • PIN เก็บเป็นแฮช ตรวจที่หน้าเว็บ — ไม่ใช่ความปลอดภัยระดับเซิร์ฟเวอร์ */
   const WHOK='ux_me', MODEK='ux_savemode', DEVK='ux_dev_id', RPL='ux_rp_list', PRUNEK='ux_prune_day', SNAPK='ux_snap_day', ACFGC='ux_cfg_cache';
-  const PRES='countermeasure-presence:', AUD='countermeasure-audit:', AUTHP='countermeasure-auth:', SNAP='countermeasure-snap:', ACFGK=AUTHP+'~cfg', APPVER='60';
+  const PRES='countermeasure-presence:', AUD='countermeasure-audit:', AUTHP='countermeasure-auth:', SNAP='countermeasure-snap:', ACFGK=AUTHP+'~cfg', APPVER='78';
   var clockOff=0, lastOK=0, newDev=null;
   const lsGet=k=>{ try{ return localStorage.getItem(k); }catch(e){ return null; } };
   const lsSet=(k,v)=>{ try{ localStorage.setItem(k,v); return true; }catch(e){ return false; } };
@@ -3124,7 +3136,7 @@ async function abInfo(){
   const last=localStorage.getItem(BK);
   el.innerHTML=
     `<div>สถานะ: <b style="color:${ab.on?'var(--t-ok)':'var(--mut)'}">${ab.on?'เปิดอยู่':'ปิดอยู่'}</b></div>`+
-    `<div>โฟลเดอร์: ${h?(ab.dirName||'(เลือกแล้ว)'):'<span style="color:var(--t-dang)">ยังไม่ได้เลือก</span>'}</div>`+
+    `<div>โฟลเดอร์: ${h?esc(ab.dirName||'(เลือกแล้ว)'):'<span style="color:var(--t-dang)">ยังไม่ได้เลือก</span>'}</div>`+
     `<div>สิทธิ์เขียนไฟล์: ${p==='granted'?'<span style="color:var(--t-ok)">อนุญาตแล้ว</span>':'<span style="color:var(--t-warn)">รออนุญาต</span>'}</div>`+
     `<div>สำรองล่าสุด: ${last?new Date(last).toLocaleString('th-TH'):'ยังไม่เคย'}</div>`+
     `<div>เปลี่ยนแปลงค้างอยู่: ${dirty} ครั้ง</div>`+
@@ -3527,7 +3539,7 @@ tr.od-soon{background:rgba(245,158,11,.15)}
       inp.setAttribute('list','ownerList');inp.setAttribute('autocomplete','off');}
     let arr=[];try{arr=JSON.parse(localStorage.getItem('issue_tracker_v2')||'[]');}catch(e){}
     const n=[...new Set(arr.map(x=>String(x.owner||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'th'));
-    dl.innerHTML=n.map(v=>`<option value="${v}">`).join('');
+    dl.textContent='';n.forEach(v=>{let o=document.createElement('option');o.value=v;dl.appendChild(o)});
   }
 
   const tb=document.getElementById('tb');
@@ -6737,7 +6749,7 @@ window.HS={show:()=>{ ensureYear(); render(); },get:()=>store,records:records,lo
 </script>
 <script>
 /* เริ่มเชื่อมต่อ Supabase หลัง Tracker และ Checklist พร้อมใช้งาน */
-if(window.SPDB) window.SPDB.bind();
+if(window.SPDB){if(window.QEAuth&&QEAuth.enabled&&QEAuth.enabled())QEAuth.ready().then(ok=>{if(ok)SPDB.bind()});else SPDB.bind();}
 </script>
 <!-- External/Supabase edition generated from Rev.36; UI and original features retained. -->
 <script>
@@ -11282,7 +11294,7 @@ async function mailSchedSync(manual){
     const d=new Date(); d.setDate(d.getDate()-7);
     const since=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
     const url=C.supabaseUrl.replace(/\/+$/,'')+'/rest/v1/mail_schedule?select=id,mail_date,body&mail_date=gte.'+since+'&order=id.asc&limit=50';
-    const r=await fetch(url,{headers:{apikey:C.supabaseKey,Authorization:'Bearer '+C.supabaseKey}});
+    const _j=(window.QEAuth&&QEAuth.enabled&&QEAuth.enabled())?QEAuth.accessToken():C.supabaseKey;const r=await fetch(url,{headers:{apikey:C.supabaseKey,Authorization:'Bearer '+_j}});
     if(!r.ok) throw new Error('HTTP '+r.status);
     const rows=await r.json(); if(!Array.isArray(rows)) return;
     const last=+msSt.lastId||0, newest={};
@@ -12096,11 +12108,11 @@ const FULL={Earn:'Chonlakarn Harikunsawad',Natcha:'Natcha Choomas',Mana:'Mana Ku
 const VIEWERS=[{n:'DM',full:'Jumnean Chiwirach',role:'Dept. Manager (Represent)'},{n:'GM',full:'Charinya Udomsri',role:'General Manager'}];
 const VSALT='qe-view-2026', VHASH='c245b77a89aad116176c89cc479a2ec898828accf96b53e7f630aa9fd01a800c';
 const isViewerName=n=>VIEWERS.some(v=>v.n===n);
-const sess=()=>{ const s=jget(SK,null); if(s&&s.role==='viewer') return (isViewerName(s.n)&&s.exp>Date.now())?s:null; return (s&&names().indexOf(s.n)>=0&&s.exp>Date.now()&&lsGet('ux_me')===s.n)?s:null; };
-const me=()=>{ const s=sess(); return s?s.n:''; };
-const isAdmin=()=>admins().indexOf(me())>=0;
-function startSession(name){ lsSet(SK,JSON.stringify({n:name,exp:Date.now()+ttl(),at:Date.now()})); C().setWho(name); }
-function endSession(){ try{ C().goOffline(); }catch(e){} lsDel(SK); C().setWho(''); }
+const realAuth=()=>!!(window.QEAuth&&QEAuth.enabled&&QEAuth.enabled());
+const sess=()=>{if(realAuth()){const u=QEAuth.user&&QEAuth.user(),r=QEAuth.role&&QEAuth.role();return u?{n:u.email||u.id,role:r,exp:Date.now()+3600000}:null}const s=jget(SK,null);if(s&&s.role==='viewer')return(isViewerName(s.n)&&s.exp>Date.now())?s:null;return(s&&names().indexOf(s.n)>=0&&s.exp>Date.now()&&lsGet('ux_me')===s.n)?s:null};
+const me=()=>{const s=sess();return s?s.n:''};const isAdmin=()=>realAuth()?QEAuth.role()==='admin':admins().indexOf(me())>=0;
+function startSession(name){if(realAuth()){C().setWho(name);return}lsSet(SK,JSON.stringify({n:name,exp:Date.now()+ttl(),at:Date.now()}));C().setWho(name)}
+function endSession(){try{C().goOffline()}catch(e){}if(realAuth()){QEAuth.signOut();return}lsDel(SK);C().setWho('')}
 
 /* ---------- หน้าล็อก (ล็อกอิน / บังคับอัปเดตเวอร์ชัน) — คลุมทั้งหน้า ไม่มีปุ่มข้าม ---------- */
 const inerted=[];
@@ -12226,6 +12238,7 @@ function showLock(reason){
   stepName(reason);
 }
 function authCheck(){
+  if(realAuth()) return;
   if(!verOk()){ showVerLock(); return; } if(g('cbVerLock')) hideVerLock();
   if(!locked&&!sess()){ if(lsGet('ux_me')){ try{ C().setWho(''); }catch(e){} } showLock(lsGet(SK)?'หมดเวลาเข้าสู่ระบบ ('+C().cfg().ttlh+' ชม.) — เข้าสู่ระบบอีกครั้ง':''); }
 }
@@ -12293,7 +12306,7 @@ function renderPanel(){
   if(st.newDev) h+='<div class="cb-warn y"><b>🆕 เครื่องนี้เพิ่งเริ่มใช้งาน</b><br>'+(st.newDev.dropped?'ข้อมูลเดิมในเครื่อง '+st.newDev.dropped+' รายการที่ไม่ตรงกับ Cloud <b>ไม่ได้ถูกส่งขึ้นไป</b> (เก็บเป็นจุดกู้คืนแล้ว)<br>':'')+(st.newDev.n?'ยังมี <b>'+st.newDev.n+'</b> รายการที่ Cloud ไม่มี ('+E(sum(st.newDev.by))+') — อาจเป็นข้อมูลตั้งต้นของไฟล์ ไม่ใช่งานจริง<div class="cb-act"><button class="cb-btn p" data-a="discard">ใช้ของ Cloud (ทิ้งข้อมูลเหล่านี้)</button><button class="cb-btn" data-a="save">ส่งขึ้น Cloud</button></div>':'<div class="cb-act"><button class="cb-btn" data-a="clrnew">รับทราบ</button></div>')+'</div>';
   if(newer>(+st.ver||0)) h+='<div class="cb-warn y"><b>🔄 มีเวอร์ชันใหม่กว่า</b> — เพื่อนที่ออนไลน์ใช้ v'+newer+' แต่เครื่องนี้ v'+E(st.ver)+' · กด <b>Ctrl+F5</b> (บันทึกงานที่ค้างก่อน)</div>';
   if(skew>120000) h+='<div class="cb-warn y"><b>🕒 นาฬิกาเครื่องนี้คลาด</b> จากเวลาเซิร์ฟเวอร์ ~'+Math.round(skew/60000)+' นาที — รายชื่อออนไลน์ปรับให้อัตโนมัติ แต่ควรตั้งเวลาเครื่องให้ตรง</div>';
-  if(s&&C().cfg()&&me()&&AUTH&&AUTH[me()]&&!AUTH[me()].rh) h+='<div class="cb-warn y"><b>🔑 ยังไม่มีรหัสกู้คืน PIN</b> — สร้างไว้ ลืม PIN จะได้ไม่ต้องรอผู้ดูแล<div class="cb-act"><button class="cb-btn p" data-a="mkrec">สร้างรหัสกู้คืน</button></div></div>';
+  if(!realAuth()&&s&&C().cfg()&&me()&&AUTH&&AUTH[me()]&&!AUTH[me()].rh) h+='<div class="cb-warn y"><b>🔑 ยังไม่มีรหัสกู้คืน PIN</b> — สร้างไว้ ลืม PIN จะได้ไม่ต้องรอผู้ดูแล<div class="cb-act"><button class="cb-btn p" data-a="mkrec">สร้างรหัสกู้คืน</button></div></div>';
   h+='<div class="cb-note" style="margin:0 0 6px">Cloud <b>'+st.cloudN+'</b> รายการ · ตรวจล่าสุด '+hhmm(st.lastOK)+' · เวอร์ชัน v'+E(st.ver)+'</div>';
   h+='<h4>👤 บัญชี</h4><div class="cb-r"><div><b>'+E(me())+'</b>'+(admin?' <small style="display:inline">· ผู้ดูแล</small>':'')+'<small>เข้าสู่ระบบถึง '+(s?fmt(s.exp):'')+'</small></div></div><div class="cb-act"><button class="cb-btn" data-a="chpin">🔑 เปลี่ยน PIN</button><button class="cb-btn d" data-a="logout">ออกจากระบบ</button></div>';
   h+='<h4>💾 การบันทึก</h4><div><button class="cb-chip'+(manual?' on':'')+'" data-a="mode" data-v="manual">ต้องกดบันทึก</button><button class="cb-chip'+(!manual?' on':'')+'" data-a="mode" data-v="auto">อัตโนมัติ</button></div>';
@@ -12326,7 +12339,7 @@ function renderPanel(){
     (u?'<div class="cb-r"><div><b>📡 ข้อมูลที่เครื่องนี้ดึง</b><small>วันนี้ '+E(window.SPDB.fmtBytes(u.today.b))+' ('+u.today.n+' คำขอ) · 7 วัน '+E(window.SPDB.fmtBytes(u.week.b))+(u.paused?' · พักซิงก์เพราะโควตา':'')+'</small></div></div>':'')+
     '<div class="cb-r"><div><b>🔠 ขนาดตัวอักษรทั้งหน้า</b></div><span class="t"><select id="cbZoom" aria-label="ขนาดตัวอักษร" style="padding:4px 6px;border-radius:8px;border:1px solid var(--line);background:var(--soft);color:var(--txt)"><option value="1"'+(z===1?' selected':'')+'>ปกติ</option><option value="1.12"'+(z===1.12?' selected':'')+'>ใหญ่</option><option value="1.25"'+(z===1.25?' selected':'')+'>ใหญ่มาก</option></select></span></div>'+
     '<div class="cb-act"><button class="cb-btn" data-a="gloss">📖 คำศัพท์ในระบบ</button></div><div class="cb-note">ปุ่มลัด: Ctrl+S บันทึก · Ctrl+K ค้นหา · Alt+1–7 สลับแท็บ · Ctrl+Z ย้อนการแก้ (เฉพาะหน้า Tracker)</div>');
-  if(admin){
+  if(admin&&!realAuth()){
     const au=AUTH||{}, rows=cf.names.map(n=>{ const r=au[n], isA=cf.admins.indexOf(n)>=0; return '<div class="cb-r"><div><b>'+E(n)+'</b>'+(isA?' <small style="display:inline">· ผู้ดูแล</small>':'')+'<small>'+(AUTH===null?'…':(r&&r.h?'ตั้ง PIN '+fmt(r.at)+(r.dev?' · เครื่อง '+E(r.dev):'')+(r.rh?' · มีรหัสกู้คืน':''):'<span style="color:#f59e0b">ยังไม่ตั้ง PIN</span>'))+'</small></div><div class="cb-act" style="margin:0;justify-content:flex-end"><button class="cb-btn" data-a="reset" data-v="'+E(n)+'"'+(n===me()?' disabled':'')+'>รีเซ็ต PIN</button><button class="cb-btn" data-a="adm" data-v="'+E(n)+'"'+((isA&&cf.admins.length<2)?' disabled':'')+'>'+(isA?'ถอดผู้ดูแล':'ตั้งผู้ดูแล')+'</button><button class="cb-btn d" data-a="deluser" data-v="'+E(n)+'"'+((isA||n===me())?' disabled':'')+'>ลบชื่อ</button></div></div>'; }).join('');
     h+=detail('adm','🛠 ผู้ดูแล: จัดการผู้ใช้',rows+'<div class="cb-act"><input class="cb-in" id="cbNewName" placeholder="เพิ่มชื่อผู้ใช้ใหม่ (2–12 ตัวอักษร)" maxlength="12" autocomplete="off" style="flex:1;min-width:140px"><button class="cb-btn p" data-a="adduser">＋ เพิ่ม</button></div>'+
       '<div class="cb-r"><div><b>⏱ เข้าสู่ระบบค้างได้นาน</b></div><span class="t"><select id="cbTtl" aria-label="ระยะเวลาจำเครื่อง" style="padding:4px 6px;border-radius:8px;border:1px solid var(--line);background:var(--soft);color:var(--txt)">'+[4,8,12,24].map(v=>'<option value="'+v+'"'+(cf.ttlh===v?' selected':'')+'>'+v+' ชม.</option>').join('')+'</select></span></div>'+
@@ -12337,7 +12350,7 @@ function renderPanel(){
 }
 panel.addEventListener('toggle',e=>{ const d=e.target; if(d&&d.dataset&&d.dataset.id){ OPEN[d.dataset.id]=d.open; if(d.open&&d.dataset.id==='snap'&&SNAPS===null) loadSnaps(); } },true);
 async function loadHist(){ if(histBusy) return; histBusy=true; try{ HIST=await C().history(40); }catch(e){ HIST=false; } histBusy=false; if(!panel.hidden) renderPanel(); }
-async function loadAuth(){ try{ AUTH=await C().authList(); }catch(e){} if(!panel.hidden) renderPanel(); }
+async function loadAuth(){if(realAuth()){AUTH={};if(!panel.hidden)renderPanel();return}try{AUTH=await C().authList()}catch(e){}if(!panel.hidden)renderPanel()}
 async function loadSnaps(){ try{ SNAPS=await C().snapList(); }catch(e){ SNAPS=false; } if(!panel.hidden) renderPanel(); }
 function openPanel(){ if(locked) return; panel.hidden=false; renderPanel(); loadHist(); loadAuth(); if(OPEN.snap) loadSnaps(); try{ C().beat(); }catch(e){} }
 function closePanel(){ panel.hidden=true; }
@@ -12384,7 +12397,7 @@ panel.addEventListener('click',async e=>{
   await busyWrap(async()=>{
     const dirtyN=(C().dirty()||{}).n||0;
     if(a==='close') closePanel();
-    else if(a==='logout'){ if(!(await CF('ออกจากระบบ?'+(dirtyN?'\nมีการแก้ไขที่ยังไม่บันทึก '+dirtyN+' รายการ (ยังอยู่ในเครื่อง ไม่หาย)':''),{ok:'ออกจากระบบ',cancel:'ยกเลิก'}))) return; closePanel(); endSession(); showLock('ออกจากระบบแล้ว'); }
+    else if(a==='logout'){if(!(await CF('ออกจากระบบ?'+(dirtyN?'\nมีการแก้ไขที่ยังไม่บันทึก '+dirtyN+' รายการ (ยังอยู่ในเครื่อง ไม่หาย)':''),{ok:'ออกจากระบบ',cancel:'ยกเลิก'})))return;closePanel();endSession();if(!realAuth())showLock('ออกจากระบบแล้ว')}
     else if(a==='chpin') changePin();
     else if(a==='mkrec') makeRecovery();
     else if(a==='gloss') openGloss();
@@ -12418,7 +12431,7 @@ window.addEventListener('beforeunload',e=>{ try{ const d=C().dirty(); if(C().mod
 document.addEventListener('keydown',e=>{ if(locked) return; if((e.ctrlKey||e.metaKey)&&!e.altKey&&e.key.toLowerCase()==='s'){ const d=C().dirty(); if(C().mode()==='manual'&&((d&&d.n>0)||C().anomaly())){ e.preventDefault(); doSave(); } } },true);
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&!panel.hidden&&!g('cbPinMd')&&!g('cbCf')&&!g('cbGl')){ closePanel(); } });
 document.addEventListener('mousedown',e=>{ if(panel.hidden) return; if(!e.target.closest('#cbPanel,#cbPill,.cb-ov,#cbCf')) closePanel(); });
-window.addEventListener('spdb-collab',()=>{ paint(); if(!verOk()) authCheck(); }); window.addEventListener('spdb-conflict',paint);
+window.addEventListener('spdb-collab',()=>{paint();if(!verOk())authCheck()});window.addEventListener('spdb-conflict',paint);window.addEventListener('qeauth:ready',()=>{try{C().setWho(me())}catch(e){}paint()});
 setInterval(()=>{ if(document.hidden) return; paint(); authCheck(); },5000);
 setInterval(()=>{ if(document.hidden||!me()) return; C().cfgRefresh().then(()=>authCheck()).catch(()=>{}); },600000);
 authCheck(); setTimeout(()=>{ paint(); },1500);
@@ -12869,7 +12882,7 @@ async function ask(question,opts){
   const context=opts.context||(mode==='qe'?collectContext():{date:isoToday(),mode:'general'});
   const controller=new AbortController(); const timer=setTimeout(()=>controller.abort(),75000);
   try{
-    const res=await fetch(FUNCTION_URL,{method:'POST',signal:controller.signal,headers:{'Content-Type':'application/json','apikey':CFG.supabaseKey,'Authorization':'Bearer '+CFG.supabaseKey},
+    const res=await fetch(FUNCTION_URL,{method:'POST',signal:controller.signal,headers:{'Content-Type':'application/json','apikey':CFG.supabaseKey,'Authorization':'Bearer '+((window.QEAuth&&QEAuth.enabled&&QEAuth.enabled())?QEAuth.accessToken():CFG.supabaseKey)},
       body:JSON.stringify({action:'qe_tracker_assistant',version:2,mode:mode,question:String(question).slice(0,4000),history:(opts.history||[]).slice(-12),context:context})});
     const raw=await res.text(); let d={}; try{ d=JSON.parse(raw); }catch(e){ d={answer:raw}; }
     if(!res.ok) throw new Error(d.error||d.message||('Edge Function ตอบกลับ HTTP '+res.status));
@@ -13020,13 +13033,13 @@ const SEENK='qe_chat_seen_v1'; let seen={}; try{ seen=JSON.parse(localStorage.ge
 const saveSeen=()=>{ try{ localStorage.setItem(SEENK,JSON.stringify(seen)); }catch(e){} };
 function badge(){ const b=g('qeChatBadge'); b.textContent=String(unread); b.classList.toggle('on',unread>0); }
 const E=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const me=()=>String(localStorage.getItem('ux_me')||document.getElementById('cbWn')?.textContent||'Guest').trim()||'Guest';
-const headers=(extra={})=>Object.assign({'apikey':key,'Authorization':'Bearer '+key},extra);
+const me=()=>String((window.QEAuth&&QEAuth.enabled&&QEAuth.enabled()&&QEAuth.user()&&QEAuth.user().email)||localStorage.getItem('ux_me')||document.getElementById('cbWn')?.textContent||'Guest').trim()||'Guest';
+const headers=(extra={})=>{const t=(window.QEAuth&&QEAuth.enabled&&QEAuth.enabled())?QEAuth.accessToken():key;return Object.assign({'apikey':key,'Authorization':'Bearer '+t},extra)};
 function stamp(v){try{return new Intl.DateTimeFormat('th-TH',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'short'}).format(new Date(v));}catch(e){return'';}}
 function setStatus(s){g('qeChatStatus').textContent=s||'';}
 function drawRooms(){g('qeChatRooms').innerHTML=rooms.map(r=>'<button type="button" class="qec-room '+(r[0]===room?'on':'')+'" data-r="'+r[0]+'">'+r[1]+'</button>').join('');}
-function draw(list){const box=g('qeChatMessages'),who=me();if(!list.length){box.innerHTML='<div class="qec-empty">ยังไม่มีข้อความในห้องนี้</div>';return;}box.innerHTML=list.map(m=>'<div class="qec-row '+(m.sender_name===who?'me':'')+'"><div class="qec-meta">'+E(m.sender_name)+' · '+E(stamp(m.created_at))+'</div><div class="qec-bubble">'+E(m.message)+'</div></div>').join('');box.scrollTop=box.scrollHeight;}
-async function load(silent){if(!base||!key){setStatus('ไม่พบการตั้งค่า Supabase');return;}if(busy)return;busy=true;try{const url=base+'/rest/v1/chat_messages?select=id,room_key,sender_name,message,created_at&room_key=eq.'+encodeURIComponent(room)+'&deleted_at=is.null&order=created_at.desc&limit=100';const res=await fetch(url,{headers:headers()});const data=await res.json();if(!res.ok)throw new Error(data.message||'โหลดข้อความไม่สำเร็จ');data.reverse();const latest=data.length?Number(data[data.length-1].id):0;const isOpen=g('qeChatPanel').classList.contains('on');if(seen[room]==null){seen[room]=latest;saveSeen();}if(isOpen){seen[room]=Math.max(+seen[room]||0,latest);saveSeen();unread=0;}else{const who=me();unread=data.filter(m=>Number(m.id)>(+seen[room]||0)&&m.sender_name!==who).length;}badge();lastIds[room]=latest;draw(data);if(!silent)setStatus('เชื่อมต่อแล้ว · '+data.length+' ข้อความ');}catch(e){setStatus('ผิดพลาด: '+(e.message||e));}finally{busy=false;}}
+function draw(list){const box=g('qeChatMessages'),who=me();box.textContent='';if(!list.length){let e=document.createElement('div');e.className='qec-empty';e.textContent='ยังไม่มีข้อความในห้องนี้';box.appendChild(e);return}list.forEach(m=>{let r=document.createElement('div');r.className='qec-row '+(m.sender_name===who?'me':'');let a=document.createElement('div');a.className='qec-meta';a.textContent=String(m.sender_name||'')+' · '+stamp(m.created_at);let b=document.createElement('div');b.className='qec-bubble';b.textContent=String(m.message||'');r.append(a,b);box.appendChild(r)});box.scrollTop=box.scrollHeight;}
+async function load(silent){if(!base||!key){setStatus('ไม่พบการตั้งค่า Supabase');return;}if(window.QEAuth&&QEAuth.enabled&&QEAuth.enabled()&&!QEAuth.accessToken()){setStatus('รอเข้าสู่ระบบ Supabase Auth');return;}if(busy)return;busy=true;try{const url=base+'/rest/v1/chat_messages?select=id,room_key,sender_name,message,created_at&room_key=eq.'+encodeURIComponent(room)+'&deleted_at=is.null&order=created_at.desc&limit=100';const res=await fetch(url,{headers:headers()});const data=await res.json();if(!res.ok)throw new Error(data.message||'โหลดข้อความไม่สำเร็จ');data.reverse();const latest=data.length?Number(data[data.length-1].id):0;const isOpen=g('qeChatPanel').classList.contains('on');if(seen[room]==null){seen[room]=latest;saveSeen();}if(isOpen){seen[room]=Math.max(+seen[room]||0,latest);saveSeen();unread=0;}else{const who=me();unread=data.filter(m=>Number(m.id)>(+seen[room]||0)&&m.sender_name!==who).length;}badge();lastIds[room]=latest;draw(data);if(!silent)setStatus('เชื่อมต่อแล้ว · '+data.length+' ข้อความ');}catch(e){setStatus('ผิดพลาด: '+(e.message||e));}finally{busy=false;}}
 async function send() {
   const input = g("qeChatInput");
   const text = input.value.trim();
@@ -13196,7 +13209,7 @@ function close(){g('qeChatPanel').classList.remove('on');if(lastIds[room]){seen[
 g('qeChatFab').addEventListener('click',open);g('qeChatClose').addEventListener('click',close);g('qeChatSend').addEventListener('click',send);g('qeChatInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}});g('qeChatRooms').addEventListener('click',e=>{const b=e.target.closest('[data-r]');if(!b)return;room=b.dataset.r;drawRooms();load(false);});
 /* ตัวนับนับเฉพาะห้อง “ทีมทั้งหมด” (ห้องที่เชื่อม LINE) */
 document.addEventListener('keydown',e=>{if(e.key==='Escape')close();});
-timer=setInterval(()=>{ if(!document.hidden) load(true); },4000);document.addEventListener('visibilitychange',()=>{ if(!document.hidden) load(true); });window.addEventListener('beforeunload',()=>clearInterval(timer));drawRooms();load(true);
+const startChat=()=>{if(timer)return;timer=setInterval(()=>{if(!document.hidden)load(true)},4000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)load(true)});window.addEventListener('beforeunload',()=>clearInterval(timer));drawRooms();load(true)};if(window.QEAuth&&QEAuth.enabled&&QEAuth.enabled())QEAuth.ready().then(startChat);else startChat();
 window.__QE_CHAT={open,load,send,close};
 })();
 </script>
@@ -15187,7 +15200,7 @@ window.__QE_ROapply=function(name){
   window.__QE_RO=true; document.body.classList.add('qe-ro');
   let full=name; try{ const s=JSON.parse(localStorage.getItem('ux_auth_sess')||'null'); full=(s&&(s.full||s.n))||name; }catch(e){}
   if(!g('qeRoBar')){ const b=document.createElement('div'); b.id='qeRoBar'; b.setAttribute('role','status');
-    b.innerHTML='<span>👁 <b>โหมดดูอย่างเดียว</b> · '+String(full).replace(/[<>&]/g,'')+'</span><span class="s">ดูข้อมูล / เปลี่ยนแท็บ / ออกรายงาน PDF-PowerPoint ได้ · แก้ไขข้อมูลไม่ได้</span><button type="button" id="qeRoOut">ออกจากระบบ</button>';
+    b.innerHTML='<span>👁 <b>โหมดดูอย่างเดียว</b> · '+E(full)+'</span><span class="s">ดูข้อมูล / เปลี่ยนแท็บ / ออกรายงาน PDF-PowerPoint ได้ · แก้ไขข้อมูลไม่ได้</span><button type="button" id="qeRoOut">ออกจากระบบ</button>';
     document.body.appendChild(b);
     g('qeRoOut').addEventListener('click',()=>{ try{ localStorage.removeItem('ux_auth_sess'); localStorage.removeItem('ux_me'); }catch(e){} location.reload(); }); }
   lockInputs(document);
@@ -15733,7 +15746,7 @@ if(!/^[a-z0-9][a-z0-9_-]{1,60}$/i.test(TM.fn||'')) TM.fn='teams-notify';
 const CLOUD=window.COUNTERMEASURE_CLOUD_DEFAULTS||{};
 const fnUrl=name=>String(CLOUD.supabaseUrl||'').replace(/\/$/,'')+'/functions/v1/'+name;
 function userJwt(){
-  /* ถ้าเข้าระบบด้วย Supabase Auth อยู่ ใช้ access token ของผู้ใช้ (หมดอายุแล้วไม่ใช้) — ไม่เคยเก็บลงไฟล์ */
+  try{if(window.QEAuth&&QEAuth.enabled&&QEAuth.enabled())return QEAuth.accessToken()||''}catch(e){}
   try{ for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(!/^sb-.+-auth-token$/.test(k)) continue; const o=JSON.parse(localStorage.getItem(k)||'null'); const s=o&&(o.currentSession||o); if(s&&s.access_token&&(!s.expires_at||s.expires_at*1000>Date.now()+30000)) return s.access_token; } }catch(e){}
   return '';
 }
@@ -16462,10 +16475,10 @@ html{scroll-padding-top:64px}
 <!-- v77: optional companion add-ons load only from an HTTP(S) deployment; local single-file mode remains error-free. -->
 <script id="qeV77OptionalAddons">
 (function(){
+  if(window.QE_ENABLE_OPTIONAL_ADDONS!==true)return;
   if(!/^https?:$/i.test(location.protocol)) return;
   ['space-theme.js','teams-chat.js'].forEach(function(src){
-    var s=document.createElement('script'); s.src=src; s.defer=true;
-    s.addEventListener('error',function(){ if(window.QE77) QE77.recordError('optional-addon',new Error('โหลด '+src+' ไม่สำเร็จ'),src); });
+    var s=document.createElement('script');s.src=src;s.defer=true;s.dataset.qeOptional='1';s.addEventListener('error',function(){console.warn('optional add-on unavailable: '+src)});
     document.head.appendChild(s);
   });
 })();
@@ -16749,4 +16762,11 @@ html{scroll-padding-top:64px}
   }
 }
 </style>
+
+<style id="qeV78Overrides">
+body{padding-bottom:24px!important}.qe77-health-btn{min-width:32px!important;min-height:32px!important;padding:5px 8px!important;font-size:12.5px!important}.qe77-health-btn.ok{background:#087f5b!important}.qe77-health-btn.busy{background:#8a6100!important}.qe77-health-btn.ok:not(:hover):not(:focus-visible):not(:focus-within),.qe77-health-btn.busy:not(:hover):not(:focus-visible):not(:focus-within){width:32px!important;max-width:32px!important;padding:5px!important}.qe77-health-btn.ok:not(:hover):not(:focus-visible):not(:focus-within) .qe77-health-txt,.qe77-health-btn.busy:not(:hover):not(:focus-visible):not(:focus-within) .qe77-health-txt,.qe77-health-btn.ok:not(:hover):not(:focus-visible):not(:focus-within) .qe77-health-count,.qe77-health-btn.busy:not(:hover):not(:focus-visible):not(:focus-within) .qe77-health-count{display:none!important}@media print{.qe77-health-btn,.qe77-health-ov,#cbPill,.qec-fab,.qec-panel,.qeai-fab,.qeai-ov{display:none!important}body{padding-bottom:0!important}}
+</style>
+<script id="qeV78Final">
+(function(){function a(){let b=document.getElementById('qe77HealthBtn');if(!b)return;let c=b.classList.contains('ok')?'สีเขียว: Sync ปกติ':b.classList.contains('busy')?'สีเหลือง: กำลัง Sync':b.classList.contains('bad')?'สีแดง: พบปัญหา':'สีส้ม: ควรตรวจสอบ';b.setAttribute('aria-label',c+' · คลิกเพื่อเปิด System Health')}document.addEventListener('DOMContentLoaded',()=>{a();let s=document.getElementById('spStatus');if(s)new MutationObserver(a).observe(s,{attributes:true,childList:true,subtree:true})});window.QE78SecurityQA=Object.freeze({run(){const p='<img src=x onerror=window.__qeXss=1><svg onload=window.__qeXss=2></svg>',h=document.createElement('div');window.__qeXss=0;h.textContent=p;document.body.appendChild(h);const ok=window.__qeXss===0&&!h.querySelector('img,svg');h.remove();return{ok,executed:window.__qeXss}}})})();
+</script>
 </body></html>
