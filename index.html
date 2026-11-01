@@ -1,5 +1,6 @@
 <!--
-  QE Elec. Daily Job Tracker — Change log v78 (31-Oct-2026) · Round 2
+  QE Elec. Daily Job Tracker — Change log v79 (1-Nov-2026)
+  0) Restore optional companion add-ons on HTTP(S), including teams-chat.js, so the Microsoft Teams floating button loads again.
   1) System Health: normal state is a compact color dot; label appears on hover/focus or for a warning/error; click opens System Health; hidden for print/PDF.
   2) Optional Supabase Auth (feature flag defaults OFF): Email/Password, real session/JWT, viewer/editor/admin from qe_user_roles; user JWT is sent to Supabase when ON.
   3) Reversible v77→v78 migration: pre-v78 IndexedDB snapshot; rollback restores allow-listed business data only and excludes auth/config secrets.
@@ -9,17 +10,17 @@
 -->
 <!DOCTYPE html>
 <html lang="th"><head>
-<meta name="qe-app-version" content="78">
+<meta name="qe-app-version" content="79">
 <script id="qeV78FeatureFlags">
 window.QE_AUTH_CONFIG=Object.freeze({enabled:false,supabaseUrl:'',publishableKey:'',roleTable:'qe_user_roles'});
-window.QE_ENABLE_OPTIONAL_ADDONS=false;
+window.QE_ENABLE_OPTIONAL_ADDONS=true; // v79: restore v77 deployment behavior; loads teams-chat.js and space-theme.js on HTTP(S).
 </script>
 <script id="qeV78Core">
 /* v78 safety/observability core — loaded before legacy scripts. */
 (function(){
 'use strict';
 if (window.QE78) return;
-var APP='QE Elec. Daily Job Tracker', VER='78', DB_NAME='qe_tracker_v78_safety', STORE='snapshots';
+var APP='QE Elec. Daily Job Tracker', VER='79', DB_NAME='qe_tracker_v78_safety', STORE='snapshots';
 var MIG_KEY='qe_v78_migration', ERR_KEY='qe_v78_errors', MAX_ERR=50, restoring=false;
 var native={
   get:Storage.prototype.getItem,
@@ -16472,7 +16473,7 @@ html{scroll-padding-top:64px}
 })();
 </script>
 <!-- ===== end v64 ===== -->
-<!-- v77: optional companion add-ons load only from an HTTP(S) deployment; local single-file mode remains error-free. -->
+<!-- v79: companion add-ons are enabled by default on HTTP(S); local single-file mode remains error-free. -->
 <script id="qeV77OptionalAddons">
 (function(){
   if(window.QE_ENABLE_OPTIONAL_ADDONS!==true)return;
