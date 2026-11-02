@@ -1,4 +1,16 @@
 <!--
+  QE Elec. Daily Job Tracker — Change log v81 (2-Nov-2026)
+  0) Based on index_v80_auth.html; QE_AUTH_CONFIG.enabled remains true. No business-data key, stored user data, Supabase Auth/RLS/role logic, or cloud-sync logic is changed.
+  1) Added six quick-user buttons (Benz, Earn, Mana, Natcha, P'Pik (GM), P'Jay (DM)) plus a visually secondary Benz alternate-account option.
+  2) A quick-user choice fills the Email field, marks the choice clearly, and moves focus to Password; pressing Enter submits the real login form.
+  3) The last quick-user email is remembered locally in localStorage key ux_auth_last_email_v1 (excluded from cloud business-data sync). Passwords are never stored or logged by this feature.
+  4) Added password-manager-friendly form semantics: named fields, autocomplete=username/current-password, and a true submit button.
+  5) Added responsive, high-contrast light/dark styles for 1366x768 laptops and mobile screens.
+  6) Teams Chat now loads teams-chat-v81.js; its close button is pinned to the far-right of the header and matches the LINE close control.
+  7) Added a chat-overlap guard that temporarily hides small floating decorations (including the mascot) when they cover an open LINE/Teams panel, then restores them after both chats close.
+  8) The collaboration panel now reports the actual app version as v81.
+-->
+<!--
   QE Elec. Daily Job Tracker — Change log v80 (1-Nov-2026)
   0) Preserve every v79 feature and user-data key; this file does not migrate, clear, rename, or overwrite business data.
   1) Supabase Auth requests now obtain a current user access token (JWT), refresh it before expiry, and show a clear re-login screen if refresh is unavailable or fails.
@@ -10,10 +22,10 @@
 -->
 <!DOCTYPE html>
 <html lang="th"><head>
-<meta name="qe-app-version" content="80">
+<meta name="qe-app-version" content="81">
 <script id="qeV78FeatureFlags">
 window.QE_AUTH_CONFIG=Object.freeze({enabled:true,supabaseUrl:'',publishableKey:'',roleTable:'qe_user_roles'});
-window.QE_ENABLE_OPTIONAL_ADDONS=true; // v80: loads teams-chat-v80.js and space-theme.js on HTTP(S); original teams-chat.js is not modified.
+window.QE_ENABLE_OPTIONAL_ADDONS=true; // v81: loads teams-chat-v81.js and space-theme.js on HTTP(S); v80 companion files are not modified.
 </script>
 <script id="qeV78Core">
 /* v78 safety/observability core — loaded before legacy scripts. */
@@ -299,8 +311,54 @@ async function token(){
  try{await refresh();if(S&&S.access_token)return S.access_token;throw Error('ไม่พบ access token หลัง refresh')}catch(e){S=U=null;R='';save();lock('Session หมดอายุหรือ refresh ไม่สำเร็จ — กรุณาล็อกอินใหม่');throw Error('Session หมดอายุ — กรุณาล็อกอินใหม่')}
 }
 function inert(v,keep){[...document.body.children].forEach(x=>{if(x===keep||['SCRIPT','STYLE','LINK'].includes(x.tagName))return;v?x.setAttribute('inert',''):x.removeAttribute('inert')})}
-function css(){if(document.getElementById('qe78AuthCss'))return;let x=document.createElement('style');x.id='qe78AuthCss';x.textContent='.qe78-auth{position:fixed;inset:0;z-index:120000;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(2,6,23,.9)}.qe78-ac{width:min(430px,100%);padding:22px;border:1px solid #94a3b8;border-radius:16px;background:#fff;color:#172033;box-shadow:0 24px 70px #0008}.qe78-ac h1{font-size:21px;margin:0 0 5px}.qe78-ac p,.qe78-ac small{color:#475569;font-size:13px;line-height:1.55}.qe78-ac label{display:block;margin:10px 0 4px;font-weight:800}.qe78-ac input,.qe78-ac button{width:100%;min-height:42px;border:1px solid #64748b;border-radius:9px;padding:9px 11px;font-size:15px}.qe78-ac button{margin-top:14px;background:#1d4ed8;color:#fff;font-weight:800}.qe78-ae{margin-top:10px;padding:9px;border:1px solid #b91c1c;border-radius:8px;background:#fee2e2;color:#7f1d1d}@media(prefers-color-scheme:dark){.qe78-ac{background:#0f172a;color:#f8fafc}.qe78-ac p,.qe78-ac small{color:#cbd5e1}.qe78-ac input{background:#111827;color:#fff}}';document.head.appendChild(x)}
-function lock(msg){css();let o=document.getElementById('qe78Auth');if(!o){o=document.createElement('div');o.id='qe78Auth';o.className='qe78-auth';o.innerHTML='<section class="qe78-ac"><h1>🔐 เข้าสู่ระบบ QE Tracker</h1><p>ใช้ Email/Password ของ Supabase Auth · สิทธิ์จริงมาจาก qe_user_roles และ RLS</p><form><label>Email</label><input id="qe78Email" type="email" autocomplete="username" required><label>Password</label><input id="qe78Password" type="password" autocomplete="current-password" required><div id="qe78Err" class="qe78-ae" hidden></div><button>เข้าสู่ระบบ</button></form><small>ผู้ดูแลต้องสร้างบัญชีใน Supabase Authentication และกำหนด viewer/editor/admin ก่อน</small></section>';document.body.appendChild(o);o.querySelector('form').onsubmit=async e=>{e.preventDefault();let b=o.querySelector('button'),er=document.getElementById('qe78Err');b.disabled=true;er.hidden=true;try{await login(qe78Email.value,qe78Password.value);inert(false,o);document.body.style.overflow='';o.remove();resolveReady(true)}catch(x){er.textContent=String(x.message||x);er.hidden=false;qe78Password.value='';qe78Password.focus()}finally{b.disabled=false}}}if(msg){let e=document.getElementById('qe78Err');e.textContent=String(msg);e.hidden=false}inert(true,o);document.body.style.overflow='hidden';setTimeout(()=>qe78Email.focus(),0)}
+const LAST_EMAIL_KEY='ux_auth_last_email_v1';
+const QUICK_USERS=Object.freeze([
+ {label:'Benz',email:'bulakorn_ko@siamaisin.co.th'},
+ {label:'Earn',email:'chonlakarn_ha@siamaisin.co.th'},
+ {label:'Mana',email:'mana_ku@siamaisin.co.th'},
+ {label:'Natcha',email:'natcha_ch@siamaisin.co.th'},
+ {label:"P'Pik (GM)",email:'charinya@siamaisin.co.th'},
+ {label:"P'Jay (DM)",email:'jumnean_ch@siamaisin.co.th'}
+]);
+const ALT_USERS=Object.freeze([{label:'Benz (อีเมลสำรอง)',email:'benzbulakorn@gmail.com'}]);
+function css(){
+ if(document.getElementById('qe78AuthCss'))return;
+ let x=document.createElement('style');x.id='qe78AuthCss';x.textContent=`
+ .qe78-auth{position:fixed;inset:0;z-index:120000;display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto;background:rgba(2,6,23,.9)}
+ .qe78-ac{box-sizing:border-box;width:min(520px,100%);padding:20px;border:1px solid #64748b;border-radius:16px;background:#fff;color:#172033;box-shadow:0 24px 70px #0008}
+ .qe78-ac *{box-sizing:border-box}.qe78-ac h1{font-size:21px;margin:0 0 5px}.qe78-ac p,.qe78-ac small{color:#475569;font-size:13px;line-height:1.5}.qe78-ac p{margin:0 0 12px}
+ .qe78-ac label{display:block;margin:9px 0 4px;font-weight:800}.qe78-ac input,.qe78-ac button{font:inherit}.qe78-ac input{width:100%;min-height:42px;border:1px solid #64748b;border-radius:9px;padding:9px 11px;font-size:15px;background:#fff;color:#172033}
+ .qe78-ac input:focus-visible,.qe78-ac button:focus-visible{outline:3px solid #f59e0b;outline-offset:2px}
+ .qe78-quick-label{display:block;margin:0 0 6px;font-size:13px;font-weight:800;color:#334155}.qe78-quick{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+ .qe78-quick button,.qe78-alt{width:100%;min-height:40px;margin:0;border:1px solid #64748b;border-radius:9px;padding:7px 8px;background:#f8fafc;color:#1e3a8a;font-weight:800;cursor:pointer}
+ .qe78-quick button:hover,.qe78-alt:hover{background:#e2e8f0}.qe78-quick button[aria-pressed=true],.qe78-alt[aria-pressed=true]{border-color:#1e3a8a;background:#1d4ed8;color:#fff;box-shadow:0 0 0 3px rgba(29,78,216,.25)}
+ .qe78-alt{width:auto;min-height:34px;margin-top:7px;padding:5px 10px;font-size:12px;font-weight:700}
+ .qe78-submit{width:100%;min-height:42px;margin-top:12px;border:1px solid #1e40af;border-radius:9px;padding:9px 11px;background:#1d4ed8;color:#fff;font-weight:800;cursor:pointer}.qe78-submit:hover{background:#1e40af}.qe78-submit:disabled{cursor:wait;opacity:.7}
+ .qe78-ae{margin-top:10px;padding:9px;border:1px solid #b91c1c;border-radius:8px;background:#fee2e2;color:#7f1d1d}.qe78-ac small{display:block;margin-top:14px}
+ @media(max-width:480px){.qe78-auth{align-items:flex-start;padding:10px}.qe78-ac{padding:16px}.qe78-quick{grid-template-columns:repeat(2,minmax(0,1fr))}}
+ @media(max-height:620px){.qe78-auth{align-items:flex-start}.qe78-ac{margin-block:4px}}
+ @media(prefers-color-scheme:dark){.qe78-ac{border-color:#94a3b8;background:#0f172a;color:#f8fafc}.qe78-ac p,.qe78-ac small{color:#cbd5e1}.qe78-quick-label{color:#e2e8f0}.qe78-ac input{border-color:#94a3b8;background:#111827;color:#fff}.qe78-quick button,.qe78-alt{border-color:#94a3b8;background:#172033;color:#e0e7ff}.qe78-quick button:hover,.qe78-alt:hover{background:#273449}.qe78-quick button[aria-pressed=true],.qe78-alt[aria-pressed=true]{border-color:#bfdbfe;background:#2563eb;color:#fff}.qe78-ae{border-color:#fca5a5;background:#450a0a;color:#fecaca}}
+ `;document.head.appendChild(x)
+}
+function lock(msg){
+ css();let o=document.getElementById('qe78Auth');
+ if(!o){
+  o=document.createElement('div');o.id='qe78Auth';o.className='qe78-auth';
+  const buttons=QUICK_USERS.map(u=>'<button type="button" data-qe-email="'+u.email+'" aria-pressed="false">'+u.label+'</button>').join('');
+  o.innerHTML='<section class="qe78-ac" role="dialog" aria-modal="true" aria-labelledby="qe78AuthTitle"><h1 id="qe78AuthTitle">🔐 เข้าสู่ระบบ QE Tracker</h1><p>เลือกชื่อเพื่อเติมอีเมลอัตโนมัติ แล้วพิมพ์เฉพาะ Password</p><span class="qe78-quick-label" id="qe78QuickLabel">ผู้ใช้ประจำ</span><div class="qe78-quick" role="group" aria-labelledby="qe78QuickLabel">'+buttons+'</div><button type="button" class="qe78-alt" data-qe-email="'+ALT_USERS[0].email+'" aria-pressed="false">'+ALT_USERS[0].label+'</button><form id="qe78LoginForm" autocomplete="on"><label for="qe78Email">Email</label><input id="qe78Email" name="email" type="email" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" required><label for="qe78Password">Password</label><input id="qe78Password" name="password" type="password" autocomplete="current-password" required><div id="qe78Err" class="qe78-ae" role="alert" hidden></div><button type="submit" class="qe78-submit">เข้าสู่ระบบ</button></form><small>สิทธิ์ viewer/editor/admin ยังตรวจจาก qe_user_roles และ RLS ตามเดิม · เครื่องนี้จำเฉพาะอีเมลที่เลือก ไม่เก็บ Password</small></section>';
+  document.body.appendChild(o);
+  const form=o.querySelector('#qe78LoginForm'),email=o.querySelector('#qe78Email'),password=o.querySelector('#qe78Password'),submit=o.querySelector('.qe78-submit'),choices=[...o.querySelectorAll('[data-qe-email]')];
+  const mark=value=>{const v=String(value||'').trim().toLowerCase();choices.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.qeEmail.toLowerCase()===v)))};
+  const choose=(value,remember)=>{email.value=value;mark(value);if(remember){try{localStorage.setItem(LAST_EMAIL_KEY,value)}catch(e){}}password.focus()};
+  choices.forEach(b=>b.addEventListener('click',()=>choose(b.dataset.qeEmail,true)));
+  email.addEventListener('input',()=>mark(email.value));
+  let saved='';try{saved=String(localStorage.getItem(LAST_EMAIL_KEY)||'').trim()}catch(e){}
+  if(saved&&choices.some(b=>b.dataset.qeEmail.toLowerCase()===saved.toLowerCase()))choose(saved,false);else setTimeout(()=>email.focus(),0);
+  form.addEventListener('submit',async e=>{e.preventDefault();submit.disabled=true;o.querySelector('#qe78Err').hidden=true;try{await login(email.value,password.value);inert(false,o);document.body.style.overflow='';o.remove();resolveReady(true)}catch(x){let er=o.querySelector('#qe78Err');er.textContent=String(x.message||x);er.hidden=false;password.value='';password.focus()}finally{submit.disabled=false}})
+ }
+ if(msg){let e=o.querySelector('#qe78Err');e.textContent=String(msg);e.hidden=false}
+ inert(true,o);document.body.style.overflow='hidden'
+}
 async function out(){try{S&&S.access_token&&await req('/auth/v1/logout',{method:'POST',headers:hdr(S.access_token)})}catch(e){}S=U=null;R='';save();lock('ออกจากระบบแล้ว')}
 function guard(){document.addEventListener('click',e=>{if(!on()||R!=='editor')return;let b=e.target.closest('button,[role=button]');if(!b)return;let a=[b.dataset.qeFn,b.dataset.a,b.dataset.x,b.dataset.mje].filter(Boolean).join(' ').toLowerCase(),t=b.textContent||'';if(/(^|[-_])(del|delete|purge)([-_]|$)/.test(a)||/ลบถาวร|ล้างถังขยะ|ลบที่เลือก/.test(t)){e.preventDefault();e.stopImmediatePropagation();try{toast('การลบต้องใช้บัญชี admin','var(--t-warn)')}catch(x){alert('การลบต้องใช้บัญชี admin')}}},true)}
 async function start(){if(started)return;started=true;if(!on()){resolveReady(true);return}guard();try{pub();S=load();if(S&&+S.expires_at*1000>Date.now()+60000)await identity();else if(S&&S.refresh_token)await refresh();else throw Error('กรุณาเข้าสู่ระบบ');resolveReady(true)}catch(e){S=U=null;R='';save();lock(e.message||e)}}
@@ -2521,7 +2579,7 @@ window.qeBlk={
      • เครื่องใหม่: ไม่ส่งข้อมูลตั้งต้น/ของเก่าในเครื่องขึ้นไปทับ Cloud เงียบ ๆ
      • PIN เก็บเป็นแฮช ตรวจที่หน้าเว็บ — ไม่ใช่ความปลอดภัยระดับเซิร์ฟเวอร์ */
   const WHOK='ux_me', MODEK='ux_savemode', DEVK='ux_dev_id', RPL='ux_rp_list', PRUNEK='ux_prune_day', SNAPK='ux_snap_day', ACFGC='ux_cfg_cache';
-  const PRES='countermeasure-presence:', AUD='countermeasure-audit:', AUTHP='countermeasure-auth:', SNAP='countermeasure-snap:', ACFGK=AUTHP+'~cfg', APPVER='78';
+  const PRES='countermeasure-presence:', AUD='countermeasure-audit:', AUTHP='countermeasure-auth:', SNAP='countermeasure-snap:', ACFGK=AUTHP+'~cfg', APPVER='81';
   var clockOff=0, lastOK=0, newDev=null;
   const lsGet=k=>{ try{ return localStorage.getItem(k); }catch(e){ return null; } };
   const lsSet=(k,v)=>{ try{ localStorage.setItem(k,v); return true; }catch(e){ return false; } };
@@ -13029,7 +13087,7 @@ window.__QE_AI={ask:(q,o)=>ask(q,o||{mode:'qe',context:collectContext({q:q})}),c
 <!-- ===== QE Team Chat add-on v1 ===== -->
 <style id="qeChatStyle">
 .qec-fab{position:fixed;right:18px;bottom:126px;z-index:244;border:0;border-radius:999px;padding:11px 16px;background:linear-gradient(135deg,#06C755,#00B900);color:#fff;font-weight:800;box-shadow:0 8px 24px rgba(6,199,85,.35);cursor:pointer}.qec-fab:hover{filter:brightness(1.08)}.qec-badge{display:none;min-width:20px;height:20px;padding:0 6px;margin-left:5px;border-radius:99px;background:#ef4444;color:#fff;font-size:11px;align-items:center;justify-content:center}.qec-badge.on{display:inline-flex}
-.qec-panel{position:fixed;right:18px;bottom:180px;z-index:245;width:min(390px,calc(100vw - 24px));height:min(610px,calc(100vh - 210px));display:none;flex-direction:column;background:var(--pop,#fff);color:var(--txt,#222);border:1px solid var(--line,#ddd);border-radius:18px;box-shadow:0 18px 60px rgba(0,0,0,.35);overflow:hidden}.qec-panel.on{display:flex}.qec-head{display:flex;align-items:center;gap:10px;padding:12px 14px;background:linear-gradient(135deg,#06C755,#00B900);color:#fff}.qec-head b{flex:1}.qec-online{font-size:11px;opacity:.9}.qec-close{border:0;background:rgba(255,255,255,.18);color:#fff;border-radius:8px;padding:5px 9px;cursor:pointer}.qec-rooms{display:flex;gap:6px;padding:8px;overflow-x:auto;border-bottom:1px solid var(--line)}.qec-room{white-space:nowrap;border:1px solid var(--line);background:var(--soft);color:var(--txt);border-radius:99px;padding:6px 10px;font-size:12px;font-weight:700;cursor:pointer}.qec-room.on{background:#06C755;color:#fff;border-color:#06C755}.qec-msgs{flex:1;overflow:auto;padding:12px;background:color-mix(in srgb,var(--soft) 60%,var(--card));display:flex;flex-direction:column;gap:8px}.qec-empty{text-align:center;color:var(--mut);padding:30px 10px;font-size:13px}.qec-row{display:flex;flex-direction:column;align-items:flex-start}.qec-row.me{align-items:flex-end}.qec-meta{font-size:10px;color:var(--mut);margin:0 5px 2px}.qec-bubble{max-width:84%;padding:8px 11px;border-radius:14px 14px 14px 4px;background:var(--card);border:1px solid var(--line);white-space:pre-wrap;word-break:break-word;font-size:13px;line-height:1.45}.qec-row.me .qec-bubble{background:#06C755;color:#fff;border-color:#06C755;border-radius:14px 14px 4px 14px}.qec-compose{padding:9px;border-top:1px solid var(--line);background:var(--card)}.qec-compose-row{display:flex;gap:7px}.qec-input{flex:1;min-width:0;min-height:40px;max-height:100px;resize:none;border:1px solid var(--line);background:var(--inp);color:var(--txt);border-radius:12px;padding:9px}.qec-send{border:0;border-radius:12px;background:#06C755;color:#fff;padding:8px 14px;font-weight:800;cursor:pointer}.qec-send:disabled{opacity:.5}.qec-send:hover{background:#05b34c}.qec-input:focus{outline:none;border-color:#06C755!important;box-shadow:0 0 0 3px rgba(6,199,85,.22)!important}.qec-msgs{background:#EAF7EF!important}.qec-rooms{background:#F3FBF6}.qec-compose{background:#F3FBF6!important}.qec-room{border-color:#BFE8CF!important}.qec-status{font-size:10px;color:var(--mut);margin-top:5px;min-height:14px}
+.qec-panel{position:fixed;right:18px;bottom:180px;z-index:245;width:min(390px,calc(100vw - 24px));height:min(610px,calc(100vh - 210px));display:none;flex-direction:column;background:var(--pop,#fff);color:var(--txt,#222);border:1px solid var(--line,#ddd);border-radius:18px;box-shadow:0 18px 60px rgba(0,0,0,.35);overflow:hidden}.qec-panel.on{display:flex}.qec-head{display:flex;align-items:center;gap:10px;padding:12px 14px;background:linear-gradient(135deg,#06C755,#00B900);color:#fff}.qec-head b{flex:1}.qec-online{font-size:11px;opacity:.9}.qec-close{flex:0 0 auto;width:30px;height:30px;margin-left:auto;border:0;background:rgba(255,255,255,.18);color:#fff;border-radius:999px;padding:0;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;line-height:1}.qec-close:hover{background:rgba(255,255,255,.28)}.qec-close:focus-visible{outline:3px solid #fde68a;outline-offset:2px}.qec-rooms{display:flex;gap:6px;padding:8px;overflow-x:auto;border-bottom:1px solid var(--line)}.qec-room{white-space:nowrap;border:1px solid var(--line);background:var(--soft);color:var(--txt);border-radius:99px;padding:6px 10px;font-size:12px;font-weight:700;cursor:pointer}.qec-room.on{background:#06C755;color:#fff;border-color:#06C755}.qec-msgs{flex:1;overflow:auto;padding:12px;background:color-mix(in srgb,var(--soft) 60%,var(--card));display:flex;flex-direction:column;gap:8px}.qec-empty{text-align:center;color:var(--mut);padding:30px 10px;font-size:13px}.qec-row{display:flex;flex-direction:column;align-items:flex-start}.qec-row.me{align-items:flex-end}.qec-meta{font-size:10px;color:var(--mut);margin:0 5px 2px}.qec-bubble{max-width:84%;padding:8px 11px;border-radius:14px 14px 14px 4px;background:var(--card);border:1px solid var(--line);white-space:pre-wrap;word-break:break-word;font-size:13px;line-height:1.45}.qec-row.me .qec-bubble{background:#06C755;color:#fff;border-color:#06C755;border-radius:14px 14px 4px 14px}.qec-compose{padding:9px;border-top:1px solid var(--line);background:var(--card)}.qec-compose-row{display:flex;gap:7px}.qec-input{flex:1;min-width:0;min-height:40px;max-height:100px;resize:none;border:1px solid var(--line);background:var(--inp);color:var(--txt);border-radius:12px;padding:9px}.qec-send{border:0;border-radius:12px;background:#06C755;color:#fff;padding:8px 14px;font-weight:800;cursor:pointer}.qec-send:disabled{opacity:.5}.qec-send:hover{background:#05b34c}.qec-input:focus{outline:none;border-color:#06C755!important;box-shadow:0 0 0 3px rgba(6,199,85,.22)!important}.qec-msgs{background:#EAF7EF!important}.qec-rooms{background:#F3FBF6}.qec-compose{background:#F3FBF6!important}.qec-room{border-color:#BFE8CF!important}.qec-status{font-size:10px;color:var(--mut);margin-top:5px;min-height:14px}
 body.neo .qec-msgs{background:#071a14!important}body.neo .qec-rooms,body.neo .qec-compose{background:#0b201a!important}body.neo .qec-room{background:#102c24!important;color:var(--txt)!important;border-color:#246b54!important}body.neo .qec-room.on{background:#06C755!important;color:#fff!important}
 @media(max-width:600px){.qec-fab{right:10px;bottom:116px}.qec-panel{right:6px;bottom:168px;width:calc(100vw - 12px);height:min(620px,calc(100vh - 180px));border-radius:14px}}
 </style>
@@ -16502,10 +16560,42 @@ html{scroll-padding-top:64px}
 (function(){
   if(window.QE_ENABLE_OPTIONAL_ADDONS!==true)return;
   if(!/^https?:$/i.test(location.protocol)) return;
-  ['space-theme.js','teams-chat-v80.js'].forEach(function(src){
+  ['space-theme.js','teams-chat-v81.js'].forEach(function(src){
     var s=document.createElement('script');s.src=src;s.defer=true;s.dataset.qeOptional='1';s.addEventListener('error',function(){console.warn('optional add-on unavailable: '+src)});
     document.head.appendChild(s);
   });
+})();
+</script>
+<!-- v81: keep floating decorations/mascot from blocking LINE or Teams chat controls. -->
+<style id="qeV81ChatOverlapCss">.qe-chat-occluded{visibility:hidden!important;pointer-events:none!important}</style>
+<script id="qeV81ChatOverlapGuard">
+(function(){
+'use strict';
+if(window.QE81ChatOverlap)return;
+const H='qe-chat-occluded',hidden=new Set();let queued=false;
+const intersects=(a,b)=>a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top;
+function inFixedContext(el){for(let n=el;n&&n!==document.documentElement;n=n.parentElement){const p=getComputedStyle(n).position;if(p==='fixed')return true;}return false;}
+function openPanels(){return['qeChatPanel','qeTeamsPanel'].map(id=>document.getElementById(id)).filter(p=>p&&p.classList.contains('on'));}
+function refresh(){
+ queued=false;const panels=openPanels();
+ if(!panels.length){hidden.forEach(el=>{if(el&&el.classList)el.classList.remove(H)});hidden.clear();document.body.classList.remove('qe-chat-open');return;}
+ document.body.classList.add('qe-chat-open');
+ const zones=[];panels.forEach(p=>{const c=p.querySelector('.qec-compose,.qet-compose');zones.push((c||p).getBoundingClientRect());});
+ const keep=new Set(),skip='#qeChatPanel,#qeTeamsPanel,#qeChatFab,#qeTeamsFab,#qeAiFab,.qe77-health-btn,#ux33Top';
+ document.body.querySelectorAll('*').forEach(el=>{
+  if(el.matches(skip)||el.closest('#qeChatPanel,#qeTeamsPanel')||el.closest('#qe78Auth'))return;
+  const r=el.getBoundingClientRect();if(r.width<18||r.height<18||r.width>190||r.height>190||r.width*r.height>26000)return;
+  const cs=getComputedStyle(el);if((!hidden.has(el)&&cs.visibility==='hidden')||cs.display==='none'||+cs.opacity===0||!inFixedContext(el))return;
+  if(zones.some(z=>intersects(r,z)))keep.add(el);
+ });
+ hidden.forEach(el=>{if(!keep.has(el)){if(el&&el.classList)el.classList.remove(H);hidden.delete(el)}});
+ keep.forEach(el=>{if(!hidden.has(el)){el.classList.add(H);hidden.add(el)}});
+}
+function queue(){if(queued)return;queued=true;requestAnimationFrame(refresh);}
+const obs=new MutationObserver(ms=>{if(ms.some(m=>m.type==='childList'||m.attributeName==='class'||m.attributeName==='style'))queue()});
+function start(){obs.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style']});window.addEventListener('resize',queue,{passive:true});window.addEventListener('scroll',queue,{passive:true});document.addEventListener('click',queue,true);queue();}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
+window.QE81ChatOverlap={refresh:refresh};
 })();
 </script>
 <!-- ===== QE Executive Dashboard v1 ===== -->
