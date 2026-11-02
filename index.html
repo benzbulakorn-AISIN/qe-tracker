@@ -1,4 +1,16 @@
 <!--
+  QE Elec. Daily Job Tracker — Change log v82 (2-Nov-2026)
+  0) Based on index_v81.html; QE_AUTH_CONFIG.enabled remains true. Supabase Auth, viewer/editor/admin authorization, RLS, business-data sync, and database payload formats are unchanged.
+  1) Rebuilt the login experience as a compact corporate two-column card for 1366×768, mobile, light, and dark modes with WCAG-oriented contrast and clear focus states.
+  2) Added one editable QE_PEOPLE directory near the top of this file. Login cards show verified full name, nickname, and role; the Benz alternate email is under “บัญชีอื่น”.
+  3) The last selected email is remembered in ux_auth_last_email_v1. Passwords are never stored, copied into support messages, or written to console by v82.
+  4) Added password show/hide, Caps Lock warning, submit busy state, friendly Thai error guidance, and an Admin contact dialog (email, Teams deep link, copy-for-LINE).
+  5) Added display-only nickname formatting for the mascot greeting, account pill, collaboration account/online list, “เฉพาะของฉัน”, LINE Chat header/message names, and Teams Chat message names. Stored sender_name/owner/audit/presence values are not rewritten.
+  6) Unknown emails use qe_user_roles.display_name for the signed-in user when that optional column is available; otherwise a readable local-part fallback is used.
+  7) Updated app/collaboration labels and optional Teams companion loading to v82. New companion: teams-chat-v82.js; v81 files are not overwritten.
+  8) Added regression-test hooks only through existing DOM events; no service_role key, password logging, or Auth/RLS bypass is introduced.
+-->
+<!--
   QE Elec. Daily Job Tracker — Change log v81 (2-Nov-2026)
   0) Based on index_v80_auth.html; QE_AUTH_CONFIG.enabled remains true. No business-data key, stored user data, Supabase Auth/RLS/role logic, or cloud-sync logic is changed.
   1) Added six quick-user buttons (Benz, Earn, Mana, Natcha, P'Pik (GM), P'Jay (DM)) plus a visually secondary Benz alternate-account option.
@@ -22,17 +34,44 @@
 -->
 <!DOCTYPE html>
 <html lang="th"><head>
-<meta name="qe-app-version" content="81">
+<meta name="qe-app-version" content="82">
 <script id="qeV78FeatureFlags">
 window.QE_AUTH_CONFIG=Object.freeze({enabled:true,supabaseUrl:'',publishableKey:'',roleTable:'qe_user_roles'});
-window.QE_ENABLE_OPTIONAL_ADDONS=true; // v81: loads teams-chat-v81.js and space-theme.js on HTTP(S); v80 companion files are not modified.
+window.QE_ENABLE_OPTIONAL_ADDONS=true; // v82: loads teams-chat-v82.js and space-theme.js on HTTP(S); earlier companion files are not modified.
+</script>
+<script id="qeV82PeopleDirectory">
+/* v82: Edit names/nicknames/roles here only. This table affects display, not Supabase Auth/RLS or stored business data. */
+window.QE_PEOPLE=Object.freeze([
+ {fullName:'Bulakorn Kongnarong',nickname:'Benz',email:'bulakorn_ko@siamaisin.co.th',role:'admin',roleLabel:'ผู้ดูแล',altEmails:['benzbulakorn@gmail.com']},
+ {fullName:'Chonlakarn Harikunsawad',nickname:'Earn',email:'chonlakarn_ha@siamaisin.co.th',role:'editor',roleLabel:'แก้ไขได้',altEmails:[]},
+ {fullName:'Mana Kumkrai',nickname:'Mana',email:'mana_ku@siamaisin.co.th',role:'editor',roleLabel:'แก้ไขได้',altEmails:[]},
+ {fullName:'Natcha Choomas',nickname:'Natcha',email:'natcha_ch@siamaisin.co.th',role:'editor',roleLabel:'แก้ไขได้',altEmails:[]},
+ {fullName:'Charinya Udomsri',nickname:"P'Pik",email:'charinya@siamaisin.co.th',role:'viewer',roleLabel:'ดูอย่างเดียว',altEmails:[]},
+ {fullName:'Jumnean Chiwirach',nickname:"P'Jay",email:'jumnean_ch@siamaisin.co.th',role:'viewer',roleLabel:'ดูอย่างเดียว',altEmails:[]}
+]);
+window.QEPeople=(function(){
+ 'use strict';
+ const directory=Object.create(null), norm=v=>String(v==null?'':v).trim().toLowerCase();
+ const emailLike=v=>/^[^\s@]+@[^\s@]+$/.test(String(v||'').trim());
+ function person(v){const n=norm(v);return window.QE_PEOPLE.find(p=>norm(p.email)===n||(p.altEmails||[]).some(x=>norm(x)===n)||norm(p.nickname)===n)||null;}
+ function readableLocal(v){
+  let s=String(v||'').trim();if(emailLike(s))s=s.split('@')[0];
+  s=s.replace(/[._-]+/g,' ').replace(/\s+/g,' ').trim();
+  return s?s.split(' ').map(x=>x?x.charAt(0).toUpperCase()+x.slice(1):'').join(' '):'ผู้ใช้';
+ }
+ function display(v){const p=person(v);if(p)return p.nickname;const d=directory[norm(v)];return d||readableLocal(v);}
+ function full(v){const p=person(v);return p?p.fullName:(directory[norm(v)]||readableLocal(v));}
+ function role(v){const p=person(v);return p?p.roleLabel:'';}
+ function setDirectoryDisplayName(email,name){const e=norm(email),n=String(name||'').trim();if(e&&n)directory[e]=n;}
+ return Object.freeze({person,display,full,role,readableLocal,setDirectoryDisplayName,emailLike});
+})();
 </script>
 <script id="qeV78Core">
 /* v78 safety/observability core — loaded before legacy scripts. */
 (function(){
 'use strict';
 if (window.QE78) return;
-var APP='QE Elec. Daily Job Tracker', VER='79', DB_NAME='qe_tracker_v78_safety', STORE='snapshots';
+var APP='QE Elec. Daily Job Tracker', VER='82', DB_NAME='qe_tracker_v78_safety', STORE='snapshots';
 var MIG_KEY='qe_v78_migration', ERR_KEY='qe_v78_errors', MAX_ERR=50, restoring=false;
 var native={
   get:Storage.prototype.getItem,
@@ -287,7 +326,7 @@ window.COUNTERMEASURE_CLOUD_DEFAULTS = Object.freeze({
 </script>
 <script id="qeV78SupabaseAuth">
 (function(){'use strict';if(window.QEAuth)return;
-const SK='qe_supabase_auth_session_v1';let S=null,U=null,R='',started=false,refreshTask=null,resolveReady;const RP=new Promise(r=>resolveReady=r);
+const SK='qe_supabase_auth_session_v1';let S=null,U=null,R='',DN='',started=false,refreshTask=null,resolveReady;const RP=new Promise(r=>resolveReady=r);
 const C=()=>{const a=window.QE_AUTH_CONFIG||{},c=window.COUNTERMEASURE_CLOUD_DEFAULTS||{};return{on:!!a.enabled,url:String(a.supabaseUrl||c.supabaseUrl||'').replace(/\/$/,''),key:String(a.publishableKey||c.supabaseKey||''),table:String(a.roleTable||'qe_user_roles')}};
 const on=()=>C().on;
 function dec(t){try{let x=String(t||'').split('.')[1];return x?JSON.parse(atob(x.replace(/-/g,'+').replace(/_/g,'/').padEnd(Math.ceil(x.length/4)*4,'='))):{}}catch(e){return{}}}
@@ -297,8 +336,9 @@ async function req(path,opt){if(!/^https:\/\//.test(C().url))throw Error('Supaba
 function save(){try{S?sessionStorage.setItem(SK,JSON.stringify(S)):sessionStorage.removeItem(SK)}catch(e){}}
 function load(){try{return JSON.parse(sessionStorage.getItem(SK)||'null')}catch(e){return null}}
 function name(){return String(U&&U.email||'ผู้ใช้ Supabase')}
-function apply(){window.__QE_AUTH_ROLE=R;window.__QE_RO=R==='viewer';window.__QE_CAN_DELETE=R==='admin';try{localStorage.setItem('ux_me',name())}catch(e){}try{window.SPDB&&SPDB.collab&&SPDB.collab.setWho(name())}catch(e){}setTimeout(()=>{try{window.__QE_RO&&window.__QE_ROapply&&window.__QE_ROapply(name())}catch(e){}},50);window.dispatchEvent(new CustomEvent('qeauth:ready',{detail:{email:name(),role:R}}))}
-async function identity(){U=await req('/auth/v1/user',{headers:hdr(S.access_token)});let a=await req('/rest/v1/'+encodeURIComponent(C().table)+'?select=role&user_id=eq.'+encodeURIComponent(U.id)+'&limit=1',{headers:hdr(S.access_token)});R=Array.isArray(a)&&a[0]&&String(a[0].role||'').toLowerCase();if(!/^(viewer|editor|admin)$/.test(R))throw Error('บัญชีนี้ยังไม่มี role ใน '+C().table);apply();return true}
+function displayName(){return window.QEPeople?QEPeople.display(name()):(DN||name())}
+function apply(){window.__QE_AUTH_ROLE=R;window.__QE_RO=R==='viewer';window.__QE_CAN_DELETE=R==='admin';try{localStorage.setItem('ux_me',name())}catch(e){}try{window.SPDB&&SPDB.collab&&SPDB.collab.setWho(name())}catch(e){}setTimeout(()=>{try{window.__QE_RO&&window.__QE_ROapply&&window.__QE_ROapply(name())}catch(e){}},50);window.dispatchEvent(new CustomEvent('qeauth:ready',{detail:{email:name(),displayName:displayName(),role:R}}))}
+async function identity(){U=await req('/auth/v1/user',{headers:hdr(S.access_token)});let a=await req('/rest/v1/'+encodeURIComponent(C().table)+'?select=role&user_id=eq.'+encodeURIComponent(U.id)+'&limit=1',{headers:hdr(S.access_token)});R=Array.isArray(a)&&a[0]&&String(a[0].role||'').toLowerCase();if(!/^(viewer|editor|admin)$/.test(R))throw Error('บัญชีนี้ยังไม่มี role ใน '+C().table);DN='';try{let d=await req('/rest/v1/'+encodeURIComponent(C().table)+'?select=display_name&user_id=eq.'+encodeURIComponent(U.id)+'&limit=1',{headers:hdr(S.access_token)});DN=Array.isArray(d)&&d[0]&&String(d[0].display_name||'').trim()||'';if(DN&&window.QEPeople)QEPeople.setDirectoryDisplayName(U.email,DN)}catch(_){/* optional column: safe fallback to email local-part */}apply();return true}
 async function login(e,p){let j=await req('/auth/v1/token?grant_type=password',{method:'POST',headers:hdr(''),body:JSON.stringify({email:String(e).trim(),password:String(p)})});S=Object.assign({},j,{expires_at:j.expires_at||Math.floor(Date.now()/1000)+(j.expires_in||3600)});save();return identity()}
 async function refresh(){
  if(refreshTask)return refreshTask;
@@ -312,56 +352,75 @@ async function token(){
 }
 function inert(v,keep){[...document.body.children].forEach(x=>{if(x===keep||['SCRIPT','STYLE','LINK'].includes(x.tagName))return;v?x.setAttribute('inert',''):x.removeAttribute('inert')})}
 const LAST_EMAIL_KEY='ux_auth_last_email_v1';
-const QUICK_USERS=Object.freeze([
- {label:'Benz',email:'bulakorn_ko@siamaisin.co.th'},
- {label:'Earn',email:'chonlakarn_ha@siamaisin.co.th'},
- {label:'Mana',email:'mana_ku@siamaisin.co.th'},
- {label:'Natcha',email:'natcha_ch@siamaisin.co.th'},
- {label:"P'Pik (GM)",email:'charinya@siamaisin.co.th'},
- {label:"P'Jay (DM)",email:'jumnean_ch@siamaisin.co.th'}
-]);
-const ALT_USERS=Object.freeze([{label:'Benz (อีเมลสำรอง)',email:'benzbulakorn@gmail.com'}]);
+const QUICK_USERS=window.QE_PEOPLE;
+const ALT_USERS=Object.freeze([{label:'Benz · อีเมลสำรอง',email:'benzbulakorn@gmail.com'}]);
+const ADMIN_EMAIL='bulakorn_ko@siamaisin.co.th';
+const ADMIN_TEAMS='https://teams.microsoft.com/l/chat/0/0?users='+encodeURIComponent(ADMIN_EMAIL);
+function authErrorText(err){
+ const m=String(err&&err.message||err||'').trim(),s=Number(err&&err.status)||0,l=m.toLowerCase();
+ if(/invalid login|invalid credentials|email not confirmed|password/.test(l))return'อีเมลหรือรหัสผ่านไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง (รวมถึง Caps Lock) แล้วลองใหม่';
+ if(/session|refresh|token|jwt/.test(l))return'Session หมดอายุ กรุณาเข้าสู่ระบบใหม่ หากยังพบปัญหาให้กด “ติดต่อ Admin”';
+ if(s===403||/role|permission|unauthorized|ไม่มีสิทธิ์/.test(l))return'บัญชีนี้ยังไม่มีสิทธิ์ใช้งาน QE Tracker กรุณาติดต่อผู้ดูแลเพื่อขอสิทธิ์';
+ if(/failed to fetch|network|load failed|internet|เชื่อมต่อ/.test(l))return'เชื่อมต่อระบบไม่ได้ กรุณาตรวจสอบอินเทอร์เน็ตหรือ VPN แล้วลองอีกครั้ง';
+ if(/กรุณาเข้าสู่ระบบ|ออกจากระบบ/.test(m))return m;
+ return m?'เข้าสู่ระบบไม่สำเร็จ — '+m:'เข้าสู่ระบบไม่สำเร็จ กรุณาลองใหม่หรือติดต่อผู้ดูแล';
+}
 function css(){
  if(document.getElementById('qe78AuthCss'))return;
  let x=document.createElement('style');x.id='qe78AuthCss';x.textContent=`
- .qe78-auth{position:fixed;inset:0;z-index:120000;display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto;background:rgba(2,6,23,.9)}
- .qe78-ac{box-sizing:border-box;width:min(520px,100%);padding:20px;border:1px solid #64748b;border-radius:16px;background:#fff;color:#172033;box-shadow:0 24px 70px #0008}
- .qe78-ac *{box-sizing:border-box}.qe78-ac h1{font-size:21px;margin:0 0 5px}.qe78-ac p,.qe78-ac small{color:#475569;font-size:13px;line-height:1.5}.qe78-ac p{margin:0 0 12px}
- .qe78-ac label{display:block;margin:9px 0 4px;font-weight:800}.qe78-ac input,.qe78-ac button{font:inherit}.qe78-ac input{width:100%;min-height:42px;border:1px solid #64748b;border-radius:9px;padding:9px 11px;font-size:15px;background:#fff;color:#172033}
- .qe78-ac input:focus-visible,.qe78-ac button:focus-visible{outline:3px solid #f59e0b;outline-offset:2px}
- .qe78-quick-label{display:block;margin:0 0 6px;font-size:13px;font-weight:800;color:#334155}.qe78-quick{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
- .qe78-quick button,.qe78-alt{width:100%;min-height:40px;margin:0;border:1px solid #64748b;border-radius:9px;padding:7px 8px;background:#f8fafc;color:#1e3a8a;font-weight:800;cursor:pointer}
- .qe78-quick button:hover,.qe78-alt:hover{background:#e2e8f0}.qe78-quick button[aria-pressed=true],.qe78-alt[aria-pressed=true]{border-color:#1e3a8a;background:#1d4ed8;color:#fff;box-shadow:0 0 0 3px rgba(29,78,216,.25)}
- .qe78-alt{width:auto;min-height:34px;margin-top:7px;padding:5px 10px;font-size:12px;font-weight:700}
- .qe78-submit{width:100%;min-height:42px;margin-top:12px;border:1px solid #1e40af;border-radius:9px;padding:9px 11px;background:#1d4ed8;color:#fff;font-weight:800;cursor:pointer}.qe78-submit:hover{background:#1e40af}.qe78-submit:disabled{cursor:wait;opacity:.7}
- .qe78-ae{margin-top:10px;padding:9px;border:1px solid #b91c1c;border-radius:8px;background:#fee2e2;color:#7f1d1d}.qe78-ac small{display:block;margin-top:14px}
- @media(max-width:480px){.qe78-auth{align-items:flex-start;padding:10px}.qe78-ac{padding:16px}.qe78-quick{grid-template-columns:repeat(2,minmax(0,1fr))}}
- @media(max-height:620px){.qe78-auth{align-items:flex-start}.qe78-ac{margin-block:4px}}
- @media(prefers-color-scheme:dark){.qe78-ac{border-color:#94a3b8;background:#0f172a;color:#f8fafc}.qe78-ac p,.qe78-ac small{color:#cbd5e1}.qe78-quick-label{color:#e2e8f0}.qe78-ac input{border-color:#94a3b8;background:#111827;color:#fff}.qe78-quick button,.qe78-alt{border-color:#94a3b8;background:#172033;color:#e0e7ff}.qe78-quick button:hover,.qe78-alt:hover{background:#273449}.qe78-quick button[aria-pressed=true],.qe78-alt[aria-pressed=true]{border-color:#bfdbfe;background:#2563eb;color:#fff}.qe78-ae{border-color:#fca5a5;background:#450a0a;color:#fecaca}}
+ .qe78-auth{--qa-bg:#edf3fb;--qa-card:#fff;--qa-ink:#10233f;--qa-muted:#52657d;--qa-line:#b8c5d6;--qa-soft:#f3f6fb;--qa-primary:#174ea6;--qa-primary2:#0b397e;--qa-focus:#f5a623;--qa-danger:#a61b1b;position:fixed;inset:0;z-index:120000;display:grid;place-items:center;padding:12px;overflow:auto;background:radial-gradient(circle at 18% 12%,#d9e8fb 0,transparent 35%),linear-gradient(135deg,#f7f9fc,#e8eef7);color:var(--qa-ink)}
+ .qe78-ac{box-sizing:border-box;width:min(940px,100%);max-height:calc(100vh - 24px);display:grid;grid-template-columns:280px minmax(0,1fr);overflow:auto;border:1px solid #9eafc5;border-radius:22px;background:var(--qa-card);color:var(--qa-ink);box-shadow:0 24px 70px rgba(16,35,63,.24)}
+ .qe78-ac *{box-sizing:border-box}.qe82-brand{display:flex;flex-direction:column;justify-content:space-between;min-height:610px;padding:30px 26px;background:linear-gradient(150deg,#0d326d,#174ea6 60%,#16667c);color:#fff}.qe82-mark{width:58px;height:58px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.55);border-radius:16px;background:rgba(255,255,255,.13);font:900 21px/1 "Segoe UI",sans-serif;box-shadow:inset 0 0 0 5px rgba(255,255,255,.06)}
+ .qe82-brand h1{margin:20px 0 8px;color:#fff;font-size:25px;line-height:1.25;letter-spacing:-.02em}.qe82-brand p{margin:0;color:#dce9fb;font-size:13px;line-height:1.55}.qe82-brand-note{padding-top:18px;border-top:1px solid rgba(255,255,255,.25);color:#e8f1ff;font-size:11px;line-height:1.55}
+ .qe82-main{padding:22px 26px 18px}.qe82-mainhead{display:flex;align-items:flex-start;gap:12px;margin-bottom:12px}.qe82-mainhead>div{flex:1}.qe82-main h2{margin:0;color:var(--qa-ink);font-size:21px;line-height:1.3}.qe82-mainhead p{margin:3px 0 0;color:var(--qa-muted);font-size:12.5px}.qe82-version{flex:0 0 auto;border:1px solid var(--qa-line);border-radius:99px;padding:4px 9px;color:var(--qa-muted);font-size:11px;font-weight:800}
+ .qe78-quick-label{display:flex;align-items:center;justify-content:space-between;margin:0 0 7px;color:#263d5d;font-size:12.5px;font-weight:800}.qe78-quick-label small{color:var(--qa-muted);font-weight:500}.qe78-quick{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+ .qe78-quick button{position:relative;min-height:72px;margin:0;border:1px solid var(--qa-line);border-radius:12px;padding:10px 9px 9px;background:var(--qa-soft);color:var(--qa-ink);text-align:left;cursor:pointer;transition:.15s}.qe78-quick button:hover{border-color:#5c7daa;background:#e9f0fa;transform:translateY(-1px)}.qe78-quick button[aria-pressed=true]{border-color:var(--qa-primary);background:#e6effc;box-shadow:0 0 0 2px rgba(23,78,166,.20)}
+ .qe82-full{display:block;min-height:30px;font-size:12.5px;font-weight:800;line-height:1.25}.qe82-nick{display:block;color:var(--qa-primary);font-size:12px;font-weight:800}.qe82-role{position:absolute;right:6px;bottom:6px;border-radius:99px;padding:2px 6px;background:#dce6f5;color:#233c5d;font-size:9px;font-weight:800}.qe78-quick button[aria-pressed=true] .qe82-role{background:#174ea6;color:#fff}
+ .qe82-other{margin:7px 0 0;border:1px solid var(--qa-line);border-radius:10px;background:var(--qa-soft)}.qe82-other summary{padding:7px 10px;color:#294563;font-size:11.5px;font-weight:800;cursor:pointer}.qe82-other-body{display:flex;align-items:center;gap:8px;padding:0 9px 9px}.qe78-alt{margin:0;border:1px solid #6c829e;border-radius:8px;padding:6px 9px;background:#fff;color:#173d75;font-size:11px;font-weight:800;cursor:pointer}.qe82-other-body small{color:var(--qa-muted);font-size:10.5px}
+ .qe78-ac form{margin-top:10px;background:transparent!important;border:0!important;border-radius:0!important;padding:0!important;box-shadow:none!important}.qe78-ac label{display:block;margin:8px 0 4px;color:#263d5d;font-size:12px;font-weight:800}.qe82-inputwrap{position:relative}.qe78-ac input{width:100%;min-height:40px;border:1px solid #7e91a8;border-radius:9px;padding:8px 11px;background:#fff;color:#10233f;font:14px/1.3 "Segoe UI",Tahoma,sans-serif}.qe82-pass{padding-right:76px!important}.qe82-show{position:absolute;right:5px;top:5px;min-height:30px;border:0;border-radius:7px;padding:4px 9px;background:#e6edf6;color:#173d75;font-size:11px;font-weight:800;cursor:pointer}
+ .qe78-ac input:focus-visible,.qe78-ac button:focus-visible,.qe78-ac summary:focus-visible,.qe78-ac a:focus-visible{outline:3px solid var(--qa-focus);outline-offset:2px}.qe82-caps{min-height:17px;margin:3px 0 -4px;color:#8a4b00;font-size:10.5px;font-weight:700}.qe78-ae{display:flex;align-items:center;gap:8px;margin-top:8px;padding:8px 9px;border:1px solid #c94b4b;border-radius:9px;background:#fff0f0;color:#781717;font-size:11.5px;line-height:1.4}.qe78-ae[hidden]{display:none}.qe78-ae span{flex:1}.qe82-contact-inline{flex:0 0 auto;border:1px solid #9b2727;border-radius:7px;padding:5px 7px;background:#fff;color:#7b1717;font-size:10.5px;font-weight:800;cursor:pointer}
+ .qe78-submit{width:100%;min-height:42px;margin-top:9px;border:1px solid #0b397e;border-radius:9px;padding:8px 11px;background:var(--qa-primary);color:#fff;font:800 14px/1.2 "Segoe UI",sans-serif;cursor:pointer;box-shadow:0 5px 14px rgba(23,78,166,.2)}.qe78-submit:hover{background:var(--qa-primary2)}.qe78-submit:disabled{cursor:wait;opacity:.75}.qe82-under{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:9px}.qe82-help{border:0;background:transparent;color:#174ea6;font-size:11.5px;font-weight:800;text-decoration:underline;cursor:pointer}.qe82-security{color:var(--qa-muted);font-size:10.5px;line-height:1.35;text-align:right}
+ .qe82-contact{position:absolute;inset:0;z-index:3;display:grid;place-items:center;padding:14px;background:rgba(9,23,43,.64)}.qe82-contact[hidden]{display:none}.qe82-contact-card{width:min(520px,100%);border:1px solid var(--qa-line);border-radius:16px;padding:18px;background:var(--qa-card);color:var(--qa-ink);box-shadow:0 22px 60px rgba(0,0,0,.32)}.qe82-contact-card h3{margin:0 0 5px;font-size:18px}.qe82-contact-card p{margin:0 0 10px;color:var(--qa-muted);font-size:12px;line-height:1.5}.qe82-contact-preview{max-height:150px;overflow:auto;border:1px solid var(--qa-line);border-radius:9px;padding:9px;background:var(--qa-soft);white-space:pre-wrap;font:11px/1.45 ui-monospace,Consolas,monospace}.qe82-contact-actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-top:10px}.qe82-contact-actions a,.qe82-contact-actions button{min-height:40px;display:grid;place-items:center;border:1px solid var(--qa-line);border-radius:9px;padding:7px;background:#fff;color:#143b73;text-align:center;text-decoration:none;font-size:11px;font-weight:800;cursor:pointer}.qe82-contact-close{width:100%;min-height:36px;margin-top:8px;border:0;border-radius:8px;background:#e8edf5;color:#263d5d;font-weight:800;cursor:pointer}
+ @media(max-width:820px){.qe78-auth{place-items:start center;padding:8px}.qe78-ac{max-height:none;grid-template-columns:1fr}.qe82-brand{min-height:0;padding:14px 17px}.qe82-brand>div{display:flex;align-items:center;gap:12px}.qe82-mark{width:46px;height:46px;border-radius:12px;font-size:17px}.qe82-brand h1{margin:0 0 3px;font-size:19px}.qe82-brand p{font-size:11px}.qe82-brand-note{display:none}.qe82-main{padding:15px 16px}}
+ @media(max-width:520px){.qe78-quick{grid-template-columns:repeat(2,minmax(0,1fr))}.qe82-mainhead p,.qe78-quick-label small{display:none}.qe82-contact-actions{grid-template-columns:1fr}.qe82-security{text-align:left}.qe82-under{align-items:flex-start;flex-direction:column}.qe78-quick button{min-height:69px}}
+ @media(max-height:700px) and (min-width:821px){.qe82-brand{min-height:0;padding:22px}.qe82-brand h1{font-size:22px}.qe82-main{padding:16px 22px 13px}.qe78-quick button{min-height:64px}.qe82-full{min-height:27px}.qe78-ac form{margin-top:7px}.qe78-ac label{margin-top:6px}.qe82-under{margin-top:6px}}
+ @media(prefers-color-scheme:dark){.qe78-auth{--qa-card:#101b2d;--qa-ink:#f4f7fb;--qa-muted:#b8c6d9;--qa-line:#53657c;--qa-soft:#17263b;--qa-primary:#69a7ff;--qa-primary2:#8fbdff;background:radial-gradient(circle at 18% 12%,#183457 0,transparent 35%),linear-gradient(135deg,#07111e,#101b2d)}.qe82-main h2,.qe78-quick button,.qe82-full{color:#f4f7fb}.qe78-quick-label,.qe78-ac label{color:#dce6f4}.qe78-quick button:hover,.qe78-quick button[aria-pressed=true]{background:#213754}.qe82-nick,.qe82-help{color:#8fbdff}.qe82-role{background:#2b405b;color:#eef5ff}.qe82-other{background:#17263b}.qe82-other summary{color:#dce6f4}.qe78-alt,.qe78-ac input,.qe82-contact-actions a,.qe82-contact-actions button{background:#0c1728;color:#f4f7fb;border-color:#657991}.qe82-show{background:#263b56;color:#eef5ff}.qe78-submit{background:#2d6ec8;color:#fff}.qe78-submit:hover{background:#3d7fd9}.qe78-ae{background:#3d161b;color:#ffd8d8;border-color:#e06a6a}.qe82-contact-inline{background:#2b1115;color:#ffdada;border-color:#e06a6a}.qe82-contact-preview{background:#0c1728}.qe82-contact-close{background:#26364b;color:#f4f7fb}}
+ body.neo .qe78-auth{--qa-card:#101b2d;--qa-ink:#f4f7fb;--qa-muted:#b8c6d9;--qa-line:#53657c;--qa-soft:#17263b;--qa-primary:#69a7ff;--qa-primary2:#8fbdff;background:radial-gradient(circle at 18% 12%,#183457 0,transparent 35%),linear-gradient(135deg,#07111e,#101b2d)}
  `;document.head.appendChild(x)
 }
 function lock(msg){
  css();let o=document.getElementById('qe78Auth');
  if(!o){
   o=document.createElement('div');o.id='qe78Auth';o.className='qe78-auth';
-  const buttons=QUICK_USERS.map(u=>'<button type="button" data-qe-email="'+u.email+'" aria-pressed="false">'+u.label+'</button>').join('');
-  o.innerHTML='<section class="qe78-ac" role="dialog" aria-modal="true" aria-labelledby="qe78AuthTitle"><h1 id="qe78AuthTitle">🔐 เข้าสู่ระบบ QE Tracker</h1><p>เลือกชื่อเพื่อเติมอีเมลอัตโนมัติ แล้วพิมพ์เฉพาะ Password</p><span class="qe78-quick-label" id="qe78QuickLabel">ผู้ใช้ประจำ</span><div class="qe78-quick" role="group" aria-labelledby="qe78QuickLabel">'+buttons+'</div><button type="button" class="qe78-alt" data-qe-email="'+ALT_USERS[0].email+'" aria-pressed="false">'+ALT_USERS[0].label+'</button><form id="qe78LoginForm" autocomplete="on"><label for="qe78Email">Email</label><input id="qe78Email" name="email" type="email" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" required><label for="qe78Password">Password</label><input id="qe78Password" name="password" type="password" autocomplete="current-password" required><div id="qe78Err" class="qe78-ae" role="alert" hidden></div><button type="submit" class="qe78-submit">เข้าสู่ระบบ</button></form><small>สิทธิ์ viewer/editor/admin ยังตรวจจาก qe_user_roles และ RLS ตามเดิม · เครื่องนี้จำเฉพาะอีเมลที่เลือก ไม่เก็บ Password</small></section>';
+  const buttons=QUICK_USERS.map(u=>'<button type="button" data-qe-email="'+u.email+'" aria-pressed="false" title="'+u.fullName+' · '+u.email+'"><span class="qe82-full">'+u.fullName+'</span><span class="qe82-nick">'+u.nickname+'</span><span class="qe82-role">'+u.roleLabel+'</span></button>').join('');
+  o.innerHTML='<section class="qe78-ac" role="dialog" aria-modal="true" aria-labelledby="qe78AuthTitle"><aside class="qe82-brand"><div><div class="qe82-mark" aria-hidden="true">QE</div><div><h1>QE Elec. Daily Job Tracker</h1><p>ระบบติดตามงานประจำวันของทีม Quality Engineering Electronics</p></div></div><div class="qe82-brand-note">เข้าใช้งานด้วยบัญชีที่ได้รับอนุญาตเท่านั้น<br>สิทธิ์ถูกตรวจสอบผ่าน Supabase Auth และ RLS ตามเดิม</div></aside><main class="qe82-main"><div class="qe82-mainhead"><div><h2 id="qe78AuthTitle">เข้าสู่ระบบ</h2><p>เลือกบัญชีประจำ หรือพิมพ์อีเมลอื่น แล้วกรอกรหัสผ่าน</p></div><span class="qe82-version">v82</span></div><span class="qe78-quick-label" id="qe78QuickLabel">บัญชีทีม QE <small>ชื่อจริง · ชื่อเล่น · สิทธิ์</small></span><div class="qe78-quick" role="group" aria-labelledby="qe78QuickLabel">'+buttons+'</div><details class="qe82-other"><summary>บัญชีอื่น</summary><div class="qe82-other-body"><button type="button" class="qe78-alt" data-qe-email="'+ALT_USERS[0].email+'" aria-pressed="false">'+ALT_USERS[0].label+'</button><small>หรือพิมพ์อีเมลอื่นในช่องด้านล่าง</small></div></details><form id="qe78LoginForm" autocomplete="on"><label for="qe78Email">อีเมล</label><input id="qe78Email" name="email" type="email" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" required><label for="qe78Password">รหัสผ่าน</label><div class="qe82-inputwrap"><input id="qe78Password" class="qe82-pass" name="password" type="password" autocomplete="current-password" required><button type="button" class="qe82-show" aria-controls="qe78Password" aria-pressed="false">แสดง</button></div><div id="qe82Caps" class="qe82-caps" aria-live="polite"></div><div id="qe78Err" class="qe78-ae" role="alert" hidden><span id="qe78ErrText"></span><button type="button" class="qe82-contact-inline" data-qe-contact>ติดต่อ Admin</button></div><button type="submit" class="qe78-submit"><span>เข้าสู่ระบบ</span></button></form><div class="qe82-under"><button type="button" class="qe82-help" data-qe-contact>ลืมรหัสผ่าน / เข้าสู่ระบบไม่ได้</button><span class="qe82-security">เครื่องนี้จำเฉพาะอีเมลที่เลือก<br>ไม่จัดเก็บรหัสผ่าน</span></div></main></section><div class="qe82-contact" id="qe82Contact" hidden><section class="qe82-contact-card" role="dialog" aria-modal="true" aria-labelledby="qe82ContactTitle"><h3 id="qe82ContactTitle">ติดต่อผู้ดูแลระบบ</h3><p>เลือกช่องทางที่สะดวก ข้อความช่วยเหลือจะไม่มีรหัสผ่าน</p><div class="qe82-contact-preview" id="qe82ContactPreview"></div><div class="qe82-contact-actions"><a id="qe82Mail" href="#">ส่งอีเมลถึงผู้ดูแล</a><a href="'+ADMIN_TEAMS+'" target="_blank" rel="noopener noreferrer">เปิดแชต Microsoft Teams</a><button type="button" id="qe82Copy">คัดลอกข้อความสำหรับ LINE</button></div><button type="button" class="qe82-contact-close" id="qe82ContactClose">ปิด</button></section></div>';
   document.body.appendChild(o);
-  const form=o.querySelector('#qe78LoginForm'),email=o.querySelector('#qe78Email'),password=o.querySelector('#qe78Password'),submit=o.querySelector('.qe78-submit'),choices=[...o.querySelectorAll('[data-qe-email]')];
+  const form=o.querySelector('#qe78LoginForm'),email=o.querySelector('#qe78Email'),password=o.querySelector('#qe78Password'),submit=o.querySelector('.qe78-submit'),submitText=submit.querySelector('span'),choices=[...o.querySelectorAll('[data-qe-email]')],err=o.querySelector('#qe78Err'),errText=o.querySelector('#qe78ErrText'),show=o.querySelector('.qe82-show'),caps=o.querySelector('#qe82Caps'),contact=o.querySelector('#qe82Contact');
+  const showError=value=>{errText.textContent=authErrorText(value);err.hidden=false};
   const mark=value=>{const v=String(value||'').trim().toLowerCase();choices.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.qeEmail.toLowerCase()===v)))};
   const choose=(value,remember)=>{email.value=value;mark(value);if(remember){try{localStorage.setItem(LAST_EMAIL_KEY,value)}catch(e){}}password.focus()};
+  const issueText=()=>err.hidden?'ลืมรหัสผ่าน / เข้าสู่ระบบไม่ได้':errText.textContent;
+  const supportText=()=>{const selected=email.value.trim()||'(ยังไม่ได้เลือกบัญชี)',who=window.QEPeople?QEPeople.display(selected):selected,when=new Date().toLocaleString('th-TH'),browser=navigator.userAgent;return 'เรียนผู้ดูแล QE Tracker\n\nขอความช่วยเหลือในการเข้าสู่ระบบ\nผู้ใช้/อีเมลที่เลือก: '+who+' / '+selected+'\nปัญหาที่พบ: '+issueText()+'\nเวลา: '+when+'\nเบราว์เซอร์: '+browser+'\n\nหมายเหตุ: ข้อความนี้ไม่มีรหัสผ่าน';};
+  const openContact=()=>{const t=supportText(),subject='ขอความช่วยเหลือ QE Tracker v82';o.querySelector('#qe82ContactPreview').textContent=t;o.querySelector('#qe82Mail').href='mailto:'+ADMIN_EMAIL+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(t);contact.hidden=false;o.querySelector('#qe82ContactClose').focus()};
+  const closeContact=()=>{contact.hidden=true;o.querySelector('[data-qe-contact]').focus()};
   choices.forEach(b=>b.addEventListener('click',()=>choose(b.dataset.qeEmail,true)));
   email.addEventListener('input',()=>mark(email.value));
+  show.addEventListener('click',()=>{const reveal=password.type==='password';password.type=reveal?'text':'password';show.textContent=reveal?'ซ่อน':'แสดง';show.setAttribute('aria-pressed',String(reveal));password.focus()});
+  const capsCheck=e=>{caps.textContent=e.getModifierState&&e.getModifierState('CapsLock')?'Caps Lock เปิดอยู่ — ตรวจสอบตัวพิมพ์ใหญ่ก่อนเข้าสู่ระบบ':''};
+  password.addEventListener('keydown',capsCheck);password.addEventListener('keyup',capsCheck);password.addEventListener('blur',()=>caps.textContent='');
+  o.querySelectorAll('[data-qe-contact]').forEach(b=>b.addEventListener('click',openContact));
+  o.querySelector('#qe82ContactClose').addEventListener('click',closeContact);contact.addEventListener('click',e=>{if(e.target===contact)closeContact()});
+  o.querySelector('#qe82Copy').addEventListener('click',async()=>{const b=o.querySelector('#qe82Copy');try{await navigator.clipboard.writeText(supportText());b.textContent='คัดลอกแล้ว ✓'}catch(_){b.textContent='คัดลอกไม่สำเร็จ — เลือกข้อความด้านบน'}setTimeout(()=>b.textContent='คัดลอกข้อความสำหรับ LINE',2200)});
   let saved='';try{saved=String(localStorage.getItem(LAST_EMAIL_KEY)||'').trim()}catch(e){}
-  if(saved&&choices.some(b=>b.dataset.qeEmail.toLowerCase()===saved.toLowerCase()))choose(saved,false);else setTimeout(()=>email.focus(),0);
-  form.addEventListener('submit',async e=>{e.preventDefault();submit.disabled=true;o.querySelector('#qe78Err').hidden=true;try{await login(email.value,password.value);inert(false,o);document.body.style.overflow='';o.remove();resolveReady(true)}catch(x){let er=o.querySelector('#qe78Err');er.textContent=String(x.message||x);er.hidden=false;password.value='';password.focus()}finally{submit.disabled=false}})
+  if(saved){email.value=saved;mark(saved);setTimeout(()=>password.focus(),0)}else setTimeout(()=>email.focus(),0);
+  form.addEventListener('submit',async e=>{e.preventDefault();if(submit.disabled)return;submit.disabled=true;submitText.textContent='กำลังเข้าสู่ระบบ…';submit.setAttribute('aria-busy','true');err.hidden=true;try{await login(email.value,password.value);inert(false,o);document.body.style.overflow='';o.remove();resolveReady(true)}catch(x){showError(x);password.value='';password.type='password';show.textContent='แสดง';show.setAttribute('aria-pressed','false');password.focus()}finally{submit.disabled=false;submitText.textContent='เข้าสู่ระบบ';submit.removeAttribute('aria-busy')}})
  }
- if(msg){let e=o.querySelector('#qe78Err');e.textContent=String(msg);e.hidden=false}
+ if(msg){const e=o.querySelector('#qe78Err'),t=o.querySelector('#qe78ErrText');t.textContent=authErrorText(msg);e.hidden=false}
  inert(true,o);document.body.style.overflow='hidden'
 }
 async function out(){try{S&&S.access_token&&await req('/auth/v1/logout',{method:'POST',headers:hdr(S.access_token)})}catch(e){}S=U=null;R='';save();lock('ออกจากระบบแล้ว')}
 function guard(){document.addEventListener('click',e=>{if(!on()||R!=='editor')return;let b=e.target.closest('button,[role=button]');if(!b)return;let a=[b.dataset.qeFn,b.dataset.a,b.dataset.x,b.dataset.mje].filter(Boolean).join(' ').toLowerCase(),t=b.textContent||'';if(/(^|[-_])(del|delete|purge)([-_]|$)/.test(a)||/ลบถาวร|ล้างถังขยะ|ลบที่เลือก/.test(t)){e.preventDefault();e.stopImmediatePropagation();try{toast('การลบต้องใช้บัญชี admin','var(--t-warn)')}catch(x){alert('การลบต้องใช้บัญชี admin')}}},true)}
-async function start(){if(started)return;started=true;if(!on()){resolveReady(true);return}guard();try{pub();S=load();if(S&&+S.expires_at*1000>Date.now()+60000)await identity();else if(S&&S.refresh_token)await refresh();else throw Error('กรุณาเข้าสู่ระบบ');resolveReady(true)}catch(e){S=U=null;R='';save();lock(e.message||e)}}
+async function start(){if(started)return;started=true;if(!on()){resolveReady(true);return}guard();try{pub();S=load();if(S&&+S.expires_at*1000>Date.now()+60000)await identity();else if(S&&S.refresh_token)await refresh();else throw Error('กรุณาเข้าสู่ระบบ');resolveReady(true)}catch(e){S=U=null;R='';save();const m=String(e&&e.message||e||'');lock(/กรุณาเข้าสู่ระบบ/.test(m)?'':m)}}
 window.addEventListener('DOMContentLoaded',start);window.QEAuth={enabled:on,ready:()=>on()?RP:Promise.resolve(true),accessToken:()=>S&&S.access_token||'',getAccessToken:token,refreshSession:refresh,user:()=>U,role:()=>R,can:a=>a==='read'?!!R:a==='write'?(R==='editor'||R==='admin'):a==='delete'?R==='admin':false,login,signOut:out,start,headers:hdr};
 })();
 </script>
@@ -2579,7 +2638,7 @@ window.qeBlk={
      • เครื่องใหม่: ไม่ส่งข้อมูลตั้งต้น/ของเก่าในเครื่องขึ้นไปทับ Cloud เงียบ ๆ
      • PIN เก็บเป็นแฮช ตรวจที่หน้าเว็บ — ไม่ใช่ความปลอดภัยระดับเซิร์ฟเวอร์ */
   const WHOK='ux_me', MODEK='ux_savemode', DEVK='ux_dev_id', RPL='ux_rp_list', PRUNEK='ux_prune_day', SNAPK='ux_snap_day', ACFGC='ux_cfg_cache';
-  const PRES='countermeasure-presence:', AUD='countermeasure-audit:', AUTHP='countermeasure-auth:', SNAP='countermeasure-snap:', ACFGK=AUTHP+'~cfg', APPVER='81';
+  const PRES='countermeasure-presence:', AUD='countermeasure-audit:', AUTHP='countermeasure-auth:', SNAP='countermeasure-snap:', ACFGK=AUTHP+'~cfg', APPVER='82';
   var clockOff=0, lastOK=0, newDev=null;
   const lsGet=k=>{ try{ return localStorage.getItem(k); }catch(e){ return null; } };
   const lsSet=(k,v)=>{ try{ localStorage.setItem(k,v); return true; }catch(e){ return false; } };
@@ -10152,7 +10211,7 @@ function renderToday(){
   const S=collect(), C=counts(S), now=new Date(), ds=new Date(+today.slice(0,4),+today.slice(5,7)-1,+today.slice(8));
   let h='<div class="td-head"><div><h1>☀️ วันนี้ · '+E(ds.toLocaleDateString('th-TH',{weekday:'long'})+' '+ds.getDate()+'-'+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][ds.getMonth()]+'-'+String(ds.getFullYear()).slice(2))+'</h1><div class="td-sub">รวมงานที่ต้องทำจากทุกแท็บ · อัปเดตเอง · คลิกรายการเพื่อไปที่ต้นทาง</div></div><span class="td-grow"></span></div>';
   h+='<div class="td-tools"><button type="button" class="btn-p" data-td="add">➕ เพิ่มงานใหม่</button><button type="button" class="btn-g" data-td="copy">📋 คัดลอกสรุป</button><button type="button" class="btn-g" data-td="refresh">↻ รีเฟรช</button><span class="td-grow"></span>'+
-    (ME()?'<label title="แสดงเฉพาะรายการที่ผู้รับผิดชอบคือ “'+E(ME())+'” (ไม่กรองแผนลา)"><input type="checkbox" id="tdMine"'+(getP(KM)?' checked':'')+'> 👤 เฉพาะของฉัน ('+E(ME())+')</label>':'<span class="td-sub" title="ตั้งชื่อที่หน้า Tracker แถบ 👤 ฉันคือ">👤 ตั้งชื่อที่หน้า Tracker เพื่อกรอง “ของฉัน”</span>')+
+    (ME()?'<label title="แสดงเฉพาะรายการของ “'+E(window.QEPeople?QEPeople.display(ME()):ME())+'” (ไม่กรองแผนลา)"><input type="checkbox" id="tdMine"'+(getP(KM)?' checked':'')+'> 👤 เฉพาะของฉัน ('+E(window.QEPeople?QEPeople.display(ME()):ME())+')</label>':'<span class="td-sub" title="ตั้งชื่อที่หน้า Tracker แถบ 👤 ฉันคือ">👤 ตั้งชื่อที่หน้า Tracker เพื่อกรอง “ของฉัน”</span>')+
     '<label title="เปิดเว็บแล้วเริ่มที่หน้านี้"><input type="checkbox" id="tdStart"'+(getP(KS)?' checked':'')+'> เปิดเป็นหน้าแรก</label></div>';
   S.sys.forEach(x=>{ h+='<div class="td-sys"><span>'+E(x.t)+'</span>'+(x.k==='backup'?'<button type="button" class="btn-p" data-td="backup">💾 Backup ทั้งหมด</button>':x.k==='diag'?'<button type="button" class="btn-g" data-td="diag">🔍 ตรวจสอบการเชื่อมต่อ</button>':'')+'</div>'; });
   const away=S.lv.today.length, pendT=S.ck.pend.length, carryN=S.ck.carry.length;
@@ -12336,7 +12395,7 @@ const lblOf=r=>{ const t=r.type, p=r.payload||{}; if(t==='TrackerItem') return '
 function paint(){
   const st=C().state(), d=st.dirty, n=d?d.n:0, a=st.anomaly, manual=st.mode==='manual', on=st.online, who=me();
   pill.hidden=locked||!who||!(st.valid&&st.enabled)||!!window.__QE_RO;
-  g('cbAv').textContent=(who||'?').charAt(0).toUpperCase(); g('cbWn').textContent=who; g('cbOnT').textContent=String(on.length);
+  const showWho=window.QEPeople?QEPeople.display(who):who;g('cbAv').textContent=(showWho||'?').charAt(0).toUpperCase();g('cbWn').textContent=showWho;g('cbWho').title='บัญชี: '+showWho+(who&&who!==showWho?' · '+who:'')+' — กดเพื่อเปิดแผง';g('cbOnT').textContent=String(on.length);
   if(manual&&n>0&&!a){ if(!dirtySince) dirtySince=Date.now(); } else dirtySince=0;
   const mins=dirtySince?(Date.now()-dirtySince)/60000:0, old=mins>=10;
   if(old&&Date.now()-lastNag>15*60000&&!document.hidden){ lastNag=Date.now(); say('✎ มี '+n+' รายการที่ยังไม่ได้บันทึก (ค้างมา '+Math.round(mins)+' นาที) — กด 💾 บันทึก หรือ Ctrl+S'); }
@@ -12346,11 +12405,11 @@ function paint(){
   g('cbSt').textContent=a?('⚠ Cloud ขาดข้อมูล '+a.n):st.paused?'⏸ พักซิงก์ (โควตา)':!st.ready?'กำลังเชื่อมต่อ…':!manual?'⚡ บันทึกอัตโนมัติ':(n?('✎ ยังไม่บันทึก '+n+(old?' · ค้าง '+Math.round(mins)+' นาที':'')):(stale?('⚠ ตรวจล่าสุด '+hhmm(st.lastOK)):'✓ ตรงกับ Cloud'));
   const sv=g('cbSave'); sv.hidden=!(a||(manual&&n>0)); sv.textContent=a?'↑ ส่งกลับขึ้น Cloud':('💾 บันทึก ('+n+')'); sv.disabled=busy;
   const cb=g('cbCfl'); cb.hidden=!st.conflicts; cb.textContent='⚠ ชนกัน '+st.conflicts;
-  pill.title='ผู้ใช้: '+who+' · โหมด: '+(manual?'ต้องกดบันทึก':'อัตโนมัติ')+' · Cloud '+st.cloudN+' รายการ · ตรวจล่าสุด '+hhmm(st.lastOK)+' · v'+st.ver+(on.length?' · ออนไลน์: '+on.map(x=>x.who).join(', '):'');
+  pill.title='ผู้ใช้: '+showWho+' · โหมด: '+(manual?'ต้องกดบันทึก':'อัตโนมัติ')+' · Cloud '+st.cloudN+' รายการ · ตรวจล่าสุด '+hhmm(st.lastOK)+' · v'+st.ver+(on.length?' · ออนไลน์: '+on.map(x=>window.QEPeople?QEPeople.display(x.who):x.who).join(', '):'');
   if(!panel.hidden&&!(document.activeElement&&panel.contains(document.activeElement)&&/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName))) renderPanel();
 }
 function histLine(h){
-  const k=h.k, w='<b>'+E(h.who||'?')+'</b>', by=sum(h.by), tag=h.mode==='auto'?' <small>(อัตโนมัติ)</small>':'';
+  const k=h.k, w='<b title="'+E(h.who||'?')+'">'+E(window.QEPeople?QEPeople.display(h.who||'?'):(h.who||'?'))+'</b>', by=sum(h.by), tag=h.mode==='auto'?' <small>(อัตโนมัติ)</small>':'';
   if(k==='save') return {t:w+' บันทึก '+(h.n||0)+' รายการ'+(h.del?' · <b style="color:var(--dang)">ลบ '+h.del+'</b>':'')+tag,s:[by,(h.items||[]).slice(0,4).join(' · '),h.del?('ลบ: '+sum(h.delBy)+((h.delItems&&h.delItems.length)?' ('+h.delItems.slice(0,3).join(' · ')+')':'')):''].filter(Boolean).join(' — ')};
   if(k==='guard-block') return {t:w+' <b style="color:#f59e0b">ยกเลิก</b> การบันทึกที่จะลบ '+h.n+' รายการ ('+(h.pct||'?')+'%)',s:sum(h.by)};
   if(k==='guard-ok') return {t:w+' <b style="color:var(--dang)">ยืนยัน</b> บันทึกที่ลบ '+h.n+' รายการ ('+(h.pct||'?')+'%)',s:sum(h.by)};
@@ -12384,7 +12443,7 @@ function renderPanel(){
   if(skew>120000) h+='<div class="cb-warn y"><b>🕒 นาฬิกาเครื่องนี้คลาด</b> จากเวลาเซิร์ฟเวอร์ ~'+Math.round(skew/60000)+' นาที — รายชื่อออนไลน์ปรับให้อัตโนมัติ แต่ควรตั้งเวลาเครื่องให้ตรง</div>';
   if(!realAuth()&&s&&C().cfg()&&me()&&AUTH&&AUTH[me()]&&!AUTH[me()].rh) h+='<div class="cb-warn y"><b>🔑 ยังไม่มีรหัสกู้คืน PIN</b> — สร้างไว้ ลืม PIN จะได้ไม่ต้องรอผู้ดูแล<div class="cb-act"><button class="cb-btn p" data-a="mkrec">สร้างรหัสกู้คืน</button></div></div>';
   h+='<div class="cb-note" style="margin:0 0 6px">Cloud <b>'+st.cloudN+'</b> รายการ · ตรวจล่าสุด '+hhmm(st.lastOK)+' · เวอร์ชัน v'+E(st.ver)+'</div>';
-  h+='<h4>👤 บัญชี</h4><div class="cb-r"><div><b>'+E(me())+'</b>'+(admin?' <small style="display:inline">· ผู้ดูแล</small>':'')+'<small>เข้าสู่ระบบถึง '+(s?fmt(s.exp):'')+'</small></div></div><div class="cb-act"><button class="cb-btn" data-a="chpin">🔑 เปลี่ยน PIN</button><button class="cb-btn d" data-a="logout">ออกจากระบบ</button></div>';
+  h+='<h4>👤 บัญชี</h4><div class="cb-r"><div><b title="'+E(me())+'">'+E(window.QEPeople?QEPeople.display(me()):me())+'</b>'+(admin?' <small style="display:inline">· ผู้ดูแล</small>':'')+(me()&&me()!==(window.QEPeople?QEPeople.display(me()):me())?'<small>'+E(me())+'</small>':'')+'<small>เข้าสู่ระบบถึง '+(s?fmt(s.exp):'')+'</small></div></div><div class="cb-act"><button class="cb-btn" data-a="chpin">🔑 เปลี่ยน PIN</button><button class="cb-btn d" data-a="logout">ออกจากระบบ</button></div>';
   h+='<h4>💾 การบันทึก</h4><div><button class="cb-chip'+(manual?' on':'')+'" data-a="mode" data-v="manual">ต้องกดบันทึก</button><button class="cb-chip'+(!manual?' on':'')+'" data-a="mode" data-v="auto">อัตโนมัติ</button></div>';
   if(manual){
     if(d&&d.n){ h+='<div class="cb-r"><div><b>✎ ยังไม่บันทึก '+d.n+' รายการ</b><small>'+E(sum(d.by))+(d.del?' · ลบ '+d.del:'')+'</small>'+(d.items&&d.items.length?'<small>'+E(d.items.slice(0,4).join(' · '))+'</small>':'')+'</div></div><div class="cb-act"><button class="cb-btn p" data-a="save">💾 บันทึกขึ้น Cloud</button><button class="cb-btn d" data-a="discard">↩ ทิ้งที่ยังไม่บันทึก</button></div>'; }
@@ -12392,7 +12451,7 @@ function renderPanel(){
   } else h+='<div class="cb-note">⚡ ทุกการแก้ไขส่งขึ้น Cloud อัตโนมัติ — เพื่อนเห็นทันที แต่แก้พลาดก็ขึ้นทันที</div>';
   h+='<div class="cb-act"><button class="cb-btn" data-a="check">↻ ตรวจข้อมูลล่าสุดจาก Cloud</button></div>';
   h+='<h4>🟢 ออนไลน์ตอนนี้ ('+on.length+')</h4>';
-  h+=on.length?on.map(x=>'<div class="cb-r"><span class="cb-dot" style="margin-top:6px"></span><div><b>'+E(x.who)+'</b>'+(x.mine?' <small style="display:inline">(คุณ)</small>':'')+(x.devs>1?' <small style="display:inline">· '+x.devs+' เครื่อง</small>':'')+((x.ver||0)<(+st.ver||0)?' <small style="display:inline;color:#f59e0b">· เวอร์ชัน '+(x.ver?'v'+x.ver:'เก่า')+'</small>':'')+'<small>'+E(x.tab?('อยู่หน้า '+x.tab):'')+(x.dirty?' · กำลังแก้ ยังไม่บันทึก '+x.dirty:'')+'</small></div><span class="t">'+ago(x.at)+'</span></div>').join(''):'<div class="cb-note">ยังไม่เห็นใคร (สัญญาณอัปเดตทุก ~90 วินาที เฉพาะตอนเปิดหน้านี้อยู่)</div>';
+  h+=on.length?on.map(x=>'<div class="cb-r"><span class="cb-dot" style="margin-top:6px"></span><div><b title="'+E(x.who)+'">'+E(window.QEPeople?QEPeople.display(x.who):x.who)+'</b>'+(x.mine?' <small style="display:inline">(คุณ)</small>':'')+(x.devs>1?' <small style="display:inline">· '+x.devs+' เครื่อง</small>':'')+((x.ver||0)<(+st.ver||0)?' <small style="display:inline;color:#f59e0b">· เวอร์ชัน '+(x.ver?'v'+x.ver:'เก่า')+'</small>':'')+'<small>'+E(x.tab?('อยู่หน้า '+x.tab):'')+(x.dirty?' · กำลังแก้ ยังไม่บันทึก '+x.dirty:'')+'</small></div><span class="t">'+ago(x.at)+'</span></div>').join(''):'<div class="cb-note">ยังไม่เห็นใคร (สัญญาณอัปเดตทุก ~90 วินาที เฉพาะตอนเปิดหน้านี้อยู่)</div>';
   if(confl.length){
     h+='<h4>⚠ รายการที่ถูกแก้ซ้ำพร้อมกัน ('+confl.length+')</h4>'+confl.slice(-6).reverse().map(c=>'<div class="cb-r"><div><b>'+E(lblOf({type:c.type,payload:c.payload}))+'</b>'+(c.fields&&c.fields.length?'<small>ฟิลด์ที่ชนกัน: '+E(c.fields.join(', '))+'</small>':'<small>ทั้งรายการถูกแก้ต่างกัน — ใช้ของเครื่องที่บันทึกทีหลัง เก็บของอีกฝั่งไว้ให้ดู</small>')+'</div><span class="t">'+fmt(c.at)+'</span></div>').join('')+'<div class="cb-act"><button class="cb-btn" data-a="cfcopy">📋 คัดลอกเป็น JSON</button><button class="cb-btn d" data-a="cfclear">ล้างรายการ</button></div><div class="cb-note">ตรวจค่าของอีกฝั่งให้ครบก่อนล้าง (ปุ่มคัดลอกเก็บไว้ได้)</div>';
   }
@@ -13116,7 +13175,7 @@ const canSend=()=>!(window.QEAuth&&QEAuth.enabled&&QEAuth.enabled())||QEAuth.can
 function stamp(v){try{return new Intl.DateTimeFormat('th-TH',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'short'}).format(new Date(v));}catch(e){return'';}}
 function setStatus(s){g('qeChatStatus').textContent=s||'';}
 function drawRooms(){g('qeChatRooms').innerHTML=rooms.map(r=>'<button type="button" class="qec-room '+(r[0]===room?'on':'')+'" data-r="'+r[0]+'">'+r[1]+'</button>').join('');}
-function draw(list){const box=g('qeChatMessages'),who=me();box.textContent='';if(!list.length){let e=document.createElement('div');e.className='qec-empty';e.textContent='ยังไม่มีข้อความในห้องนี้';box.appendChild(e);return}list.forEach(m=>{let r=document.createElement('div');r.className='qec-row '+(m.sender_name===who?'me':'');let a=document.createElement('div');a.className='qec-meta';a.textContent=String(m.sender_name||'')+' · '+stamp(m.created_at);let b=document.createElement('div');b.className='qec-bubble';b.textContent=String(m.message||'');r.append(a,b);box.appendChild(r)});box.scrollTop=box.scrollHeight;}
+function draw(list){const box=g('qeChatMessages'),who=me();box.textContent='';if(!list.length){let e=document.createElement('div');e.className='qec-empty';e.textContent='ยังไม่มีข้อความในห้องนี้';box.appendChild(e);return}list.forEach(m=>{let r=document.createElement('div');r.className='qec-row '+(m.sender_name===who?'me':'');let a=document.createElement('div');a.className='qec-meta';a.textContent=(window.QEPeople?QEPeople.display(m.sender_name):String(m.sender_name||''))+' · '+stamp(m.created_at);a.title=String(m.sender_name||'');let b=document.createElement('div');b.className='qec-bubble';b.textContent=String(m.message||'');r.append(a,b);box.appendChild(r)});box.scrollTop=box.scrollHeight;}
 async function load(silent){if(!base||!key){setStatus('ไม่พบการตั้งค่า Supabase');return;}if(busy)return;busy=true;try{const url=base+'/rest/v1/chat_messages?select=id,room_key,sender_name,message,created_at&room_key=eq.'+encodeURIComponent(room)+'&deleted_at=is.null&order=created_at.desc&limit=100';const res=await fetch(url,{headers:await headers()});const data=await res.json();if(!res.ok)throw new Error(data.message||'โหลดข้อความไม่สำเร็จ');data.reverse();const latest=data.length?Number(data[data.length-1].id):0;const isOpen=g('qeChatPanel').classList.contains('on');if(seen[room]==null){seen[room]=latest;saveSeen();}if(isOpen){seen[room]=Math.max(+seen[room]||0,latest);saveSeen();unread=0;}else{const who=me();unread=data.filter(m=>Number(m.id)>(+seen[room]||0)&&m.sender_name!==who).length;}badge();lastIds[room]=latest;draw(data);if(!silent)setStatus('เชื่อมต่อแล้ว · '+data.length+' ข้อความ'+(canSend()?'':' · ดูอย่างเดียว'));}catch(e){setStatus('ผิดพลาด: '+(e.message||e));}finally{busy=false;}}
 async function send() {
   const input = g("qeChatInput");
@@ -13287,7 +13346,7 @@ async function send() {
     input.focus();
   }
 }
-function open(){g('qeChatPanel').classList.add('on');unread=0;badge();if(lastIds[room]){seen[room]=Math.max(+seen[room]||0,lastIds[room]);saveSeen();}g('qeChatWho').textContent='ผู้ใช้: '+me();drawRooms();load(false);setTimeout(()=>g('qeChatInput').focus(),30);}
+function open(){g('qeChatPanel').classList.add('on');unread=0;badge();if(lastIds[room]){seen[room]=Math.max(+seen[room]||0,lastIds[room]);saveSeen();}const raw=me(),shown=window.QEPeople?QEPeople.display(raw):raw;g('qeChatWho').textContent='ผู้ใช้: '+shown;g('qeChatWho').title=raw;drawRooms();load(false);setTimeout(()=>g('qeChatInput').focus(),30);}
 function close(){g('qeChatPanel').classList.remove('on');if(lastIds[room]){seen[room]=Math.max(+seen[room]||0,lastIds[room]);saveSeen();}unread=0;badge();}
 g('qeChatFab').addEventListener('click',open);g('qeChatClose').addEventListener('click',close);g('qeChatSend').addEventListener('click',send);g('qeChatInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}});g('qeChatRooms').addEventListener('click',e=>{const b=e.target.closest('[data-r]');if(!b)return;room=b.dataset.r;drawRooms();load(false);});
 /* ตัวนับนับเฉพาะห้อง “ทีมทั้งหมด” (ห้องที่เชื่อม LINE) */
@@ -16560,13 +16619,13 @@ html{scroll-padding-top:64px}
 (function(){
   if(window.QE_ENABLE_OPTIONAL_ADDONS!==true)return;
   if(!/^https?:$/i.test(location.protocol)) return;
-  ['space-theme.js','teams-chat-v81.js'].forEach(function(src){
+  ['space-theme.js','teams-chat-v82.js'].forEach(function(src){
     var s=document.createElement('script');s.src=src;s.defer=true;s.dataset.qeOptional='1';s.addEventListener('error',function(){console.warn('optional add-on unavailable: '+src)});
     document.head.appendChild(s);
   });
 })();
 </script>
-<!-- v81: keep floating decorations/mascot from blocking LINE or Teams chat controls. -->
+<!-- v82: keep floating decorations/mascot from blocking LINE or Teams chat controls. -->
 <style id="qeV81ChatOverlapCss">.qe-chat-occluded{visibility:hidden!important;pointer-events:none!important}</style>
 <script id="qeV81ChatOverlapGuard">
 (function(){
@@ -16596,6 +16655,19 @@ const obs=new MutationObserver(ms=>{if(ms.some(m=>m.type==='childList'||m.attrib
 function start(){obs.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style']});window.addEventListener('resize',queue,{passive:true});window.addEventListener('scroll',queue,{passive:true});document.addEventListener('click',queue,true);queue();}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 window.QE81ChatOverlap={refresh:refresh};
+})();
+</script>
+
+<!-- v82 display-only nickname adapter for the late-loaded mascot/optional add-ons. -->
+<script id="qeV82NicknameDisplayLayer">
+(function(){'use strict';
+ if(window.__QE82_NICK_LAYER)return;window.__QE82_NICK_LAYER=true;
+ const greet=/((?:สวัสดีครับ|สวัสดีค่ะ)\s*คุณ)\s*([^\s<]+@[^\s<]+)/gi;
+ function fixText(n){if(!n||n.nodeType!==3||!greet.test(n.nodeValue||''))return;greet.lastIndex=0;n.nodeValue=n.nodeValue.replace(greet,(all,lead,email)=>lead+(window.QEPeople?QEPeople.display(email):email.split('@')[0]));}
+ function scan(root){if(!root)return;if(root.nodeType===3){fixText(root);return}if(root.nodeType!==1&&root.nodeType!==9&&root.nodeType!==11)return;const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);let n;while(n=w.nextNode())fixText(n);}
+ const obs=new MutationObserver(list=>list.forEach(m=>{if(m.type==='characterData')fixText(m.target);else m.addedNodes.forEach(scan)}));
+ function start(){scan(document.body);obs.observe(document.body,{subtree:true,childList:true,characterData:true});window.addEventListener('qeauth:ready',()=>setTimeout(()=>scan(document.body),30));}
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
 </script>
 <!-- ===== QE Executive Dashboard v1 ===== -->
