@@ -1,4 +1,15 @@
 <!--
+  QE Elec. Daily Job Tracker — Change log v84 Phase A (2-Nov-2026)
+  0) Based on index_v83.html; v83 is not overwritten. QE_AUTH_CONFIG.enabled remains true. Supabase Auth, viewer/editor/admin semantics, qe_v83_* RLS policies, Edge Functions/Secrets, pcr.html and pcr_records are unchanged.
+  1) Role-aware UX hides permanent-delete controls from non-admin users; viewer write controls and chat composers are disabled with a clear read-only explanation while search/filter/export remain available. Legacy PIN controls are hidden when Supabase Auth is active.
+  2) LINE/Teams chat panels are mutually exclusive, opaque, viewport-safe and keyboard closable. teams-chat-v84.js adds incremental reads and pauses polling while hidden.
+  3) Login labels and secondary text use explicit WCAG-AA-oriented colors in light/dark modes. Added favicon, theme-color, skip link, aria-live status, focus containment, and accessible in-app dialogs for primary destructive flows.
+  4) System Health now includes a read-only Self-test for localStorage, session/role, Cloud read, QEData.currentDue and Teams companion version. Important storage/cloud/chat catches report centrally without toast spam.
+  5) Core sync excludes countermeasure-snap:, countermeasure-presence:, countermeasure-audit: and countermeasure-auth: rows from business payload scans. Presence heartbeat changes from 90 s to 180 s; LINE/Teams chat use initial+delta reads.
+  6) XSS review covers all dynamic HTML sinks; user/cloud/chat strings remain escaped or are rendered with textContent/safe DOM nodes. Security QA payloads include img/script/quoted text.
+  7) Existing Conflict, Backup, System Health and Sync behavior is retained; no business-data key is renamed, migrated, cleared or overwritten by this patch.
+-->
+<!--
   QE Elec. Daily Job Tracker — Change log v83 (2-Nov-2026)
   0) Based on index_v82.html; QE_AUTH_CONFIG.enabled remains true. Supabase Auth requests, viewer/editor/admin authorization, RLS, database payloads, business-data sync, and Teams/LINE delivery behavior are unchanged.
   1) Fixed login-card contrast in light, dark, hover, focus, and selected states; full name, nickname, and role labels now use explicit high-contrast colors (WCAG AA target >= 4.5:1).
@@ -44,10 +55,12 @@
 -->
 <!DOCTYPE html>
 <html lang="th"><head>
-<meta name="qe-app-version" content="83">
+<meta name="qe-app-version" content="84">
+<meta name="theme-color" content="#f5f6f8">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 rx=%2714%27 fill=%27%23174ea6%27/%3E%3Ctext x=%2732%27 y=%2741%27 text-anchor=%27middle%27 font-family=%27Segoe UI,Arial%27 font-size=%2726%27 font-weight=%27700%27 fill=%27white%27%3EQE%3C/text%3E%3C/svg%3E">
 <script id="qeV78FeatureFlags">
 window.QE_AUTH_CONFIG=Object.freeze({enabled:true,supabaseUrl:'',publishableKey:'',roleTable:'qe_user_roles'});
-window.QE_ENABLE_OPTIONAL_ADDONS=true; // v83: loads teams-chat-v83.js and space-theme.js on HTTP(S); earlier companion files are not modified.
+window.QE_ENABLE_OPTIONAL_ADDONS=true; // v84: loads teams-chat-v84.js and space-theme.js on HTTP(S); earlier companion files are not modified.
 </script>
 <script id="qeV82PeopleDirectory">
 /* v82: Edit names/nicknames/roles here only. This table affects display, not Supabase Auth/RLS or stored business data. */
@@ -81,7 +94,7 @@ window.QEPeople=(function(){
 (function(){
 'use strict';
 if (window.QE78) return;
-var APP='QE Elec. Daily Job Tracker', VER='83', DB_NAME='qe_tracker_v78_safety', STORE='snapshots';
+var APP='QE Elec. Daily Job Tracker', VER='84', DB_NAME='qe_tracker_v78_safety', STORE='snapshots';
 var MIG_KEY='qe_v78_migration', ERR_KEY='qe_v78_errors', MAX_ERR=50, restoring=false;
 var native={
   get:Storage.prototype.getItem,
@@ -343,7 +356,7 @@ function dec(t){try{let x=String(t||'').split('.')[1];return x?JSON.parse(atob(x
 function pub(){const k=C().key,p=dec(k);if(!k||k.length<20)throw Error('ยังไม่ได้ตั้งค่า Supabase publishable key');if(/service[_-]?role/i.test(k)||p.role==='service_role')throw Error('ห้ามใช้ service_role key ใน HTML');return k}
 function hdr(tok,x){return Object.assign({'Accept':'application/json','Content-Type':'application/json','apikey':pub()},tok?{'Authorization':'Bearer '+tok}:{},x||{})}
 async function req(path,opt){if(!/^https:\/\//.test(C().url))throw Error('Supabase URL ไม่ถูกต้อง');let r=await fetch(C().url+path,Object.assign({cache:'no-store',mode:'cors'},opt||{})),t=await r.text(),j={};try{j=t?JSON.parse(t):{}}catch(e){j={message:t}}if(!r.ok){let e=Error(j.error_description||j.message||('HTTP '+r.status));e.status=r.status;throw e}return j}
-function save(){try{S?sessionStorage.setItem(SK,JSON.stringify(S)):sessionStorage.removeItem(SK)}catch(e){}}
+function save(){try{S?sessionStorage.setItem(SK,JSON.stringify(S)):sessionStorage.removeItem(SK)}catch(e){if(window.QE84Error)QE84Error.record('storage',e,'Supabase session')}}
 function load(){try{return JSON.parse(sessionStorage.getItem(SK)||'null')}catch(e){return null}}
 function name(){return String(U&&U.email||'ผู้ใช้ Supabase')}
 function displayName(){return window.QEPeople?QEPeople.display(name()):(DN||name())}
@@ -406,7 +419,7 @@ function lock(msg){
  if(!o){
   o=document.createElement('div');o.id='qe78Auth';o.className='qe78-auth';
   const buttons=QUICK_USERS.map(u=>'<button type="button" data-qe-email="'+u.email+'" aria-pressed="false" title="'+u.fullName+' · '+u.email+'"><span class="qe82-full">'+u.fullName+'</span><span class="qe82-nick">'+u.nickname+'</span><span class="qe82-role">'+u.roleLabel+'</span></button>').join('');
-  o.innerHTML='<section class="qe78-ac" role="dialog" aria-modal="true" aria-labelledby="qe78AuthTitle"><aside class="qe82-brand"><div><div class="qe82-mark" aria-hidden="true">QE</div><div><h1>QE Elec. Daily Job Tracker</h1><p>ระบบติดตามงานประจำวันของทีม Quality Engineering Electronics</p></div></div><div class="qe82-brand-note">เข้าใช้งานด้วยบัญชีที่ได้รับอนุญาตเท่านั้น<br>สิทธิ์ถูกตรวจสอบผ่าน Supabase Auth และ RLS ตามเดิม</div></aside><main class="qe82-main"><div class="qe82-mainhead"><div><h2 id="qe78AuthTitle">เข้าสู่ระบบ</h2><p>เลือกบัญชีประจำ หรือพิมพ์อีเมลอื่น แล้วกรอกรหัสผ่าน</p></div><span class="qe82-version">v83</span></div><span class="qe78-quick-label" id="qe78QuickLabel">บัญชีทีม QE <small>ชื่อจริง · ชื่อเล่น · สิทธิ์</small></span><div class="qe78-quick" role="group" aria-labelledby="qe78QuickLabel">'+buttons+'</div><details class="qe82-other"><summary>บัญชีอื่น</summary><div class="qe82-other-body"><button type="button" class="qe78-alt" data-qe-email="'+ALT_USERS[0].email+'" aria-pressed="false">'+ALT_USERS[0].label+'</button><small>หรือพิมพ์อีเมลอื่นในช่องด้านล่าง</small></div></details><form id="qe78LoginForm" autocomplete="on"><label for="qe78Email">อีเมล</label><input id="qe78Email" name="email" type="email" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" required><label for="qe78Password">รหัสผ่าน</label><div class="qe82-inputwrap"><input id="qe78Password" class="qe82-pass" name="password" type="password" autocomplete="current-password" required><button type="button" class="qe82-show" aria-controls="qe78Password" aria-pressed="false">แสดง</button></div><div id="qe82Caps" class="qe82-caps" aria-live="polite"></div><div id="qe78Err" class="qe78-ae" role="alert" hidden><span id="qe78ErrText"></span><button type="button" class="qe82-contact-inline" data-qe-contact>ติดต่อ Admin</button></div><button type="submit" class="qe78-submit"><span>เข้าสู่ระบบ</span></button></form><div class="qe82-under"><button type="button" class="qe82-help" data-qe-contact>ลืมรหัสผ่าน / เข้าสู่ระบบไม่ได้</button><span class="qe82-security">เครื่องนี้จำเฉพาะอีเมลที่เลือก<br>ไม่จัดเก็บรหัสผ่าน</span></div></main></section><div class="qe82-contact" id="qe82Contact" hidden><section class="qe82-contact-card" role="dialog" aria-modal="true" aria-labelledby="qe82ContactTitle"><h3 id="qe82ContactTitle">ติดต่อผู้ดูแลระบบ</h3><p>เลือกช่องทางที่สะดวก ข้อความช่วยเหลือจะไม่มีรหัสผ่าน</p><div class="qe82-contact-preview" id="qe82ContactPreview"></div><div class="qe82-contact-actions"><a id="qe83Teams" class="qe83-contact-primary" href="'+ADMIN_TEAMS+'" target="_blank" rel="noopener noreferrer">เปิดแชต Microsoft Teams (แนะนำ)</a><button type="button" id="qe82Copy">คัดลอกข้อความสำหรับ LINE</button><a id="qe83Outlook" href="#" target="_blank" rel="noopener noreferrer">Outlook บนเว็บ</a><a id="qe82Mail" href="#">แอปอีเมลในเครื่อง</a></div><div id="qe83CopyStatus" class="qe83-copy-status" aria-live="polite"></div><button type="button" class="qe82-contact-close" id="qe82ContactClose">ปิด</button></section></div>';
+  o.innerHTML='<section class="qe78-ac" role="dialog" aria-modal="true" aria-labelledby="qe78AuthTitle"><aside class="qe82-brand"><div><div class="qe82-mark" aria-hidden="true">QE</div><div><h1>QE Elec. Daily Job Tracker</h1><p>ระบบติดตามงานประจำวันของทีม Quality Engineering Electronics</p></div></div><div class="qe82-brand-note">เข้าใช้งานด้วยบัญชีที่ได้รับอนุญาตเท่านั้น<br>สิทธิ์ถูกตรวจสอบผ่าน Supabase Auth และ RLS ตามเดิม</div></aside><main class="qe82-main"><div class="qe82-mainhead"><div><h2 id="qe78AuthTitle">เข้าสู่ระบบ</h2><p>เลือกบัญชีประจำ หรือพิมพ์อีเมลอื่น แล้วกรอกรหัสผ่าน</p></div><span class="qe82-version">v84</span></div><span class="qe78-quick-label" id="qe78QuickLabel">บัญชีทีม QE <small>ชื่อจริง · ชื่อเล่น · สิทธิ์</small></span><div class="qe78-quick" role="group" aria-labelledby="qe78QuickLabel">'+buttons+'</div><details class="qe82-other"><summary>บัญชีอื่น</summary><div class="qe82-other-body"><button type="button" class="qe78-alt" data-qe-email="'+ALT_USERS[0].email+'" aria-pressed="false">'+ALT_USERS[0].label+'</button><small>หรือพิมพ์อีเมลอื่นในช่องด้านล่าง</small></div></details><form id="qe78LoginForm" autocomplete="on"><label for="qe78Email">อีเมล</label><input id="qe78Email" name="email" type="email" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" required><label for="qe78Password">รหัสผ่าน</label><div class="qe82-inputwrap"><input id="qe78Password" class="qe82-pass" name="password" type="password" autocomplete="current-password" required><button type="button" class="qe82-show" aria-controls="qe78Password" aria-pressed="false">แสดง</button></div><div id="qe82Caps" class="qe82-caps" aria-live="polite"></div><div id="qe78Err" class="qe78-ae" role="alert" hidden><span id="qe78ErrText"></span><button type="button" class="qe82-contact-inline" data-qe-contact>ติดต่อ Admin</button></div><button type="submit" class="qe78-submit"><span>เข้าสู่ระบบ</span></button></form><div class="qe82-under"><button type="button" class="qe82-help" data-qe-contact>ลืมรหัสผ่าน / เข้าสู่ระบบไม่ได้</button><span class="qe82-security">เครื่องนี้จำเฉพาะอีเมลที่เลือก<br>ไม่จัดเก็บรหัสผ่าน</span></div></main></section><div class="qe82-contact" id="qe82Contact" hidden><section class="qe82-contact-card" role="dialog" aria-modal="true" aria-labelledby="qe82ContactTitle"><h3 id="qe82ContactTitle">ติดต่อผู้ดูแลระบบ</h3><p>เลือกช่องทางที่สะดวก ข้อความช่วยเหลือจะไม่มีรหัสผ่าน</p><div class="qe82-contact-preview" id="qe82ContactPreview"></div><div class="qe82-contact-actions"><a id="qe83Teams" class="qe83-contact-primary" href="'+ADMIN_TEAMS+'" target="_blank" rel="noopener noreferrer">เปิดแชต Microsoft Teams (แนะนำ)</a><button type="button" id="qe82Copy">คัดลอกข้อความสำหรับ LINE</button><a id="qe83Outlook" href="#" target="_blank" rel="noopener noreferrer">Outlook บนเว็บ</a><a id="qe82Mail" href="#">แอปอีเมลในเครื่อง</a></div><div id="qe83CopyStatus" class="qe83-copy-status" aria-live="polite"></div><button type="button" class="qe82-contact-close" id="qe82ContactClose">ปิด</button></section></div>';
   document.body.appendChild(o);
   const form=o.querySelector('#qe78LoginForm'),email=o.querySelector('#qe78Email'),password=o.querySelector('#qe78Password'),submit=o.querySelector('.qe78-submit'),submitText=submit.querySelector('span'),choices=[...o.querySelectorAll('[data-qe-email]')],err=o.querySelector('#qe78Err'),errText=o.querySelector('#qe78ErrText'),show=o.querySelector('.qe82-show'),caps=o.querySelector('#qe82Caps'),contact=o.querySelector('#qe82Contact');
   const showError=value=>{errText.textContent=authErrorText(value);err.hidden=false};
@@ -417,7 +430,7 @@ function lock(msg){
   const copyText=async t=>{try{if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(t);return true}}catch(_){}try{const a=document.createElement('textarea');a.value=t;a.setAttribute('readonly','');a.style.cssText='position:fixed;left:-9999px;top:0';document.body.appendChild(a);a.select();const ok=document.execCommand('copy');a.remove();return ok}catch(_){return false}};
   let supportSnapshot='';
   const copySupport=async okText=>{const st=o.querySelector('#qe83CopyStatus'),ok=await copyText(supportSnapshot||supportText());st.textContent=ok?okText:'คัดลอกอัตโนมัติไม่ได้ — กรุณาเลือกข้อความตัวอย่างแล้วคัดลอก';return ok};
-  const openContact=()=>{const t=supportText(),subject='ขอความช่วยเหลือ QE Tracker v83',q='?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(t);supportSnapshot=t;o.querySelector('#qe82ContactPreview').textContent=t;o.querySelector('#qe82Mail').href='mailto:'+ADMIN_EMAIL+q;o.querySelector('#qe83Outlook').href='https://outlook.office.com/mail/deeplink/compose?to='+encodeURIComponent(ADMIN_EMAIL)+'&subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(t);o.querySelector('#qe83CopyStatus').textContent='';contact.hidden=false;o.querySelector('#qe83Teams').focus()};
+  const openContact=()=>{const t=supportText(),subject='ขอความช่วยเหลือ QE Tracker v84',q='?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(t);supportSnapshot=t;o.querySelector('#qe82ContactPreview').textContent=t;o.querySelector('#qe82Mail').href='mailto:'+ADMIN_EMAIL+q;o.querySelector('#qe83Outlook').href='https://outlook.office.com/mail/deeplink/compose?to='+encodeURIComponent(ADMIN_EMAIL)+'&subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(t);o.querySelector('#qe83CopyStatus').textContent='';contact.hidden=false;o.querySelector('#qe83Teams').focus()};
   const closeContact=()=>{contact.hidden=true;o.querySelector('[data-qe-contact]').focus()};
   choices.forEach(b=>b.addEventListener('click',()=>choose(b.dataset.qeEmail,true)));
   email.addEventListener('input',()=>mark(email.value));
@@ -428,14 +441,14 @@ function lock(msg){
   o.querySelector('#qe82ContactClose').addEventListener('click',closeContact);contact.addEventListener('click',e=>{if(e.target===contact)closeContact()});
   o.querySelector('#qe83Teams').addEventListener('click',()=>{void copySupport('คัดลอกข้อความแล้ว — วางในแชต Teams ได้ทันที')});
   o.querySelector('#qe82Copy').addEventListener('click',async()=>{const b=o.querySelector('#qe82Copy'),ok=await copySupport('คัดลอกข้อความสำหรับ LINE แล้ว ✓');if(ok)b.textContent='คัดลอกแล้ว ✓';setTimeout(()=>b.textContent='คัดลอกข้อความสำหรับ LINE',2200)});
-  let saved='';try{saved=String(localStorage.getItem(LAST_EMAIL_KEY)||'').trim()}catch(e){}
+  let saved='';try{saved=String(localStorage.getItem(LAST_EMAIL_KEY)||'').trim()}catch(e){if(window.QE84Error)QE84Error.record('storage',e,'last login email')}
   if(saved){email.value=saved;mark(saved);setTimeout(()=>password.focus(),0)}else setTimeout(()=>email.focus(),0);
   form.addEventListener('submit',async e=>{e.preventDefault();if(submit.disabled)return;submit.disabled=true;submitText.textContent='กำลังเข้าสู่ระบบ…';submit.setAttribute('aria-busy','true');err.hidden=true;try{await login(email.value,password.value);inert(false,o);document.body.style.overflow='';o.remove();resolveReady(true)}catch(x){showError(x);password.value='';password.type='password';show.textContent='แสดง';show.setAttribute('aria-pressed','false');password.focus()}finally{submit.disabled=false;submitText.textContent='เข้าสู่ระบบ';submit.removeAttribute('aria-busy')}})
  }
  if(msg){const e=o.querySelector('#qe78Err'),t=o.querySelector('#qe78ErrText');t.textContent=authErrorText(msg);e.hidden=false}
  inert(true,o);document.body.style.overflow='hidden'
 }
-async function out(){try{S&&S.access_token&&await req('/auth/v1/logout',{method:'POST',headers:hdr(S.access_token)})}catch(e){}S=U=null;R='';save();lock('ออกจากระบบแล้ว')}
+async function out(){try{S&&S.access_token&&await req('/auth/v1/logout',{method:'POST',headers:hdr(S.access_token)})}catch(e){if(window.QE84Error)QE84Error.record('auth',e,'Supabase logout')}S=U=null;R='';save();lock('ออกจากระบบแล้ว')}
 function guard(){document.addEventListener('click',e=>{if(!on()||R!=='editor')return;let b=e.target.closest('button,[role=button]');if(!b)return;let a=[b.dataset.qeFn,b.dataset.a,b.dataset.x,b.dataset.mje].filter(Boolean).join(' ').toLowerCase(),t=b.textContent||'';if(/(^|[-_])(del|delete|purge)([-_]|$)/.test(a)||/ลบถาวร|ล้างถังขยะ|ลบที่เลือก/.test(t)){e.preventDefault();e.stopImmediatePropagation();try{toast('การลบต้องใช้บัญชี admin','var(--t-warn)')}catch(x){alert('การลบต้องใช้บัญชี admin')}}},true)}
 async function start(){if(started)return;started=true;if(!on()){resolveReady(true);return}guard();const prior=load();S=prior;try{pub();if(S&&+S.expires_at*1000>Date.now()+60000)await identity();else if(S&&S.refresh_token)await refresh();else{S=U=null;R='';save();lock('');return}resolveReady(true)}catch(e){const m=String(e&&e.message||e||''),had=!!(prior&&(prior.access_token||prior.refresh_token||prior.expires_at)),expired=had&&((+prior.expires_at>0&&+prior.expires_at*1000<=Date.now()+60000)||/refresh[^\n]*(?:expired|invalid)|(?:expired|invalid)[^\n]*refresh|session[^\n]*expired/i.test(m));S=U=null;R='';save();lock(expired?'Session หมดอายุ กรุณาเข้าสู่ระบบใหม่ หากยังพบปัญหาให้กด “ติดต่อ Admin”':(/กรุณาเข้าสู่ระบบ/.test(m)?'':m))}}
 window.addEventListener('DOMContentLoaded',start);window.QEAuth={enabled:on,ready:()=>on()?RP:Promise.resolve(true),accessToken:()=>S&&S.access_token||'',getAccessToken:token,refreshSession:refresh,user:()=>U,role:()=>R,can:a=>a==='read'?!!R:a==='write'?(R==='editor'||R==='admin'):a==='delete'?R==='admin':false,login,signOut:out,start,headers:hdr};
@@ -2201,7 +2214,7 @@ window.qeBlk={
   function statAdd(kind,bytes){
     const o=statLoad(), d=localDay(), x=o[d]||(o[d]={n:0,b:0,full:0,probe:0,keys:0,rows:0,up:0});
     x.n++; x.b+=bytes; if(kind&&(kind in x)) x[kind]++;
-    clearTimeout(statT); statT=setTimeout(()=>{ try{ const ks=Object.keys(o).sort(); while(ks.length>14) delete o[ks.shift()]; localStorage.setItem(STK,JSON.stringify(o)); }catch(e){} },8000);
+    clearTimeout(statT); statT=setTimeout(()=>{ try{ const ks=Object.keys(o).sort(); while(ks.length>14) delete o[ks.shift()]; localStorage.setItem(STK,JSON.stringify(o)); }catch(e){if(window.QE84Error)QE84Error.record('storage',e,'sync statistics');} },8000);
   }
   const fmtB=b=>b<1024?(b+' B'):b<1048576?((b/1024).toFixed(0)+' KB'):((b/1048576).toFixed(b<10485760?2:1)+' MB');
   function usage(){
@@ -2306,10 +2319,11 @@ window.qeBlk={
     return {key:x.record_key,type:x.entity_type,payload:p,date:x.record_date||null,json:cj(p),updatedAt:x.updated_at||''};
   }
   /* ----- แคชฝั่งเซิร์ฟเวอร์ในหน่วยความจำ + ตรวจการเปลี่ยนแปลงแบบประหยัด ----- */
-  const COLS='record_key,entity_type,payload,record_date,updated_at', VERIFY_MS=10*60*1000, MT=Array.from(MANAGED).join(',');
-  let RC=null, rcMax='', rcKeysAt=0, rcVer=0, appliedVer=-1, lastChanged=true, useFlt=true, useSmart=true, IGN=new Map();
-  const FLT=()=>useFlt?('&record_key=like.'+encodeURIComponent(PREFIX+'*')+'&entity_type=in.('+MT+')'):'';
-  const okRow=x=>!!(x&&x.record_key&&String(x.record_key).startsWith(PREFIX)&&MANAGED.has(x.entity_type));
+  const COLS='record_key,entity_type,payload,record_date,updated_at', VERIFY_MS=10*60*1000, MT=Array.from(MANAGED).join(','), SYSTEM_PREFIXES=['countermeasure-snap:','countermeasure-presence:','countermeasure-audit:','countermeasure-auth:'];
+  let RC=null, rcMax='', rcKeysAt=0, rcVer=0, appliedVer=-1, lastChanged=true, useFlt=2, useSmart=true, IGN=new Map();
+  const isSystemKey=k=>SYSTEM_PREFIXES.some(p=>String(k||'').startsWith(p));
+  const FLT=()=>useFlt===2?('&record_key=like.'+encodeURIComponent(PREFIX+'*')+SYSTEM_PREFIXES.map(p=>'&record_key=not.like.'+encodeURIComponent(p+'*')).join('')+'&entity_type=in.('+MT+')'):useFlt===1?('&record_key=like.'+encodeURIComponent(PREFIX+'*')):'';
+  const okRow=x=>!!(x&&x.record_key&&String(x.record_key).startsWith(PREFIX)&&!isSystemKey(x.record_key)&&MANAGED.has(x.entity_type));
   const tsNow=()=>{ let t=Date.now(); const m=Date.parse(rcMax); if(isFinite(m)&&t<=m) t=m+1; return new Date(t).toISOString(); };   // เวลาเขียนต้องมากกว่าที่เคยเห็น (กันนาฬิกาเครื่องช้า)
   function cloneRC(){ const m=new Map(); RC.forEach((r,k)=>m.set(k,Object.assign({},r,{payload:JSON.parse(r.json)}))); return m; }
   async function probe(){
@@ -2318,7 +2332,7 @@ window.qeBlk={
         const r=await apiRaw('GET','?select=updated_at'+FLT()+'&order=updated_at.desc&limit=1',null,{'Prefer':'count=exact'},'probe');
         const cr=(r.headers&&r.headers.get&&r.headers.get('content-range'))||'', m=/\/(\d+)$/.exec(cr), a=Array.isArray(r.data)?r.data:[];
         return {max:a[0]?String(a[0].updated_at):'',count:m?+m[1]:-1};
-      }catch(e){ if(t===0&&useFlt&&e.status===400){ useFlt=false; continue; } throw e; }
+      }catch(e){ if(t===0&&useFlt===2&&e.status===400){ useFlt=1; continue; } throw e; }
     }
   }
   async function fetchFull(){
@@ -2326,7 +2340,7 @@ window.qeBlk={
     while(true){
       let rows;
       try{ rows=await api('GET','?select='+COLS+'&order=record_key.asc'+FLT(),null,{'Range':from+'-'+(from+PAGE-1)},'full'); }
-      catch(e){ if(useFlt&&e.status===400){ useFlt=false; out.clear(); from=0; continue; } throw e; }
+      catch(e){ if(useFlt===2&&e.status===400){ useFlt=1; out.clear(); from=0; continue; } throw e; }
       const arr=Array.isArray(rows)?rows:[];
       arr.forEach(x=>{ if(okRow(x)){ try{ const r=fromRow(x); out.set(r.key,r); }catch(e){} } });
       if(arr.length<PAGE)break; from+=PAGE;
@@ -2418,15 +2432,15 @@ window.qeBlk={
       Object.keys(current).forEach(k=>{if(!(k in remoteLocal))localStorage.removeItem(k);});
       Object.entries(remoteLocal).forEach(([k,v])=>{if(v===null||v===undefined)localStorage.removeItem(k);else localStorage.setItem(k,String(v));});
     }finally{}
-    if(m.mj){ try{ const cur=readMJ(); if(!cur||mjCanon(cur)!==mjCanon(m.mj)){ m.mj.updated=(cur&&cur.updated)||new Date().toISOString(); localStorage.setItem(MJKEY,JSON.stringify(m.mj)); } }catch(e){} }
+    if(m.mj){ try{ const cur=readMJ(); if(!cur||mjCanon(cur)!==mjCanon(m.mj)){ m.mj.updated=(cur&&cur.updated)||new Date().toISOString(); localStorage.setItem(MJKEY,JSON.stringify(m.mj)); } }catch(e){if(window.QE84Error)QE84Error.record('storage',e,'apply Main QE Jobs');} }
     if(typeof data!=='undefined'){data=window.__qeSan.items(m.tracker).list||[];localStorage.setItem('issue_tracker_v2',JSON.stringify(data));}
     if(typeof trash!=='undefined'){trash=window.__qeSan.items(m.trash,true).list||[];localStorage.setItem('issue_tracker_trash',JSON.stringify(trash));}
     if(m.title&&m.title.title)localStorage.setItem('issue_tracker_title',JSON.stringify(m.title));
     if(window.__checklist&&window.__checklist.loadCentral)window.__checklist.loadCentral(m.checklist);
     if(window.MS&&window.MS.loadRemote)window.MS.loadRemote(m.missionRows||[]);
     if(window.HS&&window.HS.loadRemote)window.HS.loadRemote(m.hoshinRows||[]);
-    try{loadTitle();render();checkBackup();}catch(e){}
-    try{ if(window.MJ&&window.MJ.reload) window.MJ.reload(); }catch(e){}
+    try{loadTitle();render();checkBackup();}catch(e){if(window.QE84Error)QE84Error.record('ui',e,'render synced data')}
+    try{ if(window.MJ&&window.MJ.reload) window.MJ.reload(); }catch(e){if(window.QE84Error)QE84Error.record('ui',e,'reload Main QE Jobs')}
   }
   function localMoved(base){
     try{ const l=recMap(appModel()); if(l.size!==base.size) return true; let mv=false; l.forEach((r,k)=>{ const o=base.get(k); if(!o||o.json!==r.json) mv=true; }); return mv; }catch(e){ return false; }
@@ -2477,10 +2491,10 @@ window.qeBlk={
   }
   const syncSig=()=>base()+'|'+table();
   function loadBase(){ try{ const o=JSON.parse(localStorage.getItem(BASEK)||'null'); return (o&&o.v===1&&o.s===syncSig()&&o.m&&typeof o.m==='object')?o.m:null; }catch(e){ return null; } }
-  function saveBase(map){ const m={}; map.forEach((r,k)=>{ m[k]=hrec(r); }); try{ localStorage.setItem(BASEK,JSON.stringify({v:1,s:syncSig(),m:m})); }catch(e){} }
+  function saveBase(map){ const m={}; map.forEach((r,k)=>{ m[k]=hrec(r); }); try{ localStorage.setItem(BASEK,JSON.stringify({v:1,s:syncSig(),m:m})); }catch(e){if(window.QE84Error)QE84Error.record('storage',e,'sync baseline');} }
   function readConf(){ try{ const a=JSON.parse(localStorage.getItem(CFK)||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
   async function chooseLightConflict(c){const r=c.remote||c.base||c.local||{},k=String(c.k||'').replace(PREFIX,''),ra=c.remote&&c.remote.updatedAt||'ถูกลบจาก Cloud',ba=c.base&&c.base.updatedAt||'ไม่มี baseline';return uiConfirm('⚠ พบ Conflict ก่อนเขียนทับ\n'+recLabel(r)+' · '+k+'\n\nupdated_at ที่เห็นครั้งก่อน: '+ba+'\nCloud ล่าสุด: '+ra+'\n\nเลือกฉบับที่จะเก็บ (ไม่มี merge อัตโนมัติ)',{ok:c.kind==='delete'?'ลบตามเครื่องนี้':'เก็บฉบับเครื่องนี้',cancel:'ใช้ฉบับ Cloud',danger:c.kind==='delete'})}
-  function noteConflicts(list){if(!list||!list.length)return;const cur=readConf(),at=new Date().toISOString();list.forEach(c=>{const r=c.remote||c.base||c.local||{};cur.push({at,key:String(c.k).replace(PREFIX,''),type:r.type||'',payload:r.payload||null,fields:['updated_at'],decision:c.decision||'cloud'})});try{localStorage.setItem(CFK,JSON.stringify(cur.slice(-60)))}catch(e){}try{auditPost('conflict',{n:list.length,decisions:list.map(c=>c.decision)})}catch(e){}try{toast('⚠️ ตรวจ Conflict '+list.length+' รายการแล้ว — ไม่มี merge อัตโนมัติ','var(--t-warn)')}catch(e){}window.dispatchEvent(new Event('spdb-conflict'))}
+  function noteConflicts(list){if(!list||!list.length)return;const cur=readConf(),at=new Date().toISOString();list.forEach(c=>{const r=c.remote||c.base||c.local||{};cur.push({at,key:String(c.k).replace(PREFIX,''),type:r.type||'',payload:r.payload||null,fields:['updated_at'],decision:c.decision||'cloud'})});try{localStorage.setItem(CFK,JSON.stringify(cur.slice(-60)))}catch(e){if(window.QE84Error)QE84Error.record('storage',e,'conflict log')}try{auditPost('conflict',{n:list.length,decisions:list.map(c=>c.decision)})}catch(e){if(window.QE84Error)QE84Error.record('cloud',e,'conflict audit')}try{toast('⚠️ ตรวจ Conflict '+list.length+' รายการแล้ว — ไม่มี merge อัตโนมัติ','var(--t-warn)')}catch(e){if(window.QE84Error)QE84Error.record('ui',e,'conflict status')}window.dispatchEvent(new Event('spdb-conflict'))}
 
   /* ----- รวมการแก้ไข 3 ทาง ระดับ field (base = ค่าที่เห็นครั้งล่าสุดจากฐานข้อมูล, local = เครื่องนี้, remote = ฐานข้อมูลตอนนี้) ----- */
   const APPENDK=new Set(['hist','revs','pr','steps']), isO=x=>x&&typeof x==='object'&&!Array.isArray(x), eqv=(a,b)=>cj(a)===cj(b);
@@ -2532,7 +2546,7 @@ window.qeBlk={
   function backupLocal(local,remote){
     let diff=false; local.forEach((l,k)=>{ const r=remote.get(k); if(r&&hrec(r)!==hrec(l)) diff=true; }); if(!diff) return;
     const o={at:new Date().toISOString()}; ['issue_tracker_v2','issue_tracker_trash',MJKEY,'daily_checklist_v1','daily_checklist_notes','daily_checklist_conf'].forEach(k=>{ const v=localStorage.getItem(k); if(v!=null) o[k]=v; });
-    try{ localStorage.setItem(BAKK,JSON.stringify(o)); }catch(e){}
+    try{ localStorage.setItem(BAKK,JSON.stringify(o)); }catch(e){if(window.QE84Error)QE84Error.record('backup',e,'local cloud backup')}
   }
   async function connect(loadRemote){
     if(!cfg.enabled){setStatus('off','ปิดการใช้ฐานข้อมูลกลาง — ข้อมูลยังอยู่เฉพาะเครื่องนี้');return;}
@@ -2608,7 +2622,7 @@ window.qeBlk={
     cfg.supabaseUrl=g('spSite').value.trim().replace(/\/$/,'');
     cfg.supabaseKey=g('spKey').value.trim();
     cfg.tableName=g('spList').value.trim()||'countermeasure_records';
-    cfg.enabled=g('spOn').checked;saveCfg();ready=false;cache.clear();RC=null;useFlt=true;useSmart=true;
+    cfg.enabled=g('spOn').checked;saveCfg();ready=false;cache.clear();RC=null;useFlt=2;useSmart=true;
   }
   async function diag(){
     const out=g('spDiagOut'), L=[]; if(!out) return;
@@ -2640,7 +2654,7 @@ window.qeBlk={
     g('spConnect').onclick=async()=>{readForm();if(!cfg.enabled){setStatus('off','ปิดการใช้ฐานข้อมูลกลางแล้ว');toast('ปิด Cloud DB แล้ว');return;}try{await connect(true);toast('✅ เชื่อมต่อ Supabase แล้ว');}catch(e){setStatus('error','เชื่อมต่อไม่สำเร็จ — '+errText(e));alert('เชื่อมต่อไม่สำเร็จ: '+e.message);}};
     g('spRefresh').onclick=async()=>{readForm();if(!cfg.enabled){alert('กรุณาเปิดสวิตช์ Cloud DB ก่อน');return;}try{pausedUntil=0;await refreshRemote(true,true);}catch(e){setStatus('error','ดึงข้อมูลไม่สำเร็จ — '+errText(e));alert(e.message);}};
     g('spPush').onclick=async()=>{readForm();if(!cfg.enabled){alert('กรุณาเปิดสวิตช์ Cloud DB ก่อน');return;}if(!confirm('ส่งข้อมูลในเครื่องขึ้น Cloud DB?\nข้อมูลกลางที่ไม่มีอยู่ในเครื่องนี้จะถูกลบ'))return;try{await syncNow(true);toast('✅ ส่งข้อมูลขึ้น Cloud DB แล้ว');}catch(e){alert(e.message);}};
-    g('spReset').onclick=async()=>{try{localStorage.removeItem(CFG);}catch(e){}cfg=defaults();ready=false;cache.clear();RC=null;useFlt=true;useSmart=true;fillForm();toast('↺ กลับไปใช้ค่าที่ฝังในไฟล์แล้ว');if(valid()){try{await connect(true);}catch(e){setStatus('error','เชื่อมต่อไม่สำเร็จ — '+errText(e));}}else setStatus('off','ค่าที่ฝังในไฟล์ยังไม่ครบ — กรุณาแก้ COUNTERMEASURE_CLOUD_DEFAULTS');};
+    g('spReset').onclick=async()=>{try{localStorage.removeItem(CFG);}catch(e){}cfg=defaults();ready=false;cache.clear();RC=null;useFlt=2;useSmart=true;fillForm();toast('↺ กลับไปใช้ค่าที่ฝังในไฟล์แล้ว');if(valid()){try{await connect(true);}catch(e){setStatus('error','เชื่อมต่อไม่สำเร็จ — '+errText(e));}}else setStatus('off','ค่าที่ฝังในไฟล์ยังไม่ครบ — กรุณาแก้ COUNTERMEASURE_CLOUD_DEFAULTS');};
     g('spSyncBtn').onclick=()=>{if(!valid()){g('ovSP').classList.add('on');toast('กรุณาตั้งค่า Supabase ก่อน');return;}syncNow(false).then(()=>toast('✅ Sync Cloud DB แล้ว')).catch(e=>alert(e.message));};
     ['pointerdown','keydown','wheel','touchstart'].forEach(ev=>window.addEventListener(ev,()=>{lastAct=Date.now();},{passive:true,capture:true}));
     schedulePoll(); presenceStart();
@@ -2655,7 +2669,7 @@ window.qeBlk={
      • เครื่องใหม่: ไม่ส่งข้อมูลตั้งต้น/ของเก่าในเครื่องขึ้นไปทับ Cloud เงียบ ๆ
      • PIN เก็บเป็นแฮช ตรวจที่หน้าเว็บ — ไม่ใช่ความปลอดภัยระดับเซิร์ฟเวอร์ */
   const WHOK='ux_me', MODEK='ux_savemode', DEVK='ux_dev_id', RPL='ux_rp_list', PRUNEK='ux_prune_day', SNAPK='ux_snap_day', ACFGC='ux_cfg_cache';
-  const PRES='countermeasure-presence:', AUD='countermeasure-audit:', AUTHP='countermeasure-auth:', SNAP='countermeasure-snap:', ACFGK=AUTHP+'~cfg', APPVER='83';
+  const PRES='countermeasure-presence:', AUD='countermeasure-audit:', AUTHP='countermeasure-auth:', SNAP='countermeasure-snap:', ACFGK=AUTHP+'~cfg', APPVER='84';
   var clockOff=0, lastOK=0, newDev=null;
   const lsGet=k=>{ try{ return localStorage.getItem(k); }catch(e){ return null; } };
   const lsSet=(k,v)=>{ try{ localStorage.setItem(k,v); return true; }catch(e){ return false; } };
@@ -2762,7 +2776,7 @@ window.qeBlk={
       const iso=new Date(nowS()).toISOString();
       await api('POST','?on_conflict=record_key',[{record_key:PRES+devId(),entity_type:'AppConfig',payload:{who:who(),dev:devId(),at:iso,tab:curTab(),dirty:dirtyInfo?dirtyInfo.n:0,mode:saveMode(),ver:APPVER},record_date:null,updated_at:iso}],{'Prefer':'resolution=merge-duplicates,return=minimal'},'pres');
       const rows=await api('GET','?select=record_key,payload,updated_at&record_key=like.'+encodeURIComponent(PRES+'*')+'&order=updated_at.desc&limit=40',null,null,'pres');
-      presRows=(Array.isArray(rows)?rows:[]).map(x=>Object.assign({key:x.record_key,u:x.updated_at},x.payload||{})); emit('presence'); dailyPrune(); autoSnap().catch(()=>{});
+      presRows=(Array.isArray(rows)?rows:[]).map(x=>Object.assign({key:x.record_key,u:x.updated_at},x.payload||{})); emit('presence'); dailyPrune(); autoSnap().catch(e=>{if(window.QE84Error)QE84Error.record('backup',e,'automatic cloud snapshot')});
     }catch(e){ if(e&&(e.status===400||e.status===403||e.status===404)) presOK=false; }
   }
   function online(){
@@ -2781,10 +2795,10 @@ window.qeBlk={
       const d1=new Date(Date.now()-3*864e5).toISOString(), d2=new Date(Date.now()-90*864e5).toISOString();
       await api('DELETE','?entity_type=eq.AppConfig&record_key=like.'+encodeURIComponent(PRES+'*')+'&updated_at=lt.'+encodeURIComponent(d1),null,{'Prefer':'return=minimal'},'pres');
       await api('DELETE','?entity_type=eq.AppConfig&record_key=like.'+encodeURIComponent(AUD+'*')+'&updated_at=lt.'+encodeURIComponent(d2),null,{'Prefer':'return=minimal'},'aud');
-    }catch(e){}
+    }catch(e){if(window.QE84Error)QE84Error.record('cloud',e,'daily presence/audit prune')}
   }
   function presenceStart(){
-    setTimeout(beat,2500); setInterval(beat,90000);
+    setTimeout(beat,2500); setInterval(beat,180000);
     document.addEventListener('visibilitychange',()=>{ if(!document.hidden) setTimeout(beat,800); });
     window.addEventListener('pagehide',goOffline);
   }
@@ -3060,7 +3074,8 @@ function edit(id){
   $('submitBtn').textContent='💾 บันทึกการแก้ไข'; $('cancelBtn').style.display='inline-block';
   $('f').scrollIntoView({behavior:'smooth',block:'center'});
 }
-function del(id){      // ย้ายไปถังขยะ (ไม่ลบถาวร)
+async function del(id){      // ย้ายไปถังขยะ (ไม่ลบถาวร)
+  if(!(await QE84Dialog.confirm('ย้ายรายการนี้ไปถังขยะ?\nกู้คืนได้ภายหลัง',{title:'ย้ายไปถังขยะ',ok:'ย้ายไปถังขยะ',cancel:'ยกเลิก',danger:true}))) return;
   const d=data.find(x=>x.id===id); if(!d) return;
   if(editId===id) resetForm();
   trash.unshift(Object.assign({},d,{deletedAt:new Date().toISOString()}));
@@ -3187,24 +3202,22 @@ $('rsBtn').onclick=()=>$('rsFile').click();
 $('rsFile').onchange=e=>{
   const file=e.target.files[0]; if(!file) return;
   const fr=new FileReader();
-  fr.onload=()=>{
+  fr.onload=async()=>{
     try{
       const p=JSON.parse(fr.result);
       const rs=window.__qeSan.items(Array.isArray(p)?p:p.items); const items=rs.list;
       if(!Array.isArray(items)) throw 0;
-      const merge=confirm(
-        `ไฟล์นี้มี ${items.length} รายการ (ในเครื่องตอนนี้มี ${data.length})\n\n`+
-        `[ OK ]     = รวมข้อมูล (Merge) — ของเดิมไม่หาย\n`+
-        `[ Cancel ] = ไปเลือกแบบเขียนทับ`);
+      const merge=await QE84Dialog.confirm(
+        `ไฟล์นี้มี ${items.length} รายการ (ในเครื่องตอนนี้มี ${data.length})\n\nรวมข้อมูลโดยไม่ลบของเดิมหรือไม่?`,{title:'Restore / Merge',ok:'รวมข้อมูล',cancel:'ไปเลือกเขียนทับ'});
       if(merge){
         const ids=new Set(data.map(x=>x.id)); let add=0;
         items.forEach(x=>{ if(!ids.has(x.id)){ data.push(x); add++; } });
         toast(`✅ รวมข้อมูลแล้ว เพิ่มใหม่ ${add} รายการ`);
       }else{
-        if(!confirm('⚠️ เขียนทับข้อมูลทั้งหมดในเครื่อง?\nข้อมูลปัจจุบันจะหายถาวร')) return;
+        if(!(await QE84Dialog.confirm('⚠️ เขียนทับข้อมูลทั้งหมดในเครื่อง?\nข้อมูลปัจจุบันจะหายถาวร',{title:'เขียนทับข้อมูล',ok:'เขียนทับ',cancel:'ยกเลิก',danger:true}))) return;
         data=items; toast(`✅ กู้คืนแล้ว ${items.length} รายการ`);
       }
-      if(p.title&&p.title.title&&confirm('ไฟล์นี้มีชื่อหัวข้อ:\n"'+p.title.title+'"\n\nใช้ชื่อนี้ด้วยไหม?')){
+      if(p.title&&p.title.title&&(await QE84Dialog.confirm('ไฟล์นี้มีชื่อหัวข้อ:\n"'+p.title.title+'"\n\nใช้ชื่อนี้ด้วยไหม?',{title:'ใช้ชื่อจากไฟล์สำรอง',ok:'ใช้ชื่อนี้',cancel:'คงชื่อเดิม'}))){
         localStorage.setItem(TKEY,JSON.stringify(p.title)); loadTitle();
       }
       if(Array.isArray(p.trash)) p.trash=window.__qeSan.items(p.trash,true).list;
@@ -3216,7 +3229,7 @@ $('rsFile').onchange=e=>{
       if(p.checklist&&window.__checklist){ const n=window.__checklist.restore(p.checklist,merge); if(n) toast('✅ กู้คืน Checklist '+n+' วันด้วย'); }
       if(p.missions&&window.MS){ try{ const n=window.MS.restore(p.missions,merge); if(n) toast('✅ กู้คืน Mission '+n+' ปีด้วย'); }catch(e){} }
       if(p.hoshin&&window.HS){ try{ const n=window.HS.restore(p.hoshin,merge); if(n) toast('✅ กู้คืน Hoshin '+n+' ปีด้วย'); }catch(e){} }
-      if(p.mainjobs&&window.MJ&&window.MJ.setData&&confirm('ไฟล์นี้มีข้อมูล Main QE Jobs (PCR / Claim / New project / Follow-up)\n\n[ OK ] = แทนที่ข้อมูล Main QE Jobs ปัจจุบันด้วยข้อมูลในไฟล์ (กด ↩ ย้อนกลับ ในหน้า Main QE Jobs ได้)\n[ Cancel ] = ไม่แตะข้อมูล Main QE Jobs')){ if(window.MJ.setData(p.mainjobs)) toast('✅ กู้คืนข้อมูล Main QE Jobs แล้ว'); }
+      if(p.mainjobs&&window.MJ&&window.MJ.setData&&(await QE84Dialog.confirm('ไฟล์นี้มีข้อมูล Main QE Jobs (PCR / Claim / New project / Follow-up)\n\nแทนที่ข้อมูล Main QE Jobs ปัจจุบันด้วยข้อมูลในไฟล์หรือไม่?\nกด ↩ ย้อนกลับ ในหน้า Main QE Jobs ได้',{title:'Restore Main QE Jobs',ok:'แทนที่ข้อมูล',cancel:'ไม่แตะข้อมูล',danger:true}))){ if(window.MJ.setData(p.mainjobs)) toast('✅ กู้คืนข้อมูล Main QE Jobs แล้ว'); }
       data.forEach(x=>{ x.revs=x.revs||[]; if(x.status==='Open') x.status='In Progress'; });
       data.sort((a,b)=>b.id-a.id);
       if(rs.fixed) alert('ปรับค่าที่ผิดรูปแบบใน '+rs.fixed+' รายการให้ปลอดภัยแล้ว — โปรดตรวจสอบรายการหลังกู้คืน');
@@ -3537,16 +3550,16 @@ function trashRestore(id){
   if(data.some(x=>x.id===id)) d.id=Date.now();
   data.unshift(d); saveTrash(); save(); render(); toast('↩ กู้คืนรายการแล้ว');
 }
-function trashPurge(id){
-  if(!confirm('ลบรายการนี้ถาวร?\nกู้คืนไม่ได้อีก')) return;
+async function trashPurge(id){
+  if(!(await QE84Dialog.confirm('ลบรายการนี้ถาวร?\nกู้คืนไม่ได้อีก',{title:'ลบถาวร',ok:'ลบถาวร',cancel:'ยกเลิก',danger:true}))) return;
   trash=trash.filter(x=>x.id!==id); saveTrash(); save(); renderTrash(); toast('ลบถาวรแล้ว');
 }
 $('trBtn').onclick=()=>{ renderTrash(); $('ov5').classList.add('on'); };
 $('trClose').onclick=()=>$('ov5').classList.remove('on');
 $('ov5').onclick=e=>{ if(e.target===$('ov5')) $('ov5').classList.remove('on'); };
-$('trEmpty').onclick=()=>{
+$('trEmpty').onclick=async()=>{
   if(!trash.length) return;
-  if(!confirm(`ลบถาวร ${trash.length} รายการในถังขยะทั้งหมด?\nกู้คืนไม่ได้อีก`)) return;
+  if(!(await QE84Dialog.confirm(`ลบถาวร ${trash.length} รายการในถังขยะทั้งหมด?\nกู้คืนไม่ได้อีก`,{title:'ล้างถังขยะทั้งหมด',ok:'ลบทั้งหมด',cancel:'ยกเลิก',danger:true}))) return;
   trash=[]; saveTrash(); save(); renderTrash(); toast('ล้างถังขยะแล้ว');
 };
 
@@ -12460,7 +12473,7 @@ function renderPanel(){
   if(skew>120000) h+='<div class="cb-warn y"><b>🕒 นาฬิกาเครื่องนี้คลาด</b> จากเวลาเซิร์ฟเวอร์ ~'+Math.round(skew/60000)+' นาที — รายชื่อออนไลน์ปรับให้อัตโนมัติ แต่ควรตั้งเวลาเครื่องให้ตรง</div>';
   if(!realAuth()&&s&&C().cfg()&&me()&&AUTH&&AUTH[me()]&&!AUTH[me()].rh) h+='<div class="cb-warn y"><b>🔑 ยังไม่มีรหัสกู้คืน PIN</b> — สร้างไว้ ลืม PIN จะได้ไม่ต้องรอผู้ดูแล<div class="cb-act"><button class="cb-btn p" data-a="mkrec">สร้างรหัสกู้คืน</button></div></div>';
   h+='<div class="cb-note" style="margin:0 0 6px">Cloud <b>'+st.cloudN+'</b> รายการ · ตรวจล่าสุด '+hhmm(st.lastOK)+' · เวอร์ชัน v'+E(st.ver)+'</div>';
-  h+='<h4>👤 บัญชี</h4><div class="cb-r"><div><b title="'+E(me())+'">'+E(window.QEPeople?QEPeople.display(me()):me())+'</b>'+(admin?' <small style="display:inline">· ผู้ดูแล</small>':'')+(me()&&me()!==(window.QEPeople?QEPeople.display(me()):me())?'<small>'+E(me())+'</small>':'')+'<small>เข้าสู่ระบบถึง '+(s?fmt(s.exp):'')+'</small></div></div><div class="cb-act"><button class="cb-btn" data-a="chpin">🔑 เปลี่ยน PIN</button><button class="cb-btn d" data-a="logout">ออกจากระบบ</button></div>';
+  h+='<h4>👤 บัญชี</h4><div class="cb-r"><div><b title="'+E(me())+'">'+E(window.QEPeople?QEPeople.display(me()):me())+'</b>'+(admin?' <small style="display:inline">· ผู้ดูแล</small>':'')+(me()&&me()!==(window.QEPeople?QEPeople.display(me()):me())?'<small>'+E(me())+'</small>':'')+'<small>เข้าสู่ระบบถึง '+(s?fmt(s.exp):'')+'</small></div></div><div class="cb-act">'+(realAuth()?'':'<button class="cb-btn" data-a="chpin">🔑 เปลี่ยน PIN</button>')+'<button class="cb-btn d" data-a="logout">ออกจากระบบ</button></div>';
   h+='<h4>💾 การบันทึก</h4><div><button class="cb-chip'+(manual?' on':'')+'" data-a="mode" data-v="manual">ต้องกดบันทึก</button><button class="cb-chip'+(!manual?' on':'')+'" data-a="mode" data-v="auto">อัตโนมัติ</button></div>';
   if(manual){
     if(d&&d.n){ h+='<div class="cb-r"><div><b>✎ ยังไม่บันทึก '+d.n+' รายการ</b><small>'+E(sum(d.by))+(d.del?' · ลบ '+d.del:'')+'</small>'+(d.items&&d.items.length?'<small>'+E(d.items.slice(0,4).join(' · '))+'</small>':'')+'</div></div><div class="cb-act"><button class="cb-btn p" data-a="save">💾 บันทึกขึ้น Cloud</button><button class="cb-btn d" data-a="discard">↩ ทิ้งที่ยังไม่บันทึก</button></div>'; }
@@ -13167,7 +13180,7 @@ window.__QE_AI={ask:(q,o)=>ask(q,o||{mode:'qe',context:collectContext({q:q})}),c
 body.neo .qec-msgs{background:#071a14!important}body.neo .qec-rooms,body.neo .qec-compose{background:#0b201a!important}body.neo .qec-room{background:#102c24!important;color:var(--txt)!important;border-color:#246b54!important}body.neo .qec-room.on{background:#06C755!important;color:#fff!important}
 @media(max-width:600px){.qec-fab{right:10px;bottom:116px}.qec-panel{right:6px;bottom:168px;width:calc(100vw - 12px);height:min(620px,calc(100vh - 180px));border-radius:14px}}
 </style>
-<button type="button" id="qeChatFab" class="qec-fab">💬 Line Chat <span id="qeChatBadge" class="qec-badge">0</span></button>
+<button type="button" id="qeChatFab" class="qec-fab" aria-label="เปิด QE Line Chat">💬 Line Chat <span id="qeChatBadge" class="qec-badge">0</span></button>
 <section id="qeChatPanel" class="qec-panel" aria-label="QE Line Chat">
   <div class="qec-head"><b>💬 QE Line Chat</b><span id="qeChatWho" class="qec-online"></span><button type="button" id="qeChatClose" class="qec-close" aria-label="ปิดหน้าต่างแชท">✕</button></div>
   <nav id="qeChatRooms" class="qec-rooms" aria-label="ห้องแชท"></nav>
@@ -13181,9 +13194,9 @@ if(window.__QE_CHAT_ADDON)return;window.__QE_CHAT_ADDON=true;
 const g=id=>document.getElementById(id),cfg=window.COUNTERMEASURE_CLOUD_DEFAULTS||{};
 const base=String(cfg.supabaseUrl||'').replace(/\/$/,''),key=String(cfg.supabaseKey||'');
 const rooms=[['qe-team','ทีมทั้งหมด'],['pcr','PCR'],['audit','Audit'],['meeting','Meeting']];
-let room='qe-team',lastIds={},unread=0,timer=0,busy=false;
+let room='qe-team',lastIds={},unread=0,timer=0,busy=false,msgCache={};
 const SEENK='qe_chat_seen_v1'; let seen={}; try{ seen=JSON.parse(localStorage.getItem(SEENK)||'{}')||{}; }catch(e){ seen={}; }
-const saveSeen=()=>{ try{ localStorage.setItem(SEENK,JSON.stringify(seen)); }catch(e){} };
+const saveSeen=()=>{ try{ localStorage.setItem(SEENK,JSON.stringify(seen)); }catch(e){if(window.QE84Error)QE84Error.record('storage',e,'LINE chat seen');} };
 function badge(){ const b=g('qeChatBadge'); b.textContent=String(unread); b.classList.toggle('on',unread>0); }
 const E=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const me=()=>String((window.QEAuth&&QEAuth.enabled&&QEAuth.enabled()&&QEAuth.user()&&QEAuth.user().email)||localStorage.getItem('ux_me')||document.getElementById('cbWn')?.textContent||'Guest').trim()||'Guest';
@@ -13193,7 +13206,7 @@ function stamp(v){try{return new Intl.DateTimeFormat('th-TH',{hour:'2-digit',min
 function setStatus(s){g('qeChatStatus').textContent=s||'';}
 function drawRooms(){g('qeChatRooms').innerHTML=rooms.map(r=>'<button type="button" class="qec-room '+(r[0]===room?'on':'')+'" data-r="'+r[0]+'">'+r[1]+'</button>').join('');}
 function draw(list){const box=g('qeChatMessages'),who=me();box.textContent='';if(!list.length){let e=document.createElement('div');e.className='qec-empty';e.textContent='ยังไม่มีข้อความในห้องนี้';box.appendChild(e);return}list.forEach(m=>{let r=document.createElement('div');r.className='qec-row '+(m.sender_name===who?'me':'');let a=document.createElement('div');a.className='qec-meta';const visibleSender=window.QEPeople?QEPeople.display(m.sender_name):String(m.sender_name||'');a.textContent=visibleSender+' · '+stamp(m.created_at);a.title=visibleSender;let b=document.createElement('div');b.className='qec-bubble';b.textContent=String(m.message||'');r.append(a,b);box.appendChild(r)});box.scrollTop=box.scrollHeight;}
-async function load(silent){if(!base||!key){setStatus('ไม่พบการตั้งค่า Supabase');return;}if(busy)return;busy=true;try{const url=base+'/rest/v1/chat_messages?select=id,room_key,sender_name,message,created_at&room_key=eq.'+encodeURIComponent(room)+'&deleted_at=is.null&order=created_at.desc&limit=100';const res=await fetch(url,{headers:await headers()});const data=await res.json();if(!res.ok)throw new Error(data.message||'โหลดข้อความไม่สำเร็จ');data.reverse();const latest=data.length?Number(data[data.length-1].id):0;const isOpen=g('qeChatPanel').classList.contains('on');if(seen[room]==null){seen[room]=latest;saveSeen();}if(isOpen){seen[room]=Math.max(+seen[room]||0,latest);saveSeen();unread=0;}else{const who=me();unread=data.filter(m=>Number(m.id)>(+seen[room]||0)&&m.sender_name!==who).length;}badge();lastIds[room]=latest;draw(data);if(!silent)setStatus('เชื่อมต่อแล้ว · '+data.length+' ข้อความ'+(canSend()?'':' · ดูอย่างเดียว'));}catch(e){setStatus('ผิดพลาด: '+(e.message||e));}finally{busy=false;}}
+async function load(silent){if(document.hidden)return;if(!base||!key){setStatus('ไม่พบการตั้งค่า Supabase');return;}if(busy)return;busy=true;try{const last=+lastIds[room]||0,initial=!last;const url=base+'/rest/v1/chat_messages?select=id,room_key,sender_name,message,created_at&room_key=eq.'+encodeURIComponent(room)+'&deleted_at=is.null&order=id.'+(initial?'desc':'asc')+'&limit=100'+(initial?'':'&id=gt.'+encodeURIComponent(last));const res=await fetch(url,{headers:await headers()});let rows=await res.json();if(!res.ok)throw new Error(rows.message||'โหลดข้อความไม่สำเร็จ');if(initial)rows.reverse();const map=new Map((msgCache[room]||[]).map(m=>[Number(m.id)||0,m]));rows.forEach(m=>map.set(Number(m.id)||0,m));const data=Array.from(map.values()).sort((a,b)=>(+a.id||0)-(+b.id||0)).slice(-100);msgCache[room]=data;const latest=data.length?Number(data[data.length-1].id):last;if(seen[room]==null){seen[room]=latest;saveSeen();}const isOpen=g('qeChatPanel').classList.contains('on');if(isOpen){seen[room]=Math.max(+seen[room]||0,latest);saveSeen();unread=0;}else{const who=me();unread=data.filter(m=>Number(m.id)>(+seen[room]||0)&&m.sender_name!==who).length;}badge();lastIds[room]=latest;draw(data);if(!silent)setStatus('เชื่อมต่อแล้ว · '+data.length+' ข้อความ'+(canSend()?'':' · ดูอย่างเดียว'));}catch(e){if(window.QE84Error)QE84Error.record('chat',e,'LINE chat load');setStatus('ผิดพลาด: '+(e.message||e));}finally{busy=false;scheduleChat();}}
 async function send() {
   const input = g("qeChatInput");
   const text = input.value.trim();
@@ -13359,16 +13372,17 @@ async function send() {
       )
     );
   } finally {
-    button.disabled = false;
-    input.focus();
+    button.disabled = !canSend();
+    if(!input.disabled) input.focus();
   }
 }
-function open(){g('qeChatPanel').classList.add('on');unread=0;badge();if(lastIds[room]){seen[room]=Math.max(+seen[room]||0,lastIds[room]);saveSeen();}const raw=me(),shown=window.QEPeople?QEPeople.display(raw):raw;g('qeChatWho').textContent='ผู้ใช้: '+shown;g('qeChatWho').title=raw;drawRooms();load(false);setTimeout(()=>g('qeChatInput').focus(),30);}
-function close(){g('qeChatPanel').classList.remove('on');if(lastIds[room]){seen[room]=Math.max(+seen[room]||0,lastIds[room]);saveSeen();}unread=0;badge();}
+function applyChatRole(){const ro=!canSend(),i=g('qeChatInput'),b=g('qeChatSend'),s=g('qeChatStatus');i.disabled=ro;b.disabled=ro;i.placeholder=ro?'ดูอย่างเดียว — บัญชีนี้ส่งข้อความไม่ได้':'พิมพ์ข้อความ…';s.classList.toggle('qe84-ro',ro);if(ro)setStatus('ดูอย่างเดียว — บัญชี viewer อ่านได้ แต่ส่งข้อความไม่ได้');}
+function open(){if(window.QE84TeamsChat&&QE84TeamsChat.close)QE84TeamsChat.close();g('qeChatPanel').classList.add('on');unread=0;badge();if(lastIds[room]){seen[room]=Math.max(+seen[room]||0,lastIds[room]);saveSeen();}const raw=me(),shown=window.QEPeople?QEPeople.display(raw):raw;g('qeChatWho').textContent='ผู้ใช้: '+shown;g('qeChatWho').title=raw;drawRooms();applyChatRole();load(false);setTimeout(()=>{const i=g('qeChatInput');(i.disabled?g('qeChatClose'):i).focus()},30);}
+function close(){g('qeChatPanel').classList.remove('on');if(lastIds[room]){seen[room]=Math.max(+seen[room]||0,lastIds[room]);saveSeen();}unread=0;badge();scheduleChat();}
 g('qeChatFab').addEventListener('click',open);g('qeChatClose').addEventListener('click',close);g('qeChatSend').addEventListener('click',send);g('qeChatInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}});g('qeChatRooms').addEventListener('click',e=>{const b=e.target.closest('[data-r]');if(!b)return;room=b.dataset.r;drawRooms();load(false);});
 /* ตัวนับนับเฉพาะห้อง “ทีมทั้งหมด” (ห้องที่เชื่อม LINE) */
 document.addEventListener('keydown',e=>{if(e.key==='Escape')close();});
-const startChat=()=>{if(timer)return;timer=setInterval(()=>{if(!document.hidden)load(true)},4000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)load(true)});window.addEventListener('beforeunload',()=>clearInterval(timer));drawRooms();load(true)};if(window.QEAuth&&QEAuth.enabled&&QEAuth.enabled())QEAuth.ready().then(startChat);else startChat();
+const scheduleChat=()=>{clearTimeout(timer);timer=0;if(document.hidden)return;timer=setTimeout(()=>load(true),g('qeChatPanel').classList.contains('on')?5000:30000)};const startChat=()=>{drawRooms();applyChatRole();load(true);document.addEventListener('visibilitychange',()=>{if(document.hidden){clearTimeout(timer);timer=0}else load(true)});window.addEventListener('beforeunload',()=>clearTimeout(timer));window.addEventListener('qeauth:ready',applyChatRole)};if(window.QEAuth&&QEAuth.enabled&&QEAuth.enabled())QEAuth.ready().then(startChat).catch(e=>{if(window.QE84Error)QE84Error.record('chat',e,'LINE chat start')});else startChat();
 window.__QE_CHAT={open,load,send,close};
 })();
 </script>
@@ -16636,7 +16650,7 @@ html{scroll-padding-top:64px}
 (function(){
   if(window.QE_ENABLE_OPTIONAL_ADDONS!==true)return;
   if(!/^https?:$/i.test(location.protocol)) return;
-  ['space-theme.js','teams-chat-v83.js'].forEach(function(src){
+  ['space-theme.js','teams-chat-v84.js'].forEach(function(src){
     var s=document.createElement('script');s.src=src;s.defer=true;s.dataset.qeOptional='1';s.addEventListener('error',function(){console.warn('optional add-on unavailable: '+src)});
     document.head.appendChild(s);
   });
@@ -16975,4 +16989,84 @@ body{padding-bottom:24px!important}.qe77-health-btn{min-width:32px!important;min
 <script id="qeV78Final">
 (function(){function a(){let b=document.getElementById('qe77HealthBtn');if(!b)return;let c=b.classList.contains('ok')?'สีเขียว: Sync ปกติ':b.classList.contains('busy')?'สีเหลือง: กำลัง Sync':b.classList.contains('bad')?'สีแดง: พบปัญหา':'สีส้ม: ควรตรวจสอบ';b.setAttribute('aria-label',c+' · คลิกเพื่อเปิด System Health')}document.addEventListener('DOMContentLoaded',()=>{a();let s=document.getElementById('spStatus');if(s)new MutationObserver(a).observe(s,{attributes:true,childList:true,subtree:true})});window.QE78SecurityQA=Object.freeze({run(){const p='<img src=x onerror=window.__qeXss=1><svg onload=window.__qeXss=2></svg>',h=document.createElement('div');window.__qeXss=0;h.textContent=p;document.body.appendChild(h);const ok=window.__qeXss===0&&!h.querySelector('img,svg');h.remove();return{ok,executed:window.__qeXss}}})})();
 </script>
+<!-- ===== v84 Phase A hardening layer: role UX, accessibility, self-test, dialogs, chat layout ===== -->
+<style id="qeV84Css">
+.qe84-skip{position:fixed;left:12px;top:8px;z-index:2147483647;transform:translateY(-180%);padding:9px 14px;border-radius:8px;background:#0b397e;color:#fff;font-weight:800;text-decoration:none}.qe84-skip:focus{transform:none;outline:3px solid #fbbf24}
+.qe84-ro-note{display:none;margin:8px 0;padding:8px 11px;border:1px solid #d97706;border-radius:9px;background:#fff7ed;color:#7c2d12;font-size:12px;font-weight:750}.qe84-role-viewer .qe84-ro-note{display:block}
+.qe84-disabled{opacity:.52;cursor:not-allowed;filter:saturate(.45)}.qe84-admin-only[hidden]{display:none!important}
+#toast{z-index:10120!important}
+.qe84-dialog{position:fixed;inset:0;z-index:2147483600;display:grid;place-items:center;padding:16px;background:rgba(2,6,23,.72)}.qe84-dialog-card{width:min(500px,100%);max-height:88vh;overflow:auto;border:1px solid var(--line,#cbd5e1);border-radius:16px;padding:20px;background:var(--pop,#fff);color:var(--txt,#172033);box-shadow:0 24px 70px rgba(0,0,0,.5)}.qe84-dialog-card h2{margin:0 0 9px;font-size:19px}.qe84-dialog-msg{white-space:pre-wrap;line-height:1.6}.qe84-dialog-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:16px}.qe84-dialog-actions button{min-width:92px;min-height:40px}.qe84-danger{background:var(--dang,#b91c1c);color:#fff;border-color:var(--dang,#b91c1c)}
+.qe84-self{margin-top:12px;border-top:1px solid #cbd5e1;padding-top:12px}.qe84-self h3{margin:0 0 8px}.qe84-self-results{display:grid;gap:6px;margin-top:8px}.qe84-self-row{display:grid;grid-template-columns:28px 170px minmax(0,1fr);gap:8px;align-items:start;padding:7px 9px;border-radius:8px;background:#f8fafc;color:#172033;font-size:12px}.qe84-self-row.pass .qe84-self-state{color:#166534}.qe84-self-row.fail .qe84-self-state{color:#991b1b}.qe84-self-row.warn .qe84-self-state{color:#92400e}
+.qec-panel{z-index:10040;right:18px;bottom:76px;height:min(610px,calc(100vh - 96px));background:#fff;color:#172033;isolation:isolate}.qec-msgs{background:#eaf7ef!important}.qec-compose,.qec-rooms{background:#f3fbf6!important;position:relative;z-index:2}.qec-input{background:#fff;color:#172033;border-color:#64748b}.qec-fab{z-index:10031}.qec-input:disabled,.qec-send:disabled{opacity:.68;cursor:not-allowed}.qec-status.qe84-ro{color:#92400e;font-weight:800}
+body.neo .qec-panel{background:#0b1424!important;color:#f8fafc;border-color:#52627a}body.neo .qec-msgs{background:#101d2d!important}body.neo .qec-compose,body.neo .qec-rooms{background:#0b1424!important}body.neo .qec-input{background:#101d33;color:#f8fafc;border-color:#71849c}
+.qe78-auth .qe78-ac label{color:#263d5d}.qe78-auth .qe82-mainhead p,.qe78-auth .qe78-quick-label small,.qe78-auth .qe82-other-body small,.qe78-auth .qe82-security,.qe78-auth .qe82-version{color:#52657d}.qe78-auth .qe82-other summary{color:#294563}
+body.neo .qe78-auth .qe78-ac label,.qe78-auth:has(body.neo) .qe78-ac label{color:#f4f7fb}body.neo .qe78-auth .qe82-mainhead p,body.neo .qe78-auth .qe78-quick-label small,body.neo .qe78-auth .qe82-other-body small,body.neo .qe78-auth .qe82-security,body.neo .qe78-auth .qe82-version{color:#d8e2ef}
+@media(prefers-color-scheme:dark){.qe78-auth .qe78-ac label{color:#f4f7fb}.qe78-auth .qe82-mainhead p,.qe78-auth .qe78-quick-label small,.qe78-auth .qe82-other-body small,.qe78-auth .qe82-security,.qe78-auth .qe82-version{color:#d8e2ef}.qe78-auth .qe82-other summary{color:#f4f7fb}}
+@media(max-width:600px){.qec-panel{right:6px;bottom:68px;height:min(620px,calc(100vh - 82px))}}
+@media(prefers-reduced-motion:reduce){.qe84-skip{transition:none}}
+</style>
+<script id="qeV84PhaseA">
+(function(){
+'use strict';
+if(window.__QE84_PHASE_A)return;window.__QE84_PHASE_A=true;
+var nativeConfirm=window.confirm.bind(window),nativePrompt=window.prompt.bind(window);
+function record(kind,e,ctx){try{if(window.QE78&&QE78.recordError)QE78.recordError(kind,e,ctx||'v84');else console.error('[v84 '+kind+']',e);}catch(x){console.error('[v84 recorder]',x);}}
+window.QE84Error=Object.freeze({record:record});
+function el(tag,cls,text){var n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n;}
+function focusables(root){return Array.prototype.slice.call(root.querySelectorAll('button:not([disabled]),a[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])')).filter(function(n){return n.offsetParent!==null;});}
+function dialogMessage(message,opt){opt=opt||{};return new Promise(function(resolve){
+ try{var prev=document.activeElement,ov=el('div','qe84-dialog'),card=el('section','qe84-dialog-card'),title=el('h2','',opt.title||'ยืนยันรายการ'),msg=el('div','qe84-dialog-msg',String(message==null?'':message)),acts=el('div','qe84-dialog-actions'),cancel=el('button','btn-g',opt.cancel||'ยกเลิก'),ok=el('button',(opt.danger?'btn-d qe84-danger':'btn-p'),opt.ok||'ตกลง');ov.setAttribute('role',opt.alert?'alertdialog':'dialog');ov.setAttribute('aria-modal','true');title.id='qe84DialogTitle';ov.setAttribute('aria-labelledby',title.id);cancel.type=ok.type='button';if(opt.alert)cancel.hidden=true;acts.append(cancel,ok);card.append(title,msg,acts);ov.appendChild(card);document.body.appendChild(ov);
+  function done(v){document.removeEventListener('keydown',key,true);ov.remove();try{prev&&prev.focus&&prev.focus();}catch(e){record('accessibility',e,'dialog restore focus');}resolve(v);}
+  function key(e){if(e.key==='Escape'){e.preventDefault();e.stopPropagation();done(false);return;}if(e.key==='Tab'){var f=focusables(card);if(!f.length){e.preventDefault();ok.focus();return;}var i=f.indexOf(document.activeElement),nx=e.shiftKey?(i<=0?f.length-1:i-1):(i<0||i===f.length-1?0:i+1);e.preventDefault();f[nx].focus();}}
+  cancel.addEventListener('click',function(){done(false);});ok.addEventListener('click',function(){done(true);});document.addEventListener('keydown',key,true);(opt.danger&&!opt.alert?cancel:ok).focus();
+ }catch(e){record('dialog',e,'build confirm');try{resolve(nativeConfirm(String(message)));}catch(x){record('dialog',x,'native confirm fallback');resolve(false);}}
+});}
+window.QE84Dialog=Object.freeze({confirm:function(m,o){return dialogMessage(m,o);},alert:function(m,o){o=Object.assign({alert:true,title:'ข้อความจากระบบ',ok:'ตกลง'},o||{});return dialogMessage(m,o);},prompt:function(m,d){try{return Promise.resolve(nativePrompt(m,d));}catch(e){record('dialog',e,'prompt fallback');return Promise.resolve(null);}}});
+
+function role(){try{return window.QEAuth&&QEAuth.enabled&&QEAuth.enabled()?String(QEAuth.role()||window.__QE_AUTH_ROLE||''):String(window.__QE_AUTH_ROLE||'');}catch(e){record('auth',e,'read role');return'';}}
+var safeText=/กรอง|ค้นหา|export|ส่งออก|csv|backup|สำรอง|copy|คัดลอก|พิมพ์|print|ปิด|ยกเลิก|รีเฟรช|ดู|เปิด|help|คู่มือ|ธีม|ก่อน|ถัด|เดือนนี้|ทั้งหมด/i;
+var writeText=/เพิ่ม|แก้ไข|บันทึก|นำเข้า|restore|กู้คืน|ลบ|เขียนทับ|ส่งข้อมูล|ยืนยัน|confirm|ตั้งค่า|เปลี่ยน|ทำเสร็จ|เลื่อนกำหนด|อัปโหลด|เชื่อมต่อ/i;
+var writeIds=new Set(['submitBtn','cancelBtn','rsBtn','qiBtn','shConfirm','shCarry','shImp','shAdd','rSave','rUndo','dlAdd','trEmpty','spConnect','spPush','spReset','spSyncBtn','imgBtn','renameBtn']);
+var writeActions=/^(?:add|new|edit|save|del|delete|purge|rm|remove|restore|import|commit|done|toggle|openrev|trashrestore|trashpurge|delstep|undostep|clearcur|tk|up|dn|mode|discard|reset|adm|deluser|adduser|delsel|bulkown|chpin|mkrec)$/i;
+function descriptor(n){return [n.id,n.getAttribute('data-qe-fn'),n.getAttribute('data-a'),n.getAttribute('data-x'),n.getAttribute('data-act'),n.getAttribute('data-mje'),n.getAttribute('data-f'),n.getAttribute('title'),n.textContent].filter(Boolean).join(' ').trim();}
+function isWrite(n){if(!n||!n.matches)return false;if(writeIds.has(n.id))return true;if(n.closest('#f')&&!/^(?:q|fStatus|fDate|fOwner|fFlag|fMonth|fYear|fMBasis)$/.test(n.id||''))return true;var d=descriptor(n),a=[n.getAttribute('data-qe-fn'),n.getAttribute('data-a'),n.getAttribute('data-x'),n.getAttribute('data-act'),n.getAttribute('data-mje'),n.getAttribute('data-f')].filter(Boolean).join(' ');if(writeActions.test(a))return true;if(safeText.test(d))return false;return writeText.test(d);}
+function isPermanent(n){var d=descriptor(n);return n.id==='trEmpty'||/trashPurge|ลบถาวร|ล้างถังขยะทั้งหมด/i.test(d);}
+function markButton(n,viewer,admin){if(!n||n.dataset.qe84RoleSkip==='1')return;if(isPermanent(n)&&!admin){n.hidden=true;n.classList.add('qe84-admin-only');n.setAttribute('aria-hidden','true');return;}n.hidden=false;n.classList.remove('qe84-admin-only');n.removeAttribute('aria-hidden');if(viewer&&isWrite(n)){n.disabled=true;n.setAttribute('aria-disabled','true');n.classList.add('qe84-disabled');n.title='บัญชีนี้ดูอย่างเดียว';n.dataset.qe84Readonly='1';}else if(n.dataset.qe84Readonly==='1'){n.disabled=false;n.removeAttribute('aria-disabled');n.classList.remove('qe84-disabled');delete n.dataset.qe84Readonly;}}
+var applying=false;
+function applyRoleUI(forceRole){if(applying)return;applying=true;try{var r=forceRole||role(),viewer=r==='viewer',admin=r==='admin';document.body.classList.toggle('qe84-role-viewer',viewer);document.body.classList.toggle('qe84-role-editor',r==='editor');document.body.classList.toggle('qe84-role-admin',admin);document.querySelectorAll('button,[role="button"],input[type="button"],input[type="submit"]').forEach(function(n){markButton(n,viewer,admin);});var pin=document.querySelector('[data-a="chpin"]');if(pin&&window.QEAuth&&QEAuth.enabled&&QEAuth.enabled())pin.hidden=true;var note=document.getElementById('qe84RoNote');if(note)note.hidden=!viewer;window.dispatchEvent(new CustomEvent('qe84:roleui',{detail:{role:r}}));}catch(e){record('role-ui',e,'apply controls');}finally{applying=false;}}
+window.QE84RoleUI=Object.freeze({apply:applyRoleUI,role:role,isWrite:isWrite});
+window.addEventListener('click',function(e){var r=role(),n=e.target&&e.target.closest&&e.target.closest('button,[role="button"],input,select,textarea');if(!n)return;if(isPermanent(n)&&r!=='admin'){e.preventDefault();e.stopImmediatePropagation();return;}if(r==='viewer'&&isWrite(n)){e.preventDefault();e.stopImmediatePropagation();var t=document.getElementById('toast');if(t){t.textContent='บัญชีนี้ดูอย่างเดียว — ใช้การค้นหา กรอง และส่งออกได้';t.setAttribute('role','status');t.setAttribute('aria-live','polite');}}},true);
+
+function openDialog(){var ds=Array.prototype.slice.call(document.querySelectorAll('[role="dialog"],[role="alertdialog"]')).filter(function(d){var s=getComputedStyle(d);return s.display!=='none'&&s.visibility!=='hidden'&&!d.hidden&&d.getAttribute('aria-hidden')!=='true';});return ds[ds.length-1]||null;}
+document.addEventListener('keydown',function(e){if(e.key!=='Tab')return;var d=openDialog();if(!d||d.classList.contains('qe84-dialog'))return;var f=focusables(d);if(!f.length)return;var i=f.indexOf(document.activeElement);if(e.shiftKey&&i<=0){e.preventDefault();f[f.length-1].focus();}else if(!e.shiftKey&&(i<0||i===f.length-1)){e.preventDefault();f[0].focus();}},true);
+
+function labelIcons(root){(root||document).querySelectorAll('button,[role="button"]').forEach(function(b){if(b.getAttribute('aria-label'))return;var t=(b.getAttribute('title')||b.textContent||'').replace(/\s+/g,' ').trim();if(t)b.setAttribute('aria-label',t.slice(0,120));});}
+function chatExclusive(){var lp=document.getElementById('qeChatPanel'),tp=document.getElementById('qeTeamsPanel');if(lp&&tp&&lp.classList.contains('on')&&tp.classList.contains('on')){if(window.__QE_CHAT&&__QE_CHAT.close)__QE_CHAT.close();else lp.classList.remove('on');}}
+function observe(){var pending=false;var mo=new MutationObserver(function(ms){if(pending||!ms.some(function(m){return m.type==='childList'&&m.addedNodes.length;}))return;pending=true;requestAnimationFrame(function(){pending=false;labelIcons(document);applyRoleUI();chatExclusive();});});mo.observe(document.body,{subtree:true,childList:true});}
+
+function addSelfTest(){var panel=document.querySelector('.qe77-health-panel');if(!panel||document.getElementById('qe84Self'))return;var box=el('section','qe84-self');box.id='qe84Self';var h=el('h3','','ตรวจสอบตนเอง · Self-test (อ่านอย่างเดียว)'),btn=el('button','qe77-a','▶ รัน Self-test'),out=el('div','qe84-self-results');btn.type='button';btn.id='qe84SelfRun';out.id='qe84SelfResults';out.setAttribute('aria-live','polite');box.append(h,btn,out);var err=panel.querySelector('.qe77-errors');panel.insertBefore(box,err||null);btn.addEventListener('click',runSelfTest);}
+function resultRow(name,state,detail){var r=el('div','qe84-self-row '+state),ic=el('div','qe84-self-state',state==='pass'?'ผ่าน':state==='fail'?'ไม่ผ่าน':'เตือน'),nm=el('b','',name),dt=el('span','',detail);r.append(ic,nm,dt);return r;}
+async function runSelfTest(){var out=document.getElementById('qe84SelfResults'),btn=document.getElementById('qe84SelfRun');if(!out||!btn)return;btn.disabled=true;out.textContent='';var rows=[];
+ try{var k='qe84_selftest_'+Math.random().toString(36).slice(2),v='ok';localStorage.setItem(k,v);var ok=localStorage.getItem(k)===v;localStorage.removeItem(k);rows.push(['Local storage',ok?'pass':'fail',ok?'อ่าน/เขียน probe ชั่วคราวและลบแล้ว':'อ่าน/เขียนไม่ได้']);}catch(e){record('self-test',e,'localStorage');rows.push(['Local storage','fail',String(e.message||e)]);}
+ try{var r=role(),u=window.QEAuth&&QEAuth.user&&QEAuth.user();rows.push(['Session / บทบาท',/^(viewer|editor|admin)$/.test(r)?'pass':'fail',(u&&u.email?u.email+' · ':'')+(r||'ไม่พบบทบาท')]);}catch(e){record('self-test',e,'session');rows.push(['Session / บทบาท','fail',String(e.message||e)]);}
+ try{var sample={due:'2026-11-01',revs:[{date:'2026-11-03'}],status:'In Progress'},d=window.QEData&&QEData.currentDue(sample);rows.push(['Due date (Single Source)',d==='2026-11-03'?'pass':'fail','QEData.currentDue → '+String(d||'ไม่พร้อม')]);}catch(e){record('self-test',e,'QEData.currentDue');rows.push(['Due date (Single Source)','fail',String(e.message||e)]);}
+ try{var cv=window.QE84TeamsChat&&QE84TeamsChat.version;rows.push(['ไฟล์แชต Teams',cv==='84'?'pass':'warn',cv?'teams-chat-v'+cv+'.js':'ยังไม่โหลด (ตรวจอีกครั้งเมื่อเปิดผ่าน HTTP/HTTPS)']);}catch(e){rows.push(['ไฟล์แชต Teams','warn','ยังไม่พร้อม']);}
+ try{var c=window.COUNTERMEASURE_CLOUD_DEFAULTS||{},url=String(c.supabaseUrl||'').replace(/\/$/,''),table=String(c.tableName||'countermeasure_records'),token=(window.QEAuth&&QEAuth.enabled&&QEAuth.enabled())?await QEAuth.getAccessToken():c.supabaseKey;if(!url||!token)throw Error('การตั้งค่า Cloud ไม่ครบ');var res=await fetch(url+'/rest/v1/'+encodeURIComponent(table)+'?select=record_key&limit=1',{method:'GET',headers:{Accept:'application/json',apikey:c.supabaseKey,Authorization:'Bearer '+token},cache:'no-store'});rows.push(['Cloud read-only',res.ok?'pass':'fail','GET เฉพาะ record_key · HTTP '+res.status]);}catch(e){record('self-test',e,'Cloud read-only');rows.push(['Cloud read-only','fail',String(e.message||e).slice(0,160)]);}
+ rows.forEach(function(x){out.appendChild(resultRow(x[0],x[1],x[2]));});btn.disabled=false;btn.focus();}
+
+function init(){
+ var skip=el('a','qe84-skip','ข้ามไปเนื้อหาหลัก');skip.href='#qeMainContent';document.body.insertBefore(skip,document.body.firstChild);var main=document.getElementById('viewTracker')||document.querySelector('main')||document.body;main.id=main.id||'qeMainContent';if(!main.hasAttribute('tabindex'))main.tabIndex=-1;
+ var note=el('div','qe84-ro-note','โหมดดูอย่างเดียว — ค้นหา กรอง ดูรายละเอียด และส่งออกได้ แต่ไม่สามารถเพิ่ม แก้ไข ลบ นำเข้า หรือส่งข้อความ');note.id='qe84RoNote';note.hidden=true;var nav=document.getElementById('nvNav')||main;nav.parentNode.insertBefore(note,nav.nextSibling);
+ var toast=document.getElementById('toast');if(toast){toast.setAttribute('role','status');toast.setAttribute('aria-live','polite');toast.setAttribute('aria-atomic','true');}
+ var lineFab=document.getElementById('qeChatFab');if(lineFab&&!lineFab.getAttribute('aria-label'))lineFab.setAttribute('aria-label','เปิด QE Line Chat');var lp=document.getElementById('qeChatPanel');if(lp){lp.setAttribute('role','dialog');lp.setAttribute('aria-modal','false');}
+ labelIcons(document);applyRoleUI();addSelfTest();observe();chatExclusive();
+ var theme=document.querySelector('meta[name="theme-color"]');function themeColor(){if(theme)theme.content=document.body.classList.contains('neo')?'#0f172a':'#f5f6f8';}themeColor();new MutationObserver(themeColor).observe(document.body,{attributes:true,attributeFilter:['class']});
+ window.addEventListener('qeauth:ready',function(){applyRoleUI();setTimeout(applyRoleUI,200);});
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
+window.QE84SecurityQA=Object.freeze({run:function(){var p=['<img src=x onerror=window.__qe84Xss=1>','<script>window.__qe84Xss=2<\/script>','ข้อความ “quote” \'single\' & ampersand'],host=el('div');window.__qe84Xss=0;p.forEach(function(x){var d=el('div','',x);host.appendChild(d);});document.body.appendChild(host);var ok=window.__qe84Xss===0&&!host.querySelector('img,script');host.remove();return{ok:ok,executed:window.__qe84Xss,payloads:p.length};}});
+})();
+</script>
+<!-- ===== end v84 Phase A ===== -->
+
 </body></html>
