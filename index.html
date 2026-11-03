@@ -1,4 +1,30 @@
 <!--
+  QE Elec. Daily Job Tracker — Change log v93 (4-Nov-2026)
+  0) Based on v92; v92 files remain unchanged. QE_AUTH_CONFIG.enabled remains true. Auth, roles, RLS, audit, Edge Functions, Secrets and user data are unchanged.
+  1) Fixed the Today-page Checklist owner resolver scope error that could leave the entire Today page blank when current or carried checklist rows existed.
+  2) Today data collection and each Today card now have independent error boundaries; a failed source/card shows an inline fallback and reports to System Health without hiding the remaining page.
+  3) Legacy checklist rows without owner remain read-only-compatible and display as QE All; v92 owner tabs and owner labels are preserved.
+  4) All visible version labels derive from window.QE_APP_VERSION and show v93.
+-->
+<!--
+  QE Elec. Daily Job Tracker — Change log v92 (3-Nov-2026)
+  0) Based on v90; all v90 files remain unchanged. QE_AUTH_CONFIG.enabled remains true. Auth, roles, RLS, audit, Edge Functions, Secrets, polling and user data are unchanged.
+  1) System Health moves into the top Settings menu with its complete read-only Self-test; the floating health control is removed from the visible interface.
+  2) LINE chat, connection settings and LINE settings use explicit WCAG-AA text/surface colors in light and dark themes.
+  3) The remembered companion show/hide control is a small circular inline-SVG face button without visible text.
+  4) The unified launcher opens the last-used channel directly (Teams on first use); Teams/LINE switching and per-channel unread badges are inside both chat panels.
+  5) Monthly daily-OT bars show readable hour values above every non-zero bar without covering the target line.
+  6) All visible version labels derive from window.QE_APP_VERSION and show v92.
+-->
+<!--
+  QE Elec. Daily Job Tracker — Change log v90 (3-Nov-2026)
+  0) Based on v89; all v89 files remain unchanged. QE_AUTH_CONFIG.enabled remains true. Auth, roles, RLS, audit, Edge Functions, Secrets and user data are unchanged.
+  1) LINE and Microsoft Teams now share one blue chat launcher with per-channel and combined unread badges, inline logos, a selector, Back controls and remembered last channel.
+  2) Both chats open at the last-read/unread position, follow new messages only while the reader is at the bottom, and otherwise show “ข้อความใหม่ ↓”. Last-read message IDs stay local to this browser.
+  3) The account circle uses the existing Sync and collaboration state for a green/red connection dot plus an online-user count badge and accessible status/name tooltip.
+  4) All visible version labels derive from window.QE_APP_VERSION and show v90.
+-->
+<!--
   QE Elec. Daily Job Tracker — Change log v89 (3-Nov-2026)
   0) Based on v88; all v88 files remain unchanged. QE_AUTH_CONFIG.enabled remains true. No Supabase Auth, role, RLS, audit, Edge Function, Secret, service-role key, or user data is changed.
   1) Holo is the v89 first-load default; bright pastel pink-purple-blue galaxy background, sparkles, cards, and text keep WCAG AA contrast in Holo and dark themes.
@@ -98,7 +124,7 @@
 -->
 <!DOCTYPE html>
 <html lang="th"><head>
-<meta name="qe-app-version" content="89">
+<meta name="qe-app-version" content="93">
 <meta name="theme-color" content="#f5f6f8">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 rx=%2714%27 fill=%27%23174ea6%27/%3E%3Ctext x=%2732%27 y=%2741%27 text-anchor=%27middle%27 font-family=%27Segoe UI,Arial%27 font-size=%2726%27 font-weight=%27700%27 fill=%27white%27%3EQE%3C/text%3E%3C/svg%3E">
 
@@ -130,8 +156,8 @@
 -->
 
 
-<link rel="stylesheet" href="app-v89.css">
-<link rel="stylesheet" href="teams-chat-v89.css">
+<link rel="stylesheet" href="app-v92.css">
+<link rel="stylesheet" href="teams-chat-v92.css">
 
 
 
@@ -295,6 +321,7 @@
   <div id="viewSheet" style="--shfs: 17px; display: none;">
     <h1 style="font-size:20px;margin:0 0 4px">📝 Checklist รายวัน</h1>
     <div class="sub" style="margin-bottom:12px">จดรายการที่ต้องทำในแต่ละวัน แบบตาราง Excel — บันทึกอัตโนมัติ แยกตามวันที่ (Cloud DB เมื่อเชื่อมต่อ และมีสำเนาในเครื่อง)</div>
+    <nav class="sh-owner-tabs" id="shOwnerTabs" aria-label="กรอง Checklist ตามผู้รับผิดชอบ"></nav>
     <div class="sh-bar">
       <button class="btn-g" id="shPrev" title="วันก่อนหน้า">◀</button>
       <input type="date" id="shDate">
@@ -320,7 +347,7 @@
       <kbd>Ctrl+Enter</kbd> สลับ O · วางข้อความหลายบรรทัดจาก Excel ได้เลย (ใช้ Tab/ขีด "-" นำหน้าเป็นระดับเยื้อง)
     </p>
     <div class="sh-wrap" id="shWrap">
-      <div class="sh-row h"><div>#</div><div>✓</div><div>รายการ (Task)</div><div>หมายเหตุ (Remark)</div><div>จัดการ</div><div>Tracker</div></div>
+      <div class="sh-row h"><div>#</div><div>✓</div><div>รายการ (Task)</div><div>ผู้รับผิดชอบ</div><div>หมายเหตุ (Remark)</div><div>จัดการ</div><div>Tracker</div></div>
       <div id="shBody"><div class="sh-row" data-i="0">
       <div class="sh-no" title="ลากเพื่อย้ายแถว"><span class="nn">1</span><span class="gh">⠿</span></div>
       <div class="sh-st s0" data-a="st" title="คลิกเพื่อสลับสถานะ"></div>
@@ -643,7 +670,7 @@
 
 <!-- ===== QE AI Assistant add-on v1 ===== -->
 
-<button type="button" id="qeAiFab" class="qeai-fab" title="เปิด QE AI Assistant">✨ AI Assistant</button>
+<button type="button" id="qeAiFab" class="qeai-fab" title="ผู้ช่วย AI" aria-label="ผู้ช่วย AI">✨ AI Assistant</button>
 <div id="qeAiOv" class="qeai-ov" aria-hidden="true">
   <section class="qeai-md qeai2" role="dialog" aria-modal="true" aria-labelledby="qeAiTitle">
     <div class="qeai-hd">
@@ -676,9 +703,9 @@
 
 <button type="button" id="qeChatFab" class="qec-fab" aria-label="เปิด QE Line Chat"><svg class="qec-logo qec-logo-fab" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect x="3" y="3" width="58" height="58" rx="15" fill="#06C755"/><path d="M50 30.5c0-10-8.8-18.2-19.7-18.2S10.6 20.5 10.6 30.5c0 8.9 7 16.3 16.5 17.9 1.8.4 1.6 1 1.2 3.5l-.5 3.1c-.1.9-.7 3.4 3 1.9 3.7-1.8 19.2-11.4 19.2-26.4z" fill="#fff"/><text x="30.5" y="35.2" text-anchor="middle" font-family="Arial,sans-serif" font-size="11.2" font-weight="900" fill="#06C755">LINE</text></svg><span class="qec-lab">Line Chat</span><span id="qeChatBadge" class="qec-badge">0</span></button>
 <section id="qeChatPanel" class="qec-panel" aria-label="QE Line Chat">
-  <div class="qec-head"><svg class="qec-logo qec-logo-head" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect x="3" y="3" width="58" height="58" rx="15" fill="#06C755"/><path d="M50 30.5c0-10-8.8-18.2-19.7-18.2S10.6 20.5 10.6 30.5c0 8.9 7 16.3 16.5 17.9 1.8.4 1.6 1 1.2 3.5l-.5 3.1c-.1.9-.7 3.4 3 1.9 3.7-1.8 19.2-11.4 19.2-26.4z" fill="#fff"/><text x="30.5" y="35.2" text-anchor="middle" font-family="Arial,sans-serif" font-size="11.2" font-weight="900" fill="#06C755">LINE</text></svg><b>QE Line Chat</b><span id="qeChatWho" class="qec-online"></span><button type="button" id="qeChatClose" class="qec-close" aria-label="ปิดหน้าต่างแชท">✕</button></div>
+  <div class="qec-head"><button type="button" id="qeChatBack" class="qec-back" aria-label="กลับไปเลือกช่องทางแชต">←</button><svg class="qec-logo qec-logo-head" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect x="3" y="3" width="58" height="58" rx="15" fill="#06C755"/><path d="M50 30.5c0-10-8.8-18.2-19.7-18.2S10.6 20.5 10.6 30.5c0 8.9 7 16.3 16.5 17.9 1.8.4 1.6 1 1.2 3.5l-.5 3.1c-.1.9-.7 3.4 3 1.9 3.7-1.8 19.2-11.4 19.2-26.4z" fill="#fff"/><text x="30.5" y="35.2" text-anchor="middle" font-family="Arial,sans-serif" font-size="11.2" font-weight="900" fill="#06C755">LINE</text></svg><b>QE Line Chat</b><span id="qeChatWho" class="qec-online"></span><button type="button" id="qeChatClose" class="qec-close" aria-label="ปิดหน้าต่างแชท">✕</button></div>
   <nav id="qeChatRooms" class="qec-rooms" aria-label="ห้องแชท"></nav>
-  <div id="qeChatMessages" class="qec-msgs" role="region" aria-label="ข้อความแชท" tabindex="0"><div class="qec-empty">กำลังโหลดข้อความ…</div></div>
+  <div class="qec-msgwrap"><div id="qeChatMessages" class="qec-msgs" role="log" aria-live="polite" aria-label="ข้อความ LINE" tabindex="0"><div class="qec-empty">กำลังโหลดข้อความ…</div></div><button type="button" id="qeChatNew" class="qec-new" hidden>ข้อความใหม่ ↓</button></div>
   <div class="qec-compose"><div class="qec-compose-row"><textarea id="qeChatInput" class="qec-input" maxlength="2000" placeholder="พิมพ์ข้อความ…"></textarea><button type="button" id="qeChatSend" class="qec-send">ส่ง</button></div><div id="qeChatStatus" class="qec-status" aria-live="polite"></div></div>
 </section>
 
@@ -767,5 +794,5 @@
 
 <!-- ===== end v84 Phase A ===== -->
 
-<script src="app-v89.js" defer></script>
+<script src="app-v93.js" defer></script>
 </body></html>
