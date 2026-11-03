@@ -1,4 +1,30 @@
 <!--
+  QE Elec. Daily Job Tracker — Change log v89 (3-Nov-2026)
+  0) Based on v88; all v88 files remain unchanged. QE_AUTH_CONFIG.enabled remains true. No Supabase Auth, role, RLS, audit, Edge Function, Secret, service-role key, or user data is changed.
+  1) Holo is the v89 first-load default; bright pastel pink-purple-blue galaxy background, sparkles, cards, and text keep WCAG AA contrast in Holo and dark themes.
+  2) Rebuilt the small draggable companion as an original inline-SVG chibi astronaut with AISIN helmet mark, rotating auto-hiding nickname greetings, a non-interactive rocket, and a remembered hide/show control.
+  3) Expanded annual and monthly OT charts across the card width and increased their useful plot height while preserving the complete 1366x768 dashboard view.
+  4) All visible version labels derive from window.QE_APP_VERSION and show v89.
+-->
+<!--
+  QE Elec. Daily Job Tracker — Change log v88 (3-Nov-2026)
+  0) Based on v87; all v87 files remain unchanged. QE_AUTH_CONFIG.enabled remains true. Supabase Auth, viewer/editor/admin roles, RLS, audit, Edge Functions, Secrets, and user data are unchanged.
+  1) OT annual trend always shows all 12 FY months (Apr–Mar); months without OT/HR data keep their X-axis labels and render no bar/point.
+  2) OT month chips stay on one row at 1366×768; the Excel import and settings/member buttons are compacted instead of making month labels unreadable.
+  3) OT monthly view places summary at left and per-person OT at right; the daily average chart moves to a full-width row beneath them.
+  4) Rebuilt the companion as a smaller cute astronaut, added a non-interactive rocket cruising back and forth, and applied a readable light/dark galaxy background with reduced-motion support.
+  5) All visible version labels derive from window.QE_APP_VERSION and show v88.
+-->
+<!--
+  QE Elec. Daily Job Tracker — Change log v87 (3-Nov-2026)
+  0) Based on v86; v84/v85/v86 files are not overwritten. QE_AUTH_CONFIG.enabled remains true. No Supabase Auth, viewer/editor/admin role, RLS, audit, Edge Function, Secret, or user data is changed.
+  1) Collaboration status collapses to a small account button when normal; it expands only for pending changes, conflicts, or sync trouble. System Health returns to a small status dot in healthy/busy states.
+  2) OT annual and monthly views are compacted for 1366×768. The annual chart uses a data-fitted Y scale and only elapsed/data months; monthly person totals and daily chart share one viewport.
+  3) LINE and Microsoft Teams use current inline SVG logos in floating buttons and panel headers; no external image is loaded.
+  4) Restored the v84-style galaxy layer, rocket, cute draggable mascot, remembered position, auto-hiding rotating greetings, nickname greeting, and chat overlap guard.
+  5) All visible version labels derive from window.QE_APP_VERSION and show v87.
+-->
+<!--
   QE Elec. Daily Job Tracker — Change log v86 Phase C (3-Nov-2026)
   0) Based on v85; v84/v85 files are not overwritten. QE_AUTH_CONFIG.enabled remains true. No Supabase Auth, role, RLS, audit, Edge Function, Secret, or user-data schema is changed.
   1) Centralized every visible app/health/collaboration/companion version label on QE_APP_VERSION and set it to v86.
@@ -72,7 +98,7 @@
 -->
 <!DOCTYPE html>
 <html lang="th"><head>
-<meta name="qe-app-version" content="86">
+<meta name="qe-app-version" content="89">
 <meta name="theme-color" content="#f5f6f8">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 rx=%2714%27 fill=%27%23174ea6%27/%3E%3Ctext x=%2732%27 y=%2741%27 text-anchor=%27middle%27 font-family=%27Segoe UI,Arial%27 font-size=%2726%27 font-weight=%27700%27 fill=%27white%27%3EQE%3C/text%3E%3C/svg%3E">
 
@@ -104,8 +130,8 @@
 -->
 
 
-<link rel="stylesheet" href="app-v86.css">
-<link rel="stylesheet" href="teams-chat-v86.css">
+<link rel="stylesheet" href="app-v89.css">
+<link rel="stylesheet" href="teams-chat-v89.css">
 
 
 
@@ -648,9 +674,9 @@
 <!-- ===== end QE AI Assistant add-on ===== -->
 <!-- ===== QE Team Chat add-on v1 ===== -->
 
-<button type="button" id="qeChatFab" class="qec-fab" aria-label="เปิด QE Line Chat">💬 Line Chat <span id="qeChatBadge" class="qec-badge">0</span></button>
+<button type="button" id="qeChatFab" class="qec-fab" aria-label="เปิด QE Line Chat"><svg class="qec-logo qec-logo-fab" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect x="3" y="3" width="58" height="58" rx="15" fill="#06C755"/><path d="M50 30.5c0-10-8.8-18.2-19.7-18.2S10.6 20.5 10.6 30.5c0 8.9 7 16.3 16.5 17.9 1.8.4 1.6 1 1.2 3.5l-.5 3.1c-.1.9-.7 3.4 3 1.9 3.7-1.8 19.2-11.4 19.2-26.4z" fill="#fff"/><text x="30.5" y="35.2" text-anchor="middle" font-family="Arial,sans-serif" font-size="11.2" font-weight="900" fill="#06C755">LINE</text></svg><span class="qec-lab">Line Chat</span><span id="qeChatBadge" class="qec-badge">0</span></button>
 <section id="qeChatPanel" class="qec-panel" aria-label="QE Line Chat">
-  <div class="qec-head"><b>💬 QE Line Chat</b><span id="qeChatWho" class="qec-online"></span><button type="button" id="qeChatClose" class="qec-close" aria-label="ปิดหน้าต่างแชท">✕</button></div>
+  <div class="qec-head"><svg class="qec-logo qec-logo-head" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect x="3" y="3" width="58" height="58" rx="15" fill="#06C755"/><path d="M50 30.5c0-10-8.8-18.2-19.7-18.2S10.6 20.5 10.6 30.5c0 8.9 7 16.3 16.5 17.9 1.8.4 1.6 1 1.2 3.5l-.5 3.1c-.1.9-.7 3.4 3 1.9 3.7-1.8 19.2-11.4 19.2-26.4z" fill="#fff"/><text x="30.5" y="35.2" text-anchor="middle" font-family="Arial,sans-serif" font-size="11.2" font-weight="900" fill="#06C755">LINE</text></svg><b>QE Line Chat</b><span id="qeChatWho" class="qec-online"></span><button type="button" id="qeChatClose" class="qec-close" aria-label="ปิดหน้าต่างแชท">✕</button></div>
   <nav id="qeChatRooms" class="qec-rooms" aria-label="ห้องแชท"></nav>
   <div id="qeChatMessages" class="qec-msgs" role="region" aria-label="ข้อความแชท" tabindex="0"><div class="qec-empty">กำลังโหลดข้อความ…</div></div>
   <div class="qec-compose"><div class="qec-compose-row"><textarea id="qeChatInput" class="qec-input" maxlength="2000" placeholder="พิมพ์ข้อความ…"></textarea><button type="button" id="qeChatSend" class="qec-send">ส่ง</button></div><div id="qeChatStatus" class="qec-status" aria-live="polite"></div></div>
@@ -741,5 +767,5 @@
 
 <!-- ===== end v84 Phase A ===== -->
 
-<script src="app-v86.js" defer></script>
+<script src="app-v89.js" defer></script>
 </body></html>
