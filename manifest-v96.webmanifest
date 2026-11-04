@@ -1,0 +1,38 @@
+{
+  "id": "./index_v96.html",
+  "name": "QE Elec. Daily Job Tracker v96",
+  "short_name": "QE Tracker",
+  "description": "ระบบติดตามงานประจำวันของทีม Quality Engineering Electronics",
+  "lang": "th",
+  "dir": "ltr",
+  "start_url": "./index_v96.html",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "orientation": "any",
+  "background_color": "#f5f6f8",
+  "theme_color": "#4338ca",
+  "categories": ["business", "productivity"],
+  "icons": [
+    {
+      "src": "qe-icon-v96.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "เปิด Tracker",
+      "short_name": "Tracker",
+      "url": "./index_v96.html#tracker",
+      "icons": [{"src": "qe-icon-v96.svg", "sizes": "any", "type": "image/svg+xml"}]
+    },
+    {
+      "name": "เปิด Dashboard",
+      "short_name": "Dashboard",
+      "url": "./index_v96.html#dashboard",
+      "icons": [{"src": "qe-icon-v96.svg", "sizes": "any", "type": "image/svg+xml"}]
+    }
+  ]
+}
