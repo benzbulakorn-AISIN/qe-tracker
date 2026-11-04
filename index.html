@@ -1,10 +1,10 @@
 <!--
-  QE Elec. Daily Job Tracker — Change log v95 (4-Nov-2026)
-  0) Frontend hardening release based on v94; existing Supabase Auth, RLS, roles and business-data formats are unchanged.
-  1) Removes string-eval timer fallback, redacts telemetry URLs and catches up paused timers safely after tab visibility resumes.
-  2) Adds protocol allow-listing/reverse-tabnabbing protection, secure-context checks, generic dialog focus management and duplicate skip-link prevention.
-  3) Ships complete manifest/icon, production-minified assets with SRI, broader reduced-motion/high-contrast/coarse-pointer CSS and bounded diagnostics.
-  4) Server function remains teams-send-message-v94 until a separately tested v95 server package is deployed.
+  QE Elec. Daily Job Tracker — Change log v96 (4-Nov-2026)
+  0) Production-readiness release based on user-approved v95 UAT; schema, Auth, RLS, role contract and business-data keys are unchanged.
+  1) Adds same-origin PWA/offline shell, safe update notice, storage-pressure health and bounded in-memory performance/error diagnostics.
+  2) Narrows CSP image origins and keeps SHA-384 SRI on production assets and lazy PptxGenJS.
+  3) Adds deterministic build, CI template, expanded static/browser gates and explicit 10/10 production sign-off checklist.
+  4) v95 remains untouched for immediate rollback; server function remains teams-send-message-v94.
 -->
 <!--
   QE Elec. Daily Job Tracker — Change log v94 (4-Nov-2026)
@@ -140,10 +140,13 @@
 -->
 <!DOCTYPE html>
 <html lang="th"><head>
-<meta name="qe-app-version" content="95">
+<meta name="qe-app-version" content="96">
 <meta name="theme-color" content="#f5f6f8">
 <meta name="color-scheme" content="light dark">
 <meta name="application-name" content="QE Elec. Daily Job Tracker">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="description" content="ระบบติดตามงานประจำวันของทีม Quality Engineering Electronics">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 rx=%2714%27 fill=%27%23174ea6%27/%3E%3Ctext x=%2732%27 y=%2741%27 text-anchor=%27middle%27 font-family=%27Segoe UI,Arial%27 font-size=%2726%27 font-weight=%27700%27 fill=%27white%27%3EQE%3C/text%3E%3C/svg%3E">
 
@@ -153,7 +156,7 @@
 
 <meta name="referrer" content="no-referrer">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; script-src-attr 'none'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://graph.microsoft.com https://login.microsoftonline.com https://script.google.com https://script.googleusercontent.com; img-src 'self' data: blob: https:; media-src 'none'; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none'; worker-src 'self' blob:; manifest-src 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; script-src-attr 'none'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://graph.microsoft.com https://login.microsoftonline.com https://script.google.com https://script.googleusercontent.com; img-src 'self' data: blob: https://avqprchbdmacbomptxte.supabase.co https://script.googleusercontent.com; media-src 'none'; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none'; worker-src 'self' blob:; manifest-src 'self'; upgrade-insecure-requests">
 <title>QE Elec. Daily Job Tracker</title>
 <!-- v62 (27-Oct-2026): Time-saving & Ergonomics layer — ดู Change log ในบล็อก qeV62Css ท้ายไฟล์ -->
 <!-- v70 (31-Oct-2026): Hoshin › Overall status — (1) ย้ายปุ่ม ตั้ง Due/ขยาย/ย่อ/CSV ขึ้นแถวบน ไม่ซ้อนปุ่มเลขไลน์ (2) กรองตามชื่อผู้รับผิดชอบ / แสดงทั้งหมด (3) ตาราง รายละเอียดรายไลน์ มีคอลัมน์ผู้รับผิดชอบ และ Due ดึงจาก Overall status -->
@@ -175,8 +178,8 @@
 -->
 
 
-<link rel="stylesheet" href="core-v95.min.css" integrity="sha384-oYdBb7+zmW2yfpY+6iLIz9KffUDpIliHkrze/PWdCuDNDvSDfoJ6qbn7ZP4nuHV6" crossorigin="anonymous">
-<link rel="manifest" href="manifest-v95.webmanifest">
+<link rel="stylesheet" href="core-v96.min.css" integrity="sha384-GAnv4vzawXp4KVrUfjdCRMqTH7+O6hutjskaWMpMydp/in8gNb27ew5AzB/SrK5S" crossorigin="anonymous">
+<link rel="manifest" href="manifest-v96.webmanifest">
 
 
 
@@ -813,6 +816,6 @@
 
 <!-- ===== end v84 Phase A ===== -->
 
-<script src="bootstrap-v95.min.js" defer integrity="sha384-unvCjAMCSSbBwh9RlCa0Km6Pni3QgZV5UhhfT4CoCjRT/a7K16Tk5JTyLKkqXKQ6" crossorigin="anonymous"></script>
-<script src="core-v95.min.js" defer integrity="sha384-raI2T1165aHFEryjplWLDWUceGHjVxLIfjvSBHuWYjk2A0juqTkxCl3ekqKvNcEg" crossorigin="anonymous"></script>
+<script src="bootstrap-v96.min.js" defer integrity="sha384-/r5m6WqeKMHanY0tlrKWn1pUc4QiR9b5vQaxwbx6tigE7qWiiyIZCUrbSx8paKSE" crossorigin="anonymous"></script>
+<script src="core-v96.min.js" defer integrity="sha384-PI+8DR/HygLUtywOonRdUNa+TMUbumksjwz/+aSXThthhZlb6/o+qGU0he62kXA5" crossorigin="anonymous"></script>
 </body></html>
