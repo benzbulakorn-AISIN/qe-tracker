@@ -1,10 +1,11 @@
 <!--
-  QE Elec. Daily Job Tracker — Change log v96 (4-Nov-2026)
-  0) Production-readiness release based on user-approved v95 UAT; schema, Auth, RLS, role contract and business-data keys are unchanged.
-  1) Adds same-origin PWA/offline shell, safe update notice, storage-pressure health and bounded in-memory performance/error diagnostics.
-  2) Narrows CSP image origins and keeps SHA-384 SRI on production assets and lazy PptxGenJS.
-  3) Adds deterministic build, CI template, expanded static/browser gates and explicit 10/10 production sign-off checklist.
-  4) v95 remains untouched for immediate rollback; server function remains teams-send-message-v94.
+  QE Elec. Daily Job Tracker — Change log v97 (4-Nov-2026)
+  0) Production-assurance release based on v96; schema, Auth, RLS, role contract and business-data keys are unchanged.
+  1) Isolates the offline shell to index_v97.html so unrelated pages and older versions cannot poison the cache.
+  2) Preserves other-version caches, handles waiting workers and reloads only after controllerchange.
+  3) Redacts credentials/email from diagnostics, debounces semantic scans and adds keyboard tab semantics plus 320px reflow coverage.
+  4) Adds stable PWA identity, PNG/maskable icons and read-only deploy/backup evidence tools; v96 remains the rollback point.
+  5) Server function remains teams-send-message-v94 for compatibility; legacy-secret migration still requires an owner-approved Edge/BFF rollout.
 -->
 <!--
   QE Elec. Daily Job Tracker — Change log v94 (4-Nov-2026)
@@ -140,7 +141,7 @@
 -->
 <!DOCTYPE html>
 <html lang="th"><head>
-<meta name="qe-app-version" content="96">
+<meta name="qe-app-version" content="97">
 <meta name="theme-color" content="#f5f6f8">
 <meta name="color-scheme" content="light dark">
 <meta name="application-name" content="QE Elec. Daily Job Tracker">
@@ -178,8 +179,9 @@
 -->
 
 
-<link rel="stylesheet" href="core-v96.min.css" integrity="sha384-GAnv4vzawXp4KVrUfjdCRMqTH7+O6hutjskaWMpMydp/in8gNb27ew5AzB/SrK5S" crossorigin="anonymous">
-<link rel="manifest" href="manifest-v96.webmanifest">
+<link rel="stylesheet" href="core-v97.min.css" integrity="sha384-NokrupADXTtvJuvagA9dbQoBPWEAviOXB4/noxyTMNobQ/z2CNc8nklqtY9S7x5l" crossorigin="anonymous">
+<link rel="manifest" href="manifest-v97.webmanifest">
+<link rel="apple-touch-icon" href="qe-icon-v97-192.png">
 
 
 
@@ -816,6 +818,6 @@
 
 <!-- ===== end v84 Phase A ===== -->
 
-<script src="bootstrap-v96.min.js" defer integrity="sha384-/r5m6WqeKMHanY0tlrKWn1pUc4QiR9b5vQaxwbx6tigE7qWiiyIZCUrbSx8paKSE" crossorigin="anonymous"></script>
-<script src="core-v96.min.js" defer integrity="sha384-PI+8DR/HygLUtywOonRdUNa+TMUbumksjwz/+aSXThthhZlb6/o+qGU0he62kXA5" crossorigin="anonymous"></script>
+<script src="bootstrap-v97.min.js" defer integrity="sha384-pYDjvlF+v6JE18qk3sci2fhzvlf8/mxL008zmV2ogWvOcO9so//f+LlD3sliSGAs" crossorigin="anonymous"></script>
+<script src="core-v97.min.js" defer integrity="sha384-sPfpvPDVqkE94Z/fKkhbbU1P9jw7lLaXSDJbbhbrn25/gpAu3LMxaIV4b6jZvN5H" crossorigin="anonymous"></script>
 </body></html>
