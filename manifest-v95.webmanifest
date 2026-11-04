@@ -1,0 +1,20 @@
+{
+  "name": "QE Elec. Daily Job Tracker",
+  "short_name": "QE Tracker",
+  "description": "ระบบติดตามงานประจำวันของทีม Quality Engineering Electronics",
+  "lang": "th",
+  "start_url": "./index_v95.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f5f6f8",
+  "theme_color": "#174ea6",
+  "icons": [
+    {
+      "src": "qe-icon-v95.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
