@@ -1,4 +1,20 @@
 <!--
+  QE Elec. Daily Job Tracker — Change log v95 (4-Nov-2026)
+  0) Frontend hardening release based on v94; existing Supabase Auth, RLS, roles and business-data formats are unchanged.
+  1) Removes string-eval timer fallback, redacts telemetry URLs and catches up paused timers safely after tab visibility resumes.
+  2) Adds protocol allow-listing/reverse-tabnabbing protection, secure-context checks, generic dialog focus management and duplicate skip-link prevention.
+  3) Ships complete manifest/icon, production-minified assets with SRI, broader reduced-motion/high-contrast/coarse-pointer CSS and bounded diagnostics.
+  4) Server function remains teams-send-message-v94 until a separately tested v95 server package is deployed.
+-->
+<!--
+  QE Elec. Daily Job Tracker — Change log v94 (4-Nov-2026)
+  0) Based on user-approved v93; v93/v92 files remain unchanged. QE_AUTH_CONFIG.enabled stays true; Auth and viewer/editor/admin semantics are unchanged.
+  1) v93 dependencies are packaged under v94 names; the 1.62 MB core is split into ordered maintainable files without changing execution order.
+  2) CSP is tightened for GitHub Pages, optional add-ons load without duplicate HEAD probes, and interval callbacks pause while the tab is hidden.
+  3) Empty catch blocks report to diagnostics; request/byte-per-minute metrics are exposed as QE94Runtime.snapshot().
+  4) Server changes are side-by-side and reversible; nothing in this package runs against Production automatically.
+-->
+<!--
   QE Elec. Daily Job Tracker — Change log v93 (4-Nov-2026)
   0) Based on v92; v92 files remain unchanged. QE_AUTH_CONFIG.enabled remains true. Auth, roles, RLS, audit, Edge Functions, Secrets and user data are unchanged.
   1) Fixed the Today-page Checklist owner resolver scope error that could leave the entire Today page blank when current or carried checklist rows existed.
@@ -124,8 +140,11 @@
 -->
 <!DOCTYPE html>
 <html lang="th"><head>
-<meta name="qe-app-version" content="93">
+<meta name="qe-app-version" content="95">
 <meta name="theme-color" content="#f5f6f8">
+<meta name="color-scheme" content="light dark">
+<meta name="application-name" content="QE Elec. Daily Job Tracker">
+<meta name="description" content="ระบบติดตามงานประจำวันของทีม Quality Engineering Electronics">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 rx=%2714%27 fill=%27%23174ea6%27/%3E%3Ctext x=%2732%27 y=%2741%27 text-anchor=%27middle%27 font-family=%27Segoe UI,Arial%27 font-size=%2726%27 font-weight=%27700%27 fill=%27white%27%3EQE%3C/text%3E%3C/svg%3E">
 
 
@@ -134,7 +153,7 @@
 
 <meta name="referrer" content="no-referrer">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; script-src-attr 'none'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://graph.microsoft.com https://login.microsoftonline.com https://script.google.com https://script.googleusercontent.com; img-src 'self' data: blob: https:; media-src 'none'; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none'; worker-src 'self' blob:; manifest-src 'self'; upgrade-insecure-requests">
 <title>QE Elec. Daily Job Tracker</title>
 <!-- v62 (27-Oct-2026): Time-saving & Ergonomics layer — ดู Change log ในบล็อก qeV62Css ท้ายไฟล์ -->
 <!-- v70 (31-Oct-2026): Hoshin › Overall status — (1) ย้ายปุ่ม ตั้ง Due/ขยาย/ย่อ/CSV ขึ้นแถวบน ไม่ซ้อนปุ่มเลขไลน์ (2) กรองตามชื่อผู้รับผิดชอบ / แสดงทั้งหมด (3) ตาราง รายละเอียดรายไลน์ มีคอลัมน์ผู้รับผิดชอบ และ Due ดึงจาก Overall status -->
@@ -156,8 +175,8 @@
 -->
 
 
-<link rel="stylesheet" href="app-v92.css">
-<link rel="stylesheet" href="teams-chat-v92.css">
+<link rel="stylesheet" href="core-v95.min.css" integrity="sha384-oYdBb7+zmW2yfpY+6iLIz9KffUDpIliHkrze/PWdCuDNDvSDfoJ6qbn7ZP4nuHV6" crossorigin="anonymous">
+<link rel="manifest" href="manifest-v95.webmanifest">
 
 
 
@@ -794,5 +813,6 @@
 
 <!-- ===== end v84 Phase A ===== -->
 
-<script src="app-v93.js" defer></script>
+<script src="bootstrap-v95.min.js" defer integrity="sha384-unvCjAMCSSbBwh9RlCa0Km6Pni3QgZV5UhhfT4CoCjRT/a7K16Tk5JTyLKkqXKQ6" crossorigin="anonymous"></script>
+<script src="core-v95.min.js" defer integrity="sha384-raI2T1165aHFEryjplWLDWUceGHjVxLIfjvSBHuWYjk2A0juqTkxCl3ekqKvNcEg" crossorigin="anonymous"></script>
 </body></html>
