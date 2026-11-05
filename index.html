@@ -1,5 +1,7 @@
 <!--
-  QE Elec. Daily Job Tracker — Change log v98 (5-Nov-2026)
+  QE Elec. Daily Job Tracker — Change log v99 (5-Nov-2026)
+  v99: แก้ตัวนับ "ยังไม่บันทึก/ลบ" ผิดตอนโหลด Mission/Hoshin ยังไม่เสร็จ, ดึงข้อมูล Cloud เข้า Mission/Hoshin หลังโหลด chunk,
+       เริ่ม Hoshin add-on ใหม่หลังโหลด chunk, แจ้งเตือนเมื่อโหลดโมดูลไม่สำเร็จ (แก้เฉพาะ core-v99.min.js + index)
   0) Side-by-side performance/accessibility release based on v97; schema, Auth, RLS, Edge Functions, role contract and business-data keys are unchanged.
   1) Reserves Cloud/status/navigation/welcome/mascot geometry before enhancement code runs to reduce layout shifts.
   2) Splits Mission, Hoshin, Main QE Jobs and Executive Report into SRI-protected on-demand chunks; backup/restore and aggregate views hydrate required chunks first.
@@ -826,5 +828,5 @@
 <!-- ===== end v84 Phase A ===== -->
 
 <script src="bootstrap-v98.min.js" defer integrity="sha384-Cvy/9lCbBPQ6bwSGreoRhyYA5HyDWMD+zi+kPJkkpvoKXyOE2UXYeZTy3iSdBqSW" crossorigin="anonymous"></script>
-<script src="core-v98.min.js" defer integrity="sha384-mZAI6xzLsJRQhO638CW5k/Db4N3JbcDDMTUbjZdJgP4zi9cRizgvUrUfiyS6YVS2" crossorigin="anonymous"></script>
+<script src="core-v99.min.js" defer integrity="sha384-ZLWfKEAlL13mB87awil1NTREltbCiq0eEsi2b3WVbhG0+5WsHeJ9HTOPgKXu6RVg" crossorigin="anonymous"></script>
 </body></html>
