@@ -1,11 +1,11 @@
 <!--
-  QE Elec. Daily Job Tracker — Change log v97 (4-Nov-2026)
-  0) Production-assurance release based on v96; schema, Auth, RLS, role contract and business-data keys are unchanged.
-  1) Isolates the offline shell to index_v97.html so unrelated pages and older versions cannot poison the cache.
-  2) Preserves other-version caches, handles waiting workers and reloads only after controllerchange.
-  3) Redacts credentials/email from diagnostics, debounces semantic scans and adds keyboard tab semantics plus 320px reflow coverage.
-  4) Adds stable PWA identity, PNG/maskable icons and read-only deploy/backup evidence tools; v96 remains the rollback point.
-  5) Server function remains teams-send-message-v94 for compatibility; legacy-secret migration still requires an owner-approved Edge/BFF rollout.
+  QE Elec. Daily Job Tracker — Change log v98 (5-Nov-2026)
+  0) Side-by-side performance/accessibility release based on v97; schema, Auth, RLS, Edge Functions, role contract and business-data keys are unchanged.
+  1) Reserves Cloud/status/navigation/welcome/mascot geometry before enhancement code runs to reduce layout shifts.
+  2) Splits Mission, Hoshin, Main QE Jobs and Executive Report into SRI-protected on-demand chunks; backup/restore and aggregate views hydrate required chunks first.
+  3) Applies the remembered visual theme before visible content is parsed, reducing h1 render delay without changing stored theme values.
+  4) Removes forced nav height reads, limits tab semantics to real tablists, restores a canonical focusable skip link and raises muted-text contrast.
+  5) Keeps decorative motion on transform/opacity only and honors reduced-motion; cache-lifetime, source-map and IndexedDB diagnostics remain intentionally unchanged.
 -->
 <!--
   QE Elec. Daily Job Tracker — Change log v94 (4-Nov-2026)
@@ -141,7 +141,7 @@
 -->
 <!DOCTYPE html>
 <html lang="th"><head>
-<meta name="qe-app-version" content="97">
+<meta name="qe-app-version" content="98">
 <meta name="theme-color" content="#f5f6f8">
 <meta name="color-scheme" content="light dark">
 <meta name="application-name" content="QE Elec. Daily Job Tracker">
@@ -179,9 +179,9 @@
 -->
 
 
-<link rel="stylesheet" href="core-v97.min.css" integrity="sha384-NokrupADXTtvJuvagA9dbQoBPWEAviOXB4/noxyTMNobQ/z2CNc8nklqtY9S7x5l" crossorigin="anonymous">
-<link rel="manifest" href="manifest-v97.webmanifest">
-<link rel="apple-touch-icon" href="qe-icon-v97-192.png">
+<link rel="stylesheet" href="core-v98.min.css" integrity="sha384-KE5nZpHQI0fM8mHz2ZxylMNFTMQPJ6COXTiBLVuTD5pAga+AKrCbXSD3gMzIpnyF" crossorigin="anonymous">
+<link rel="manifest" href="manifest-v98.webmanifest">
+<link rel="apple-touch-icon" href="qe-icon-v98-192.png">
 
 
 
@@ -200,6 +200,7 @@
 
 </head>
 <body class="calm">
+<script src="theme-early-v98.min.js" integrity="sha384-XhAIeqTpBWUCuvmIlr70QU/6SYgdIcGk7qy69qPza8Hb10iSbJ+0UJI8VRJnq/ZT" crossorigin="anonymous"></script>
 <a class="qe-skip" href="#qeMain" id="qeSkip">ข้ามไปยังเนื้อหาหลัก</a>
 <noscript><p class="qe-noscript">ต้องเปิดใช้งาน JavaScript เพื่อใช้ QE Elec. Daily Job Tracker</p></noscript>
 
@@ -214,11 +215,14 @@
     <button type="button" class="btn-g" id="spBtn" title="ตั้งค่าฐานข้อมูลกลางบน Supabase">☁ Cloud DB</button>
     <button type="button" class="btn-g" id="imgBtn" style="color:var(--t-vio)" title="ถ่ายหน้าจอที่เปิดอยู่เป็นรูป แล้วส่งเข้า LINE กลุ่มทันที (ไม่ Download)">📷 ส่งรูปเข้า LINE</button>
   </div>
+  <div id="qe98NavReserve" class="qe98-nav-reserve" aria-hidden="true"></div>
+  <div id="qe98MascotReserve" class="qe98-mascot-reserve" aria-hidden="true"></div>
   <div id="viewTracker" style="">
   <div class="top"><div class="top-left">
   <h1><span id="appTitleTxt">🛠️ QE Elec. Daily Job Tracker</span><button class="btn-g" id="renameBtn">✎ เปลี่ยนชื่อ</button></h1>
   <div class="sub" id="appSub" style="display: block;">ลงปัญหาประจำวัน • มาตรการแก้ไข • กำหนดเสร็จ &amp; การเลื่อนกำหนด • สำรองข้อมูลในเครื่อง</div>
   <div class="sp-status" id="spStatus" data-state="busy" role="status"><span class="sp-dot"></span><span class="sp-grow" id="spStatusText"><b>Cloud DB:</b> กำลังตรวจสอบการเชื่อมต่อ…</span><button type="button" class="btn-g" id="spSyncBtn" style="padding:5px 10px;font-size:12px">↻ Sync</button></div>
+  <div id="qe98QuickSlot" class="qe98-runtime-slot qe98-quick-slot" aria-hidden="true"></div>
 
   <div class="cards">
     <div class="card"><div class="n" id="cTotal">–</div><div class="l">All Items</div></div>
@@ -237,6 +241,7 @@
       <ul class="legend" id="legend"></ul>
     </div>
   </div></div>
+  <div id="qe98SummarySlot" class="qe98-runtime-slot qe98-summary-slot" aria-hidden="true"></div>
 
   <div class="card calbox" id="calBox">
     <div class="cal-head">
@@ -263,6 +268,7 @@
     <div id="ownBody"><div id="ownList"></div></div>
   </div>
 
+  <div id="qe98AddSlot" class="qe98-runtime-slot qe98-add-slot" aria-hidden="true"></div>
   <form id="f">
     <div class="grid">
       <div><label>วันที่แจ้ง</label>
@@ -301,6 +307,7 @@
     </div>
   </form>
 
+  <div id="qe98ToolsSlot" class="qe98-runtime-slot qe98-tools-slot" aria-hidden="true"></div>
   <div class="tools">
     <input id="q" type="search" name="qe-tracker-q-nofill" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="🔍 ค้นหา...">
     <select id="fStatus"><option value="">ทุกสถานะ</option><option>In Progress</option><option>Done</option></select>
@@ -818,6 +825,6 @@
 
 <!-- ===== end v84 Phase A ===== -->
 
-<script src="bootstrap-v97.min.js" defer integrity="sha384-pYDjvlF+v6JE18qk3sci2fhzvlf8/mxL008zmV2ogWvOcO9so//f+LlD3sliSGAs" crossorigin="anonymous"></script>
-<script src="core-v97.min.js" defer integrity="sha384-sPfpvPDVqkE94Z/fKkhbbU1P9jw7lLaXSDJbbhbrn25/gpAu3LMxaIV4b6jZvN5H" crossorigin="anonymous"></script>
+<script src="bootstrap-v98.min.js" defer integrity="sha384-Cvy/9lCbBPQ6bwSGreoRhyYA5HyDWMD+zi+kPJkkpvoKXyOE2UXYeZTy3iSdBqSW" crossorigin="anonymous"></script>
+<script src="core-v98.min.js" defer integrity="sha384-mZAI6xzLsJRQhO638CW5k/Db4N3JbcDDMTUbjZdJgP4zi9cRizgvUrUfiyS6YVS2" crossorigin="anonymous"></script>
 </body></html>
