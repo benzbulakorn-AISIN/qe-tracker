@@ -1,6 +1,6 @@
-/*! QE Elec. Daily Job Tracker V120 — compatibility service worker (filename kept for bootstrap-v98) */
+/*! QE Elec. Daily Job Tracker V121 — compatibility service worker (filename kept for bootstrap-v98) */
 "use strict";
-var CACHE = "qe-elec-tracker-v120-shell-1";
+var CACHE = "qe-elec-tracker-v121-shell-1";
 var SHELL = [
   "./",
   "./index.html",
@@ -9,15 +9,15 @@ var SHELL = [
   "./sidebar-v118.js",
   "./theme-early-v98.min.js",
   "./bootstrap-v98.min.js",
-  "./core-v120.min.js",
-  "./scheduled-summary-v120.js",
+  "./core-v121.min.js",
+  "./scheduled-summary-v121.js",
   "./trash-v118.js",
-  "./version-v120.js",
+  "./version-v121.js",
   "./mission-v98.min.js",
   "./hoshin-v98.min.js",
   "./mainjobs-v98.min.js",
   "./executive-report-v98.min.js",
-  "./manifest-v120.webmanifest",
+  "./manifest-v121.webmanifest",
   "./qe-icon-v98-192.png"
 ];
 self.addEventListener("install", function (event) {
