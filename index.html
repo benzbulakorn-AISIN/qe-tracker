@@ -1,8 +1,9 @@
 <!--
-  QE Elec. Daily Job Tracker — Change log v115 (7-Nov-2026)
+  QE Elec. Daily Job Tracker — Change log v116 (7-Nov-2026)
+  v116: คืน Focus ไปยังปุ่มที่เปิดถังขยะกลางหลังปิดด้วย Esc, ปุ่ม ✕ หรือคลิกฉากหลัง; บน Mobile จะเปิด Sidebar/Accordion เดิมให้ปุ่มมองเห็นและกด Enter เปิดซ้ำได้
   v115: บนหน้าจอแคบ เมนู “เครื่องมือ” เปิดเป็น Accordion ภายใน Sidebar เพื่อให้รายการทั้งหมดอยู่ใน viewport และกดได้ที่ 360×800; Desktop flyout และ business handlers เดิมไม่เปลี่ยน
   QE Elec. Daily Job Tracker — Change log v110 (6-Nov-2026)
-  v110: ขอบซ้ายสุดของเนื้อหา (วัดจากแถบน้ำเงิน) = ขอบขวาสุด (วัดจากปุ่มลอย ↑ / แชต / AI ที่อยู่ซ้ายสุด) = 28px ทุกหน้า ทุกขนาดจอ · เนื้อหากว้างขึ้นเล็กน้อย (แก้เฉพาะ sidebar-v115.js/.css + index)
+  v110: ขอบซ้ายสุดของเนื้อหา (วัดจากแถบน้ำเงิน) = ขอบขวาสุด (วัดจากปุ่มลอย ↑ / แชต / AI ที่อยู่ซ้ายสุด) = 28px ทุกหน้า ทุกขนาดจอ · เนื้อหากว้างขึ้นเล็กน้อย (แก้เฉพาะ sidebar-v116.js/.css + index)
   QE Elec. Daily Job Tracker — Change log v109 (5-Nov-2026)
   v109: ขอบซ้าย-ขวาเท่ากันจริง — วัดจากการ์ด/กล่องที่มองเห็น (v108 วัดจากกรอบห่อหุ้มที่มีระยะในตัวฝั่งซ้าย ทำให้ซ้ายกว้างกว่า) · ปรับซ้ำอัตโนมัติเมื่อสลับหน้า/เนื้อหาโหลดเสร็จ (แก้เฉพาะ sidebar-v109.js/.css + index)
   v108: ชื่อ Sidebar เป็น QE Electronics / Daily Job Tracker + เลขเวอร์ชัน
@@ -158,7 +159,7 @@
 -->
 <!DOCTYPE html>
 <html lang="th"><head>
-<meta name="qe-app-version" content="115">
+<meta name="qe-app-version" content="116">
 <meta name="theme-color" content="#f5f6f8">
 <meta name="color-scheme" content="light dark">
 <meta name="application-name" content="QE Elec. Daily Job Tracker">
@@ -198,8 +199,8 @@
 
 <link rel="stylesheet" href="core-v98.min.css" integrity="sha384-KE5nZpHQI0fM8mHz2ZxylMNFTMQPJ6COXTiBLVuTD5pAga+AKrCbXSD3gMzIpnyF" crossorigin="anonymous">
 <link rel="manifest" href="manifest-v98.webmanifest">
-<link rel="stylesheet" href="sidebar-v115.css" integrity="sha384-3sNI4obW/7f2IZ4OXIWDkYFkNDc196i5CfGfnunoPNek0jXUtk3mASq/Rbuck95L" crossorigin="anonymous">
-<script src="sidebar-v115.js" integrity="sha384-c8CEPzw+C2M6OECJDyBuyfcRKjrTjHO0FSzZRxQcV1lS6D/XFLUskhW7x3N9To3t" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="sidebar-v116.css" integrity="sha384-3sNI4obW/7f2IZ4OXIWDkYFkNDc196i5CfGfnunoPNek0jXUtk3mASq/Rbuck95L" crossorigin="anonymous">
+<script src="sidebar-v116.js" integrity="sha384-NMQO/H7jcz6dcQjTakY90BbzI4q0/RetIb21o7ndbhohIRvdsvtsQuo2106l8Xcr" crossorigin="anonymous"></script>
 <link rel="apple-touch-icon" href="qe-icon-v98-192.png">
 
 
@@ -845,7 +846,7 @@
 <!-- ===== end v84 Phase A ===== -->
 
 <script src="bootstrap-v98.min.js" defer integrity="sha384-Cvy/9lCbBPQ6bwSGreoRhyYA5HyDWMD+zi+kPJkkpvoKXyOE2UXYeZTy3iSdBqSW" crossorigin="anonymous"></script>
-<script src="core-v115.min.js" defer integrity="sha384-fJq0G9rdncjaQom0s22BTihv+/kojDKtjXhgufo9elOER7Zxo5fGFd8Tgd5iG4Ux" crossorigin="anonymous"></script>
-<script src="trash-v115.js" defer integrity="sha384-1bpXeN/1YsD5a1iudX4D93zoZiZOVi/ABB8fH/mkDhi5Kkc92YhCUfPjBcdDY67q" crossorigin="anonymous"></script>
-<script src="version-v115.js" defer integrity="sha384-NHoQuzdxBpJCrK44PhOIsJsYya047sovVAXpTfUvsl3/5sEVz31RzMkS5kDlnnf4" crossorigin="anonymous"></script>
+<script src="core-v116.min.js" defer integrity="sha384-lY71J206iumU1o7FBfs8JUu8V66zJxoutGbkQyAl1XVPO/zaInUlQmLX25CwTtJ3" crossorigin="anonymous"></script>
+<script src="trash-v116.js" defer integrity="sha384-gn2wxmyZHS7qJpu1RQ0den5v+P20gdfmxDLHKvsHfZL53o3hZUlM1/WFUsK48vxh" crossorigin="anonymous"></script>
+<script src="version-v116.js" defer integrity="sha384-D6vlSuBnMIWqk1qYxHQeJ0AJLVgua3L0bATKgcqKW5sLyk2A4+qZqeXrk48qNArm" crossorigin="anonymous"></script>
 </body></html>
