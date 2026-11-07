@@ -1,0 +1,195 @@
+/* QE Elec. Daily Job Tracker — sidebar-v115.css (sidebar-v110 + mobile tools accordion)
+   ทุกกฎอยู่ใต้ html.qe105 — ถ้า sidebar-v105.js ทำงานไม่สำเร็จ จะถอดคลาสนี้ออกแล้วกลับไปใช้เมนูบนเดิม */
+html.qe105{--qe105-w:212px}
+html.qe105.qe105-c{--qe105-w:60px}
+html.qe105.qe105-m{--qe105-w:0px}
+
+/* ---------- 1) เมนูเดิม (#nvNav) ถูกซ่อนไว้นอกจอ ใช้เป็นตัวควบคุมเบื้องหลัง ---------- */
+html.qe105 #nvNav{position:fixed!important;left:-10000px!important;top:0!important;width:420px!important;max-width:none!important;height:auto!important;margin:0!important;transform:none!important;filter:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;contain:none!important;will-change:auto!important}
+html.qe105 .qe105-navwrap{position:static!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;border:0!important;background:none!important;box-shadow:none!important;overflow:visible!important}
+/* พื้นที่สำรองของเมนูบน/มาสคอต ไม่จำเป็นแล้ว → เอาช่องว่างด้านบนออก */
+html.qe105 #qe98NavReserve,html.qe105 #qe98MascotReserve,html.qe105 .qe98-nav-reserve,html.qe105 .qe98-mascot-reserve{display:none!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important}
+html.qe105 .qe98-runtime-slot:empty{display:none!important;min-height:0!important;margin:0!important}
+html.qe105 .qe98-runtime-slot{min-height:0!important}
+
+/* ---------- 2) เนื้อหาหลัก: เว้นซ้ายให้ Sidebar เว้นขวาให้ปุ่มแชต/AI/น้องดุ๊กดิ๊ก ---------- */
+html.qe105 #qeMain{margin-left:var(--qe105-w)!important;margin-right:0!important;width:auto!important;max-width:none!important;padding-top:14px!important;padding-left:var(--qe110-pl,28px)!important;padding-right:var(--qe110-pr,96px)!important;box-sizing:border-box;transition:margin-left .18s ease}
+html.qe105.qe105-m #qeMain{margin-left:0!important;padding-top:58px!important;padding-right:68px!important}
+
+/* ---------- 3) Sidebar ใหม่ ---------- */
+#qe105Sb{position:fixed;left:0;top:0;bottom:0;width:var(--qe105-w);z-index:70;box-sizing:border-box;display:flex;flex-direction:column;padding:8px 8px 8px;background:linear-gradient(180deg,#0d2150 0%,#143277 100%);color:#dbe5ff;font-size:13px;line-height:1.25;box-shadow:3px 0 18px rgba(8,20,60,.25);transition:width .18s ease,transform .2s ease,visibility 0s;overflow:hidden}
+#qe105Sb *{box-sizing:border-box}
+.qe105-brand{flex:none;display:flex;align-items:center;gap:8px;min-height:34px;padding:2px 4px 8px;margin-bottom:4px;border-bottom:1px solid rgba(255,255,255,.13)}
+.qe105-logo{flex:none;width:28px;height:28px;border-radius:8px;display:grid;place-items:center;background:linear-gradient(135deg,#60a5fa,#2563eb);color:#fff;font-weight:800;font-size:12px}
+.qe105-bt{min-width:0;flex:1 1 auto}
+.qe105-bt b{display:block;color:#fff;font-size:13.5px;line-height:1.2;white-space:nowrap;letter-spacing:.01em}
+.qe105-sub{display:flex;align-items:center;gap:6px;margin-top:1px;min-width:0}
+.qe105-bt small{display:block;color:#9db0de;font-size:10.5px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qe105-ver{flex:none;padding:0 6px;border-radius:99px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);color:#cfe0ff;font-size:9.5px;font-weight:700;line-height:15px;letter-spacing:.02em}
+.qe105-mid{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.25) transparent}
+.qe105-grp+.qe105-grp{margin-top:2px;padding-top:2px;border-top:1px solid rgba(255,255,255,.1)}
+.qe105-gl{padding:5px 8px 1px;color:#8fa4d6;font-size:10.5px;font-weight:700;letter-spacing:.05em}
+.qe105-it{display:flex;align-items:center;gap:9px;position:relative;width:100%;min-height:31px;margin:1px 0;padding:3px 8px;border:0;border-radius:8px;background:transparent;color:#dbe5ff;font:inherit;font-size:13px;font-weight:600;text-align:left;cursor:pointer}
+.qe105-it:hover{background:rgba(255,255,255,.11);color:#fff}
+.qe105-it:focus-visible,.qe105-user:focus-visible,.qe105-col:focus-visible,#qe105Burger:focus-visible{outline:2px solid #fbbf24;outline-offset:2px}
+.qe105-it.qe105-on{background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;box-shadow:0 4px 12px rgba(37,99,235,.42)}
+.qe105-it[hidden],.qe105-grp[hidden],.qe105-bd[hidden],.qe105-dot[hidden]{display:none!important}
+.qe105-ic{flex:none;width:20px;height:20px;display:grid;place-items:center;font-size:16px;line-height:1}
+.qe105-ic svg{width:17px;height:17px;display:block}
+.qe105-tx{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qe105-bd{flex:none;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#f59e0b;color:#1f2937;font-size:11px;font-weight:800;display:grid;place-items:center}
+.qe105-sep{height:1px;margin:6px 4px;background:rgba(255,255,255,.14)}
+.qe105-tl{font-weight:500}
+.qe105-kbd{flex:none;padding:0 5px;border:1px solid rgba(255,255,255,.28);border-radius:5px;color:#b9c8ee;font-size:10px;line-height:15px}
+.qe105-dot{flex:none;width:9px;height:9px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 2px #143277}
+.qe105-foot{flex:none;display:flex;flex-direction:column;gap:5px;margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.13)}
+.qe105-user{display:flex;align-items:center;gap:8px;width:100%;padding:4px 6px;border:0;border-radius:10px;background:rgba(255,255,255,.09);color:#fff;font:inherit;text-align:left;cursor:pointer}
+.qe105-user:hover{background:rgba(255,255,255,.16)}
+.qe105-av{position:relative;flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:#fff;color:#143277;font-weight:800;font-size:13px}
+.qe105-avd{position:absolute;right:-1px;bottom:-1px;width:11px;height:11px;border-radius:50%;border:2px solid #143277;background:#22c55e}
+.qe105-avc{position:absolute;right:-7px;top:-7px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;border:2px solid #143277;background:#2563eb;color:#fff;font-size:10px;font-weight:800;display:grid;place-items:center}
+.qe105-avc[hidden]{display:none}
+.qe105-ut{min-width:0;flex:1 1 auto}
+.qe105-un{display:block;color:#fff;font-size:12.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qe105-us{display:block;color:#b9c8ee;font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qe105-col{display:flex;align-items:center;gap:9px;width:100%;min-height:26px;padding:3px 8px;border:1px solid rgba(255,255,255,.2);border-radius:8px;background:transparent;color:#cfdbfb;font:inherit;font-size:12px;font-weight:600;cursor:pointer}
+.qe105-col:hover{background:rgba(255,255,255,.1);color:#fff}
+
+/* จอเตี้ย (พื้นที่เบราว์เซอร์ราว 600px): ซ่อนหัวกลุ่ม เหลือเส้นคั่นให้เห็นทุกเมนูโดยไม่ต้องเลื่อน */
+@media (max-height:640px){
+  .qe105-gl{display:none}
+  .qe105-it{min-height:29px;padding-top:2px;padding-bottom:2px}
+  .qe105-brand{padding-bottom:6px;margin-bottom:2px}
+  .qe105-sep{margin:4px 4px}
+}
+@media (max-height:540px){.qe105-bt small{display:none}.qe105-it{min-height:26px;font-size:12.5px}.qe105-col{display:none}}
+
+/* ---------- 4) โหมดย่อ (เหลือแต่ไอคอน) ---------- */
+html.qe105-c #qe105Sb{padding:8px 7px}
+html.qe105-c .qe105-gl,html.qe105-c .qe105-tx,html.qe105-c .qe105-bt,html.qe105-c .qe105-ver,html.qe105-c .qe105-kbd,html.qe105-c .qe105-ut,html.qe105-c .qe105-colt{display:none}
+html.qe105-c .qe105-brand{justify-content:center;padding:2px 0 8px}
+html.qe105-c .qe105-it,html.qe105-c .qe105-col,html.qe105-c .qe105-user{justify-content:center;padding-left:0;padding-right:0}
+html.qe105-c .qe105-it{min-height:34px}
+html.qe105-c .qe105-bd{position:absolute;top:1px;right:3px;min-width:15px;height:15px;padding:0 3px;font-size:9.5px;border:2px solid #143277;box-sizing:content-box}
+html.qe105-c .qe105-dot{position:absolute;top:5px;right:8px}
+html.qe105-c .qe105-user{background:transparent;padding:2px 0}
+html.qe105-c .qe105-avc{right:-9px}
+
+/* ---------- 5) มือถือ / หน้าต่างแคบ: Sidebar เป็น drawer ---------- */
+#qe105Burger,#qe105Back{display:none}
+html.qe105-m #qe105Sb{width:262px;transform:translateX(-105%);visibility:hidden;box-shadow:none;transition:transform .2s ease,visibility 0s linear .2s}
+html.qe105-m.qe105-open #qe105Sb{transform:none;visibility:visible;z-index:300;box-shadow:6px 0 30px rgba(0,0,0,.45);transition:transform .2s ease,visibility 0s}
+html.qe105-m #qe105Burger{display:flex;position:fixed;top:8px;left:8px;z-index:69;width:42px;height:42px;align-items:center;justify-content:center;border:1px solid rgba(0,0,0,.25);border-radius:12px;background:#143277;color:#fff;font-size:20px;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.3)}
+html.qe105-m.qe105-open #qe105Back{display:block;position:fixed;inset:0;z-index:290;background:rgba(5,12,35,.55)}
+
+/* ---------- 6) เมนู ⚙ เครื่องมือ: Desktop เปิดข้าง Sidebar เหมือนเดิม ---------- */
+html.qe105 #nvMenu{position:fixed!important;left:calc(var(--qe105-w) + 8px)!important;right:auto!important;top:auto!important;bottom:12px!important;width:min(360px,calc(100vw - var(--qe105-w) - 16px))!important;max-height:calc(100vh - 24px)!important;overflow-y:auto!important;z-index:500!important;transform:none!important}
+.qe115-tools-panel:empty{display:none}
+.qe115-caret{flex:none;width:14px;color:#b9c8ee;font-size:13px;text-align:center;transition:transform .15s ease}
+html.qe105.qe105-m .qe105-it{min-height:44px}
+html.qe105.qe105-m .qe115-tools-panel{display:block;width:100%;padding:0 2px 2px 29px}
+html.qe105.qe105-m .qe115-tools-panel #nvMenu{position:static!important;left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;width:100%!important;max-width:none!important;max-height:min(52vh,420px)!important;margin:3px 0 6px!important;overflow-x:hidden!important;overflow-y:auto!important;z-index:auto!important;transform:none!important;border-radius:10px!important;box-shadow:inset 0 0 0 1px rgba(255,255,255,.13),0 5px 14px rgba(0,0,0,.18)!important}
+html.qe105.qe105-m .qe115-tools-panel #nvMenu[hidden]{display:none!important}
+html.qe105.qe105-m .qe115-tools-panel #nvMenu .nv-mi{width:100%!important;min-height:44px!important;padding:7px 8px!important;white-space:normal!important}
+html.qe105.qe105-m .qe115-tools-panel #nvMenu .nv-mi small{white-space:normal!important;overflow-wrap:anywhere}
+html.qe105.qe105-m .qe105-it.qe115-tool-open{background:rgba(255,255,255,.12);color:#fff}
+
+/* ---------- 7) รวมปุ่ม B (สถานะ/ออนไลน์) เข้า Sidebar ---------- */
+html.qe105 #cbPill #cbWho,html.qe105 #cbPill #cbOn{display:none!important}
+html.qe105 #cbPill.cb-compact{display:none!important}
+html.qe105 #cbPill{left:calc(var(--qe105-w) + 12px)!important;bottom:12px!important}
+html.qe105 .cb-pn{left:calc(var(--qe105-w) + 12px)!important;bottom:12px!important}
+html.qe105.qe105-m #cbPill,html.qe105.qe105-m .cb-pn{left:8px!important}
+
+/* ---------- 8) ตาราง Tracker: ให้ช่อง Countermeasure กว้างพออ่านได้ ---------- */
+html.qe105 table:has(#thDate){table-layout:fixed!important;width:100%!important;min-width:940px}
+html.qe105 table:has(#thDate) th{box-sizing:border-box!important}
+html.qe105 table:has(#thDate) th:nth-child(1){width:96px!important}
+html.qe105 table:has(#thDate) th:nth-child(2){width:80px!important}
+html.qe105 table:has(#thDate) th:nth-child(3){width:172px!important}
+html.qe105 table:has(#thDate) th:nth-child(4){width:auto!important}
+html.qe105 table:has(#thDate) th:nth-child(5){width:112px!important}
+html.qe105 table:has(#thDate) th:nth-child(6){width:140px!important}
+html.qe105 table:has(#thDate) th:nth-child(7){width:132px!important}
+html.qe105 table:has(#thDate) th{white-space:normal!important;word-break:normal!important}
+html.qe105 table:has(#thDate) td{overflow-wrap:break-word;word-break:normal;white-space:normal;line-height:1.5;vertical-align:top}
+html.qe105 table:has(#thDate) td:nth-child(7) button{margin:2px}
+
+@media print{#qe105Sb,#qe105Burger,#qe105Back{display:none!important}html.qe105 #qeMain{margin-left:0!important;padding-right:0!important}}
+@media (prefers-reduced-motion:reduce){#qe105Sb,html.qe105 #qeMain{transition:none!important}}
+
+/* ================= v106 ================= */
+/* (4) Tracker: ปุ่มจัดการ 6 ปุ่มให้ขึ้นบรรทัดใหม่ ไม่ถูกตัดขอบ */
+html.qe105 table:has(#thDate) td:nth-child(7),
+html.qe105 table:has(#thDate) td:nth-child(7) *{white-space:normal!important}
+html.qe105 table:has(#thDate) td:nth-child(7) div{display:flex!important;flex-wrap:wrap!important;gap:4px!important;justify-content:flex-start;max-width:100%}
+html.qe105 table:has(#thDate) td:nth-child(7) button{flex:0 0 auto;margin:2px!important}
+html.qe105 .tw{overflow-x:auto}
+
+/* (5) Main QE Jobs › New project: ให้ตารางพอดีความกว้างจอ ไม่ต้องเลื่อนซ้าย-ขวา */
+html.qe105 #viewMainJobs .mj-tw{overflow-x:visible!important}
+html.qe105 #viewMainJobs table.mj-pv,html.qe105 #viewMainJobs table.mj-tbl.mj-pv{min-width:0!important;width:100%!important;table-layout:fixed!important}
+html.qe105 #viewMainJobs .mj-pv th,html.qe105 #viewMainJobs .mj-pv td{padding:5px 3px!important;font-size:12px!important;line-height:1.3}
+html.qe105 #viewMainJobs .mj-pv th.mn,html.qe105 #viewMainJobs .mj-pv td.mn{width:140px!important;min-width:0!important;max-width:140px;white-space:normal!important;padding:5px 5px!important;text-align:left;word-break:break-word}
+html.qe105 #viewMainJobs .mj-pv .mje-cell{min-width:0!important}
+html.qe105 #viewMainJobs .mj-pv .dt{white-space:normal!important;font-size:11.5px!important;line-height:1.25;word-break:break-word}
+html.qe105 #viewMainJobs .mj-pv .mj-st{min-width:0!important;padding:0 6px!important;font-size:11.5px!important;max-width:100%}
+html.qe105 #viewMainJobs .mj-pv .pv-ord{margin-right:3px!important;gap:2px}
+html.qe105 #viewMainJobs .mj-pv .pv-ord button,html.qe105 #viewMainJobs .mj-pv .pv-grip{width:18px!important;height:20px!important;font-size:10px}
+html.qe105 #viewMainJobs .mj-pv td.mn button:not(.pv-grip):not([data-mje]){white-space:normal;line-height:1.2}
+
+/* (6) Hoshin › ภาพรวม: กิจกรรมที่ 1-4 เรียงแถวเดียวกัน */
+html.qe105 #viewHoshin .hs-acts{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:10px!important;align-items:start}
+html.qe105 #viewHoshin .hs-act{min-width:0}
+html.qe105 #viewHoshin .hs-ah{display:flex!important;flex-wrap:wrap;gap:6px 8px;align-items:flex-start}
+html.qe105 #viewHoshin .hs-ah b{font-size:12.5px;line-height:1.35}
+html.qe105 #viewHoshin .hs-ap{flex:0 0 auto;margin-left:auto}
+html.qe105 #viewHoshin .hs-tr{min-width:0}
+@media (max-width:1180px){html.qe105 #viewHoshin .hs-acts{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+@media (max-width:640px){html.qe105 #viewHoshin .hs-acts{grid-template-columns:1fr!important}}
+
+/* (7) Hoshin › สถานะรายไลน์: ≤10 ไลน์ = แถวเดียว · มากกว่านั้น = ขึ้นบรรทัดใหม่แต่อ่านออก (v107) */
+html.qe105 #viewHoshin .hs-board{display:grid!important;gap:8px!important;overflow:visible;grid-template-columns:repeat(auto-fill,minmax(124px,1fr))!important;grid-auto-flow:row!important;grid-auto-columns:auto!important}
+html.qe105 #viewHoshin .hs-board:not(:has(.hs-tile:nth-child(11))){grid-template-columns:repeat(auto-fit,minmax(0,1fr))!important}
+html.qe105 #viewHoshin .hs-board .hs-tile{min-width:0!important;padding:7px 8px!important;text-align:left}
+html.qe105 #viewHoshin .hs-board .hs-tile b{font-size:13px!important;line-height:1.25;white-space:nowrap}
+html.qe105 #viewHoshin .hs-board .hs-tile span{max-width:100%;font-size:11.5px!important;line-height:1.3;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;overflow-wrap:anywhere}
+/* (8) Hoshin › หัวข้อ (เช่น Skip paint): กราฟไม่สูงเกินจน "สรุป / Temporary action / Milestone" ถูกดันลงล่าง */
+html.qe105 #viewHoshin svg.ms-trend{display:block;width:100%!important;height:auto!important;max-height:none!important}
+html.qe105 #viewHoshin .hs-info{margin-top:10px!important}
+
+/* (9) Dashboard: % บนโดนัท (ป้ายที่สคริปต์เพิ่ม) */
+.qe106-pct{font-family:inherit}
+
+/* ================= v107 ================= */
+/* (1) Tracker › Status: ข้อความ "แก้ล่าสุด …" ขึ้นบรรทัดใหม่ ไม่ตกขอบ */
+html.qe105 table:has(#thDate) th:nth-child(6){width:156px!important}
+html.qe105 table:has(#thDate) th:nth-child(5){width:108px!important}
+html.qe105 table:has(#thDate) td:nth-child(6),
+html.qe105 table:has(#thDate) td:nth-child(6) *{white-space:normal!important;overflow-wrap:anywhere!important;word-break:normal;max-width:100%}
+html.qe105 table:has(#thDate) td:nth-child(6) small,
+html.qe105 table:has(#thDate) td:nth-child(6) .by,
+html.qe105 table:has(#thDate) td:nth-child(6) .ed{display:block;font-size:11.5px!important;line-height:1.35;color:var(--mut)}
+
+/* (2) Main QE Jobs › Model / Stage: ชื่อรุ่นเด่น · ปุ่ม Follow-up เล็กแบบลิงก์ · ปุ่มสลับลำดับโผล่เมื่อชี้ที่แถว */
+html.qe105 #viewMainJobs .mj-pv td.mn{position:relative;display:table-cell;padding:7px 8px 7px 8px!important;vertical-align:middle}
+html.qe105 #viewMainJobs .mj-pv td.mn>b,html.qe105 #viewMainJobs .mj-pv td.mn>strong{display:block;font-size:13.5px;line-height:1.3;margin:0 0 3px}
+html.qe105 #viewMainJobs .mj-pv td.mn .pv-ord{position:absolute;top:3px;right:3px;margin:0!important;gap:2px;opacity:0;transition:opacity .12s;z-index:2}
+html.qe105 #viewMainJobs .mj-pv tr:hover td.mn .pv-ord,
+html.qe105 #viewMainJobs .mj-pv td.mn:focus-within .pv-ord{opacity:1}
+@media (hover:none){html.qe105 #viewMainJobs .mj-pv td.mn .pv-ord{opacity:.85}}
+html.qe105 #viewMainJobs .mj-pv td.mn button:not(.pv-grip):not([data-mje]):not(.pv-ord *){display:inline-block;margin:0!important;padding:0 !important;border:0!important;background:transparent!important;box-shadow:none!important;color:#9db8ff!important;font-size:11.5px!important;font-weight:600;text-decoration:underline;text-underline-offset:2px;line-height:1.3;opacity:.9}
+html.qe105 #viewMainJobs .mj-pv td.mn button:not(.pv-grip):not([data-mje]):not(.pv-ord *):hover{color:#fff!important;opacity:1}
+html.qe105 #viewMainJobs .mj-pv .pv-ord button,html.qe105 #viewMainJobs .mj-pv .pv-grip{width:20px!important;height:20px!important;font-size:10px;border-radius:5px}
+
+/* (3) Hoshin › ภาพรวม: การ์ดกิจกรรม 1-4 สูงเท่ากัน หัวการ์ดเรียงแบบเดียวกัน ปุ่ม "เพิ่มหัวข้อ" อยู่ล่างสุดเสมอ */
+html.qe105 #viewHoshin .hs-acts{align-items:stretch!important;gap:12px!important}
+html.qe105 #viewHoshin .hs-act{display:flex!important;flex-direction:column;gap:8px;height:100%;padding:12px 12px 12px!important;min-width:0}
+html.qe105 #viewHoshin .hs-ah{display:grid!important;grid-template-columns:auto minmax(0,1fr) auto;gap:4px 9px;align-items:start;min-height:84px;padding-bottom:6px;border-bottom:1px dashed var(--line)}
+html.qe105 #viewHoshin .hs-ah>div:nth-child(2) small{display:block;font-size:11px;color:var(--mut);font-weight:700;margin-bottom:1px}
+html.qe105 #viewHoshin .hs-ah>div:nth-child(2) b{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;font-size:12.5px;line-height:1.35}
+html.qe105 #viewHoshin .hs-ap{display:flex!important;flex-direction:column;align-items:flex-end;margin:0!important;text-align:right;min-width:42px}
+html.qe105 #viewHoshin .hs-ap b{font-size:19px;line-height:1.1}
+html.qe105 #viewHoshin .hs-ap span{font-size:10.5px;color:var(--mut)}
+html.qe105 #viewHoshin .hs-act .hs-tr{margin:0!important}
+html.qe105 #viewHoshin .hs-act .hs-add{margin-top:auto!important;align-self:flex-start}
