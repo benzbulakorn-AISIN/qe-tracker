@@ -1,0 +1,62 @@
+/*! QE Elec. Daily Job Tracker — backup-fallback-v133.js  (แทน backup-fallback-v132.js · ใช้คู่กับ tracker-toolbar-v131.js)
+    v132: ถ้า Chrome ปฏิเสธหน้าต่าง "บันทึกไฟล์" → ดาวน์โหลดไฟล์เดิมลงโฟลเดอร์ดาวน์โหลดแทน
+    v133: แก้หน้าต่างซ้อน 2 ชั้น — ถ้าการสำรองเริ่มจาก "ตัวตั้งเวลา" (ไม่ได้กดเอง) จะไม่เปิดหน้าต่างบันทึกไฟล์เลย
+          แต่ดาวน์โหลดตรงทันที (เนื้อหาไฟล์เดิม 100%)
+    ไม่แตะ: business logic, Backup schema, localStorage, Cloud Sync, Auth/Role/RLS, LINE/Teams, Trash */
+(function () {
+  "use strict";
+  if (window.__QE132_BKFB) return;
+  window.__QE132_BKFB = true;
+  var D = document;
+  function diag(e, c) { try { window.QE86Diagnostics && window.QE86Diagnostics.capture(e, c || "backup-fallback-v133"); } catch (_) {} }
+  function toast(msg) {
+    try {
+      var t = D.createElement("div"); t.textContent = msg;
+      t.setAttribute("role", "status"); t.setAttribute("aria-live", "polite");
+      t.style.cssText = "position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:10050;max-width:92vw;padding:12px 18px;border-radius:12px;background:#1e293b;color:#fff;font-size:14px;font-weight:600;line-height:1.5;box-shadow:0 10px 30px rgba(0,0,0,.3);white-space:pre-line;font-family:inherit";
+      D.body.appendChild(t); setTimeout(function () { t.parentNode && t.parentNode.removeChild(t); }, 6000);
+    } catch (_) {}
+  }
+  function download(name, parts) {
+    var blob = new Blob(parts, { type: /\.json$/i.test(name) ? "application/json" : "application/octet-stream" });
+    var a = D.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; a.style.display = "none";
+    D.body.appendChild(a); a.click(); a.parentNode.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 5000);
+    toast("💾 สำรองข้อมูลแล้ว\nไฟล์ “" + name + "” อยู่ในโฟลเดอร์ดาวน์โหลด");
+  }
+  function fakeHandle(name) {
+    var parts = [];
+    var writer = {
+      write: function (d) {
+        if (d && typeof d === "object" && !(d instanceof Blob) && !(d instanceof ArrayBuffer) && !ArrayBuffer.isView(d) && "data" in d) d = d.data;
+        if (d != null) parts.push(d); return Promise.resolve();
+      },
+      truncate: function () { return Promise.resolve(); }, seek: function () { return Promise.resolve(); },
+      abort: function () { parts = []; return Promise.resolve(); },
+      close: function () { download(name, parts); return Promise.resolve(); }
+    };
+    return { kind: "file", name: name,
+      createWritable: function () { return Promise.resolve(writer); },
+      getFile: function () { return Promise.resolve(new File(parts, name)); },
+      queryPermission: function () { return Promise.resolve("granted"); },
+      requestPermission: function () { return Promise.resolve("granted"); },
+      isSameEntry: function () { return Promise.resolve(false); } };
+  }
+  function userIsClicking() {
+    try { var u = navigator.userActivation; return !u || !!u.isActive; } catch (_) { return true; }
+  }
+  var orig = window.showSaveFilePicker;
+  if (typeof orig !== "function" || orig.__qe132) return;
+  var wrapped = function (opts) {
+    var name = (opts && opts.suggestedName) || ("qe_tracker_backup_" + new Date().toISOString().slice(0, 10).replace(/-/g, "") + ".json");
+    if (!userIsClicking()) return Promise.resolve(fakeHandle(name));   /* v133: ตัวตั้งเวลา → ดาวน์โหลดตรง ไม่เปิดหน้าต่าง */
+    var p; try { p = orig.call(window, opts); } catch (e) { p = Promise.reject(e); }
+    return Promise.resolve(p).catch(function (e) {
+      var n = e && e.name;
+      if (n === "SecurityError" || n === "NotAllowedError") { diag(e, "backup-fallback-v133 → download"); return fakeHandle(name); }
+      throw e;   /* AbortError = ผู้ใช้กด Cancel เอง → ไม่ดาวน์โหลดซ้ำ */
+    });
+  };
+  wrapped.__qe132 = true;
+  try { window.showSaveFilePicker = wrapped; } catch (e) { diag(e, "backup-fallback-v133 wire"); }
+})();
