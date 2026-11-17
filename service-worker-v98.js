@@ -1,6 +1,6 @@
 /*! QE Elec. Daily Job Tracker V135 — compatibility service worker (filename kept for bootstrap-v98) */
 "use strict";
-var CACHE = "qe-elec-tracker-v136-shell-1";
+var CACHE = "qe-elec-tracker-v137-shell-1";
 var SHELL = [
   "./",
   "./index.html",
@@ -14,7 +14,7 @@ var SHELL = [
   "./trash-v118.js",
   "./version-v125.js",
   "./tracker-edit-v135.js",
-  "./plan-export-v136.js",
+  "./plan-excel-v137.js",
   "./mission-v98.min.js",
   "./hoshin-v98.min.js",
   "./mainjobs-v98.min.js",
