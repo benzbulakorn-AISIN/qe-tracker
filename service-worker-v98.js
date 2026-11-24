@@ -1,6 +1,6 @@
 /*! QE Elec. Daily Job Tracker V135 — compatibility service worker (filename kept for bootstrap-v98) */
 "use strict";
-var CACHE = "qe-elec-tracker-v141-shell-1";
+var CACHE = "qe-elec-tracker-v142-shell-1";
 var SHELL = [
   "./",
   "./index.html",
@@ -13,7 +13,7 @@ var SHELL = [
   "./scheduled-summary-v125.js",
   "./trash-v118.js",
   "./version-v125.js",
-  "./tracker-edit-v135.js",
+  "./tracker-edit-v142.js",
   "./plan-excel-v137.js",
   "./schedule-free-v138.js",
   "./summary-style-v140.js",
@@ -23,6 +23,7 @@ var SHELL = [
   "./executive-report-v98.min.js",
   "./manifest-v125.webmanifest",
   "./qe-icon-v98-192.png"
+  "./app-version-v142.js",
 ];
 self.addEventListener("install", function (event) {
   event.waitUntil(caches.open(CACHE).then(function (cache) { return cache.addAll(SHELL); }));
