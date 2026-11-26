@@ -1,6 +1,6 @@
 /*! QE Elec. Daily Job Tracker V135 — compatibility service worker (filename kept for bootstrap-v98) */
 "use strict";
-var CACHE = "qe-elec-tracker-v142b-shell-1";
+var CACHE = "qe-elec-tracker-v143-shell-1";
 var SHELL = [
   "./",
   "./index.html",
@@ -23,7 +23,7 @@ var SHELL = [
   "./executive-report-v98.min.js",
   "./manifest-v125.webmanifest",
   "./qe-icon-v98-192.png"
-  "./app-version-v142.js",
+  "./app-version-v143.js",
 ];
 self.addEventListener("install", function (event) {
   event.waitUntil(caches.open(CACHE).then(function (cache) { return cache.addAll(SHELL); }));
